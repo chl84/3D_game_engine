@@ -97,4 +97,7 @@ labelled `render` or `golden`.
 - Windows compilation and headless tests; the CI job exists but has not run yet
 - CI runs on GitHub Actions
 - Anything that requires Vulkan device creation
-- `clang-tidy` in CI; it runs locally in M0.2 and is added to CI in M0.5
+- clang-format and clang-tidy in CI; they run locally in M0.2 and are added to
+  CI in M0.5
+- ASan/UBSan as a Linux CI job; M0.2 only runs it locally. The CI job is added
+  in M0.5.

@@ -12,6 +12,12 @@
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 
+## Repository state
+
+- `main`: initial bootstrap commit, pushed to GitHub and set as the default branch.
+- `m0/foundation`: all M0 work, pushed; not merged into `main`.
+- Branch protection/rulesets are planned for M0.5.
+
 ## Verification evidence
 
 | Item | Status | Evidence |
@@ -46,6 +52,14 @@
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
   `docs/AI_AGENT_GUIDE.md` and `docs/PROJECT_FORMAT.md` are skeletons or drafts.
 - volk and `engine doctor` are not implemented; they belong to M0.4.
+
+## Planned for M0.5
+
+- clang-format and clang-tidy checks in CI, so they are automatically tested
+  instead of manually verified.
+- An ASan/UBSan Linux CI job.
+- Linux CI matrix, caching, branch protection and artifacts.
+- The Windows job from M0.2 stays green.
 
 ## Next step
 

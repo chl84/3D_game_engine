@@ -25,7 +25,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.2 | vcpkg manifest, dependencies, warnings, format/tidy, sanitizer presets, and the Windows MSVC + vcpkg CI job | Next |
 | M0.3 | Core: logging, config, filesystem sandbox, UUID, error handling | Planned |
 | M0.4 | CLI skeleton and `engine doctor --json` | Planned |
-| M0.5 | Linux CI matrix, caching, branch protection and artifacts; the Windows job from M0.2 is kept green | Planned |
+| M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, Linux CI matrix, caching, branch protection and artifacts; the Windows job from M0.2 is kept green | Planned |
 | M0.6 | Full documentation, ADRs and VISION translation | Planned |
 | M0.7 | Hardening and M0 acceptance | Planned |
 
