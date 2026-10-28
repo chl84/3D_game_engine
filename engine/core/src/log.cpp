@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include <chrono>
-#include <ctime>
+#include <cstdint>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -35,22 +35,38 @@ namespace {
 }
 
 [[nodiscard]] std::string timestamp_utc() {
-    const auto now = std::chrono::system_clock::now();
-    const auto milliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) %
-        std::chrono::milliseconds(1000);
-    const std::time_t time = std::chrono::system_clock::to_time_t(now);
-    const std::tm* utc = std::gmtime(&time);
-    if (utc == nullptr) {
-        return "1970-01-01T00:00:00.000Z";
-    }
+    using namespace std::chrono;
 
-    char buffer[32]{};
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", utc);
+    const auto now = system_clock::now();
+    const auto since_epoch = now.time_since_epoch();
+    const auto day_count = duration_cast<days>(since_epoch);
+    const auto time_of_day = since_epoch - day_count;
+
+    const auto hour_count = duration_cast<hours>(time_of_day).count();
+    const auto minute_count = duration_cast<minutes>(time_of_day).count() % 60;
+    const auto second_count = duration_cast<seconds>(time_of_day).count() % 60;
+    const auto millisecond_count = duration_cast<milliseconds>(time_of_day).count() % 1000;
+
+    // Civil date from days since 1970-01-01 (Howard Hinnant's algorithm).
+    const std::int64_t z = static_cast<std::int64_t>(day_count.count()) + 719468;
+    const std::int64_t era = (z >= 0 ? z : z - 146096) / 146097;
+    const auto day_of_era = static_cast<unsigned>(z - (era * 146097));
+    const auto year_of_era =
+        (day_of_era - (day_of_era / 1460) + (day_of_era / 36524) - (day_of_era / 146096)) / 365;
+    const std::int64_t year_base = static_cast<std::int64_t>(year_of_era) + (era * 400);
+    const int day_of_year = static_cast<int>(
+        day_of_era - ((365 * year_of_era) + (year_of_era / 4) - (year_of_era / 100)));
+    const int month_part = ((5 * day_of_year) + 2) / 153;
+    const int day = day_of_year - (((153 * month_part) + 2) / 5) + 1;
+    const int month = month_part + (month_part < 10 ? 3 : -9);
+    const int year = static_cast<int>(year_base) + (month <= 2 ? 1 : 0);
 
     std::ostringstream output;
-    output << buffer << '.' << std::setw(3) << std::setfill('0')
-           << static_cast<int>(milliseconds.count()) << 'Z';
+    output << std::setfill('0') << std::setw(4) << year << '-' << std::setw(2) << month << '-'
+           << std::setw(2) << day << 'T' << std::setw(2) << static_cast<int>(hour_count) << ':'
+           << std::setw(2) << static_cast<int>(minute_count) << ':' << std::setw(2)
+           << static_cast<int>(second_count) << '.' << std::setw(3)
+           << static_cast<int>(millisecond_count) << 'Z';
     return output.str();
 }
 
