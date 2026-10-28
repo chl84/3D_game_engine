@@ -38,7 +38,7 @@
 | clang-tidy | Manually verified | `clang-tidy -p build/ci-linux-clang` on the C++ sources → exit 0; all warnings were in non-user code |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
-| Clean clone on Linux (M0.3) | Automatically tested | Clone of `1dd90b4`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
+| Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
 | Vulkan loader and GPU | Manually verified | `vulkaninfo --summary` → Intel Iris Xe, API 1.4.354, Mesa 26.2.5 |
