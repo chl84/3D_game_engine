@@ -1,0 +1,42 @@
+# Build outputs
+/build/
+/build-*/
+/out/
+/artifacts/
+
+# CMake
+/compile_commands.json
+CMakeUserPresets.json
+
+# Package managers
+/vcpkg_installed/
+**/vcpkg_installed/
+/vcpkg-cache/
+
+# Engine runtime data
+/.engine/
+**/.engine/
+
+# Compiled shaders and binaries
+*.spv
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.user
+*.swp
+
+# Logs and caches
+*.log
+/.cache/
+**/.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
