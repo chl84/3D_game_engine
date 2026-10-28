@@ -18,9 +18,10 @@ command and Catch2 tests. Vulkan (`volk`) and `engine doctor` are added in M0.4.
 | Python | 3.14.8 |
 | vcpkg | bootstrapped at `~/.local/share/vcpkg`, commit `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
 
-The CI reference environment is Ubuntu 24.04 with GCC 14 and Clang 18, plus
-Windows Server 2022 with MSVC. CI is the source of truth for reproducible
-builds; local Omarchy versions may be newer and are reported here.
+The CI target environment is Ubuntu 24.04 with GCC 14 and Clang 18, plus
+Windows Server 2022 with MSVC. M0.2 uses the runner default GCC 13.3 for the
+GCC job; M0.5 pins GCC 14. CI is the source of truth for reproducible builds;
+local Omarchy versions may be newer and are reported here.
 
 ## Prerequisites
 

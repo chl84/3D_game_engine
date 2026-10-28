@@ -38,6 +38,9 @@
 
 ## Known issues and gaps
 
+- The M0.2 Linux GCC CI job uses the Ubuntu 24.04 runner default GCC 13.3;
+  M0.5 pins GCC 14. This is the only toolchain deviation from the approved CI
+  matrix.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
   are planned for M0.6.
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
