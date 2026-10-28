@@ -87,17 +87,27 @@ jobs:
 
       - name: Bootstrap vcpkg
         shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg "$env:VCPKG_ROOT"
-          git -C "$env:VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          $vcpkgRoot = Join-Path $env:GITHUB_WORKSPACE "vcpkg"
+          git clone https://github.com/microsoft/vcpkg $vcpkgRoot
+          git -C $vcpkgRoot checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
           New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
-          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+          "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --preset ci-windows
 
       - name: Build
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset ci-windows
 
       - name: Test
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: ctest --preset ci-windows --output-on-failure
