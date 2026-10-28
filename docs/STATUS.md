@@ -25,26 +25,27 @@
 | clang-format | Manually verified | `clang-format --dry-run --Werror` on all C++ files → no changes |
 | clang-tidy | Manually verified | `clang-tidy -p build/ci-linux-clang` on the C++ sources → exit 0; all warnings were in non-user code |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
-| Clean clone on Linux | Automatically tested (M0.1) | Clone of `m0/foundation`, configure, build, `ctest` → 1/1 passed at M0.1 |
+| Clean clone on Linux | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
 | Vulkan loader and GPU | Manually verified | `vulkaninfo --summary` → Intel Iris Xe, API 1.4.354, Mesa 26.2.5 |
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Not verified | The `ci-windows` job exists; it has not run yet |
+| Windows build | Pending | The `ci-windows` job is part of the M0.2 CI run; its result is not in yet |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Not verified | The Linux job is pushed; the Windows job is new; neither result is recorded yet |
+| GitHub Actions | Partially verified | The M0.1 Linux run succeeded; the M0.2 run includes Linux and Windows jobs and is queued/running |
 
 ## Known issues and gaps
 
-- The Windows MSVC + vcpkg CI job has not run yet. Its first run is the proof
+- The Windows MSVC + vcpkg CI job is queued/running. Its first run is the proof
   for MSVC warnings and dependency builds.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
   are planned for M0.6.
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
   `docs/AI_AGENT_GUIDE.md` and `docs/PROJECT_FORMAT.md` are skeletons or drafts.
-- No GitHub Actions result has been recorded yet.
+- The M0.2 GitHub Actions result is not recorded yet; the M0.1 Linux run was
+  green.
 - volk and `engine doctor` are not implemented; they belong to M0.4.
 
 ## Next step
