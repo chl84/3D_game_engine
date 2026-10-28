@@ -1,12 +1,22 @@
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
+    unit/config_test.cpp
+    unit/error_test.cpp
+    unit/log_test.cpp
+    unit/path_sandbox_test.cpp
+    unit/uuid_test.cpp
     unit/version_test.cpp
+)
+
+target_include_directories(engine_core_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit
 )
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
     Catch2::Catch2WithMain
+    spdlog::spdlog
 )
 
 engine_set_warnings(engine_core_tests)

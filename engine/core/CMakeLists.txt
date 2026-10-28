@@ -5,6 +5,11 @@ configure_file(
 )
 
 add_library(engine_core STATIC
+    src/config.cpp
+    src/error.cpp
+    src/log.cpp
+    src/path_sandbox.cpp
+    src/uuid.cpp
     src/version.cpp
 )
 
@@ -20,6 +25,14 @@ target_include_directories(engine_core
 )
 
 target_compile_features(engine_core PUBLIC cxx_std_20)
+
+target_link_libraries(engine_core
+    PUBLIC
+        nlohmann_json::nlohmann_json
+        tl::expected
+    PRIVATE
+        spdlog::spdlog
+)
 
 set_target_properties(engine_core PROPERTIES
     CXX_STANDARD 20

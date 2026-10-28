@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M0.2. Three CTest tests exist; Windows CI is being added in this
-substep.
+**Status:** M0.3. Three CTest tests exist; `engine_core_tests` contains 20 test
+cases and 126 assertions.
 
 ## Current tests
 
@@ -16,6 +16,18 @@ checks the `name`, `version` and `cxxStandard` fields plus the presence of build
 metadata. `engine_dependencies_smoke` includes and links nlohmann/json, spdlog,
 CLI11, `tl::expected` and Catch2, so missing include paths or link errors fail
 on both Linux and Windows.
+
+`engine_core_tests` covers:
+
+- `Result<T>`/`Error` codes, JSON serialization and exit-code mapping
+- UUID parsing, formatting, v4 bits and deterministic seeded generation
+- filesystem sandbox escapes, symlinks and invalid roots
+- JSON configuration loading, type errors and recursive merge
+- JSONL logging, level filtering and required record fields
+
+The `log-record@1` schema is in `schemas/log-record@1.schema.json`. M0.3 checks
+the required fields structurally; full JSON Schema validation is added with the
+M0.4 schema infrastructure.
 
 ## How to run
 
@@ -94,10 +106,12 @@ labelled `render` or `golden`.
 
 ## Not verified yet
 
-- Windows compilation and headless tests; the CI job exists but has not run yet
-- CI runs on GitHub Actions
+- Windows graphics; the Windows CI job compiles and runs headless tests, but
+  the runner has no GPU
 - Anything that requires Vulkan device creation
-- clang-format and clang-tidy in CI; they run locally in M0.2 and are added to
-  CI in M0.5
-- ASan/UBSan as a Linux CI job; M0.2 only runs it locally. The CI job is added
-  in M0.5.
+- Full JSON Schema validation of `log-record@1`; it is added with the M0.4
+  schema infrastructure
+- clang-format and clang-tidy in CI; they run locally and are added to CI in
+  M0.5
+- ASan/UBSan as a Linux CI job; the local job runs, and the CI job is added in
+  M0.5

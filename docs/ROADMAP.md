@@ -6,7 +6,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.1 done) |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.3 done) |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Planned |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
@@ -23,8 +23,8 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.0 | Environment prerequisites, vcpkg, Vulkan verification | Done |
 | M0.1 | Repository bootstrap, build skeleton, version command, ADRs | Done |
 | M0.2 | vcpkg manifest, dependencies, warnings, format/tidy, sanitizer presets, and the Windows MSVC + vcpkg CI job | Next |
-| M0.3 | Core: logging, config, filesystem sandbox, UUID, error handling | Planned |
-| M0.4 | CLI skeleton and `engine doctor --json` | Planned |
+| M0.3 | Core: logging, config, filesystem sandbox, UUID, error handling | Done |
+| M0.4 | CLI skeleton and `engine doctor --json` | Next |
 | M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, Linux CI matrix, caching, branch protection and artifacts; the Windows job from M0.2 is kept green | Planned |
 | M0.6 | Full documentation, ADRs and VISION translation | Planned |
 | M0.7 | Hardening and M0 acceptance | Planned |

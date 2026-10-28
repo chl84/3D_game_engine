@@ -1,7 +1,8 @@
 # Build
 
-**Status:** M0.2. The build uses a pinned vcpkg manifest, the `engine` version
-command and Catch2 tests. Vulkan (`volk`) and `engine doctor` are added in M0.4.
+**Status:** M0.3. The build uses a pinned vcpkg manifest, the `engine` version
+command, the core library (errors, UUID, filesystem sandbox, config and logging)
+and Catch2 tests. Vulkan (`volk`) and `engine doctor` are added in M0.4.
 
 ## Local development environment
 

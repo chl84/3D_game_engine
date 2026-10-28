@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.2 complete; M0.3 is next
+**Current substep:** M0.3 complete locally; M0.4 is next
 
 ## Completed
 
@@ -11,6 +11,7 @@
 | M0.0 | Vulkan development packages installed by the owner; vcpkg bootstrapped at the pinned commit; git identity configured; `vulkaninfo` and lavapipe verified |
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
+| M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases |
 
 ## Repository state
 
@@ -22,10 +23,15 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC C++20 build | Automatically tested | `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 3/3 passed |
+| GCC C++20 build | Automatically tested | `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; `engine_core_tests` → 20 cases / 126 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 3/3 passed; `engine_core_tests` → 20 cases / 126 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 3/3 passed |
 | TSan | Automatically tested | `cmake --preset linux-tsan`, build, `ctest` → 3/3 passed |
+| UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
+| Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
+| Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
+| JSONL logging | Automatically tested | `log_test.cpp` → filtered records, required fields, `fields` object, level names |
+| log-record@1 schema | Implemented | `schemas/log-record@1.schema.json`; structural checks in `log_test.cpp`; full JSON Schema validation arrives with the M0.4 schema infrastructure |
 | Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2 |
 | `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` parsed the JSON and checked required fields |
 | clang-format | Manually verified | `clang-format --dry-run --Werror` on all C++ files → no changes |
@@ -47,6 +53,11 @@
 - The M0.2 Linux GCC CI job uses the Ubuntu 24.04 runner default GCC 13.3;
   M0.5 pins GCC 14. This is the only toolchain deviation from the approved CI
   matrix.
+- Full JSON Schema validation of `log-record@1` is deferred to M0.4, when the
+  schema and contract-test infrastructure is introduced. M0.3 checks the
+  required fields structurally.
+- The console log sink is implemented with spdlog but is not automatically
+  tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
   are planned for M0.6.
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
@@ -63,6 +74,6 @@
 
 ## Next step
 
-M0.3: core foundations — logging (console and JSONL), configuration, filesystem
-sandbox, UUID v4 plus the seeded generator from ADR-0003, `Result<T>`/`Error`,
-version metadata and unit tests.
+M0.4: CLI skeleton and `engine doctor --json` — CLI11-based command dispatch,
+version and doctor commands, JSON schemas for both, contract tests, and Vulkan
+detection through volk (including lavapipe and validation layers).

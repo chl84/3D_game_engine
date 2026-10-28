@@ -39,10 +39,14 @@ target with explicit dependencies; cycles are forbidden.
 
 ## Current implementation
 
-M0.1 contains only:
+M0.3 contains:
 
-- `engine/core`: version metadata
+- `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
+  `UuidGenerator`, `PathSandbox`, JSON `Config`, and `Log` with console and
+  JSONL sinks
 - `tools/engine`: the `engine` CLI with `--version`
+- `tests/unit`: core unit tests
 - `tests/smoke`: the version JSON smoke test
+- `schemas/log-record@1.schema.json`
 
 The remaining modules are planned, not implemented.

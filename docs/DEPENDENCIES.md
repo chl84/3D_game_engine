@@ -1,9 +1,9 @@
 # Dependencies
 
-**Status:** M0.2. The vcpkg manifest is active for nlohmann/json 3.12.0,
-spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1 and Catch2 3.16.1. The engine
-binary does not use them yet; they are compiled and linked by the dependency
-smoke test. volk is added in M0.4.
+**Status:** M0.3. The vcpkg manifest is active for nlohmann/json 3.12.0,
+spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1 and Catch2 3.16.1. The core
+library uses nlohmann/json, spdlog and `tl::expected`; Catch2 is test-only.
+CLI11 and volk are added to the engine in M0.4.
 
 ## Policy
 
