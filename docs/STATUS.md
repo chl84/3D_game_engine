@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.2 complete locally; M0.3 is next
+**Current substep:** M0.2 complete; M0.3 is next
 
 ## Completed
 
@@ -10,7 +10,7 @@
 |---|---|
 | M0.0 | Vulkan development packages installed by the owner; vcpkg bootstrapped at the pinned commit; git identity configured; `vulkaninfo` and lavapipe verified |
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
-| M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 |
+| M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 
 ## Verification evidence
 
@@ -32,20 +32,16 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Pending | The `ci-windows` job is part of the M0.2 CI run; its result is not in yet |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40787100553](https://github.com/chl84/3D_game_engine/actions/runs/40787100553) → configure, build and `ctest` all succeeded with MSVC and vcpkg |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Partially verified | The M0.1 Linux run succeeded; the M0.2 run includes Linux and Windows jobs and is queued/running |
+| GitHub Actions | Automatically tested | Run [40787100553](https://github.com/chl84/3D_game_engine/actions/runs/40787100553) → Linux GCC, Linux Clang and Windows MSVC all succeeded |
 
 ## Known issues and gaps
 
-- The Windows MSVC + vcpkg CI job is queued/running. Its first run is the proof
-  for MSVC warnings and dependency builds.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
   are planned for M0.6.
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
   `docs/AI_AGENT_GUIDE.md` and `docs/PROJECT_FORMAT.md` are skeletons or drafts.
-- The M0.2 GitHub Actions result is not recorded yet; the M0.1 Linux run was
-  green.
 - volk and `engine doctor` are not implemented; they belong to M0.4.
 
 ## Next step
