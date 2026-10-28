@@ -1,7 +1,9 @@
 # Dependencies
 
-**Status:** M0.1. No runtime dependency is linked yet. The first vcpkg
-dependencies are added in M0.2.
+**Status:** M0.2. The vcpkg manifest is active for nlohmann/json 3.12.0,
+spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1 and Catch2 3.16.1. The engine
+binary does not use them yet; they are compiled and linked by the dependency
+smoke test. volk is added in M0.4.
 
 ## Policy
 
@@ -54,7 +56,7 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| CMake | 4.4.5 in CI; minimum 3.28 | BSD-3-Clause | Build system |
+| CMake | 4.4.5 target; CI uses 3.28+ in M0.2 and pins 4.4.5 in M0.5 | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 | Apache-2.0 | Build tool |
 | GCC | 14 in CI | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |

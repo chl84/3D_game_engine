@@ -10,16 +10,19 @@ The project is in the M0 foundation phase. The engine is not usable for games ye
 - Ninja
 - A C++20 compiler: GCC 14+, Clang 18+, or MSVC 19.4+
 - Python 3.10+ for the smoke tests
+- vcpkg, bootstrapped at `~/.local/share/vcpkg` and exported as `VCPKG_ROOT`
 
 ## Build
 
 ```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
 cmake --preset linux-debug
 cmake --build --preset linux-debug
 ctest --preset linux-debug --output-on-failure
 ```
 
-Run the version command:
+The first configure downloads and builds the pinned vcpkg dependencies. Run the
+version command:
 
 ```bash
 ./build/linux-debug/tools/engine/engine --version --json

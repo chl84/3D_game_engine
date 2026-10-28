@@ -1,32 +1,65 @@
 # Testing
 
-**Status:** M0.1. One smoke test exists.
+**Status:** M0.2. Three CTest tests exist; Windows CI is being added in this
+substep.
 
 ## Current tests
 
-| Test | Type | Command |
+| Test | Type | Labels |
 |---|---|---|
-| `engine_version_json` | CLI smoke test | `ctest --preset linux-debug -R engine_version_json` |
+| `engine_core_tests` | Catch2 unit test | `unit` |
+| `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0 dependencies | `unit`, `dependencies` |
+| `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 
-The smoke test runs `engine --version --json`, parses stdout as JSON and checks
-the `name`, `version` and `cxxStandard` fields plus the presence of build
-metadata.
+`engine_version_json` runs `engine --version --json`, parses stdout as JSON and
+checks the `name`, `version` and `cxxStandard` fields plus the presence of build
+metadata. `engine_dependencies_smoke` includes and links nlohmann/json, spdlog,
+CLI11, `tl::expected` and Catch2, so missing include paths or link errors fail
+on both Linux and Windows.
 
 ## How to run
 
 ```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
 cmake --preset linux-debug
 cmake --build --preset linux-debug
 ctest --preset linux-debug --output-on-failure
 ```
 
-Clang:
+Clang with warnings as errors:
 
 ```bash
 cmake --preset ci-linux-clang
 cmake --build --preset ci-linux-clang
 ctest --preset ci-linux-clang --output-on-failure
 ```
+
+AddressSanitizer + UndefinedBehaviorSanitizer:
+
+```bash
+cmake --preset linux-asan
+cmake --build --preset linux-asan
+ctest --preset linux-asan --output-on-failure
+```
+
+ThreadSanitizer:
+
+```bash
+cmake --preset linux-tsan
+cmake --build --preset linux-tsan
+ctest --preset linux-tsan --output-on-failure
+```
+
+Windows MSVC + vcpkg:
+
+```powershell
+cmake --preset ci-windows
+cmake --build --preset ci-windows
+ctest --preset ci-windows --output-on-failure
+```
+
+The Windows preset requires an MSVC developer environment and
+`VCPKG_ROOT` to be set. CI provides both.
 
 ## Planned test types
 
@@ -46,6 +79,7 @@ ctest --preset ci-linux-clang --output-on-failure
 CTest labels are used to select subsets:
 
 - `unit`
+- `dependencies`
 - `integration`
 - `cli`
 - `contract`
@@ -60,7 +94,7 @@ labelled `render` or `golden`.
 
 ## Not verified yet
 
-- Windows compilation and headless tests
-- Sanitizer builds
+- Windows compilation and headless tests; the CI job exists but has not run yet
+- CI runs on GitHub Actions
 - Anything that requires Vulkan device creation
-- CI runs
+- `clang-tidy` in CI; it runs locally in M0.2 and is added to CI in M0.5

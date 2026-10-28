@@ -44,24 +44,19 @@ void print_usage(std::ostream& out) {
 }
 
 void print_version_json() {
-    std::cout << '{'
-              << "\"name\":" << json_quote("engine") << ','
+    std::cout << '{' << "\"name\":" << json_quote("engine") << ','
               << "\"version\":" << json_quote(engine::core::version()) << ','
               << "\"gitCommit\":" << json_quote(engine::core::git_commit()) << ','
               << "\"buildType\":" << json_quote(engine::core::build_type()) << ','
               << "\"compiler\":" << json_quote(engine::core::compiler()) << ','
               << "\"platform\":" << json_quote(engine::core::platform()) << ','
-              << "\"cxxStandard\":" << json_quote(engine::core::cxx_standard())
-              << "}\n";
+              << "\"cxxStandard\":" << json_quote(engine::core::cxx_standard()) << "}\n";
 }
 
 void print_version_human() {
-    std::cout << "engine " << engine::core::version()
-              << " (" << engine::core::git_commit()
-              << ", " << engine::core::build_type()
-              << ", " << engine::core::compiler()
-              << ", " << engine::core::platform()
-              << ")\n";
+    std::cout << "engine " << engine::core::version() << " (" << engine::core::git_commit() << ", "
+              << engine::core::build_type() << ", " << engine::core::compiler() << ", "
+              << engine::core::platform() << ")\n";
 }
 
 } // namespace

@@ -4,6 +4,8 @@ add_executable(engine
 
 target_link_libraries(engine PRIVATE engine::core)
 
+engine_set_warnings(engine)
+
 set_target_properties(engine PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
