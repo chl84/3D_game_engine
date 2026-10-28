@@ -22,8 +22,8 @@ target with explicit dependencies; cycles are forbidden.
 | `editor` | ImGui editor that changes state only through commands | All modules |
 | Game modules | Game-specific C++ and Lua | Public engine API only |
 
-`render` is added to `world` only when `world` exists; M2 links `core`,
-`platform`, `scene` and `asset`.
+`render` links only the modules that exist at its milestone: M2 uses `core`,
+`platform` and `scene`; `asset` is added in M3 and `world` in M5.
 
 ## Dependency rules
 
