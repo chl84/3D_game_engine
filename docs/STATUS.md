@@ -50,8 +50,9 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch at `330e6b5`; M2.8
-  head is `d091f0d`, with documentation after it. Not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch at `8bb3c82`; M2.9
+  reviewer GODKJENT, owner manual test and merge approval pending. Not
+  merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -172,8 +173,8 @@
 | M2.9 windowed run | Automatically tested | `engine_run_smoke` creates a project with a camera and cube and runs `engine run --frames 2 --hidden` at 320×240; the command returns `command-result@1` with 2 frames |
 | M2.9 presentation input | Implemented; manual test pending | `engine run` supports WASD + Q/E, Shift, right-mouse look, F1 overlay toggle and Escape close. The camera pose is passed to `Renderer::draw_frame` and never written to the scene (ADR-0002) |
 | M2.9 overlay toggle and ImGui input | Automatically tested | `engine_overlay_test` toggles the overlay off and on and checks visibility/draw vertices; `Renderer::process_sdl_event` routes SDL events to ImGui. The owner verifies the interactive fly camera and toggle on Hyprland |
-| M2.9 CI | Automatically tested | Manual dispatch [40961862671](https://github.com/chl84/3D_game_engine/actions/runs/40961862671) on `8141c84` → all five jobs green. Linux 15/15 including `engine_run_smoke`; Windows 11/11; ASan/UBSan 15/15; Quality green |
-| M2.9 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `8141c84`, ran 15 registered tests (14 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.9 CI | Automatically tested | Final run [40963990696](https://github.com/chl84/3D_game_engine/actions/runs/40963990696) on `8bb3c82` → all five jobs green. Linux 15/15 including `engine_run_smoke`; Windows 11/11; ASan/UBSan 15/15; Quality green |
+| M2.9 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `8bb3c82`, ran 15 registered tests (14 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
