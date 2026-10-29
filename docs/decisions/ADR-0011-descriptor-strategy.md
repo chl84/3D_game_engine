@@ -149,7 +149,10 @@ M3 materials and textures:
   Descriptors are updated after bind; partially bound descriptors cover unused
   slots.
 - The engine budget is 4096 sampled images and 4096 material records, well
-  below the measured limits. The budget is validated against
+  below the measured limits. The M2 reference scene uses at most 100
+  materials; the larger hard cap leaves headroom for M5 and editor scenes.
+  The 1 GiB texture-memory budget remains the practical limit. The descriptor
+  budget is validated against
   `maxPerStageDescriptorUpdateAfterBindSampledImages`,
   `maxDescriptorSetUpdateAfterBindSampledImages`,
   `maxUpdateAfterBindDescriptorsInAllPools` and `maxBoundDescriptorSets` at

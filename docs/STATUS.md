@@ -49,8 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch; code head `a0dca57`,
-  with documentation commits after it. Not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch; code head `e860779`
+  (ImGui exact pin) with documentation commits after it. Not merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -150,9 +150,9 @@
 | M2.6 screenshot sandbox and limits | Automatically tested | `engine screenshot --out` resolves through `PathSandbox`; `../escape.png` is rejected and nothing is written outside the project. Width and height are capped at 8192 and frames at 1000; `--width 8193`, `--height 8193` and `--frames 1001` are rejected. `tests/smoke/screenshot.py` covers all four cases |
 | M2.6 CI Xvfb regression | Fixed | The CTest step was never under Xvfb: `engine_window_smoke` was always skipped and `engine_swapchain_test` ran only in the separate `--require-minimize` step. M2.6 runs the whole CTest suite under Xvfb + openbox and keeps the strict minimize step. `VK_ICD_FILENAMES` is selected from `lvp_icd*.json` before the tests |
 | M2.6 local suites | Automatically tested | `ci-linux-clang` and `linux-debug` → 14 registered, 13 passed and the golden test skipped without lavapipe; `linux-asan` → same; `linux-tsan` → 11/11 CPU-side tests. Golden image on lavapipe still matches with maximum channel difference 0 |
-| M2.6 CI | Automatically tested | Manual dispatch [40931398435](https://github.com/chl84/3D_game_engine/actions/runs/40931398435) on `a0dca57` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest with `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and `engine_screenshot_golden` passed on lavapipe under Xvfb; the strict minimize step printed `minimize: renderer reported no frames`. ASan/UBSan: 14/14. Windows MSVC: 9/9 with graphics tests not registered. Quality: clang-format and clang-tidy green |
-| M2.6 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `a0dca57`, built with the overlay port, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
-| M2.6 ImGui exact pin | Verified | The overlay port uses `REF b916186e66aa3c02b72c6ca17455516512ed8049` (the commit behind the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's archive. A moved tag or rewritten commit fails the vcpkg source check |
+| M2.6 CI | Automatically tested | Final run [40939445788](https://github.com/chl84/3D_game_engine/actions/runs/40939445788) on `eab71a4` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest with `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and `engine_screenshot_golden` passed on lavapipe under Xvfb; the strict minimize step printed `minimize: renderer reported no frames`. ASan/UBSan: 14/14. Windows MSVC: 9/9 with graphics tests not registered. Quality: clang-format and clang-tidy green |
+| M2.6 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `eab71a4`, built with the exact-commit overlay port, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.6 ImGui exact pin | Verified | The overlay port uses `REF b916186e66aa3c02b72c6ca17455516512ed8049` (the commit behind the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's archive. A moved tag or rewritten commit fails the vcpkg source check. CI [40939445788](https://github.com/chl84/3D_game_engine/actions/runs/40939445788) built the pinned commit on Linux and Windows |
 | M2.7 descriptor ADR | Proposed | ADR-0011 compares classic sets, descriptor indexing and BDA, records the measured Iris Xe and lavapipe support, recommends bindless with a classic fallback, and defers BDA to M5/M8. Awaiting owner approval |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
