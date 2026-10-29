@@ -199,6 +199,26 @@ int main() {
         return fail("the GPU timestamp path produced no samples");
     }
 
+    if (!renderer->overlay_visible()) {
+        return fail("the overlay was not visible initially");
+    }
+    renderer->set_overlay_visible(false);
+    auto hidden = renderer->draw_frame(scene_view);
+    if (!hidden || !*hidden) {
+        return fail("could not draw with the overlay hidden");
+    }
+    if (renderer->overlay_visible() || renderer->overlay_draw_vertices() != 0) {
+        return fail("the overlay stayed visible after being hidden");
+    }
+    renderer->set_overlay_visible(true);
+    auto shown = renderer->draw_frame(scene_view);
+    if (!shown || !*shown) {
+        return fail("could not draw with the overlay shown again");
+    }
+    if (!renderer->overlay_visible() || renderer->overlay_draw_vertices() == 0) {
+        return fail("the overlay did not return after being shown again");
+    }
+
     if (scene->revision() != revision_before || scene->size() != entity_count_before) {
         return fail("the overlay mutated the scene");
     }
