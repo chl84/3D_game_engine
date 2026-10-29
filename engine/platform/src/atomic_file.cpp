@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cerrno>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <system_error>

@@ -96,9 +96,9 @@
 | Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 55 core cases / 412 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
-| `--dry-run` | Automatically tested | `validate_cli.py` checks that project create, scene create, entity create, component set and batch dry-runs leave files and scene state unchanged |
+| `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
 | Generated API reference | Automatically tested | `engine schema --json` exposes 3 components and 8 command schemas; `engine_api_reference` checks `docs/API_REFERENCE.md` against the generator |
-| Codex review fixes | Automatically tested | Symlink-safe exclusive temp files, scene-create overwrite rejection, recursive subtree undo, missing sceneId and negative revision validation, and revision bumps on component undo/redo |
+| Codex review fixes | Automatically tested, redo manually verified | Symlink-safe exclusive temp files, scene-create overwrite rejection (existing and listed-but-missing), recursive subtree undo, missing sceneId and negative revision validation, and revision bump on component undo; redo is manually verified because the CLI has no redo command |
 | M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1.10/maintenance`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
 | M1 CI | Automatically tested | Manual dispatch [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |

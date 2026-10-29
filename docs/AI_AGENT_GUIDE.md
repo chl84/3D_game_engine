@@ -133,10 +133,11 @@ engine component set ./my-game --id <uuid> --component engine.scene.Motion \
 engine batch ./my-game --file changes.json --dry-run --json
 ```
 
-A dry run validates and executes the command in memory, returns the same result
-shape with `"dryRun": true`, and writes no project or scene files. `project
-create`, `scene create`, `project unlock`, entity and component commands and
-batch support it. Read-only commands do not need it.
+A dry run returns the same result shape with `"dryRun": true` and writes no
+project or scene files. Entity and component commands and batch execute in
+memory; `project create` and `project unlock` only validate the target and
+report what would happen. `scene create` validates the path and duplicate
+registration. Read-only commands do not need it.
 
 ## Planned commands
 
