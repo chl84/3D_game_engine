@@ -140,6 +140,9 @@
 | M2.5 offscreen render | Automatically tested | `engine_screenshot_test` renders a 64×64 scene through the headless Vulkan device and compares it to `tests/fixtures/golden/m2_scene_64.png` on lavapipe |
 | M2.5 screenshot CLI | Automatically tested | `tests/smoke/screenshot.py` creates a project, camera and cube, runs `engine screenshot --frames 2 --width 64 --height 64`, validates `command-result@1`, and checks the PNG signature and size |
 | M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
+| M2.5 CI | Automatically tested | Manual dispatch [40923042186](https://github.com/chl84/3D_game_engine/actions/runs/40923042186) → Linux 13/13 including `engine_screenshot_golden` on lavapipe and `engine_screenshot_cli`; Windows 9/9 with graphics tests skipped; Quality green |
+| M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `67e7ec1`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
+| M2.5 Windows ICD note | Documented | `docs/M2_PLAN.md` records the evaluation of Vulkan loader + lavapipe/SwiftShader on the Windows runner for a later step |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
