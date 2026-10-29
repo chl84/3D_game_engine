@@ -66,6 +66,7 @@ public:
 
     [[nodiscard]] VkInstance instance() const noexcept;
     [[nodiscard]] VkPhysicalDevice physical_device() const noexcept;
+    [[nodiscard]] VkSurfaceKHR surface() const noexcept;
     [[nodiscard]] VkDevice device() const noexcept;
     [[nodiscard]] VkQueue graphics_queue() const noexcept;
     [[nodiscard]] VkQueue present_queue() const noexcept;

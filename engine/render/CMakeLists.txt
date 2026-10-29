@@ -1,6 +1,8 @@
 add_library(engine_render STATIC
     src/device.cpp
+    src/renderer.cpp
     src/vma.cpp
+    src/vulkan_util.cpp
 )
 
 add_library(engine::render ALIAS engine_render)
