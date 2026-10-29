@@ -194,6 +194,10 @@ int main() {
     if (!saw_stats) {
         return fail("no frame statistics were collected");
     }
+    const engine::render::FrameStats final_stats = renderer->frame_stats();
+    if (final_stats.gpu_timing_supported && final_stats.gpu_samples == 0) {
+        return fail("the GPU timestamp path produced no samples");
+    }
 
     if (scene->revision() != revision_before || scene->size() != entity_count_before) {
         return fail("the overlay mutated the scene");

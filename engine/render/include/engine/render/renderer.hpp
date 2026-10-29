@@ -22,6 +22,7 @@ struct FrameStats {
     double frames_per_second{0.0};
     double cpu_frame_ms{0.0};
     double gpu_frame_ms{0.0};
+    std::uint64_t gpu_samples{0};
     bool gpu_timing_supported{false};
 };
 

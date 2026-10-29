@@ -269,6 +269,7 @@ struct Renderer::Impl {
     std::chrono::steady_clock::time_point last_present;
     VkQueryPool timestamp_pool{VK_NULL_HANDLE};
     double timestamp_period{0.0};
+    std::uint32_t timestamp_valid_bits{0};
     bool timestamp_supported{false};
     std::array<bool, kFramesInFlight> timestamp_ready{};
     bool overlay_context_initialized{false};
@@ -823,6 +824,7 @@ core::Result<void> Renderer::Impl::create_timestamp_pool() {
 
     timestamp_pool = pool;
     timestamp_period = static_cast<double>(period);
+    timestamp_valid_bits = families[graphics_family].timestampValidBits;
     timestamp_supported = true;
     stats.gpu_timing_supported = true;
     return {};
@@ -1441,9 +1443,16 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
             vkGetQueryPoolResults(impl_->device->device(), impl_->timestamp_pool,
                                   static_cast<std::uint32_t>(frame_slot * 2), 2, sizeof(timestamps),
                                   timestamps.data(), sizeof(std::uint64_t), VK_QUERY_RESULT_64_BIT);
-        if (query == VK_SUCCESS && timestamps[1] >= timestamps[0]) {
-            impl_->stats.gpu_frame_ms = static_cast<double>(timestamps[1] - timestamps[0]) *
-                                        impl_->timestamp_period / 1'000'000.0;
+        const std::uint64_t mask =
+            impl_->timestamp_valid_bits >= 64
+                ? ~std::uint64_t{0}
+                : ((std::uint64_t{1} << impl_->timestamp_valid_bits) - std::uint64_t{1});
+        const std::uint64_t start = timestamps[0] & mask;
+        const std::uint64_t end = timestamps[1] & mask;
+        if (query == VK_SUCCESS && end >= start) {
+            impl_->stats.gpu_frame_ms =
+                static_cast<double>(end - start) * impl_->timestamp_period / 1'000'000.0;
+            ++impl_->stats.gpu_samples;
         }
     }
     const auto cpu_start = std::chrono::steady_clock::now();
