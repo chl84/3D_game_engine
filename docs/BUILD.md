@@ -62,10 +62,10 @@ fallback, and `Device::create` rejects an unsupported device with
 `E_UNSUPPORTED`.
 
 `glslc` is a build tool, not a linked library. On Arch it comes with the
-`shaderc` package; on Ubuntu CI the `glslc` package is installed. On Windows
-CI the LunarG Vulkan SDK 1.4.363 is installed and its `Bin` directory is added
-to `PATH`; `VULKAN_SDK` is also set. CMake searches `PATH` and `VULKAN_SDK` and
-fails at configure time when `glslc` is missing.
+`shaderc` package. Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and uses its
+`glslc`; Windows CI installs the same LunarG SDK and adds its `Bin` directory
+to `PATH`. `VULKAN_SDK` is set on both, and CMake searches `PATH` and
+`VULKAN_SDK` and fails at configure time when `glslc` is missing.
 
 SDL3 is built by vcpkg with the Vulkan, X11 and Wayland features. On Debian and
 Ubuntu the build needs the X11 and Wayland development headers:

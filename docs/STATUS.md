@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.8 hardening — Windows offscreen lavapipe, pinned Linux glslc and the consolidated M2 acceptance report are in progress. M2.7 is owner-approved.
+**Current substep:** M2.8 hardening — Windows offscreen lavapipe and pinned Linux glslc are verified; the consolidated M2 acceptance report and reviewer approval remain. M2.7 is owner-approved.
 
 ## Substeps
 
@@ -43,7 +43,7 @@
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
-| M2.8 | Hardening and M2 acceptance | In progress — Windows offscreen ICD, pinned Linux glslc and the acceptance report |
+| M2.8 | Hardening and M2 acceptance | In progress — Windows offscreen ICD and pinned Linux glslc verified; acceptance report and reviewer approval remain |
 
 ## Repository state
 
@@ -107,7 +107,7 @@
 | Command bus | Automatically tested | `command_test.cpp` covers schema validation, successful and failed handlers, unknown commands, duplicate/malformed registration, sorted schemas, command-log entries, undo/redo, redo invalidation, transactions and rollback |
 | Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
 | Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
-| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 60 core cases / 468 assertions |
+| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 62 core cases / 474 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
 | `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
@@ -143,8 +143,8 @@
 | M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
 | M2.5 CI | Automatically tested | Manual dispatch [40925072019](https://github.com/chl84/3D_game_engine/actions/runs/40925072019) → Linux 13/13 including `engine_screenshot_golden` on lavapipe and `engine_screenshot_cli`; Windows 9/9 with graphics tests skipped; Quality green |
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `72d6a92`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
-| M2.5 Windows ICD evaluation | Evaluated; moved to M2.8 | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. The owner approved moving the follow-up to M2.8 on 2026-10-29, including an evaluation of prebuilt Mesa lavapipe packages. Windows graphics remains not verified |
-| M2.5 Linux glslc evaluation | Evaluated; moved to M2.8 | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. The owner approved moving the cached pinned SDK `glslc` follow-up to M2.8 on 2026-10-29 |
+| M2.5 Windows ICD evaluation | Decided and implemented in M2.8 | The Windows runner installs pinned Mesa lavapipe 26.2.6 (`mmozeiko/build-mesa`, SHA-256 verified) and registers its ICD. Windows offscreen golden and screenshot tests run and pass; window/swapchain presentation remains not verified |
+| M2.5 Linux glslc evaluation | Decided and implemented in M2.8 | Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and uses its `glslc` (shaderc v2026.4), matching the Windows SDK. The cache is keyed by SDK version; the extracted SDK is reused across Linux jobs |
 | M2.6 ImGui dependency | Automatically tested | Dear ImGui 1.93.0-docking is pinned in vcpkg to the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049` with the SHA512 of that commit's archive, and built through `cmake/vcpkg-overlay/imgui`. The overlay keeps SDL3 at `default-features: false` and builds the Vulkan backend against volk; it adds no dbus, systemd, libxcrypt or second Vulkan loader. ADR-0010 records the decision |
 | M2.6 ImGui overlay | Automatically tested | `engine_overlay_test` renders four frames with a camera and two meshes, checks the entity list, CPU/GPU frame statistics including at least one GPU timestamp sample, non-empty draw data, unchanged scene revision and camera position, and zero validation errors. Local result: 480 vertices for 3 entities, CPU 1.76 ms, GPU 0.10 ms on Intel Iris Xe |
 | M2.6 screenshot sandbox and limits | Automatically tested | `engine screenshot --out` resolves through `PathSandbox`; `../escape.png` is rejected and nothing is written outside the project. Width and height are capped at 8192 and frames at 1000; `--width 8193`, `--height 8193` and `--frames 1001` are rejected. `tests/smoke/screenshot.py` covers all four cases |
@@ -163,6 +163,11 @@
 | M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
 | M2.7 CI | Automatically tested | Manual dispatch [40950970681](https://github.com/chl84/3D_game_engine/actions/runs/40950970681) on `dbc313a` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest; lavapipe LLVM 20.1.2 reports `descriptorIndexing: true` and `descriptor-indexing: pass`. ASan/UBSan: 14/14. Windows MSVC: 9/9; graphics tests not registered. Quality green |
 | M2.7 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `dbc313a`, built the exact-commit dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.8 Windows offscreen ICD | Automatically tested | Windows CI installs `mmozeiko/build-mesa` lavapipe 26.2.6 x64 (SHA-256 verified), registers `lvp_icd.x86_64.json` in the Vulkan loader registry, and runs on `llvmpipe (LLVM 23.1.4)`. `engine_render_tests` is 13 cases / 105 assertions with device cases running; `engine_screenshot_golden` and `engine_screenshot_cli` pass; Windows CTest is 11/11 |
+| M2.8 pinned Linux glslc | Automatically tested | Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and uses its `glslc` (`shaderc v2026.4`); `command -v glslc` is asserted to be `$VULKAN_SDK/bin/glslc`. This matches the Windows SDK version |
+| M2.8 doctor mixed-device test | Automatically tested | `engine_core_tests` adds mixed supported/unsupported device cases: one supported device passes, all-unsupported fails, and an empty device list remains diagnostic. Core tests are 62 cases / 474 assertions |
+| M2.8 CI | Automatically tested | Manual dispatch [40954919302](https://github.com/chl84/3D_game_engine/actions/runs/40954919302) on `2e0fc70` → all five jobs green. Linux GCC 14 / Clang 18 / ASan: 14/14; Windows MSVC: 11/11 with lavapipe offscreen tests; Quality green |
+| M2.8 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `2e0fc70`, built with pinned dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -188,7 +193,8 @@
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
 | Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 6/6 tests passed, including `engine_docs_links` and `engine_sensitive_scan` |
-| Windows graphics | Not verified | The Windows runner has no GPU; graphics is not tested there and is outside the M2/M3 approval |
+| Windows offscreen graphics | Automatically tested | Pinned Mesa lavapipe 26.2.6; Windows CTest 11/11 including the golden, screenshot CLI and device render tests on `llvmpipe (LLVM 23.1.4)` |
+| Windows presentation | Not verified | Window, swapchain and overlay tests are not registered on Windows; the runner has no verified presentation path |
 | GitHub Actions | Automatically tested | Manual dispatch run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | CI trigger policy | Configured | Feature-branch pushes do not trigger CI; pull requests to `main`, pushes to `main` and manual dispatches run all five jobs |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
@@ -299,11 +305,11 @@ The Windows job caught two real portability issues before the milestone closed:
 - `docs/PROJECT_FORMAT.md` describes the implemented M1 format.
 - `engine doctor` reports the current working directory as the project root
   until project-root discovery is added.
-- Windows graphics is **not verified**: the runner has no GPU. The Windows CI
-  job compiles the render module and runs the headless tests; the device cases
-  skip when the Vulkan loader or an ICD is missing. The window, swapchain,
-  overlay and golden tests are not registered on Windows. M2.8 must evaluate
-  prebuilt Mesa lavapipe packages for the Windows runner before M2 closes.
+- Windows offscreen graphics is verified on lavapipe: the CI job installs
+  pinned Mesa lavapipe 26.2.6, registers its ICD, and runs the golden and
+  screenshot tests plus the device render tests (11/11). Windows window,
+  swapchain and presentation remain unverified and those tests are not
+  registered there.
 - Scene format v2 adds `engine.scene.Mesh`; v1 scenes load and are upgraded on
   save. The M1 release cannot read v2 scenes. ADR-0009 records the change.
 - `Mesh` asset UUIDs are not resolved until the asset pipeline in M3. M2.4
@@ -311,8 +317,9 @@ The Windows job caught two real portability issues before the milestone closed:
 - The full Linux CTest suite runs under Xvfb + openbox in CI, so the window,
   swapchain and overlay tests execute there. A separate step keeps the strict
   `--require-minimize` contract. Windows installs pinned lavapipe and runs the
-  offscreen golden and screenshot tests; window, swapchain and overlay remain
-  Linux-only because Windows presentation is not verified.
+  offscreen golden and screenshot tests plus the device render tests; window,
+  swapchain and overlay remain Linux-only because Windows presentation is not
+  verified.
 - Descriptor indexing is a hard requirement. A device that lacks it is rejected
   by `Device::create` and by `engine doctor --require vulkan`; there is no
   fallback. A fallback would require a new ADR for a concrete target device.

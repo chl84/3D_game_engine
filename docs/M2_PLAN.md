@@ -184,6 +184,16 @@ with Required validation. Device loss is not simulated in M2.7.
   `ARCHITECTURE.md`, ADRs and `API_REFERENCE.md`.
 - Reviewer approval, then owner approval for merge to `main` and tag `v0.3.0`.
 
+Implementation result: Windows offscreen graphics now runs on pinned Mesa
+lavapipe 26.2.6 (11/11 Windows CTest); Windows presentation remains not
+verified. Linux CI caches the LunarG SDK 1.4.363.0 and uses its `glslc`.
+`docs/PERFORMANCE.md` records the reference budget and the M5/M8 measurement
+plan. The ImGui compile-time split and re-initialization measurement are
+evaluated but not adopted: the overlay is off by default in release, the
+re-initialization is on the swapchain-recreation path rather than the steady
+state, and the editor/UI split belongs in M6. Device loss and the fake-device
+end-to-end rejection test remain documented gaps.
+
 ## M2 reference budget
 
 | Parameter | Budget |

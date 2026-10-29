@@ -59,7 +59,8 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| glslc (shaderc CLI) | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine |
+| glslc (shaderc CLI) | Vulkan SDK 1.4.363.0 on Linux and Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine. Linux CI caches the pinned LunarG SDK and uses its `glslc` |
+| Mesa lavapipe (Windows CI package) | 26.2.6 from `mmozeiko/build-mesa` | MIT and Apache-2.0 with LLVM exceptions | Software Vulkan ICD for Windows offscreen CI tests. Not linked into the engine; SHA-256 verified |
 | CMake | 4.4.5 pinned in CI; 4.4.4 on the development machine | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 pinned in CI and on the development machine | Apache-2.0 | Build tool |
 | GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
@@ -103,8 +104,9 @@ and the license texts used for redistribution.
   the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049` with the SHA512
   of that commit's source archive; update the version, commit and hash together.
 - `glslc` is executed as a build tool. The shaderc library is not linked and is
-  not a runtime dependency. Linux CI installs the distro `glslc` package;
-  Windows CI installs the LunarG Vulkan SDK 1.4.363 and adds its `Bin`
-  directory to `PATH`.
+  not a runtime dependency. Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and
+  adds its `x86_64/bin` directory to `PATH`; Windows CI installs the same
+  LunarG SDK and adds its `Bin` directory to `PATH`. Linux and Windows
+  therefore use the same `glslc` version.
 - The generated SPIR-V is embedded in `engine_render` as C++ word arrays, so
   tests and tools do not need shader files at runtime.

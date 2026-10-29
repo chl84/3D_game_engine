@@ -89,12 +89,14 @@ instead of being skipped as headless. A separate step runs
 `engine_swapchain_test --require-minimize` so a window manager that ignores
 minimize still fails. Linux therefore reports 14/14 with lavapipe.
 
-The Windows job installs a pinned Mesa lavapipe package and registers its ICD,
-so the offscreen golden and screenshot tests run there too. The window,
-swapchain and overlay tests remain Linux-only because Windows presentation is
-not verified. Without an ICD the offscreen tests report exit code 77 and are
-shown as skipped; the Windows doctor step fails if lavapipe cannot satisfy the
-descriptor requirements.
+The Windows job installs pinned Mesa lavapipe 26.2.6 (`mmozeiko/build-mesa`,
+SHA-256 verified) and registers its ICD, so the offscreen golden and screenshot
+tests and the device render tests run there too. Windows reports 11/11 CTest,
+and `engine_render_tests` runs 13 cases / 105 assertions with the device cases
+executing. The window, swapchain and overlay tests remain Linux-only because
+Windows presentation is not verified. Without an ICD the offscreen tests report
+exit code 77 and are shown as skipped; the Windows doctor step fails if
+lavapipe cannot satisfy the descriptor requirements.
 
 `engine_core_tests` covers:
 
@@ -161,7 +163,10 @@ every intermediate commit. `concurrency` cancels superseded runs on the same
 ref.
 
 Every job installs CMake 4.4.5 and Ninja 1.13.2 from the official release
-archives and fails if the reported versions differ. The Linux jobs install
+archives and fails if the reported versions differ. The Linux jobs cache the
+LunarG Vulkan SDK 1.4.363.0 and use its `glslc` (`shaderc v2026.4`) so Linux
+and Windows produce SPIR-V with the same tool version; the check asserts that
+`command -v glslc` is `$VULKAN_SDK/bin/glslc`. The Linux jobs also install
 `mesa-vulkan-drivers`, `libvulkan1`, `vulkan-validationlayers` and the X11 and
 Wayland development headers needed to build SDL3. They select the installed
 `lvp_icd*.json` into `VK_ICD_FILENAMES`, capture the exit code from
