@@ -236,8 +236,10 @@ image tests.
 
 ## Branch protection
 
-`main` is the default branch. Run `scripts/setup_branch_protection.sh` after
-enabling GitHub Pro or making the repository public; GitHub returns HTTP 403
-for branch protection and rulesets on a private repository on the Free plan.
-The script requires the five CI jobs as status checks. M0.5 stays in progress
-until this is decided.
+`main` is the default branch and is protected. The repository is public, so
+branch protection is available on the Free plan. Running
+`scripts/setup_branch_protection.sh` applies the rule with these required
+checks: `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
+`Quality` and `Linux ASan/UBSan`. Force pushes and deletions are disabled, and
+conversations must be resolved before merging. `enforce_admins` is off so the
+owner can still push directly during M0.

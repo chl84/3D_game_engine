@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.5 in progress — CI work is green, branch protection is blocked by the GitHub plan and needs an owner decision. M0.6 has not started.
+**Current substep:** M0.5 complete. M0.6 is next.
 
 ## Substeps
 
@@ -13,17 +13,17 @@
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases at M0.3 (21 after M0.4); Linux and Windows CI green |
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
-| M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and a branch-protection setup script; all five CI jobs green. **Not complete:** branch protection is blocked by the GitHub plan and awaits the owner's decision |
+| M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 
 ## Repository state
 
 - `main`: initial bootstrap commit, pushed to GitHub and set as the default branch.
 - `m0/foundation`: all M0 work, pushed; not merged into `main`.
-- Branch protection/rulesets are **blocked by the GitHub plan**: the API returns
-  HTTP 403 because the private repository needs GitHub Pro (or public
-  visibility). `scripts/setup_branch_protection.sh` contains the intended
-  required checks and can be run after the owner upgrades or makes the
-  repository public.
+- The repository is public, and branch protection is **enabled** on `main` via
+  `scripts/setup_branch_protection.sh`. Required checks are
+  `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
+  `Quality` and `Linux ASan/UBSan`; force pushes and deletions are disabled,
+  and conversations must be resolved before merging.
 
 ## Verification evidence
 
@@ -60,16 +60,16 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 4/4 tests passed |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40798154876](https://github.com/chl84/3D_game_engine/actions/runs/40798154876) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Run [40798154876](https://github.com/chl84/3D_game_engine/actions/runs/40798154876) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
 | Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → CI loader 1.3.275, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0. The local loader is 1.4.363 |
 | Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `vulkan` is present in `requirements.failed`. The test asserts membership, not exact array equality; a local run produced exactly `["vulkan"]` |
 | Failure artifacts | Implemented | CTest `Testing/` and doctor JSON are uploaded on failed Linux/Windows/ASan jobs |
-| Branch protection | Blocked | GitHub API returns HTTP 403: private repository requires GitHub Pro or public visibility; [setup script](../scripts/setup_branch_protection.sh) is ready |
+| Branch protection | Automatically verified | GitHub API accepted the protection rule for `main`; required checks are the five CI jobs, `strict` is true, force pushes and deletions are disabled. Applied by [setup script](../scripts/setup_branch_protection.sh) |
 
 ## M0.3 CI history
 
@@ -117,25 +117,22 @@ The Windows job caught two real portability issues before the milestone closed:
   missing ICD exits 8; ASan/UBSan detects `llvmpipe` under the sanitizers;
   Windows passes 4/4 CTest with 21/21 test cases.
 - Run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796):
-  all five jobs green on the final documentation commit (`3381761`), with the
-  same tool versions and Vulkan checks.
+  all five jobs green on the documentation commit (`3381761`), with the same
+  tool versions and Vulkan checks.
+- Run [40798154876](https://github.com/chl84/3D_game_engine/actions/runs/40798154876):
+  all five jobs green on `9915170` after correcting the CI evidence.
 
 ## Known issues and gaps
 
-- **M0.5 is not formally complete.** Branch protection/rulesets are blocked by
-  the GitHub plan: the private repository needs GitHub Pro or public
-  visibility. The ready-to-run script is
-  `scripts/setup_branch_protection.sh`. The owner must choose GitHub Pro, a
-  public repository, or accept that branch protection is not enforced. M0.5
-  stays **in progress** until that decision is recorded.
+- Branch protection is enabled on `main`. The repository is public, so the
+  Free-plan restriction no longer applies.
 - The development machine has CMake 4.4.4 while CI pins 4.4.5. A clean local
   build with 4.4.5 passed, so this is a documented version difference, not an
   unverified CI path.
 - CI actions were upgraded from `actions/checkout@v4`, `actions/cache@v4` and
   `actions/upload-artifact@v4` to `@v7`, `@v6` and `@v7`. This removes the
-  Node 20 deprecation from those actions, but `ilammy/msvc-dev-cmd@v1` still
-  emits a Node 20 warning. The major upgrades are tooling changes and await the
-  owner's A.6 approval.
+  Node 20 deprecation from those actions; `ilammy/msvc-dev-cmd@v1` still emits
+  a Node 20 warning. The actions are CI tooling, not runtime dependencies.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
@@ -147,7 +144,6 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Owner decision on branch protection. M0.5 remains in progress until then and
-M0.6 has not started. After the decision, M0.6 will complete the English
-`VISION.md` translation, finalize `ARCHITECTURE.md`, `BUILD.md`, `TESTING.md`,
-`DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update the ADR set.
+M0.6: complete the English `VISION.md` translation, finalize `ARCHITECTURE.md`,
+`BUILD.md`, `TESTING.md`, `DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update
+the ADR set.

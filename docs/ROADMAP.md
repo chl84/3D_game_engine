@@ -6,7 +6,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.4 done; M0.5 in progress) |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.5 done) |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Planned |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
@@ -25,8 +25,8 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.2 | vcpkg manifest, dependencies, warnings, format/tidy, sanitizer presets, and the Windows MSVC + vcpkg CI job | Done |
 | M0.3 | Core: logging, config, filesystem sandbox, UUID, error handling | Done |
 | M0.4 | CLI skeleton and `engine doctor --json` | Done |
-| M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe/Vulkan detection tests, Linux CI matrix, caching and artifacts. Branch protection is blocked by the GitHub plan, so the substep is **not complete** and awaits the owner's decision | In progress — blocked on owner decision |
-| M0.6 | Full documentation, ADRs and VISION translation | Planned (after M0.5 is closed) |
+| M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe/Vulkan detection tests, Linux CI matrix, caching, artifacts and branch protection on `main` | Done |
+| M0.6 | Full documentation, ADRs and VISION translation | Next |
 | M0.7 | Hardening and M0 acceptance | Planned |
 
 ## Deferred modules
