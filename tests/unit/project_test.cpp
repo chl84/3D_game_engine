@@ -163,6 +163,16 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     REQUIRE(mesh_document["formatVersion"] == 2);
     REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Mesh"]["meshId"]
                 .get<std::string>() == std::string(engine::scene::kBuiltinCubeMesh));
+    REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Transform"]["position"][0]
+                .get<double>() == 16000.001);
+
+    auto reloaded = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE(reloaded.has_value());
+    REQUIRE(loaded->uuid(entity).has_value());
+    const auto reloaded_entity = reloaded->find(*loaded->uuid(entity));
+    REQUIRE(reloaded_entity.has_value());
+    REQUIRE(reloaded->transform(*reloaded_entity).position == Vec3d{16000.001, 0.0, 8000.0});
+
     mesh_document["formatVersion"] = 1;
     REQUIRE(
         engine::platform::atomic_write_file(scene_file, mesh_document.dump(2) + "\n").has_value());

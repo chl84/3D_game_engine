@@ -2,7 +2,7 @@
 
 **Status:** M2.4. Eleven CTest tests exist on Linux; Windows registers nine
 because the window and swapchain tests are not registered there. `engine_core_tests`
-contains 60 test cases and 463 assertions; `engine_render_tests` contains 9
+contains 60 test cases and 468 assertions; `engine_render_tests` contains 9
 test cases and 62 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
 pinned CMake 4.4.5 and Ninja 1.13.2.
