@@ -124,7 +124,7 @@
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
-| ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
+| ADR set | Complete | `docs/decisions/` contains ADR-0001–0008 and an index; each records status, date, context, decision, consequences and alternatives |
 | Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |
 | Commands in documentation | Automatically tested | `engine_version_json` and `engine_cli_contract` run the documented `--version` and `doctor` commands; CTest commands run in CI |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |

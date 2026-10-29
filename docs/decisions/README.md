@@ -29,3 +29,4 @@ ADRs are not rewritten.
 | [0005](ADR-0005-error-handling.md) | Error handling with `Result` and stable codes | Accepted |
 | [0006](ADR-0006-static-libraries.md) | Static libraries and module boundaries for M0–M4 | Accepted |
 | [0007](ADR-0007-reflection.md) | Reflection with an explicit component registry | Accepted |
+| [0008](ADR-0008-renderer-dependencies.md) | Renderer dependencies for M2 | Accepted |
