@@ -225,6 +225,23 @@ int main(int argc, char** argv) {
     batch_command->add_option("--undo", batch_undo, "Undo the last N commands before saving.")
         ->check(CLI::NonNegativeNumber);
 
+    auto* screenshot_command = app.add_subcommand("screenshot", "Render a scene to a PNG file.");
+    std::string screenshot_project;
+    std::string screenshot_scene = "scenes/main.scene.json";
+    std::string screenshot_out;
+    int screenshot_frames = 1;
+    int screenshot_width = 1280;
+    int screenshot_height = 720;
+    screenshot_command->add_option("project", screenshot_project, "Project directory.")->required();
+    screenshot_command->add_option("scene", screenshot_scene, "Scene path inside the project.");
+    screenshot_command->add_option("--out", screenshot_out, "Output PNG file.")->required();
+    screenshot_command->add_option("--frames", screenshot_frames, "Frames to render.")
+        ->check(CLI::PositiveNumber);
+    screenshot_command->add_option("--width", screenshot_width, "Image width.")
+        ->check(CLI::PositiveNumber);
+    screenshot_command->add_option("--height", screenshot_height, "Image height.")
+        ->check(CLI::PositiveNumber);
+
     for (CLI::App* command : {
              project_create,
              project_validate,
@@ -240,6 +257,7 @@ int main(int argc, char** argv) {
              component_remove,
              simulate_command,
              batch_command,
+             screenshot_command,
          }) {
         command->add_flag("--json", json, "Emit a machine-readable JSON document.");
     }
@@ -367,6 +385,12 @@ int main(int argc, char** argv) {
     if (*batch_command) {
         return engine::cli::batch(batch_project, batch_scene, batch_file, batch_undo, json,
                                   dry_run);
+    }
+
+    if (*screenshot_command) {
+        return engine::cli::screenshot(screenshot_project, screenshot_scene, screenshot_out,
+                                       screenshot_frames, screenshot_width, screenshot_height,
+                                       json);
     }
 
     std::cerr << "error: no command\n" << app.help() << '\n';

@@ -87,6 +87,20 @@ set_tests_properties(engine_render_tests PROPERTIES
     SKIP_RETURN_CODE 4
 )
 
+add_executable(engine_screenshot_test
+    render/screenshot_test.cpp
+)
+
+target_link_libraries(engine_screenshot_test PRIVATE
+    engine::render
+)
+
+target_include_directories(engine_screenshot_test PRIVATE
+    ${Stb_INCLUDE_DIR}
+)
+
+engine_set_warnings(engine_screenshot_test)
+
 add_executable(engine_window_smoke
     render/window_smoke.cpp
 )
@@ -122,6 +136,26 @@ if(NOT WIN32)
     add_test(NAME engine_swapchain_test COMMAND engine_swapchain_test)
     set_tests_properties(engine_swapchain_test PROPERTIES
         LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(NAME engine_screenshot_golden
+        COMMAND engine_screenshot_test
+                "${CMAKE_SOURCE_DIR}/tests/fixtures/golden/m2_scene_64.png"
+    )
+    set_tests_properties(engine_screenshot_golden PROPERTIES
+        LABELS "unit;render;acceptance"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(
+        NAME engine_screenshot_cli
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/screenshot.py"
+                "$<TARGET_FILE:engine>"
+    )
+    set_tests_properties(engine_screenshot_cli PROPERTIES
+        LABELS "contract;cli;render"
         SKIP_RETURN_CODE 77
     )
 endif()

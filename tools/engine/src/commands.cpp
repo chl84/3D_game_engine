@@ -2,9 +2,14 @@
 
 #include <engine/command/command.hpp>
 #include <engine/core/path_sandbox.hpp>
+#include <engine/render/device.hpp>
+#include <engine/render/offscreen_renderer.hpp>
 #include <engine/scene/project.hpp>
 #include <engine/scene/scene.hpp>
+#include <engine/scene/scene_view.hpp>
 #include <engine/scene/simulation.hpp>
+
+#include <stb_image_write.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -31,6 +36,7 @@ using core::Result;
 using core::Uuid;
 using scene::Camera;
 using scene::Entity;
+using scene::Mesh;
 using scene::Motion;
 using scene::Project;
 using scene::Scene;
@@ -151,6 +157,16 @@ void print_result(const CommandResult& result, bool json) {
         }
         return static_cast<void*>(&scene.component<Motion>(entity));
     }
+    if (component_name == "engine.scene.Mesh") {
+        was_present = scene.has<Mesh>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<Mesh>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<Mesh>(entity));
+    }
     return core::make_failure<void*>(core::make_error(ErrorCode::NotFound, "unsupported component",
                                                       {}, {{"component", component_name}}));
 }
@@ -166,6 +182,9 @@ void print_result(const CommandResult& result, bool json) {
     if (component_name == "engine.scene.Motion") {
         return scene.has<Motion>(entity);
     }
+    if (component_name == "engine.scene.Mesh") {
+        return scene.has<Mesh>(entity);
+    }
     return false;
 }
 
@@ -176,6 +195,9 @@ void print_result(const CommandResult& result, bool json) {
     }
     if (component_name == "engine.scene.Motion") {
         return scene.remove_component<Motion>(entity);
+    }
+    if (component_name == "engine.scene.Mesh") {
+        return scene.remove_component<Mesh>(entity);
     }
     return core::make_failure<void>(core::make_error(
         ErrorCode::Validation, "component cannot be removed", {}, {{"component", component_name}}));
@@ -211,6 +233,10 @@ void print_result(const CommandResult& result, bool json) {
         motion != nullptr && scene.has<Motion>(entity)) {
         snapshot["components"]["engine.scene.Motion"] =
             motion->to_json(&scene.component<Motion>(entity));
+    }
+    if (const auto* mesh = registry.find("engine.scene.Mesh");
+        mesh != nullptr && scene.has<Mesh>(entity)) {
+        snapshot["components"]["engine.scene.Mesh"] = mesh->to_json(&scene.component<Mesh>(entity));
     }
 
     nlohmann::json children = nlohmann::json::array();
@@ -270,6 +296,21 @@ void print_result(const CommandResult& result, bool json) {
             return core::make_failure<Entity>(added.error());
         }
         auto parsed = motion->from_json(&scene.component<Motion>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
+    if (const auto iterator = components.find("engine.scene.Mesh"); iterator != components.end()) {
+        const auto* mesh = registry.find("engine.scene.Mesh");
+        if (mesh == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "mesh descriptor missing"));
+        }
+        auto added = scene.add_component<Mesh>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = mesh->from_json(&scene.component<Mesh>(entity), *iterator);
         if (!parsed) {
             return core::make_failure<Entity>(parsed.error());
         }
@@ -873,10 +914,12 @@ int project_create(const std::string& root, const std::string& name, bool json, 
             return exit_code_for(result);
         }
 
-        const CommandResult result = success({{"dryRun", true},
-                                              {"root", target.string()},
-                                              {"name", name},
-                                              {"scene", "scenes/main.scene.json"}});
+        const CommandResult result = success({
+            {"dryRun", true},
+            {"root", target.string()},
+            {"name", name},
+            {"scene", "scenes/main.scene.json"},
+        });
         print_result(result, json);
         return 0;
     }
@@ -1283,6 +1326,93 @@ int batch(const std::string& project_root, const std::string& scene_path, const 
         success({{"results", std::move(results)}, {"undoCount", undo_count}, {"dryRun", dry_run}});
     print_result(result, json);
     return 0;
+}
+
+int screenshot(const std::string& project_root, const std::string& scene_path,
+               const std::string& out_path, int frames, int width, int height, bool json) {
+    if (out_path.empty()) {
+        const CommandResult result = failure(
+            core::make_error(ErrorCode::Usage, "--out is required", {}, {{"stage", "screenshot"}}));
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    if (frames <= 0 || width <= 0 || height <= 0) {
+        const CommandResult result = failure(
+            core::make_error(ErrorCode::Validation, "frames, width and height must be positive", {},
+                             {{"frames", frames}, {"width", width}, {"height", height}}));
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    auto project = Project::load(project_root);
+    if (!project) {
+        const CommandResult result = failure(project.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    ReflectionRegistry registry;
+    scene::register_scene_components(registry);
+    auto loaded_scene = project->load_scene(scene_path, registry);
+    if (!loaded_scene) {
+        const CommandResult result = failure(loaded_scene.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    render::DeviceOptions device_options;
+    device_options.application_name = "engine screenshot";
+    auto device = render::Device::create(device_options);
+    if (!device) {
+        const CommandResult result = failure(device.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    render::OffscreenOptions offscreen_options;
+    offscreen_options.width = static_cast<std::uint32_t>(width);
+    offscreen_options.height = static_cast<std::uint32_t>(height);
+    auto renderer = render::OffscreenRenderer::create(*device, offscreen_options);
+    if (!renderer) {
+        const CommandResult result = failure(renderer.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    const scene::SceneView view(*loaded_scene);
+    auto pixels = renderer->render(view, frames);
+    if (!pixels) {
+        const CommandResult result = failure(pixels.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    const std::filesystem::path output(out_path);
+    if (output.has_parent_path()) {
+        std::error_code error;
+        std::filesystem::create_directories(output.parent_path(), error);
+        if (error) {
+            const CommandResult result = failure(
+                core::make_error(ErrorCode::Io, "could not create the screenshot directory",
+                                 error.message(), {{"path", output.parent_path().string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+    }
+    if (stbi_write_png(output.string().c_str(), width, height, 4, pixels->data(), width * 4) == 0) {
+        const CommandResult result = failure(core::make_error(
+            ErrorCode::Io, "could not write the screenshot", {}, {{"path", output.string()}}));
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    const CommandResult result = success({
+        {"path", output.string()},
+        {"width", width},
+        {"height", height},
+        {"frames", frames},
+    });
+    print_result(result, json);
+    return exit_code_for(result);
 }
 
 } // namespace engine::cli
