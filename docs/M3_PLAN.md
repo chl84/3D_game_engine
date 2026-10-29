@@ -3,7 +3,7 @@
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
 implemented: scene v3, asset schemas, fastgltf/simdjson, `ilammy` replacement,
 PointLight warnings and the approved `stb_image` PNG/JPEG requirements are in
-place. M3.1 awaits review; M3.2 starts after reviewer approval.
+place. M3.1 is CI-green and awaits review; M3.2 starts after reviewer approval.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 

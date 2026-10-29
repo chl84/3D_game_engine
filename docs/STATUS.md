@@ -195,8 +195,8 @@
 | M3.1 stb_image approval | Documented | PNG/JPEG only via `STBI_ONLY_PNG`/`STBI_ONLY_JPEG`, 8192×8192 and 256 MiB pre-decode limits, `E_VALIDATION`, and truncated/corrupt/oversized ASan/UBSan tests |
 | M3.1 PointLight warnings | Automatically tested | `engine_point_light_warning` checks `project validate`, `engine run` and `engine screenshot` warnings; no silent ignore |
 | M3.1 `ilammy` replacement | Automatically tested | The Windows job uses `vswhere` + `vcvarsall.bat x64`; `Verify MSVC` passes `cl.exe`, and the Windows matrix is green |
-| M3.1 CI | Automatically tested | Manual dispatch [40973936972](https://github.com/chl84/3D_game_engine/actions/runs/40973936972) on `a55d568` → all five jobs green. Linux 15/15; Windows 11/11 with native MSVC setup, fastgltf and scene v3; ASan 15/15; Quality green |
-| M3.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `a55d568` → 15 registered tests (14 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.1 CI | Automatically tested | Manual dispatch [40975777615](https://github.com/chl84/3D_game_engine/actions/runs/40975777615) on `5d473e6` → all five jobs green. Linux 16/16 including `engine_point_light_warning`; Windows 11/11 with native MSVC setup, fastgltf and scene v3; ASan 16/16; Quality green |
+| M3.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `5d473e6` → 16 registered tests (15 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
