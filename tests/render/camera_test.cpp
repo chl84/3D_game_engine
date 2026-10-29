@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+#include <cmath>
+
 TEST_CASE("camera projects the test triangle in front of the viewer", "[render][camera]") {
     engine::render::Camera camera;
     const glm::mat4 view_projection = camera.view_projection(16.0F / 9.0F);
@@ -32,5 +34,6 @@ TEST_CASE("camera projects the test triangle in front of the viewer", "[render][
 TEST_CASE("camera aspect ratio guards against a zero width", "[render][camera]") {
     engine::render::Camera camera;
     const glm::mat4 projection = camera.projection(0.0F);
+    CHECK(std::isfinite(projection[0][0]));
     CHECK(projection[0][0] > 0.0F);
 }

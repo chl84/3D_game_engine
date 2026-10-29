@@ -119,6 +119,9 @@ jobs:
             exit "$code"
           '
 
+      - name: Render test summary
+        run: ctest --preset ${{ matrix.preset }} -R engine_render_tests -V
+
       - name: Core test summary
         run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
 
@@ -219,19 +222,16 @@ jobs:
       - name: Install Vulkan SDK for glslc
         shell: pwsh
         run: |
-          $glslc = Get-Command glslc -ErrorAction SilentlyContinue
-          if (-not $glslc) {
-            choco install vulkan-sdk --version=1.4.363 -y --no-progress
-            $glslc = Get-ChildItem "C:\VulkanSDK" -Recurse -Filter glslc.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $glslc) {
-              throw "glslc.exe was not found after installing the Vulkan SDK"
-            }
-            $bin = $glslc.Directory.FullName
-            $bin | Out-File -FilePath $env:GITHUB_PATH -Append
-            $sdk = Split-Path $bin -Parent
-            "VULKAN_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Append
-            $env:Path = "$bin;$env:Path"
+          choco install vulkan-sdk --version=1.4.363 -y --no-progress
+          $sdk = "C:\VulkanSDK\1.4.363.0"
+          $glslc = Join-Path $sdk "Bin\glslc.exe"
+          if (-not (Test-Path $glslc)) {
+            throw "Pinned glslc.exe was not found at $glslc"
           }
+          $bin = Split-Path $glslc -Parent
+          $bin | Out-File -FilePath $env:GITHUB_PATH -Append
+          "VULKAN_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $env:Path = "$bin;$env:Path"
           glslc --version
 
       - name: Install pinned CMake and Ninja
@@ -276,6 +276,11 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: ctest --preset ci-windows --output-on-failure
+
+      - name: Render test summary
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: ctest --preset ci-windows -R engine_render_tests -V
 
       - name: Core test summary
         env:
