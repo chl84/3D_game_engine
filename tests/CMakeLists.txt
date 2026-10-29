@@ -15,6 +15,7 @@ add_executable(engine_core_tests
     unit/project_test.cpp
     unit/reflect_test.cpp
     unit/scene_test.cpp
+    unit/scene_view_test.cpp
     unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
@@ -70,6 +71,7 @@ set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependenc
 add_executable(engine_render_tests
     render/camera_test.cpp
     render/device_test.cpp
+    render/scene_transform_test.cpp
 )
 
 target_link_libraries(engine_render_tests PRIVATE

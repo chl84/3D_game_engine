@@ -56,7 +56,9 @@ add_custom_target(engine_render_shaders DEPENDS "${shader_header}")
 add_library(engine_render STATIC
     src/camera.cpp
     src/device.cpp
+    src/frustum.cpp
     src/renderer.cpp
+    src/scene_transform.cpp
     src/vma.cpp
     src/vulkan_util.cpp
     "${shader_header}"

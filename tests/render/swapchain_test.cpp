@@ -1,11 +1,15 @@
 #include <engine/platform/window.hpp>
 #include <engine/render/device.hpp>
 #include <engine/render/renderer.hpp>
+#include <engine/scene/scene.hpp>
+#include <engine/scene/scene_view.hpp>
 
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -51,6 +55,72 @@ create_renderer(const engine::render::Device& device, const engine::platform::Wi
 }
 
 } // namespace
+
+[[nodiscard]] std::optional<engine::scene::Scene> build_test_scene() {
+    using engine::scene::Camera;
+    using engine::scene::Entity;
+    using engine::scene::Mesh;
+    using engine::scene::Scene;
+
+    Scene scene = Scene::with_seed(17);
+    scene.set_scene_name("m2.4-camera-relative");
+
+    const auto create = [&](const char* name) -> std::optional<Entity> {
+        auto entity = scene.create_entity(name);
+        if (!entity) {
+            return std::nullopt;
+        }
+        return *entity;
+    };
+    const auto add_mesh = [&](Entity entity, std::string_view mesh_id) {
+        auto added = scene.add_component<Mesh>(entity);
+        if (!added) {
+            return false;
+        }
+        scene.component<Mesh>(entity).mesh_id = std::string(mesh_id);
+        return true;
+    };
+
+    const auto camera = create("Camera");
+    const auto parent = create("FarParent");
+    const auto child = create("FarChild");
+    const auto ground = create("Ground");
+    const auto behind = create("Behind");
+    if (!camera || !parent || !child || !ground || !behind) {
+        return std::nullopt;
+    }
+
+    scene.transform(*camera).position = {8000.0F, 2.0F, 8000.0F};
+    auto camera_added = scene.add_component<Camera>(*camera);
+    if (!camera_added) {
+        return std::nullopt;
+    }
+    scene.component<Camera>(*camera).fovYRadians = 1.0F;
+    scene.component<Camera>(*camera).near = 0.1F;
+    scene.component<Camera>(*camera).far = 20000.0F;
+
+    scene.transform(*parent).position = {8000.0F, 0.0F, 8000.0F};
+    scene.transform(*child).position = {0.001F, 0.0F, -5.001F};
+    if (!add_mesh(*child, engine::scene::kBuiltinCubeMesh)) {
+        return std::nullopt;
+    }
+    auto parented = scene.set_parent(*child, *parent);
+    if (!parented) {
+        return std::nullopt;
+    }
+
+    scene.transform(*ground).position = {8000.0F, -0.5F, 8000.0F};
+    if (!add_mesh(*ground, engine::scene::kBuiltinPlaneMesh)) {
+        return std::nullopt;
+    }
+
+    scene.transform(*behind).position = {8000.0F, 0.0F, 8020.0F};
+    if (!add_mesh(*behind, engine::scene::kBuiltinCubeMesh)) {
+        return std::nullopt;
+    }
+
+    return scene;
+}
 
 int main(int argc, char** argv) {
     bool require_minimize = false;
@@ -98,6 +168,12 @@ int main(int argc, char** argv) {
                     device.error().hint);
     }
 
+    auto scene = build_test_scene();
+    if (!scene) {
+        return fail("could not build the test scene");
+    }
+    const engine::scene::SceneView scene_view(*scene);
+
     auto renderer = create_renderer(*device, *window);
     if (!renderer) {
         return fail("could not create the renderer: " + renderer.error().message + " " +
@@ -113,13 +189,16 @@ int main(int argc, char** argv) {
     }
 
     for (int frame = 0; frame < 3; ++frame) {
-        auto drawn = renderer->draw_frame();
+        auto drawn = renderer->draw_frame(scene_view);
         if (!drawn) {
             return fail("could not draw frame " + std::to_string(frame) + ": " +
                         drawn.error().message);
         }
         if (!*drawn) {
             return fail("frame " + std::to_string(frame) + " was not presented");
+        }
+        if (renderer->last_visible_entities() != 2) {
+            return fail("the frustum should keep the far cube and ground visible");
         }
     }
 
@@ -131,7 +210,7 @@ int main(int argc, char** argv) {
 
     bool grew = false;
     for (int frame = 0; frame < 60; ++frame) {
-        auto drawn = renderer->draw_frame();
+        auto drawn = renderer->draw_frame(scene_view);
         if (!drawn) {
             return fail("could not draw after resize: " + drawn.error().message);
         }
@@ -154,7 +233,7 @@ int main(int argc, char** argv) {
 
     bool followed_mapping = false;
     for (int frame = 0; frame < 120; ++frame) {
-        auto drawn = renderer->draw_frame();
+        auto drawn = renderer->draw_frame(scene_view);
         if (!drawn) {
             return fail("could not draw after showing the window: " + drawn.error().message);
         }
@@ -178,7 +257,7 @@ int main(int argc, char** argv) {
     if (window->minimized()) {
         bool reported_no_frame = false;
         for (int frame = 0; frame < 10; ++frame) {
-            auto drawn = renderer->draw_frame();
+            auto drawn = renderer->draw_frame(scene_view);
             if (!drawn) {
                 return fail("minimized window produced an error: " + drawn.error().message);
             }
@@ -207,7 +286,7 @@ int main(int argc, char** argv) {
 
     bool presented_after_restore = false;
     for (int frame = 0; frame < 120; ++frame) {
-        auto drawn = renderer->draw_frame();
+        auto drawn = renderer->draw_frame(scene_view);
         if (!drawn) {
             return fail("could not draw after restore: " + drawn.error().message);
         }

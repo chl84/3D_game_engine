@@ -1,6 +1,9 @@
 #include <engine/render/renderer.hpp>
 
 #include <engine/render/camera.hpp>
+#include <engine/render/frustum.hpp>
+#include <engine/render/scene_transform.hpp>
+#include <engine/scene/scene_view.hpp>
 
 #include "shaders.hpp"
 #include "vulkan_util.hpp"
@@ -21,19 +24,65 @@ namespace engine::render {
 namespace {
 
 constexpr std::size_t kFramesInFlight = 2;
-constexpr std::uint32_t kTriangleVertexCount = 3;
 
 struct Vertex {
     glm::vec3 position;
     glm::vec3 color;
 };
 
-[[nodiscard]] std::array<Vertex, 3> triangle_vertices() noexcept {
-    std::array<Vertex, 3> vertices{};
-    vertices[0] = {glm::vec3{-0.6F, -0.5F, 0.0F}, glm::vec3{1.0F, 0.2F, 0.2F}};
-    vertices[1] = {glm::vec3{0.6F, -0.5F, 0.0F}, glm::vec3{0.2F, 1.0F, 0.2F}};
-    vertices[2] = {glm::vec3{0.0F, 0.6F, 0.0F}, glm::vec3{0.2F, 0.4F, 1.0F}};
-    return vertices;
+struct MeshData {
+    std::vector<Vertex> vertices;
+    std::vector<std::uint32_t> indices;
+    float radius{0.0F};
+};
+
+struct PushConstants {
+    glm::mat4 view_projection{1.0F};
+    glm::mat4 model{1.0F};
+};
+
+static_assert(sizeof(PushConstants) == 128);
+
+[[nodiscard]] MeshData make_cube_mesh() {
+    constexpr std::array<glm::vec3, 8> positions{
+        glm::vec3{-0.5F, -0.5F, -0.5F}, glm::vec3{0.5F, -0.5F, -0.5F}, glm::vec3{0.5F, 0.5F, -0.5F},
+        glm::vec3{-0.5F, 0.5F, -0.5F},  glm::vec3{-0.5F, -0.5F, 0.5F}, glm::vec3{0.5F, -0.5F, 0.5F},
+        glm::vec3{0.5F, 0.5F, 0.5F},    glm::vec3{-0.5F, 0.5F, 0.5F},
+    };
+    constexpr std::array<glm::vec3, 8> colors{
+        glm::vec3{0.9F, 0.2F, 0.2F}, glm::vec3{0.2F, 0.9F, 0.2F}, glm::vec3{0.2F, 0.3F, 0.9F},
+        glm::vec3{0.9F, 0.9F, 0.2F}, glm::vec3{0.9F, 0.2F, 0.9F}, glm::vec3{0.2F, 0.9F, 0.9F},
+        glm::vec3{0.9F, 0.6F, 0.2F}, glm::vec3{0.6F, 0.2F, 0.9F},
+    };
+
+    MeshData mesh;
+    mesh.vertices.reserve(positions.size());
+    for (std::size_t index = 0; index < positions.size(); ++index) {
+        mesh.vertices.push_back({positions[index], colors[index]});
+    }
+    mesh.indices = {
+        0, 1, 2, 0, 2, 3, // front
+        4, 6, 5, 4, 7, 6, // back
+        0, 3, 7, 0, 7, 4, // left
+        1, 5, 6, 1, 6, 2, // right
+        3, 2, 6, 3, 6, 7, // top
+        0, 4, 5, 0, 5, 1, // bottom
+    };
+    mesh.radius = 0.8660254F;
+    return mesh;
+}
+
+[[nodiscard]] MeshData make_plane_mesh() {
+    MeshData mesh;
+    mesh.vertices = {
+        {glm::vec3{-5.0F, 0.0F, -5.0F}, glm::vec3{0.35F, 0.4F, 0.35F}},
+        {glm::vec3{5.0F, 0.0F, -5.0F}, glm::vec3{0.35F, 0.45F, 0.35F}},
+        {glm::vec3{5.0F, 0.0F, 5.0F}, glm::vec3{0.4F, 0.5F, 0.4F}},
+        {glm::vec3{-5.0F, 0.0F, 5.0F}, glm::vec3{0.4F, 0.5F, 0.4F}},
+    };
+    mesh.indices = {0, 1, 2, 0, 2, 3};
+    mesh.radius = 7.071068F;
+    return mesh;
 }
 
 [[nodiscard]] core::Result<VkShaderModule>
@@ -144,7 +193,7 @@ choose_composite_alpha(const VkSurfaceCapabilitiesKHR& capabilities) noexcept {
 void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout,
                       VkImageLayout new_layout, VkPipelineStageFlags2 source_stage,
                       VkAccessFlags2 source_access, VkPipelineStageFlags2 destination_stage,
-                      VkAccessFlags2 destination_access) {
+                      VkAccessFlags2 destination_access, VkImageAspectFlags aspect) {
     VkImageMemoryBarrier2 barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
     barrier.srcStageMask = source_stage;
@@ -156,7 +205,7 @@ void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayo
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.aspectMask = aspect;
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
@@ -179,6 +228,15 @@ struct Renderer::Impl {
         VkFence in_flight{VK_NULL_HANDLE};
     };
 
+    struct GpuMesh {
+        VkBuffer vertex_buffer{VK_NULL_HANDLE};
+        VmaAllocation vertex_allocation{nullptr};
+        VkBuffer index_buffer{VK_NULL_HANDLE};
+        VmaAllocation index_allocation{nullptr};
+        std::uint32_t index_count{0};
+        float radius{0.0F};
+    };
+
     const Device* device{nullptr};
     const platform::Window* window{nullptr};
     SwapchainOptions options;
@@ -190,12 +248,16 @@ struct Renderer::Impl {
     std::vector<VkSemaphore> render_finished;
     VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
     VkPipeline pipeline{VK_NULL_HANDLE};
-    VkBuffer vertex_buffer{VK_NULL_HANDLE};
-    VmaAllocation vertex_allocation{nullptr};
-    Camera camera;
+    GpuMesh cube_mesh;
+    GpuMesh plane_mesh;
+    VkImage depth_image{VK_NULL_HANDLE};
+    VmaAllocation depth_allocation{nullptr};
+    VkImageView depth_view{VK_NULL_HANDLE};
+    VkFormat depth_format{VK_FORMAT_D32_SFLOAT};
     std::array<Frame, kFramesInFlight> frames{};
     std::size_t frame_index{0};
     std::uint64_t presented_frames{0};
+    std::uint32_t last_visible_entities{0};
     int window_width{0};
     int window_height{0};
 
@@ -208,13 +270,19 @@ struct Renderer::Impl {
     void destroy_frame_resources();
     [[nodiscard]] core::Result<void> create_pipeline_layout();
     void destroy_pipeline_layout();
-    [[nodiscard]] core::Result<void> create_vertex_buffer();
-    void destroy_vertex_buffer();
+    [[nodiscard]] core::Result<void> create_builtin_meshes();
+    void destroy_builtin_meshes();
+    [[nodiscard]] core::Result<GpuMesh> create_gpu_mesh(const MeshData& mesh);
+    void destroy_gpu_mesh(GpuMesh& mesh);
+    [[nodiscard]] const GpuMesh* find_mesh(std::string_view mesh_id) const noexcept;
+    [[nodiscard]] core::Result<void> create_depth_resources();
+    void destroy_depth_resources();
     [[nodiscard]] core::Result<void> create_pipeline();
     [[nodiscard]] core::Result<void> create_swapchain();
     [[nodiscard]] core::Result<void> recreate_swapchain();
     void destroy_swapchain();
-    [[nodiscard]] core::Result<void> record_frame(std::uint32_t image_index);
+    [[nodiscard]] core::Result<void> record_frame(std::uint32_t image_index,
+                                                  const scene::SceneView& scene_view);
 };
 
 Renderer::Impl::~Impl() {
@@ -222,7 +290,7 @@ Renderer::Impl::~Impl() {
         (void)vkDeviceWaitIdle(device->device());
     }
     destroy_swapchain();
-    destroy_vertex_buffer();
+    destroy_builtin_meshes();
     destroy_pipeline_layout();
     destroy_frame_resources();
 }
@@ -259,15 +327,13 @@ core::Result<void> Renderer::Impl::initialize(const Device& render_device,
     if (!pipeline_layout_result) {
         return pipeline_layout_result;
     }
-    auto vertex_buffer_result = create_vertex_buffer();
-    if (!vertex_buffer_result) {
-        return vertex_buffer_result;
+    auto meshes_result = create_builtin_meshes();
+    if (!meshes_result) {
+        return meshes_result;
     }
     return create_swapchain();
 }
 
-// clang-tidy cannot see the writes through the frame array.
-// NOLINTNEXTLINE(readability-make-member-function-const)
 core::Result<void> Renderer::Impl::create_frame_resources() {
     const VkDevice handle = device->device();
     const std::uint32_t queue_family = device->queue_families().graphics;
@@ -343,7 +409,7 @@ core::Result<void> Renderer::Impl::create_pipeline_layout() {
     VkPushConstantRange push_constant{};
     push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     push_constant.offset = 0;
-    push_constant.size = sizeof(glm::mat4);
+    push_constant.size = sizeof(PushConstants);
 
     VkPipelineLayoutCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -367,46 +433,184 @@ void Renderer::Impl::destroy_pipeline_layout() {
     pipeline_layout = VK_NULL_HANDLE;
 }
 
-core::Result<void> Renderer::Impl::create_vertex_buffer() {
-    const std::array<Vertex, 3> vertices = triangle_vertices();
+core::Result<Renderer::Impl::GpuMesh> Renderer::Impl::create_gpu_mesh(const MeshData& mesh) {
+    const auto create_buffer = [&](VkDeviceSize size, VkBufferUsageFlags usage, VkBuffer& buffer,
+                                   VmaAllocation& allocation) -> core::Result<void> {
+        VkBufferCreateInfo buffer_info{};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size = size;
+        buffer_info.usage = usage;
+        buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkBufferCreateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size = sizeof(vertices);
-    buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VmaAllocationCreateInfo allocation_info{};
+        allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-    VmaAllocationCreateInfo allocation_info{};
-    allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
+                                                &buffer, &allocation, nullptr);
+        if (result != VK_SUCCESS) {
+            return core::make_failure<void>(
+                detail::vulkan_error("could not create a mesh buffer", "mesh", result));
+        }
+        return {};
+    };
 
-    const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
-                                            &vertex_buffer, &vertex_allocation, nullptr);
-    if (result != VK_SUCCESS) {
-        return core::make_failure<void>(detail::vulkan_error(
-            "could not create the triangle vertex buffer", "vertex-buffer", result));
+    GpuMesh gpu;
+    auto vertex_buffer =
+        create_buffer(mesh.vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                      gpu.vertex_buffer, gpu.vertex_allocation);
+    if (!vertex_buffer) {
+        return core::make_failure<GpuMesh>(vertex_buffer.error());
+    }
+    auto index_buffer =
+        create_buffer(mesh.indices.size() * sizeof(std::uint32_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                      gpu.index_buffer, gpu.index_allocation);
+    if (!index_buffer) {
+        destroy_gpu_mesh(gpu);
+        return core::make_failure<GpuMesh>(index_buffer.error());
     }
 
     void* mapped = nullptr;
-    const VkResult map_result = vmaMapMemory(device->allocator(), vertex_allocation, &mapped);
-    if (map_result != VK_SUCCESS) {
-        vmaDestroyBuffer(device->allocator(), vertex_buffer, vertex_allocation);
-        vertex_buffer = VK_NULL_HANDLE;
-        vertex_allocation = nullptr;
-        return core::make_failure<void>(detail::vulkan_error(
-            "could not map the triangle vertex buffer", "vertex-buffer", map_result));
+    VkResult result = vmaMapMemory(device->allocator(), gpu.vertex_allocation, &mapped);
+    if (result != VK_SUCCESS) {
+        destroy_gpu_mesh(gpu);
+        return core::make_failure<GpuMesh>(
+            detail::vulkan_error("could not map a mesh vertex buffer", "mesh", result));
     }
-    std::memcpy(mapped, vertices.data(), sizeof(vertices));
-    vmaUnmapMemory(device->allocator(), vertex_allocation);
+    std::memcpy(mapped, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
+    vmaUnmapMemory(device->allocator(), gpu.vertex_allocation);
+
+    result = vmaMapMemory(device->allocator(), gpu.index_allocation, &mapped);
+    if (result != VK_SUCCESS) {
+        destroy_gpu_mesh(gpu);
+        return core::make_failure<GpuMesh>(
+            detail::vulkan_error("could not map a mesh index buffer", "mesh", result));
+    }
+    std::memcpy(mapped, mesh.indices.data(), mesh.indices.size() * sizeof(std::uint32_t));
+    vmaUnmapMemory(device->allocator(), gpu.index_allocation);
+
+    gpu.index_count = static_cast<std::uint32_t>(mesh.indices.size());
+    gpu.radius = mesh.radius;
+    return gpu;
+}
+
+// clang-tidy cannot see the resource writes through the reference.
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void Renderer::Impl::destroy_gpu_mesh(GpuMesh& mesh) {
+    if (device == nullptr) {
+        return;
+    }
+    if (mesh.index_buffer != VK_NULL_HANDLE) {
+        vmaDestroyBuffer(device->allocator(), mesh.index_buffer, mesh.index_allocation);
+        mesh.index_buffer = VK_NULL_HANDLE;
+        mesh.index_allocation = nullptr;
+    }
+    if (mesh.vertex_buffer != VK_NULL_HANDLE) {
+        vmaDestroyBuffer(device->allocator(), mesh.vertex_buffer, mesh.vertex_allocation);
+        mesh.vertex_buffer = VK_NULL_HANDLE;
+        mesh.vertex_allocation = nullptr;
+    }
+}
+
+core::Result<void> Renderer::Impl::create_builtin_meshes() {
+    auto cube = create_gpu_mesh(make_cube_mesh());
+    if (!cube) {
+        return core::make_failure<void>(cube.error());
+    }
+    cube_mesh = *cube;
+
+    auto plane = create_gpu_mesh(make_plane_mesh());
+    if (!plane) {
+        destroy_gpu_mesh(cube_mesh);
+        return core::make_failure<void>(plane.error());
+    }
+    plane_mesh = *plane;
     return {};
 }
 
-void Renderer::Impl::destroy_vertex_buffer() {
-    if (device == nullptr || vertex_buffer == VK_NULL_HANDLE) {
+void Renderer::Impl::destroy_builtin_meshes() {
+    destroy_gpu_mesh(cube_mesh);
+    destroy_gpu_mesh(plane_mesh);
+}
+
+const Renderer::Impl::GpuMesh* Renderer::Impl::find_mesh(std::string_view mesh_id) const noexcept {
+    if (mesh_id == scene::kBuiltinCubeMesh) {
+        return &cube_mesh;
+    }
+    if (mesh_id == scene::kBuiltinPlaneMesh) {
+        return &plane_mesh;
+    }
+    return nullptr;
+}
+
+core::Result<void> Renderer::Impl::create_depth_resources() {
+    VkFormatProperties format_properties{};
+    vkGetPhysicalDeviceFormatProperties(device->physical_device(), depth_format,
+                                        &format_properties);
+    if ((format_properties.optimalTilingFeatures &
+         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) == 0) {
+        return core::make_failure<void>(core::make_error(core::ErrorCode::Unsupported,
+                                                         "D32 depth attachment is not supported",
+                                                         {}, {{"stage", "depth"}}));
+    }
+
+    // Vulkan requires every unspecified field to be zero.
+    // NOLINTNEXTLINE(bugprone-invalid-enum-default-initialization)
+    VkImageCreateInfo image_info{};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.format = depth_format;
+    image_info.extent = VkExtent3D{extent.width, extent.height, 1};
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VmaAllocationCreateInfo allocation_info{};
+    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VkResult result = vmaCreateImage(device->allocator(), &image_info, &allocation_info,
+                                     &depth_image, &depth_allocation, nullptr);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the depth image", "depth", result));
+    }
+
+    VkImageViewCreateInfo view_info{};
+    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    view_info.image = depth_image;
+    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_info.format = depth_format;
+    view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    view_info.subresourceRange.baseMipLevel = 0;
+    view_info.subresourceRange.levelCount = 1;
+    view_info.subresourceRange.baseArrayLayer = 0;
+    view_info.subresourceRange.layerCount = 1;
+
+    result = vkCreateImageView(device->device(), &view_info, nullptr, &depth_view);
+    if (result != VK_SUCCESS) {
+        destroy_depth_resources();
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the depth image view", "depth", result));
+    }
+    return {};
+}
+
+void Renderer::Impl::destroy_depth_resources() {
+    if (device == nullptr) {
         return;
     }
-    vmaDestroyBuffer(device->allocator(), vertex_buffer, vertex_allocation);
-    vertex_buffer = VK_NULL_HANDLE;
-    vertex_allocation = nullptr;
+    if (depth_view != VK_NULL_HANDLE) {
+        vkDestroyImageView(device->device(), depth_view, nullptr);
+        depth_view = VK_NULL_HANDLE;
+    }
+    if (depth_image != VK_NULL_HANDLE) {
+        vmaDestroyImage(device->allocator(), depth_image, depth_allocation);
+        depth_image = VK_NULL_HANDLE;
+        depth_allocation = nullptr;
+    }
 }
 
 core::Result<void> Renderer::Impl::create_pipeline() {
@@ -489,6 +693,13 @@ core::Result<void> Renderer::Impl::create_pipeline() {
     multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil.depthTestEnable = VK_TRUE;
+    depth_stencil.depthWriteEnable = VK_TRUE;
+    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_stencil.maxDepthBounds = 1.0F;
+
     VkPipelineColorBlendAttachmentState blend_attachment{};
     blend_attachment.colorWriteMask = static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_R_BIT) |
                                       static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_G_BIT) |
@@ -514,6 +725,7 @@ core::Result<void> Renderer::Impl::create_pipeline() {
     rendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
     rendering.colorAttachmentCount = 1;
     rendering.pColorAttachmentFormats = &format;
+    rendering.depthAttachmentFormat = depth_format;
 
     VkGraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -525,6 +737,7 @@ core::Result<void> Renderer::Impl::create_pipeline() {
     pipeline_info.pViewportState = &viewport_state;
     pipeline_info.pRasterizationState = &rasterization;
     pipeline_info.pMultisampleState = &multisample;
+    pipeline_info.pDepthStencilState = &depth_stencil;
     pipeline_info.pColorBlendState = &color_blend;
     pipeline_info.pDynamicState = &dynamic_state;
     pipeline_info.layout = pipeline_layout;
@@ -719,6 +932,12 @@ core::Result<void> Renderer::Impl::create_swapchain() {
     window_width = window->width();
     window_height = window->height();
 
+    auto depth_result = create_depth_resources();
+    if (!depth_result) {
+        destroy_swapchain();
+        return depth_result;
+    }
+
     auto pipeline_result = create_pipeline();
     if (!pipeline_result) {
         destroy_swapchain();
@@ -746,6 +965,7 @@ void Renderer::Impl::destroy_swapchain() {
         vkDestroyPipeline(handle, pipeline, nullptr);
         pipeline = VK_NULL_HANDLE;
     }
+    destroy_depth_resources();
     for (const VkSemaphore semaphore : render_finished) {
         vkDestroySemaphore(handle, semaphore, nullptr);
     }
@@ -763,7 +983,26 @@ void Renderer::Impl::destroy_swapchain() {
     extent = VkExtent2D{0, 0};
 }
 
-core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
+core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
+                                                const scene::SceneView& scene_view) {
+    const auto camera_entity = scene_view.active_camera();
+    if (!camera_entity.has_value()) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::NotFound, "the scene has no active camera", {}, {{"stage", "scene"}}));
+    }
+    const scene::WorldTransform camera_world = scene_view.world_transform(*camera_entity);
+    const scene::Camera& camera_component = scene_view.camera(*camera_entity);
+
+    Camera camera;
+    camera.vertical_fov_radians = camera_component.fovYRadians;
+    camera.near_plane = camera_component.near;
+    camera.far_plane = camera_component.far;
+
+    const float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
+    const glm::mat4 view_projection =
+        camera.projection(aspect) * camera_view_from_world(camera_world);
+    const Frustum frustum = Frustum::from_view_projection(view_projection);
+
     Frame& frame = frames[frame_index];
     VkResult result = vkResetCommandBuffer(frame.command_buffer, 0);
     if (result != VK_SUCCESS) {
@@ -780,10 +1019,17 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
             detail::vulkan_error("could not begin the command buffer", "command-buffer", result));
     }
 
-    transition_image(
-        frame.command_buffer, images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        0, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+    transition_image(frame.command_buffer, images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
+                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                     VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
+                     VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                     VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    constexpr VkPipelineStageFlags2 kDepthStages =
+        VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    transition_image(frame.command_buffer, depth_image, VK_IMAGE_LAYOUT_UNDEFINED,
+                     VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, kDepthStages, 0, kDepthStages,
+                     VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
     VkRenderingAttachmentInfo color_attachment{};
     color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -793,6 +1039,15 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.clearValue = clear_color();
 
+    VkRenderingAttachmentInfo depth_attachment{};
+    depth_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    depth_attachment.imageView = depth_view;
+    depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depth_attachment.clearValue.depthStencil.depth = 1.0F;
+    depth_attachment.clearValue.depthStencil.stencil = 0;
+
     VkRenderingInfo rendering_info{};
     rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
     rendering_info.renderArea.offset = VkOffset2D{0, 0};
@@ -800,11 +1055,9 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
     rendering_info.layerCount = 1;
     rendering_info.colorAttachmentCount = 1;
     rendering_info.pColorAttachments = &color_attachment;
+    rendering_info.pDepthAttachment = &depth_attachment;
 
     vkCmdBeginRendering(frame.command_buffer, &rendering_info);
-
-    const float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
-    const glm::mat4 view_projection = camera.view_projection(aspect);
 
     VkViewport viewport{};
     viewport.x = 0.0F;
@@ -820,18 +1073,52 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
     vkCmdSetViewport(frame.command_buffer, 0, 1, &viewport);
     vkCmdSetScissor(frame.command_buffer, 0, 1, &scissor);
     vkCmdBindPipeline(frame.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    VkDeviceSize vertex_offset = 0;
-    vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &vertex_offset);
-    vkCmdPushConstants(frame.command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                       sizeof(view_projection), &view_projection);
-    vkCmdDraw(frame.command_buffer, kTriangleVertexCount, 1, 0, 0);
+
+    PushConstants push_constants;
+    push_constants.view_projection = view_projection;
+    std::uint32_t visible = 0;
+    for (const scene::Entity entity : scene_view.entities()) {
+        if (!scene_view.has_mesh(entity)) {
+            continue;
+        }
+        const scene::Mesh& mesh_component = scene_view.mesh(entity);
+        const GpuMesh* mesh = find_mesh(mesh_component.mesh_id);
+        if (mesh == nullptr) {
+            return core::make_failure<void>(core::make_error(
+                core::ErrorCode::Unsupported, "the scene references an unknown mesh", {},
+                {{"stage", "mesh"}, {"meshId", mesh_component.mesh_id}}));
+        }
+
+        const scene::WorldTransform world = scene_view.world_transform(entity);
+        const glm::mat4 model = camera_relative_model(world, camera_world.position);
+        const float scale = std::max({
+            static_cast<float>(world.scale.x),
+            static_cast<float>(world.scale.y),
+            static_cast<float>(world.scale.z),
+        });
+        const glm::vec3 center{model[3][0], model[3][1], model[3][2]};
+        if (!frustum.intersects_sphere(center, mesh->radius * scale)) {
+            continue;
+        }
+
+        push_constants.model = model;
+        vkCmdPushConstants(frame.command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                           sizeof(PushConstants), &push_constants);
+        VkDeviceSize vertex_offset = 0;
+        vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &mesh->vertex_buffer, &vertex_offset);
+        vkCmdBindIndexBuffer(frame.command_buffer, mesh->index_buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(frame.command_buffer, mesh->index_count, 1, 0, 0, 0);
+        ++visible;
+    }
+    last_visible_entities = visible;
 
     vkCmdEndRendering(frame.command_buffer);
 
     transition_image(frame.command_buffer, images[image_index],
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                      VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-                     VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, 0);
+                     VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, 0,
+                     VK_IMAGE_ASPECT_COLOR_BIT);
 
     result = vkEndCommandBuffer(frame.command_buffer);
     if (result != VK_SUCCESS) {
@@ -860,7 +1147,7 @@ Renderer& Renderer::operator=(Renderer&&) noexcept = default;
 
 Renderer::~Renderer() = default;
 
-core::Result<bool> Renderer::draw_frame() {
+core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
     if (impl_->window->minimized()) {
         return false;
     }
@@ -886,6 +1173,21 @@ core::Result<bool> Renderer::draw_frame() {
         }
         if (impl_->swapchain == VK_NULL_HANDLE) {
             return false;
+        }
+    }
+
+    if (!view.active_camera().has_value()) {
+        return core::make_failure<bool>(core::make_error(
+            core::ErrorCode::NotFound, "the scene has no active camera", {}, {{"stage", "scene"}}));
+    }
+    for (const scene::Entity entity : view.entities()) {
+        if (!view.has_mesh(entity)) {
+            continue;
+        }
+        if (impl_->find_mesh(view.mesh(entity).mesh_id) == nullptr) {
+            return core::make_failure<bool>(core::make_error(
+                core::ErrorCode::Unsupported, "the scene references an unknown mesh", {},
+                {{"stage", "mesh"}, {"meshId", view.mesh(entity).mesh_id}}));
         }
     }
 
@@ -924,7 +1226,7 @@ core::Result<bool> Renderer::draw_frame() {
             detail::vulkan_error("could not reset the frame fence", "frame", result));
     }
 
-    auto recorded = impl_->record_frame(image_index);
+    auto recorded = impl_->record_frame(image_index, view);
     if (!recorded) {
         return core::make_failure<bool>(recorded.error());
     }
@@ -1026,6 +1328,10 @@ std::uint32_t Renderer::image_count() const noexcept {
 
 std::uint64_t Renderer::presented_frames() const noexcept {
     return impl_->presented_frames;
+}
+
+std::uint32_t Renderer::last_visible_entities() const noexcept {
+    return impl_->last_visible_entities;
 }
 
 } // namespace engine::render

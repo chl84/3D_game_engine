@@ -9,6 +9,10 @@
 #include <cstdint>
 #include <memory>
 
+namespace engine::scene {
+class SceneView;
+}
+
 namespace engine::render {
 
 struct SwapchainOptions {
@@ -29,9 +33,9 @@ public:
     Renderer& operator=(Renderer&&) noexcept;
     ~Renderer();
 
-    // Acquires, clears and presents one frame. Returns false when the window is
-    // minimized or a new swapchain could not be created yet.
-    [[nodiscard]] core::Result<bool> draw_frame();
+    // Acquires, renders the scene view and presents one frame. Returns false
+    // when the window is minimized or a new swapchain could not be created yet.
+    [[nodiscard]] core::Result<bool> draw_frame(const scene::SceneView& view);
 
     [[nodiscard]] core::Result<void> wait_idle() const;
 
@@ -41,6 +45,7 @@ public:
     [[nodiscard]] VkFormat color_format() const noexcept;
     [[nodiscard]] std::uint32_t image_count() const noexcept;
     [[nodiscard]] std::uint64_t presented_frames() const noexcept;
+    [[nodiscard]] std::uint32_t last_visible_entities() const noexcept;
 
 private:
     struct Impl;
