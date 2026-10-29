@@ -150,6 +150,11 @@ def main() -> int:
         escaped_document = parse_result(escaped, "escaped screenshot")
         if escaped.returncode == 0 or escaped_document.get("status") != "error":
             return fail("screenshot accepted a path outside the project")
+        escaped_error = escaped_document.get("error", {})
+        if escaped_error.get("code") != "E_VALIDATION":
+            return fail("escaped screenshot did not return E_VALIDATION")
+        if escaped_error.get("details", {}).get("path") != "../escape.png":
+            return fail("escaped screenshot did not report the rejected path")
         if (project.parent / "escape.png").exists():
             return fail("screenshot wrote outside the project")
 
@@ -169,6 +174,11 @@ def main() -> int:
         oversized_document = parse_result(oversized, "oversized screenshot")
         if oversized.returncode == 0 or oversized_document.get("status") != "error":
             return fail("screenshot accepted dimensions above the limit")
+        oversized_error = oversized_document.get("error", {})
+        if oversized_error.get("code") != "E_VALIDATION":
+            return fail("oversized screenshot did not return E_VALIDATION")
+        if oversized_error.get("details", {}).get("maxDimension") != 8192:
+            return fail("oversized screenshot did not report maxDimension")
 
         too_tall = run_engine(
             engine,
@@ -186,6 +196,11 @@ def main() -> int:
         too_tall_document = parse_result(too_tall, "too-tall screenshot")
         if too_tall.returncode == 0 or too_tall_document.get("status") != "error":
             return fail("screenshot accepted a height above the limit")
+        too_tall_error = too_tall_document.get("error", {})
+        if too_tall_error.get("code") != "E_VALIDATION":
+            return fail("too-tall screenshot did not return E_VALIDATION")
+        if too_tall_error.get("details", {}).get("maxDimension") != 8192:
+            return fail("too-tall screenshot did not report maxDimension")
 
         too_many_frames = run_engine(
             engine,
@@ -203,6 +218,11 @@ def main() -> int:
         too_many_frames_document = parse_result(too_many_frames, "too-many-frames screenshot")
         if too_many_frames.returncode == 0 or too_many_frames_document.get("status") != "error":
             return fail("screenshot accepted a frame count above the limit")
+        too_many_frames_error = too_many_frames_document.get("error", {})
+        if too_many_frames_error.get("code") != "E_VALIDATION":
+            return fail("too-many-frames screenshot did not return E_VALIDATION")
+        if too_many_frames_error.get("details", {}).get("maxFrames") != 1000:
+            return fail("too-many-frames screenshot did not report maxFrames")
 
     print("screenshot CLI OK")
     return 0
