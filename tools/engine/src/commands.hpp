@@ -30,6 +30,7 @@ int component_remove(const std::string& project_root, const std::string& scene_p
                      const std::string& entity_id, const std::string& component, bool json);
 
 int simulate(const std::string& project_root, const std::string& scene_path, int ticks, bool json);
+int schema(bool json);
 int batch(const std::string& project_root, const std::string& scene_path, const std::string& file,
           int undo_count, bool json);
 

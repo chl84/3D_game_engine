@@ -154,6 +154,14 @@ def main() -> int:
         return document
 
     try:
+        schema_document = run_command(["schema"], "schema")
+        components = schema_document["data"].get("components")
+        if not isinstance(components, dict):
+            return fail("schema output has no components object")
+        for name in ("engine.scene.Transform", "engine.scene.Camera", "engine.scene.Motion"):
+            if name not in components:
+                return fail(f"schema output is missing {name}")
+
         with tempfile.TemporaryDirectory(prefix="engine-cli-contract-") as temporary:
             project_dir = Path(temporary) / "demo"
             created = run_command(

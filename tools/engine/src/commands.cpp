@@ -1026,6 +1026,13 @@ int simulate(const std::string& project_root, const std::string& scene_path, int
     return 0;
 }
 
+int schema(bool json) {
+    const ReflectionRegistry registry = make_registry();
+    const CommandResult result = success({{"components", registry.schemas()}});
+    print_result(result, json);
+    return 0;
+}
+
 int batch(const std::string& project_root, const std::string& scene_path, const std::string& file,
           int undo_count, bool json) {
     std::ifstream input(file, std::ios::binary);

@@ -201,6 +201,9 @@ int main(int argc, char** argv) {
     component_remove->add_option("--component", remove_component, "Component name.")->required();
     component_command->require_subcommand(1);
 
+    auto* schema_command = app.add_subcommand("schema", "Print component schemas.");
+    schema_command->add_flag("--json", json, "Emit a machine-readable JSON document.");
+
     auto* simulate_command = app.add_subcommand("simulate", "Run fixed simulation ticks.");
     std::string simulate_project;
     std::string simulate_scene = "scenes/main.scene.json";
@@ -333,6 +336,10 @@ int main(int argc, char** argv) {
             return engine::cli::component_remove(remove_project, remove_scene, remove_id,
                                                  remove_component, json);
         }
+    }
+
+    if (*schema_command) {
+        return engine::cli::schema(json);
     }
 
     if (*simulate_command) {

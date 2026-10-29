@@ -98,3 +98,14 @@ add_test(
 set_tests_properties(engine_sensitive_scan PROPERTIES
     LABELS "docs;security"
 )
+
+add_test(
+    NAME engine_acceptance_m1
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_SOURCE_DIR}/scripts/acceptance_m1.py"
+            "$<TARGET_FILE:engine>"
+)
+
+set_tests_properties(engine_acceptance_m1 PROPERTIES
+    LABELS "contract;acceptance"
+)
