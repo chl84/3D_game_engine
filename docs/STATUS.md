@@ -135,8 +135,8 @@
 | M2.4 double world transform | Automatically tested | `scene_test` composes a parent at 8 km with a 1 mm child offset in double precision and checks the camera-relative float offset |
 | M2.4 camera-relative rendering | Automatically tested | `scene_transform_test` builds the 8 km model matrix from the double offset, checks finite values, and verifies the rotation-only camera view |
 | M2.4 depth and culling | Automatically tested | `engine_swapchain_test` renders a 8 km scene with a depth buffer and checks that the far cube and ground are visible while an entity behind the camera is culled |
-| M2.4 CI | Automatically tested | Manual dispatch [40906112033](https://github.com/chl84/3D_game_engine/actions/runs/40906112033) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with camera/transform cases passing and device cases skipped; Quality green |
-| M2.4 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `9fac9f0`, built with glslc, ran 11/11 CTest and `M1 acceptance passed` |
+| M2.4 CI | Automatically tested | Manual dispatch [40908218354](https://github.com/chl84/3D_game_engine/actions/runs/40908218354) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with camera/transform cases passing and device cases skipped; Quality green |
+| M2.4 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `7cdbb99`, built with glslc, ran 11/11 CTest and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
