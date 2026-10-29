@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.7. This document describes the approved module boundaries and
+**Status:** M2.1. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -97,6 +97,23 @@ Structural changes initiated by gameplay — spawning, despawning and component
 changes — go through the command bus. Continuous movement, physics and
 animation mutate the runtime state directly during a fixed tick.
 
+## Rendering
+
+- `platform` owns SDL3: the video and event subsystems, the window and the
+  Vulkan surface. SDL is not exposed to simulation modules.
+- `render` owns the Vulkan instance, physical and logical device, queues, VMA
+  allocator and the debug messenger. It requires Vulkan 1.3 with
+  Synchronization2 and Dynamic Rendering.
+- Rendering can run headless: a device without a window is enough for
+  offscreen rendering, screenshots and golden-image tests.
+- Validation layers are enabled in debug builds when available. The `Required`
+  mode fails when the layer is missing, and the debug messenger counts errors
+  and warnings so tests can assert zero errors.
+- volk keeps process-wide function tables, so a process has one `Device` at a
+  time. Device creation happens before worker threads start.
+- `render` reads `scene` through a read-only `SceneView`. It never receives
+  `SceneEditor`.
+
 ## Command bus
 
 - Every command has a unique, versioned name such as `scene.entity.create@1`
@@ -157,7 +174,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M1.2 contains:
+M2.1 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -168,21 +185,28 @@ M1.2 contains:
   recursive subtree destruction, and the project/scene JSON format with
   canonical output, atomic saves and project locks
 - `engine/platform`: atomic file replacement with `fsync` on POSIX and
-  `MoveFileExW` on Windows
+  `MoveFileExW` on Windows, plus SDL3 video/event initialization, the window
+  and Vulkan surface creation
 - `engine/command`: versioned command registry, JSON Schema validation via
   json-schema-validator, structured success/error results with warnings, an
   in-memory command log with sequence numbers, undo/redo stacks, redo
   invalidation and transactions that commit or roll back as one undo step
 - `engine/scene` also provides a fixed-tick simulation that advances `Motion`
   velocities into `Transform` positions and emits a deterministic state dump
-- EnTT 4.0.0 and json-schema-validator 2.4.0 are active
+- `engine/render`: Vulkan 1.3 instance and device creation through volk,
+  physical-device and queue selection, Synchronization2 and Dynamic Rendering,
+  a VMA allocator, an optional validation-layer debug messenger with error
+  counting, a headless device mode and a windowed surface mode
+- EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, VMA 3.5.0 and GLM
+  1.0.3 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
-- `tests/unit`: core unit tests
+- `tests/unit`, `tests/render`: core unit tests and Vulkan device/window smoke
+  tests
 - `tests/smoke`, `tests/contract`: CLI JSON and schema tests
 - `schemas/`: `version@1`, `doctor@1` and `log-record@1` schemas
 - CI: GCC 14, Clang 18, Windows MSVC, clang-format/clang-tidy, ASan/UBSan and
   lavapipe-based Vulkan detection
 
-The remaining modules are planned, not implemented. M1 adds reflection, ECS,
-the command bus and the project/scene format.
+The remaining modules are planned, not implemented. M2 adds the Vulkan
+renderer; M3 adds assets.

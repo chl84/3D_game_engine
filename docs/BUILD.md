@@ -1,12 +1,13 @@
 # Build
 
-**Status:** M1.10. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M2.1. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
-simulation and `engine schema`. Version, doctor and all offline commands
-support `--json` and state-changing commands support `--dry-run`. Catch2,
-contract and M1 acceptance tests cover the CLI, and
+simulation, `engine schema`, and the M2.1 Vulkan render device with an SDL3
+window. Version, doctor and all offline commands support `--json` and
+state-changing commands support `--dry-run`. Catch2, contract, render and M1
+acceptance tests cover the CLI and the renderer, and
 `scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
 clang-format, clang-tidy and ASan/UBSan. Documentation links and
 sensitive-data checks run as CTest tests.
@@ -48,7 +49,20 @@ sudo pacman -S --needed vulkan-headers vulkan-validation-layers vulkan-tools vul
 ```
 
 `vulkan-swrast` provides lavapipe, the software Vulkan device used for
-headless tests and golden images.
+headless tests and golden images. The validation layers are required by the
+`required validation layers report no errors` test; CI installs
+`vulkan-validationlayers` on Ubuntu.
+
+SDL3 is built by vcpkg with the Vulkan, X11 and Wayland features. On Debian and
+Ubuntu the build needs the X11 and Wayland development headers:
+
+```bash
+sudo apt install -y libx11-dev libxft-dev libxext-dev libwayland-dev \
+    libxkbcommon-dev libegl1-mesa-dev
+```
+
+CI installs these before configuring. Windows builds need no extra system
+packages; the Vulkan loader is optional and graphics is not verified there.
 
 ## vcpkg
 

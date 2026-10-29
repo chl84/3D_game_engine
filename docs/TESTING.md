@@ -1,9 +1,10 @@
 # Testing
 
-**Status:** M1.10. Eight CTest tests exist; `engine_core_tests` contains 56
-test cases and 417 assertions. CI also runs clang-format, clang-tidy with
-project headers included, ASan/UBSan, and Vulkan detection with pinned CMake
-4.4.5 and Ninja 1.13.2.
+**Status:** M2.1. Ten CTest tests exist on Linux; Windows registers nine
+because the window smoke test is not registered there. `engine_core_tests`
+contains 56 test cases and 417 assertions. CI also runs clang-format,
+clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
+pinned CMake 4.4.5 and Ninja 1.13.2.
 
 ## Current tests
 
@@ -17,6 +18,8 @@ project headers included, ASan/UBSan, and Vulkan detection with pinned CMake
 | `engine_sensitive_scan` | Credentials, private keys, personal paths and email addresses in tracked files | `docs`, `security` |
 | `engine_acceptance_m1` | CLI-only M1 acceptance: project, hierarchy, components, undo, round-trip and deterministic simulation | `contract`, `acceptance` |
 | `engine_api_reference` | Generated `API_REFERENCE.md` matches `engine schema --json` | `docs`, `contract` |
+| `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, single-device guard and sequential device creation | `unit`, `render` |
+| `engine_window_smoke` | SDL3 window, Vulkan surface, present queue and zero validation errors | `unit`, `render` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -24,8 +27,22 @@ metadata. `engine_cli_contract` validates `engine --version --json` against
 `version@1` and `engine doctor --json` against `doctor@1`, checks the
 `log-record@1` fixture, and verifies the `--require` exit codes.
 `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
-`tl::expected`, Catch2 and volk, so missing include paths or link errors fail
-on both Linux and Windows.
+`tl::expected`, Catch2, volk, SDL3, VMA and GLM, so missing include paths or
+link errors fail on both Linux and Windows.
+
+`engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
+graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
+asserts that the debug messenger counts zero errors, checks the single-device
+guard, and creates devices sequentially to prove that volk can be initialized
+and finalized repeatedly. If the Vulkan loader is missing, the cases are
+reported as skipped. `engine_window_smoke` creates an SDL3 window, checks the
+surface extension, creates a surface and checks the present queue. It exits
+with code 77 when no display server or Vulkan loader is available; CTest
+reports that as skipped. The window test is not registered on Windows because
+Windows graphics is not verified.
+
+The Linux CI job runs the render tests against the default Mesa device; the
+lavapipe golden-image work starts in M2.5.
 
 `engine_core_tests` covers:
 
@@ -85,8 +102,9 @@ ref.
 
 Every job installs CMake 4.4.5 and Ninja 1.13.2 from the official release
 archives and fails if the reported versions differ. The Linux jobs install
-`mesa-vulkan-drivers` and `libvulkan1`, capture the exit code from
-`engine doctor --require vulkan --json` explicitly, require exit 0 and an
+`mesa-vulkan-drivers`, `libvulkan1`, `vulkan-validationlayers` and the X11 and
+Wayland development headers needed to build SDL3. They capture the exit code
+from `engine doctor --require vulkan --json` explicitly, require exit 0 and an
 `llvmpipe` device, and require exit 8 when `VK_ICD_FILENAMES` and
 `VK_DRIVER_FILES` point to a missing file. This also makes lavapipe available
 for the M2 golden image tests.

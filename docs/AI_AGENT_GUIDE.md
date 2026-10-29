@@ -1,7 +1,8 @@
 # AI Agent Guide
 
-**Status:** M1.7. Version, doctor, the offline project/scene/entity/component
-CLI and fixed-tick simulation exist. The live API is planned for M3.
+**Status:** M2.1. Version, doctor, the offline project/scene/entity/component
+CLI, fixed-tick simulation and the Vulkan render device exist. The live API is
+planned for M3.
 
 ## Principles
 
@@ -138,6 +139,24 @@ project or scene files. Entity and component commands and batch execute in
 memory; `project create` and `project unlock` only validate the target and
 report what would happen. `scene create` validates the path and duplicate
 registration. Read-only commands do not need it.
+
+## Renderer
+
+The render module is `engine::render`; it is not exposed through the CLI yet.
+`engine screenshot` arrives in M2.5. The current API creates a Vulkan 1.3
+device with Synchronization2, Dynamic Rendering and VMA, either headless or
+from an SDL3 window. `render::Device::create` returns `E_UNSUPPORTED` when the
+loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
+layers are missing; the error details name the failing stage.
+
+Run the renderer tests with:
+
+```bash
+ctest --preset ci-linux-clang -R "engine_render_tests|engine_window_smoke" -V
+```
+
+`engine_window_smoke` reports exit code 77 when no display server is available.
+The renderer never mutates scene state; M2.4 adds the read-only `SceneView`.
 
 ## Planned commands
 

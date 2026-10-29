@@ -1,8 +1,8 @@
 # Status
 
 **Last updated:** 2026-10-29
-**Current milestone:** M1 — headless core (maintenance)
-**Current substep:** M1.10 implemented — `--dry-run`, generated API reference and the security fixes are on `m1.10/maintenance`. Awaiting owner approval for tag `v0.2.1`.
+**Current milestone:** M2 — Vulkan renderer
+**Current substep:** M2.1 implemented — the render module, SDL3 window, Vulkan 1.3 device, VMA allocator and validation messenger are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -30,15 +30,28 @@
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
 | M1.9 | Hardening and M1 acceptance | Done |
-| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, and fixes from the Codex review (symlink-safe temp files, scene-create overwrite, subtree undo, missing scene IDs, revision handling) | Done — awaiting owner tag approval |
+| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, and fixes from the Codex review (symlink-safe temp files, scene-create overwrite, subtree undo, missing scene IDs, revision handling) | Done — released as `v0.2.1` |
+
+## M2 substeps
+
+| Substep | Scope | Status |
+|---|---|---|
+| M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Implemented — review pending |
+| M2.2 | Swapchain and frame loop | Planned |
+| M2.3 | First triangle | Planned |
+| M2.4 | Scene rendering | Planned |
+| M2.5 | Offscreen rendering and screenshots | Planned |
+| M2.6 | ImGui debug overlay | Planned |
+| M2.7 | Descriptor strategy and validation hardening | Planned |
+| M2.8 | Hardening and M2 acceptance | Planned |
 
 ## Repository state
 
-- `main`: the M1 release `89f52a0`, merged from `m1/headless-core` on
-  2026-10-29 and tagged `v0.2.0`.
-- `m1.10/maintenance`: the M1.10 changes; not merged.
-- `m0/foundation`, `m1/headless-core`: merged milestone branches, tagged
-  `v0.1.0` and `v0.2.0`.
+- `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
+  2026-10-29 and tagged `v0.2.1`.
+- `m2/vulkan-renderer`: the M2 implementation branch; not merged.
+- `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
+  branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
   change repository visibility. It was done to enable branch protection on the
   GitHub Free plan.
@@ -99,8 +112,12 @@
 | `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
 | Generated API reference | Automatically tested | `engine schema --json` exposes 3 components and 8 command schemas; `engine_api_reference` checks `docs/API_REFERENCE.md` against the generator |
 | Codex review fixes | Automatically tested, redo manually verified | Symlink-safe exclusive temp files, scene-create overwrite rejection (existing and listed-but-missing), recursive subtree undo, missing sceneId and negative revision validation, and revision bump on component undo; redo is manually verified because the CLI has no redo command |
-| M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1.10/maintenance`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
-| M1 CI | Automatically tested | Manual dispatch [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
+| M1.10 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned public `v0.2.1`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
+| M1.10 CI | Automatically tested | Main push [40848990449](https://github.com/chl84/3D_game_engine/actions/runs/40848990449) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
+| M2.1 headless device | Automatically tested | `engine_render_tests` → 22 assertions in 4 test cases against the local GPU and against lavapipe forced with `VK_ICD_FILENAMES` |
+| M2.1 window and surface | Automatically tested locally | `engine_window_smoke` created a hidden SDL3 window, a Vulkan surface and a present queue with zero validation errors |
+| M2.1 validation layers | Automatically tested | The required-mode test fails when `VK_LAYER_KHRONOS_validation` is missing and asserts that the debug messenger counted zero errors |
+| M2.1 dependencies | Automatically tested | `engine_dependencies_smoke` includes and links SDL3, VMA and GLM; the vcpkg manifest pins 3.4.18, 3.5.0 and 1.0.3 |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
@@ -236,6 +253,19 @@ The Windows job caught two real portability issues before the milestone closed:
 - `docs/PROJECT_FORMAT.md` describes the implemented M1 format.
 - `engine doctor` reports the current working directory as the project root
   until project-root discovery is added.
+- Windows graphics is **not verified**: the runner has no GPU. The Windows CI
+  job compiles the render module and runs the headless tests, which skip when
+  the Vulkan loader is missing. The window smoke test is not registered on
+  Windows.
+- The window smoke test is skipped in headless CI. It runs locally and on any
+  Linux machine with a display server.
+- The renderer requires Vulkan 1.3 with Synchronization2 and Dynamic
+  Rendering. Older devices are rejected with `E_UNSUPPORTED` and the rejected
+  devices are listed in the error details.
+- volk keeps process-wide function tables, so the engine allows one render
+  device per process. Device creation must happen before worker threads start.
+- The Vulkan SDK is not bundled. Validation layers and the loader are runtime
+  requirements of the debug and test builds.
 - The English `VISION.md` translation is complete; the Norwegian master prompt
   remains the source of truth outside the repository.
 - **Git history:** rewritten on 2026-10-29 to remove a local absolute path
@@ -249,7 +279,6 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Owner approval of M1.10. After approval, the owner decides whether to merge
-`m1.10/maintenance` into `main` and publish tag `v0.2.1`. The agent does not
-merge, tag or use `--admin` without explicit owner approval. After that, the
-owner reviews the M2 plan before M2 starts.
+M2.1 review, then M2.2 — swapchain and frame loop. Merging to `main`, creating
+or pushing a tag and closing M2 as `v0.3.0` require the owner's explicit
+approval. The agent does not merge, tag or use `--admin` without that approval.

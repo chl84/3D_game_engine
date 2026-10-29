@@ -1,11 +1,11 @@
 # M2 Plan — Vulkan Renderer
 
-**Status:** Proposed. Awaiting the owner's approval. M2 has not started.
+**Status:** Approved by the owner on 2026-10-29. Implementation started with
+M2.1.
 
-M1 is released as `v0.2.0`. M1.10 (`--dry-run`, generated API reference and
-review fixes) is implemented on `m1.10/maintenance` and approved by the
-reviewer; its merge and tag `v0.2.1` still require owner approval. M2 starts
-only after both approvals.
+M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
+`m2/vulkan-renderer` branch. The milestone is not complete until the M2
+acceptance criteria are met and recorded in `docs/STATUS.md`.
 
 ## Goal
 
@@ -200,3 +200,6 @@ on Linux with lavapipe. The Windows runner has no GPU.
 5. Approve that merge, tag and `--admin` remain owner-only decisions.
 
 No implementation starts before this plan is approved.
+
+**Owner decision:** all five points were approved on 2026-10-29 together with
+the merge and the `v0.2.1` tag.
