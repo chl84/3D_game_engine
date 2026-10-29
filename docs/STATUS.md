@@ -49,8 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch at `dbc313a`; code head
-  `8cc510e` plus the `e727436` contract-test follow-up. Not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch at `330e6b5`; M2.8
+  head is `d091f0d`, with documentation after it. Not merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -166,8 +166,8 @@
 | M2.8 Windows offscreen ICD | Automatically tested | Windows CI installs `mmozeiko/build-mesa` lavapipe 26.2.6 x64 (SHA-256 verified), registers `lvp_icd.x86_64.json` in the Vulkan loader registry, and runs on `llvmpipe (LLVM 23.1.4)`. `engine_render_tests` is 13 cases / 105 assertions with device cases running; `engine_screenshot_golden` and `engine_screenshot_cli` pass; Windows CTest is 11/11 |
 | M2.8 pinned Linux glslc | Automatically tested | Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and uses its `glslc` (`shaderc v2026.4`); `command -v glslc` is asserted to be `$VULKAN_SDK/bin/glslc`. This matches the Windows SDK version |
 | M2.8 doctor mixed-device test | Automatically tested | `engine_core_tests` adds mixed supported/unsupported device cases: one supported device passes, all-unsupported fails, and an empty device list remains diagnostic. Core tests are 62 cases / 474 assertions |
-| M2.8 CI | Automatically tested | Manual dispatch [40954919302](https://github.com/chl84/3D_game_engine/actions/runs/40954919302) on `2e0fc70` → all five jobs green. Linux GCC 14 / Clang 18 / ASan: 14/14; Windows MSVC: 11/11 with lavapipe offscreen tests; Quality green |
-| M2.8 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `2e0fc70`, built with pinned dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.8 CI | Automatically tested | Final run [40959315657](https://github.com/chl84/3D_game_engine/actions/runs/40959315657) on `330e6b5` → all five jobs green. Linux GCC 14 / Clang 18 / ASan: 14/14; Windows MSVC: 11/11 with lavapipe offscreen tests; Quality green |
+| M2.8 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `330e6b5`, built with pinned dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
