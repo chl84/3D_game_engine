@@ -172,6 +172,8 @@ with Required validation. Device loss is not simulated in M2.7.
   overlay, so release builds do not link it by default.
 - Measure the ImGui Vulkan backend re-initialization on swapchain recreation
   and optimize it if the M2 performance budget is affected.
+- Add a device-loss validation scenario where the test harness can force it;
+  otherwise document why it remains uncovered.
 - Clean-clone acceptance on Linux with lavapipe.
 - ASan/UBSan and TSan smoke tests where meaningful; GPU drivers are not
   instrumented.

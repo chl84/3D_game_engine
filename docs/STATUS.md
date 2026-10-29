@@ -156,7 +156,7 @@
 | M2.7 descriptor strategy | Implemented | ADR-0011 is accepted: descriptor indexing (bindless) is a minimum requirement, there is no classic fallback, and BDA is deferred to M5/M8. The support table records Iris Xe and lavapipe |
 | M2.7 device capability gate | Automatically tested | `Device::create` queries the required descriptor-indexing features and limits. A missing feature or limit returns `E_UNSUPPORTED`, stage `descriptor-indexing`, with `missingFeatures` and `missingLimits` (name, required, supported). `Device::descriptor_capabilities()` exposes the queried values |
 | M2.7 descriptor failure test | Automatically tested | `engine_render_tests` (13 cases / 105 assertions) constructs capabilities with a missing feature and a low limit, asserts `E_UNSUPPORTED`, stage `descriptor-indexing`, `missingFeatures` and the machine-readable limit entry. There is no fallback test because there is no fallback path |
-| M2.7 doctor | Automatically tested | `engine doctor` reports `vulkan.descriptorIndexing` and a per-device `descriptorIndexing` object with `errorCode: E_UNSUPPORTED` and missing lists. `--require vulkan` exits 8 when no device satisfies the requirement; an enumerated but unsupported device also makes plain `doctor` exit 8. The doctor schema and contract test cover the new fields |
+| M2.7 doctor | Automatically tested | `engine doctor` reports `vulkan.descriptorIndexing` and a per-device `descriptorIndexing` object with `errorCode: E_UNSUPPORTED` and missing lists. `--require vulkan` exits 8 when no device satisfies the requirement; an enumerated but unsupported device adds `descriptor-indexing` to `requirements.failed` and makes plain `doctor` exit 8, so the exit code and JSON agree. The doctor schema and contract test cover the new fields |
 | M2.7 screenshot error codes | Automatically tested | `tests/smoke/screenshot.py` requires `E_VALIDATION` and the exact `path`, `maxDimension` and `maxFrames` details for `../escape.png`, `--width 8193`, `--height 8193` and `--frames 1001` |
 | M2.7 budgets | Documented | Engine budget is 4096 sampled images + 2 samplers and 4096 material records. The 1 GiB texture budget is a sub-budget of the 4 GiB total GPU memory budget |
 | M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
@@ -317,6 +317,9 @@ The Windows job caught two real portability issues before the milestone closed:
 - Device loss is not simulated in M2.7. Resize, minimize/restore and swapchain
   recreation are covered; device loss remains an M2.8 hardening item where
   practical.
+- The device-rejection path is tested through the pure descriptor requirement
+  evaluator and error builder. There is no fake-Vulkan end-to-end test that
+  drives `select_physical_device` with a synthetic unsupported device.
 - TSan covers the CPU-side tests only. The window, swapchain and overlay tests
   are excluded because the Khronos validation layer reports a lock-order
   inversion inside the uninstrumented layer; GPU drivers are not instrumented.

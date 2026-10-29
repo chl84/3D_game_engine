@@ -33,8 +33,9 @@ metadata. `engine_cli_contract` validates `engine --version --json` against
 top-level and per-device descriptor-indexing report, checks the
 `log-record@1` fixture, and verifies the `--require` exit codes. On a machine
 with a device that lacks the required descriptor features, plain `doctor`
-reports the failure and exits 8; on a machine with no Vulkan device it remains
-diagnostic unless `--require vulkan` is used.
+reports `descriptor-indexing` in `requirements.failed` and exits 8; on a
+machine with no Vulkan device it remains diagnostic unless `--require vulkan`
+is used.
 `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
 `tl::expected`, Catch2, volk, SDL3, VMA, GLM and Dear ImGui, so missing include
 paths or link errors fail on both Linux and Windows.
@@ -296,5 +297,7 @@ labelled `render` or `golden`.
   TSan-clean
 - Device loss; resize, minimize/restore and swapchain recreation are covered,
   but the harness has no practical way to force device loss
+- A fake-Vulkan end-to-end test that makes `select_physical_device` reject a
+  synthetic device; the evaluator and error builder are unit-tested directly
 - The console log sink; the JSONL sink is automatically tested
 - Branch protection enforcement; the GitHub plan blocks it (see `STATUS.md`)

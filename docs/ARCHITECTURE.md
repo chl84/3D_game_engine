@@ -134,7 +134,9 @@ animation mutate the runtime state directly during a fixed tick.
   descriptor-indexing features and limits, or creation fails with
   `E_UNSUPPORTED`, stage `descriptor-indexing`. There is no classic-set
   fallback. M3 uses one bindless set with a 4096-image array and material
-  records; M2 only implements the capability gate and its tests.
+  records; M2 only implements the capability gate and its tests. The Dear ImGui
+  overlay's internal UI descriptor pool is the documented exception (ADR-0010)
+  and is not a material/texture path.
 - The GPU memory budget is 4 GiB total. Textures are capped at 1 GiB as a
   sub-budget; material records, descriptor pools and other allocations count
   against the 4 GiB total.

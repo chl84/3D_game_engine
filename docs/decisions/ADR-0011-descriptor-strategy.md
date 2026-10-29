@@ -178,8 +178,11 @@ the same missing lists.
 Do **not** adopt BDA for M3. Re-evaluate BDA in M5/M8 for GPU-driven geometry,
 indirect draws and large-world streaming, where its benefits are concrete.
 
-There is exactly one descriptor path in M3 and later. If a concrete target
-device lacks the required features, a new ADR must be approved before adding a
+There is exactly one material/texture descriptor path in M3 and later. The
+Dear ImGui debug overlay is the documented exception: it owns an internal
+descriptor pool for its font atlas and UI textures (ADR-0010). It is not a
+material or texture path and it is not a fallback. If a concrete target device
+lacks the required features, a new ADR must be approved before adding a
 fallback; the engine does not silently degrade.
 
 ## Consequences
