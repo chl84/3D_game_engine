@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.2. This document describes the approved module boundaries and
+**Status:** M1.3. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -166,8 +166,10 @@ M1.2 contains:
 - `engine/scene`: EnTT-backed ECS with stable UUIDs, `Transform`, `Camera`,
   parent/child links, world-transform composition, cycle rejection and
   recursive subtree destruction
-- EnTT 4.0.0 and json-schema-validator 2.4.0 are available; the validator is
-  used by the command bus in M1.3
+- `engine/command`: versioned command registry, JSON Schema validation via
+  json-schema-validator, structured success/error results with warnings, and an
+  in-memory command log with sequence numbers
+- EnTT 4.0.0 and json-schema-validator 2.4.0 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
 - `tests/unit`: core unit tests
