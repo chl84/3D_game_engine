@@ -1,3 +1,4 @@
+#include <engine/render/descriptor_requirements.hpp>
 #include <engine/render/device.hpp>
 
 #include <catch2/catch_message.hpp>
@@ -61,6 +62,38 @@ TEST_CASE("headless Vulkan device initializes", "[render]") {
     CHECK_FALSE(device->has_surface());
     CHECK_FALSE(device->queue_families().presentation);
     CHECK(device->wait_idle().has_value());
+}
+
+TEST_CASE("device meets the descriptor indexing minimum", "[render][descriptor]") {
+    auto device =
+        engine::render::Device::create(device_options(engine::render::ValidationMode::Disabled));
+    if (!device) {
+        if (environment_unavailable(device.error())) {
+            SKIP("Vulkan environment is unavailable: " + device.error().message);
+        }
+        INFO("device creation failed: " << device.error().message << " " << device.error().hint);
+    }
+    REQUIRE(device.has_value());
+
+    const engine::render::DescriptorCapabilities& capabilities = device->descriptor_capabilities();
+    const engine::render::DescriptorRequirementReport report =
+        engine::render::evaluate_descriptor_requirements(capabilities);
+    INFO("missing features: " << report.missing_features.size()
+                              << ", missing limits: " << report.missing_limits.size());
+    CHECK(report.supported);
+    CHECK(capabilities.descriptor_indexing);
+    CHECK(capabilities.shader_sampled_image_array_non_uniform_indexing);
+    CHECK(capabilities.descriptor_binding_partially_bound);
+    CHECK(capabilities.descriptor_binding_variable_descriptor_count);
+    CHECK(capabilities.descriptor_binding_sampled_image_update_after_bind);
+    CHECK(capabilities.runtime_descriptor_array);
+    CHECK(capabilities.max_per_stage_descriptor_update_after_bind_sampled_images >=
+          engine::render::kBindlessSampledImageBudget);
+    CHECK(capabilities.max_descriptor_set_update_after_bind_sampled_images >=
+          engine::render::kBindlessSampledImageBudget);
+    CHECK(capabilities.max_update_after_bind_descriptors_in_all_pools >=
+          engine::render::kBindlessDescriptorBudget);
+    CHECK(capabilities.max_bound_descriptor_sets >= engine::render::kMinimumBoundDescriptorSets);
 }
 
 TEST_CASE("required validation layers report no errors", "[render][validation]") {

@@ -14,6 +14,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -229,6 +230,7 @@ struct Selection {
     VkPhysicalDevice device{VK_NULL_HANDLE};
     VkPhysicalDeviceProperties properties{};
     QueueFamilies queues{};
+    DescriptorCapabilities descriptor_capabilities{};
 };
 
 [[nodiscard]] core::Result<Selection> select_physical_device(VkInstance instance,
@@ -255,6 +257,8 @@ struct Selection {
     nlohmann::json rejected = nlohmann::json::array();
     Selection best;
     int best_score = -1;
+    std::optional<DescriptorRequirementReport> descriptor_failure;
+    std::string descriptor_failure_device;
 
     for (const VkPhysicalDevice device : devices) {
         VkPhysicalDeviceProperties properties{};
@@ -286,16 +290,39 @@ struct Selection {
             continue;
         }
 
+        const DescriptorCapabilities capabilities = query_descriptor_capabilities(device);
+        const DescriptorRequirementReport descriptor_report =
+            evaluate_descriptor_requirements(capabilities);
+        if (!descriptor_report.supported) {
+            rejected.push_back({
+                {"device", name},
+                {"reason", "descriptor indexing requirements are not met"},
+                {"descriptorIndexing", descriptor_requirement_json(descriptor_report)},
+            });
+            if (!descriptor_failure.has_value()) {
+                descriptor_failure = descriptor_report;
+                descriptor_failure_device = name;
+            }
+            continue;
+        }
+
         const int score = device_score(properties.deviceType);
         if (score > best_score) {
             best_score = score;
             best.device = device;
             best.properties = properties;
             best.queues = *queues;
+            best.descriptor_capabilities = capabilities;
         }
     }
 
     if (best.device == VK_NULL_HANDLE) {
+        if (descriptor_failure.has_value()) {
+            core::Error error = make_descriptor_requirement_error(*descriptor_failure);
+            error.details["device"] = descriptor_failure_device;
+            error.details["rejected"] = std::move(rejected);
+            return core::make_failure<Selection>(std::move(error));
+        }
         return core::make_failure<Selection>(core::make_error(
             core::ErrorCode::Unsupported, "no suitable Vulkan 1.3 device is available",
             "A Vulkan 1.3 device with Synchronization2 and Dynamic Rendering is required.",
@@ -318,6 +345,7 @@ struct Device::Impl {
     VmaAllocator allocator{nullptr};
     VkPhysicalDeviceProperties properties{};
     QueueFamilies queues{};
+    DescriptorCapabilities descriptor_capabilities{};
     bool validation_enabled{false};
     bool loader_initialized{false};
     std::unique_ptr<ValidationState> validation{std::make_unique<ValidationState>()};
@@ -504,6 +532,7 @@ core::Result<void> Device::Impl::initialize(const DeviceOptions& options) {
     physical_device = selection->device;
     properties = selection->properties;
     queues = selection->queues;
+    descriptor_capabilities = selection->descriptor_capabilities;
 
     std::vector<std::uint32_t> families{queues.graphics};
     if (queues.present != queues.graphics) {
@@ -531,6 +560,16 @@ core::Result<void> Device::Impl::initialize(const DeviceOptions& options) {
     features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
     features13.synchronization2 = VK_TRUE;
     features13.dynamicRendering = VK_TRUE;
+
+    VkPhysicalDeviceVulkan12Features features12{};
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.descriptorIndexing = VK_TRUE;
+    features12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    features12.descriptorBindingPartiallyBound = VK_TRUE;
+    features12.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    features12.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    features12.runtimeDescriptorArray = VK_TRUE;
+    features13.pNext = &features12;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -630,6 +669,10 @@ VmaAllocator Device::allocator() const noexcept {
 
 const QueueFamilies& Device::queue_families() const noexcept {
     return impl_->queues;
+}
+
+const DescriptorCapabilities& Device::descriptor_capabilities() const noexcept {
+    return impl_->descriptor_capabilities;
 }
 
 const VkPhysicalDeviceProperties& Device::properties() const noexcept {

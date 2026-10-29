@@ -71,6 +71,7 @@ set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependenc
 
 add_executable(engine_render_tests
     render/camera_test.cpp
+    render/descriptor_requirements_test.cpp
     render/device_test.cpp
     render/scene_transform_test.cpp
 )

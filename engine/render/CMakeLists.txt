@@ -56,6 +56,7 @@ add_custom_target(engine_render_shaders DEPENDS "${shader_header}")
 add_library(engine_render STATIC
     src/camera.cpp
     src/device.cpp
+    src/device_capabilities.cpp
     src/frustum.cpp
     src/offscreen_renderer.cpp
     src/renderer.cpp

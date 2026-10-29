@@ -2,6 +2,7 @@
 
 #include <engine/core/error.hpp>
 #include <engine/platform/window.hpp>
+#include <engine/render/descriptor_requirements.hpp>
 
 #include <volk.h>
 
@@ -72,6 +73,7 @@ public:
     [[nodiscard]] VkQueue present_queue() const noexcept;
     [[nodiscard]] VmaAllocator allocator() const noexcept;
     [[nodiscard]] const QueueFamilies& queue_families() const noexcept;
+    [[nodiscard]] const DescriptorCapabilities& descriptor_capabilities() const noexcept;
     [[nodiscard]] const VkPhysicalDeviceProperties& properties() const noexcept;
     [[nodiscard]] std::string device_name() const;
     [[nodiscard]] std::uint32_t api_version() const noexcept;
