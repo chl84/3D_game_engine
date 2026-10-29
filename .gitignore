@@ -41,3 +41,6 @@ CMakeUserPresets.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local review reports (Norwegian, not part of the repository)
+/reviews/
