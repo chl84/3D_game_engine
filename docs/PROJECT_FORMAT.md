@@ -1,7 +1,8 @@
 # Project and Scene Format
 
 **Status:** Implemented in M1.5 and extended with `engine.scene.Motion` in
-M1.7 and `engine.scene.Mesh` plus scene format version 2 in M2.4. The project
+M1.7, `engine.scene.Mesh` plus scene format version 2 in M2.4, and the M3
+asset-instance/light components in scene format version 3. The project
 and scene readers/writers, canonical JSON, atomic saves, project locks,
 round-trip tests and `scene validate` exist. Generated JSON Schemas are
 completed in M1.8.
@@ -71,7 +72,7 @@ This matches glTF, which simplifies asset import.
 
 ```json
 {
-  "formatVersion": 2,
+  "formatVersion": 3,
   "sceneId": "7c1e9b4d-4e6a-4c1f-8d2b-5a9e0c313f2a",
   "name": "main",
   "revision": 42,
@@ -146,6 +147,12 @@ This matches glTF, which simplifies asset import.
   (resolved by the asset pipeline from M3) or a fixed built-in ID:
   `engine.builtin.cube` or `engine.builtin.plane`. Mesh vertices and indices
   are never stored in the scene file.
+- `engine.scene.AssetInstance` stores an `assetId`. The asset hierarchy is
+  resolved read-only at render time; the scene does not copy GLB nodes.
+- `engine.scene.DirectionalLight` stores `direction`, linear `color`,
+  `intensity` and `enabled`. `direction` points from the light into the scene.
+- `engine.scene.PointLight` stores linear `color`, `intensity`, `range` and
+  `enabled`. It is reserved in scene format 3; M5 renders it.
 
 ## Canonical form
 
@@ -163,11 +170,15 @@ This matches glTF, which simplifies asset import.
 
 ## Versioning and migration
 
-- `project.json` uses `formatVersion` 1. Scene files use `formatVersion` 2;
+- `project.json` uses `formatVersion` 1. Scene files use `formatVersion` 3;
   the two formats are versioned independently.
-- Scene format 1 loads and is upgraded to 2 when saved. Scene format 1 may not
-  contain `engine.scene.Mesh`.
+- Scene format 1 loads and is upgraded through 2 to 3 when saved. Scene format
+  1 may not contain `engine.scene.Mesh`.
 - Scene format 2 adds the optional `engine.scene.Mesh` component.
+- Scene format 3 adds `engine.scene.AssetInstance`,
+  `engine.scene.DirectionalLight` and the reserved
+  `engine.scene.PointLight`. These components are rejected in v1/v2 files.
+- Scene format 4 and higher fail with `E_UNSUPPORTED_FORMAT`.
 - On load:
   - equal to current: validate and use
   - lower: run the additive migration `vN → vN+1 → …`
@@ -175,7 +186,7 @@ This matches glTF, which simplifies asset import.
 - Migrations are pure JSON→JSON functions with their own tests.
 - Unknown fields are rejected; `metadata` is preserved.
 - New format versions require an ADR and owner approval. Scene format 2 is
-  recorded in ADR-0009.
+  recorded in ADR-0009; scene format 3 is recorded in ADR-0012.
 - No automatic "best effort" migration that can lose data.
 
 ## Paths, security and locking
@@ -206,9 +217,13 @@ This is implemented in `platform` and tested on both platforms.
 
 ## Assets, prefabs and metadata
 
-- Assets get a UUID and a sidecar with import settings, source hash and a
-  cooked-cache key (M3).
-- Cooked data lives under `.engine/cache/` and can be regenerated.
+- Assets get a UUID and an `asset@1` sidecar with the original source path, a
+  project-relative source copy, import settings, source hash, stable node IDs
+  and a cooked-cache key (M3).
+- Cooked data lives under `.engine/cache/` and can be regenerated. The cache is
+  ignored by git.
+- Reimport preserves the asset UUID and stable node IDs for nodes that still
+  exist. Per-node overrides are reserved for a later milestone.
 - Prefabs are reserved in the format; instantiation comes later.
 - `metadata` is an open JSON object on the project, scene, entity and
   component. It is used by tools and AI and is preserved without being

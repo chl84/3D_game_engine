@@ -1,8 +1,9 @@
 # M3 Plan — Asset pipeline and live control
 
-**Status:** Proposed on 2026-10-30. No implementation starts and no new
-dependency or file format is used until the owner approves this plan and the
-decisions in the approval section.
+**Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
+in progress: scene v3, asset schemas, fastgltf/simdjson and the `ilammy`
+replacement are in place. The image-decoding decision is still awaiting
+explicit approval; texture decoding is not used until it is approved.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -36,17 +37,24 @@ Additional M2 decisions carried into M3:
 
 | Dependency | Version | License | Purpose | Status |
 |---|---|---|---|---|
-| fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB parsing, accessors, materials and node hierarchy | **Not in the build; owner approval required** |
-| simdjson (transitive) | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | fastgltf's JSON parser | **Not in the build; covered by the same approval** |
-| stb_image | 2026-08-02 | MIT OR Unlicense | PNG/JPEG texture decoding | Already approved in M2; no new approval |
+| fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB parsing, accessors, materials and node hierarchy | **Approved 2026-10-30; add in M3.1** |
+| simdjson (transitive) | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | fastgltf's JSON parser | **Approved 2026-10-30** |
+| stb_image | 2026-08-02 | MIT OR Unlicense | PNG/JPEG texture decoding | **Presented for explicit M3 approval; not used for texture decoding until approved** |
 
 No other runtime dependency is proposed. The live API uses the existing
 nlohmann/json and platform sockets. Compressed-texture codecs (KTX2/Basis),
 IBL tools and animation runtimes are not added in M3.
 
-`fastgltf` is added to `vcpkg.json` and `docs/DEPENDENCIES.md` only after
-approval. It is pinned through the existing vcpkg baseline and exact override.
-The transitive `simdjson` license is permissive and compatible with MIT.
+The image decoder is `stb_image` from the already pinned **stb 2026-08-02**
+package (`MIT OR Unlicense`, exact vcpkg commit). It is already in the build for
+golden-image reading; M3 would use it only to decode PNG/JPEG textures during
+asset cooking. The owner must explicitly approve that M3 use before any texture
+decode code is added. No new package is required.
+
+`fastgltf` and `simdjson` are added to `vcpkg.json` and `docs/DEPENDENCIES.md`
+in M3.1 after the 2026-10-30 approval. They are pinned through the existing
+vcpkg baseline and exact overrides. The transitive `simdjson` license is
+permissive and compatible with MIT.
 
 ## Proposed decisions requiring owner approval
 
@@ -66,11 +74,18 @@ bump the scene format to **3**.
 - The asset hierarchy is resolved read-only at render time. Reimporting a
   changed source updates the asset content while the scene continues to
   reference the same `assetId`.
+- Nodes inside an asset receive stable `nodeId` values that survive reimport.
+  They are stored in `asset.json` and reported by `asset inspect`; overrides
+  keyed by `nodeId` are not implemented in M3.
 - `project.json` stays at `formatVersion` 1. Scene files move from 2 to 3.
   Version 2 loads and is upgraded on save. Version 1 continues through the
   existing migration. Version 4 and higher fail with `E_UNSUPPORTED_FORMAT`.
 - The existing `engine.scene.Mesh` component remains for built-in primitives
   and direct mesh references.
+- Scene format 3 also adds `engine.scene.DirectionalLight` and reserves
+  `engine.scene.PointLight` now. M3 renders the directional light; M5 adds
+  point lights and shadows without another scene-format version. A scene that
+  contains point lights loads in M3 but the M3 renderer ignores them.
 
 **Alternative considered:** expand every GLB node into scene entities at
 placement. This avoids a scene-version bump but makes reimport dependent on
@@ -93,9 +108,13 @@ assets/<assetId>/source.glb          # project-relative source copy
     textures.bin                     # RGBA8 texture data and metadata
 ```
 
-- `asset.json` fields: `formatVersion`, `assetId`, `name`, `source`,
-  `sourceHash` (SHA-256), `importerVersion`, `settings`, node/material/texture
-  metadata, dependency hashes, cooked key and `metadata`.
+- `asset.json` fields: `formatVersion`, `assetId`, `name`, `source` (the
+  original source path for reimport), `sourceCopy` (project-relative source
+  copy), `sourceHash` (SHA-256), `importerVersion`, `settings`, stable
+  `nodeId`/mesh/material/texture IDs, dependency hashes, cooked key and
+  `metadata`. The original source path is stored for reimport; the project-
+  relative copy is the fallback when the original path is gone.
+- `.engine/cache/` is added to `.gitignore`; cooked data is never committed.
 - The first import generates and stores the asset UUID. Reimport reads the
   sidecar and preserves it. Tests must prove that an asset ID and a scene
   `AssetInstance` reference survive a source change.
@@ -105,14 +124,19 @@ assets/<assetId>/source.glb          # project-relative source copy
 - Mesh buffers store Float32 positions/normals/tangents/UV0 and Uint32
   indices, with per-primitive material IDs and bounds. World transforms are
   composed in double precision.
-- Textures are decoded from PNG/JPEG with the already-approved `stb_image` and
-  cooked to RGBA8 with explicit sRGB/linear metadata. Mip generation happens
+- Node IDs are stable strings/UUIDs assigned on first import and matched by
+  node path/index on reimport. They survive unchanged nodes and are available
+  for later per-node overrides.
+- Textures are decoded from PNG/JPEG with `stb_image` from the pinned stb
+  package, once the explicit M3 texture-decoding approval is given, and cooked
+  to RGBA8 with explicit sRGB/linear metadata. Mip generation happens
   at GPU upload. KTX2, WebP and other compressed formats fail with
   `E_UNSUPPORTED`.
 - If a normal map has no tangents, tangents are generated during cooking.
   Otherwise the source tangents are preserved.
-- Animations present in the GLB are parsed and preserved in the cooked
-  manifest for M4; M3 does not play them.
+- Animations are **not imported** in M3. `asset inspect` only reports whether
+  animation channels are present in the source; no animation data is cooked or
+  played. Animation import/playback moves to M4.
 
 **Alternative considered:** decode source textures on every load and skip a
 cooked cache. This is simpler but does not satisfy dependency tracking,
@@ -120,8 +144,9 @@ deterministic cooking or the M3 cache requirement.
 
 ### D3. PBR material model and the M3 light
 
-**Recommendation:** implement glTF metallic-roughness PBR with a **fixed
-engine directional light** in M3. No scene light component is added until M5.
+**Recommendation:** implement glTF metallic-roughness PBR with an
+`engine.scene.DirectionalLight` component in scene format 3. Point lights and
+shadows remain M5 features.
 
 - Material inputs: base-color factor/texture, metallic/roughness
   factor/texture, normal texture, occlusion texture and emissive
@@ -129,17 +154,20 @@ engine directional light** in M3. No scene light component is added until M5.
 - Alpha: opaque and mask are supported in M3. Blended transparency is
   deferred because it needs sorting and is not required for the M3 golden
   scene.
-- One directional light with fixed direction, color and intensity, plus a
-  small documented ambient term. No IBL/environment map in M3. Shadows and
-  point lights arrive in M5.
+- An `engine.scene.DirectionalLight` component is added in scene format 3 now,
+  with direction, linear color, intensity and enabled fields. The M3 golden
+  scene uses one directional light and a small documented ambient term. No
+  IBL/environment map in M3. `engine.scene.PointLight` is reserved in v3 now
+  but is ignored by the M3 renderer; M5 adds point lights and shadows without
+  a new scene-format version.
 - Linear lighting, sRGB texture handling and a documented deterministic tone
-  mapping. Golden images use the same fixed light and tone map on Linux and
-  Windows lavapipe.
+  mapping. Golden images use the same authored directional light and tone map
+  on Linux and Windows lavapipe.
 
-If the owner prefers authored lights now, the alternative is an
-`engine.scene.DirectionalLight` component and another scene-format addition.
-That is not recommended for M3 because it expands the format before the M5
-lighting design.
+The owner chose authored lighting now. The golden image test must verify the
+color pipeline: base-color textures are decoded as sRGB, while normal,
+metallic-roughness, occlusion and other data textures stay linear. The test
+uses controlled texture values so a swapped color space fails visibly.
 
 ### D4. Live API transport and protocol
 
@@ -148,7 +176,8 @@ lighting design.
 - Bind to `127.0.0.1` on an ephemeral port.
 - Write a session file at `.engine/live.json` containing the port, token,
   protocol version and project root. It is sandboxed, written atomically and
-  readable only by the owner.
+  readable only by the owner: POSIX mode `0600`, and a Windows DACL restricted
+  to the current user. The server refuses to start if it cannot enforce this.
 - Require the token on every request. No remote interfaces, no `0.0.0.0`.
 - Methods:
   - `command`: the existing command envelope and command bus.
@@ -189,24 +218,28 @@ runtime.
 ### M3.2 GLB import core
 
 - Parse GLB with fastgltf, including buffers, accessors, nodes, meshes,
-  primitives, hierarchy, materials, textures, samplers and animations.
+  primitives, hierarchy, materials, textures and samplers. Detect animation
+  channels and report that they exist, but do not import their data.
 - Validate required attributes and reject unsupported extensions/features
   with stable error codes and JSON Pointer details.
 - Convert glTF node transforms into engine double-precision world composition;
   keep rotation/scale float at the asset boundary.
-- Exit: unit tests for a checked-in GLB fixture, malformed files, missing
-  buffers, unsupported compression and hierarchy composition.
+- Exit: unit tests for checked-in GLB fixtures with documented provenance and
+  license (own Blender model or CC0 with a `PROVENANCE.md`), malformed files,
+  missing buffers, unsupported compression and hierarchy composition. Animation
+  channels are reported by `inspect`, not imported.
 
 ### M3.3 Cooked asset format, cache and reimport
 
 - Write `asset@1` sidecars and `engine.asset.cooked@1` cache entries.
 - Implement source hashing, dependency tracking, cache invalidation, atomic
   writes and project sandboxing.
-- Preserve the asset UUID on reimport; preserve node/material/texture IDs where
-  the source still contains them.
+- Preserve the asset UUID on reimport and preserve stable node IDs for nodes
+  that still exist. Overrides are not built in M3.
 - Exit: import → cook → load round-trip is byte-stable; changing the source
-  changes the cache key; reimport preserves the asset ID; a scene
-  `AssetInstance` reference remains valid.
+  changes the cache key; reimport preserves the asset ID and stable node IDs;
+  a scene `AssetInstance` reference remains valid; `.engine/cache/` is ignored
+  by git.
 
 ### M3.4 Asset CLI
 
@@ -233,9 +266,11 @@ engine asset list <project> [--json]
   record storage buffer, 4096-image/4096-material budget, no fallback.
 - Upload cooked meshes and textures; generate mips; handle sRGB/linear formats.
 - Add the metallic-roughness shader with normal mapping, occlusion and
-  emissive, plus the fixed directional light and documented tone map.
+  emissive, plus the `DirectionalLight` component and documented tone map.
 - Exit: validation-clean PBR scene on lavapipe Linux and Windows; descriptor
-  budgets checked; golden image of a textured GLB passes with the fixed light.
+  budgets checked; golden image of a textured GLB passes with the authored
+  directional light, and a color-space test proves sRGB baseColor versus linear
+  data textures.
 
 ### M3.6 Asset instances and scene placement
 
@@ -260,7 +295,8 @@ engine asset list <project> [--json]
 
 ### M3.8 Hardening and M3 acceptance
 
-- Run the Blender GLB acceptance script and the reimport scenario.
+- Run the Blender GLB acceptance script with checked-in models whose provenance
+  and license are documented, and the reimport scenario.
 - Run Linux GCC/Clang, ASan/UBSan, Windows MSVC with offscreen lavapipe, and
   the clean-clone acceptance.
 - Add golden images for the PBR scene on Linux and Windows lavapipe.
@@ -280,7 +316,8 @@ M3 is complete only when all of these hold:
    the existing scene `AssetInstance` still loads and references the updated
    asset with no broken IDs.
 4. A golden image test of the PBR scene passes on Linux lavapipe and on the
-   verified Windows offscreen lavapipe path.
+   verified Windows offscreen lavapipe path, including a color-space check for
+   sRGB baseColor and linear data textures.
 5. The live API executes the same commands as the CLI, plus inspection and
    screenshot, over the approved local transport; all responses validate
    against the schemas.
@@ -300,7 +337,7 @@ M3 is complete only when all of these hold:
 | Cooked round-trip | Import → cook → load → cook is deterministic; cache keys and atomic writes |
 | Reimport ID test | Source change preserves asset ID and scene references |
 | Asset CLI contract | JSON envelopes, schemas, error codes, sandbox |
-| PBR golden image | Textured GLB with fixed directional light on Linux and Windows lavapipe |
+| PBR golden image | Textured GLB with the authored directional light on Linux and Windows lavapipe |
 | Asset instance integration | Place, render, save, load, two instances, reimport |
 | Live API integration | Python client using only JSON-RPC for import/place/save/load/screenshot |
 | Windows offscreen | MSVC build and lavapipe offscreen tests |
@@ -311,9 +348,10 @@ M3 is complete only when all of these hold:
 
 - **glTF variability:** real Blender exports may use unsupported extensions,
   compressed textures, skinning or animation. These must fail clearly, not
-  silently misrender.
+  silently misrender; animation channels are reported but not imported in M3.
 - **Texture color spaces and tangents:** incorrect sRGB or tangent handling
-  breaks PBR golden images. The cooked format records both explicitly.
+  breaks PBR golden images. The cooked format records both explicitly, and the
+  golden test includes a color-space probe.
 - **Asset identity:** reimport must preserve the asset UUID and stable internal
   IDs. The scene's `AssetInstance` design avoids copying hierarchy into scenes.
 - **Bindless limits:** ADR-0011 requires descriptor indexing; textures and
@@ -323,8 +361,8 @@ M3 is complete only when all of these hold:
   licensing and transitive versions must be approved and pinned.
 - **Live API security:** loopback-only binding, token authentication, message
   limits and sandboxing are mandatory.
-- **Golden determinism:** fixed light, fixed tone map, explicit texture color
-  spaces and controlled mip generation.
+- **Golden determinism:** authored directional light, fixed tone map, explicit
+  texture color spaces and controlled mip generation.
 - **Scope:** skeletal animation playback, compressed textures, IBL, shadows and
   point lights are out of scope for M3.
 
@@ -339,19 +377,25 @@ M3 is complete only when all of these hold:
 ## Approval requested
 
 1. Approve the M3 scope, substeps and acceptance criteria.
-2. Approve `fastgltf` 0.9.1 and transitive `simdjson` 5.0.5 as M3 dependencies,
-   to be added only after this approval.
-3. Approve scene format **v3** with `engine.scene.AssetInstance` (D1), or choose
-   the expand-hierarchy alternative.
-4. Approve the `asset@1` sidecar and `engine.asset.cooked@1` formats, including
-   the asset UUID and cache layout (D2).
-5. Approve the PBR material model, fixed M3 directional light and opaque/mask
-   alpha scope (D3), or request an authored light component.
-6. Approve loopback TCP JSON-RPC with token authentication and the proposed
-   methods (D4), or choose Unix sockets/named pipes.
-7. Approve the scope exclusions: no compressed textures, IBL, shadows/point
-   lights or skeletal playback in M3.
-8. Approve replacing `ilammy/msvc-dev-cmd` with native `vcvars` in M3.
+2. **Approved:** `fastgltf` 0.9.1 and transitive `simdjson` 5.0.5 are added in
+   M3.1.
+   **Still required:** explicit approval to use `stb_image` from the pinned
+   stb 2026-08-02 commit for M3 PNG/JPEG texture decoding.
+3. **Approved:** scene format **v3** with `engine.scene.AssetInstance` and
+   `engine.scene.DirectionalLight`; `engine.scene.PointLight` is reserved in
+   v3 so M5 needs no new format version.
+4. **Approved:** the `asset@1` sidecar and `engine.asset.cooked@1` formats,
+   including original source path, stable node IDs, asset UUID and cache
+   layout. `.engine/cache/` is committed to `.gitignore`.
+5. **Approved:** the PBR material model, `engine.scene.DirectionalLight` and
+   opaque/mask alpha scope, with a golden color-space test.
+6. **Approved:** loopback TCP JSON-RPC with token authentication, owner-only
+   token-file permissions on Linux and Windows, and the proposed methods.
+7. **Approved:** no compressed textures, IBL, shadows, point-light rendering or
+   skeletal playback in M3; animations are reported but not imported.
+8. **Approved:** replace `ilammy/msvc-dev-cmd` with native `vcvars` in M3.1.
 
-Implementation starts only after these decisions are approved. New ADRs will
-record the approved decisions before the corresponding code is written.
+M3.1 starts with the approved decisions. The only open approval item is the
+M3 use of `stb_image` for texture decoding; no texture decoding is added until
+it is approved. New ADRs record the approved decisions before the corresponding
+code is written.

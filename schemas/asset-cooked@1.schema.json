@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/schemas/asset-cooked@1.schema.json",
+  "title": "engine.asset.cooked@1",
+  "description": "Manifest for cooked asset buffers and textures.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "cacheKey",
+    "sourceHash",
+    "importerVersion",
+    "meshFile",
+    "textureFile",
+    "nodes",
+    "meshes",
+    "materials",
+    "textures"
+  ],
+  "properties": {
+    "formatVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "cacheKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "importerVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "meshFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "textureFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "meshes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "textures": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

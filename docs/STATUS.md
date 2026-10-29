@@ -2,7 +2,8 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.9 is owner-tested and approved. Normal PR, merge and tag `v0.3.0` are in progress.
+**Current milestone:** M3 — asset pipeline and live control
+**Current substep:** M3.1 — decisions, scene format v3, fastgltf dependency and CI tooling. Image decoding still needs explicit owner approval before texture-decode code is written.
 
 ## Substeps
 
@@ -44,15 +45,27 @@
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.8 | Hardening and M2 acceptance | Approved by the owner 2026-10-29; reference measurement moved to M5/M8 and ImGui re-init to M8 |
-| M2.9 | Windowed `engine run`, fly camera, overlay toggle and ImGui input routing; sample project | Done — reviewer GODKJENT; owner manual test passed; merge and tag approved |
+| M2.9 | Windowed `engine run`, fly camera, overlay toggle and ImGui input routing; sample project | Done — reviewer GODKJENT; owner manual test passed; merged and tagged `v0.3.0` |
+
+## M3 substeps
+
+| Substep | Scope | Status |
+|---|---|---|
+| M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency and `ilammy` replacement | In progress |
+| M3.2 | GLB import core; animation channels reported only | Planned |
+| M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
+| M3.4 | Asset CLI | Planned |
+| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
+| M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
+| M3.7 | Local JSON-RPC live API | Planned |
+| M3.8 | M3 hardening and acceptance | Planned |
 
 ## Repository state
 
-- `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
-  2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch at `8bb3c82`; M2.9
-  reviewer GODKJENT, owner manual test and merge approval pending. Not
-  merged.
+- `main`: the M2 release `bb8514c`, merged from `m2/vulkan-renderer` on
+  2026-10-30 and tagged `v0.3.0`.
+- `m3/plan`: the approved M3 plan, not merged.
+- `m3/asset-pipeline`: the M3.1 implementation branch.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -80,10 +93,10 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 14 registered; CI runs 14/14 with lavapipe and Xvfb. Locally `linux-debug` passes 13/14 and skips the golden test without lavapipe; `engine_core_tests` → 62 cases / 474 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped without lavapipe. CI runs 14/14 with lavapipe and Xvfb |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
-| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test"` → 11/11 CPU-side tests. The three GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 15 registered; CI runs 15/15 with lavapipe and Xvfb. Locally `linux-debug` passes 14/15 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 15 registered; locally 14/15 with the golden test skipped without lavapipe. CI runs 15/15 with lavapipe and Xvfb |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 15 registered; locally 14/15 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test\|engine_run_smoke"` → 11/11 CPU-side tests. The four GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -113,7 +126,7 @@
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
 | `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
-| Generated API reference | Automatically tested | `engine schema --json` exposes 3 components and 8 command schemas; `engine_api_reference` checks `docs/API_REFERENCE.md` against the generator |
+| Generated API reference | Automatically tested | `engine schema --json` exposes 7 components and 8 command schemas; `engine_api_reference` checks `docs/API_REFERENCE.md` against the generator |
 | Codex review fixes | Automatically tested, redo manually verified | Symlink-safe exclusive temp files, scene-create overwrite rejection (existing and listed-but-missing), recursive subtree undo, missing sceneId and negative revision validation, and revision bump on component undo; redo is manually verified because the CLI has no redo command |
 | M1.10 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned public `v0.2.1`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
 | M1.10 CI | Automatically tested | Main push [40848990449](https://github.com/chl84/3D_game_engine/actions/runs/40848990449) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
@@ -175,6 +188,12 @@
 | M2.9 overlay toggle and ImGui input | Automatically tested | `engine_overlay_test` toggles the overlay off and on and checks visibility/draw vertices; `Renderer::process_sdl_event` routes SDL events to ImGui. The owner verifies the interactive fly camera and toggle on Hyprland |
 | M2.9 CI | Automatically tested | Final run [40963990696](https://github.com/chl84/3D_game_engine/actions/runs/40963990696) on `8bb3c82` → all five jobs green. Linux 15/15 including `engine_run_smoke`; Windows 11/11; ASan/UBSan 15/15; Quality green |
 | M2.9 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `8bb3c82`, ran 15 registered tests (14 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M3.1 scene format v3 | Automatically tested | Scene format 3 adds `AssetInstance`, `DirectionalLight` and reserved `PointLight`; v1/v2 scenes upgrade to v3, v3 components are rejected in v2, and v4 is rejected. `engine_core_tests` is 63 cases / 494 assertions |
+| M3.1 asset schemas | Documented | `schemas/asset@1.schema.json` and `schemas/asset-cooked@1.schema.json` define the approved asset sidecar and cooked manifest, including stable node IDs, original source path and source copy |
+| M3.1 fastgltf dependency | Automatically tested | fastgltf 0.9.1 and simdjson 5.0.5 are pinned in vcpkg with overrides; `engine_dependencies_smoke` constructs a `fastgltf::Parser` and passes |
+| M3.1 cache and source rules | Documented | `.engine/cache/` is explicitly ignored by git; `asset@1` stores the original reimport source and a project-relative source copy (ADR-0012) |
+| M3.1 `ilammy` replacement | Pending CI | The Windows job now uses `vswhere` + `vcvarsall.bat x64` and exports the environment instead of `ilammy/msvc-dev-cmd` |
+| M3.1 CI | Pending | Final CI after implementation |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

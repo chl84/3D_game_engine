@@ -1,9 +1,10 @@
 # Dependencies
 
-**Status:** M2.6. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M3.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
 1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
-Allocator 3.5.0, GLM 1.0.3, stb 2026-08-02 and Dear ImGui 1.93.0-docking. The
+Allocator 3.5.0, GLM 1.0.3, stb 2026-08-02, Dear ImGui 1.93.0-docking,
+fastgltf 0.9.1 and simdjson 5.0.5. The
 core library uses nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11
 and volk; Catch2 is test-only. EnTT is the ECS; json-schema-validator validates
 command and format payloads. Dear ImGui draws the debug overlay in the windowed
@@ -39,6 +40,8 @@ renderer. Python `jsonschema` is a development-only contract-test dependency.
 | GLM | 1.0.3 | MIT | Matrix and vector math for the renderer | M2 | Header-only C++ math library with Vulkan-compatible clip-space support. The engine keeps its own `Vec3`/`Quat` for scene data and uses GLM only inside `render`. Approved in the M2 plan on 2026-10-29. |
 | stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding | M2 | Single-header PNG writer/reader; no runtime library. Used by the screenshot command and golden-image test. The owner explicitly approved the dependency on 2026-10-29. |
 | Dear ImGui (`docking-experimental`) | 1.93.0-docking | MIT | Debug overlay and later editor UI | M2 | Immediate-mode UI for the debug overlay. Built with the SDL3 and Vulkan backends and volk, consistent with the renderer's dynamic loader. The owner approved it in the M2 plan on 2026-10-29. |
+| fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 | C++17 glTF parser used for meshes, textures, materials and node hierarchies. Approved by the owner on 2026-10-30. Not used before M3.2. |
+| simdjson | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | Transitive JSON parser for fastgltf | M3 | Pinned through the vcpkg baseline and an exact override. All components are permissive. Approved as a transitive dependency on 2026-10-30. |
 
 ## Planned dependencies
 
@@ -48,7 +51,6 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
 | Lua | 5.4.8 | MIT | Scripting | M4 |
 | sol2 | 3.5.0 | MIT | Lua bindings generated from reflection | M4 |
@@ -94,7 +96,7 @@ and the license texts used for redistribution.
   volk defines `VK_NO_PROTOTYPES`.
 - GLM is used only inside `engine/render`. Authoritative scene data keeps the
   `core::Vec3` and `core::Quat` types.
-- The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library.
+- The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library. M3 texture decoding with `stb_image` awaits explicit owner approval in `M3_PLAN.md`; no M3 texture-decode code uses it yet.
 - Dear ImGui uses a local overlay port in `cmake/vcpkg-overlay/imgui`.
   The stock port's `sdl3-binding` enables SDL3's default `ibus` feature, which
   pulls dbus, systemd and libxcrypt, and its `vulkan-binding` pulls a second

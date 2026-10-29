@@ -33,3 +33,5 @@ ADRs are not rewritten.
 | [0009](ADR-0009-scene-format-v2-mesh.md) | Scene format v2 and mesh references | Accepted |
 | [0010](ADR-0010-imgui-overlay-port.md) | Dear ImGui through a local vcpkg overlay port | Accepted |
 | [0011](ADR-0011-descriptor-strategy.md) | Descriptor strategy for materials and textures | Accepted |
+| [0012](ADR-0012-asset-pipeline-and-scene-v3.md) | Asset pipeline, scene format v3 and PBR lighting | Accepted |
+| [0013](ADR-0013-live-api-transport.md) | Local live API transport | Accepted |

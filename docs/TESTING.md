@@ -1,11 +1,11 @@
 # Testing
 
-**Status:** M2.9. Fifteen CTest tests exist on Linux; Windows registers eleven
+**Status:** M3.1. Fifteen CTest tests exist on Linux; Windows registers eleven
 because the window, swapchain, overlay and `engine run` tests remain Linux-only
 while the offscreen golden and screenshot tests are registered on both
 platforms.
-`engine_core_tests` contains 62 test cases and 474 assertions on Linux;
-Windows reports 60 cases / 462 assertions because two POSIX-only tests are
+`engine_core_tests` contains 63 test cases and 494 assertions on Linux;
+Windows reports 61 cases / 482 assertions because two POSIX-only tests are
 compiled out. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
@@ -42,8 +42,8 @@ reports `descriptor-indexing` in `requirements.failed` and exits 8; on a
 machine with no Vulkan device it remains diagnostic unless `--require vulkan`
 is used.
 `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
-`tl::expected`, Catch2, volk, SDL3, VMA, GLM and Dear ImGui, so missing include
-paths or link errors fail on both Linux and Windows.
+`tl::expected`, Catch2, volk, SDL3, VMA, GLM, Dear ImGui and fastgltf, so missing
+include paths or link errors fail on both Linux and Windows.
 
 `engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
@@ -132,8 +132,11 @@ lavapipe cannot satisfy the descriptor requirements.
   create, component set, scene create and batch
 - generated API reference parity with the command registry and reflection
   schemas
-- scene format v1 loading and v2 upgrade, `engine.scene.Mesh` round-trip,
-  rejection of Mesh in v1 and scene version 3
+- scene format v1/v2 loading and v3 upgrade, `engine.scene.Mesh`,
+  `AssetInstance`, `DirectionalLight` and `PointLight` round-trip, rejection of
+  v3 components in v2 and scene version 4
+- asset `asset@1`/`engine.asset.cooked@1` schemas and the stable-node/original-
+  source rules (schemas are published; importer tests follow in M3.2/M3.3)
 - double-precision world transforms for root entities directly at 8 km and
   16 km, plus an 8 km hierarchy with a 1 mm child offset
 - `SceneView` mesh and camera access without mutation
