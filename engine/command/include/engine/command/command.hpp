@@ -23,9 +23,13 @@ struct CommandRequest {
     nlohmann::json arguments{nlohmann::json::object()};
 };
 
+using UndoAction = std::function<Result<void>()>;
+
 struct CommandOutput {
     nlohmann::json data{nlohmann::json::object()};
     std::vector<std::string> warnings;
+    UndoAction undo;
+    UndoAction redo;
 };
 
 struct CommandResult {
@@ -33,6 +37,8 @@ struct CommandResult {
     nlohmann::json data{nlohmann::json::object()};
     std::optional<Error> error;
     std::vector<std::string> warnings;
+    UndoAction undo;
+    UndoAction redo;
 
     [[nodiscard]] static CommandResult success(CommandOutput output);
     [[nodiscard]] static CommandResult failure(Error error);
@@ -87,12 +93,33 @@ public:
     [[nodiscard]] Result<void> add(std::string name, nlohmann::json schema,
                                    CommandRegistry::Handler handler);
     [[nodiscard]] CommandResult execute(const CommandRequest& request);
+
+    [[nodiscard]] Result<void> begin_transaction();
+    [[nodiscard]] Result<void> commit_transaction();
+    [[nodiscard]] Result<void> rollback_transaction();
+    [[nodiscard]] bool in_transaction() const noexcept;
+
+    [[nodiscard]] Result<void> undo();
+    [[nodiscard]] Result<void> redo();
+    [[nodiscard]] bool can_undo() const noexcept;
+    [[nodiscard]] bool can_redo() const noexcept;
+
     [[nodiscard]] const CommandRegistry& registry() const noexcept;
     [[nodiscard]] const CommandLog& log() const noexcept;
 
 private:
+    struct HistoryEntry {
+        std::string name;
+        UndoAction undo;
+        UndoAction redo;
+    };
+
     CommandRegistry registry_;
     CommandLog& log_;
+    std::vector<HistoryEntry> undo_stack_;
+    std::vector<HistoryEntry> redo_stack_;
+    std::vector<HistoryEntry> transaction_entries_;
+    bool transaction_active_{false};
 };
 
 } // namespace engine::command

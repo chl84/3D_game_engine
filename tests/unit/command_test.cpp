@@ -21,7 +21,7 @@ namespace {
 
 void add_echo(CommandBus& bus) {
     const auto added = bus.add("test.echo@1", echo_schema(), [](const nlohmann::json& arguments) {
-        return engine::core::Result<CommandOutput>(CommandOutput{arguments, {"echoed"}});
+        return engine::core::Result<CommandOutput>(CommandOutput{arguments, {"echoed"}, {}, {}});
     });
     REQUIRE(added.has_value());
 }
@@ -102,6 +102,125 @@ TEST_CASE("command bus converts handler failures into results", "[command]") {
     REQUIRE(result.error.has_value());
     REQUIRE(result.error.value_or(engine::core::Error{}).code == ErrorCode::Io);
     REQUIRE(log.entries().size() == 1);
+}
+
+namespace {
+
+void add_increment(CommandBus& bus, int& value) {
+    const auto added = bus.add("test.increment@1",
+                               {
+                                   {"$schema", "http://json-schema.org/draft-07/schema#"},
+                                   {"type", "object"},
+                                   {"required", nlohmann::json::array({"delta"})},
+                                   {"properties", {{"delta", {{"type", "integer"}}}}},
+                               },
+                               [&value](const nlohmann::json& arguments) {
+                                   const int delta = arguments.at("delta").get<int>();
+                                   value += delta;
+                                   return engine::core::Result<CommandOutput>(CommandOutput{
+                                       nlohmann::json::object(),
+                                       {},
+                                       [&value, delta]() -> engine::core::Result<void> {
+                                           value -= delta;
+                                           return {};
+                                       },
+                                       [&value, delta]() -> engine::core::Result<void> {
+                                           value += delta;
+                                           return {};
+                                       },
+                                   });
+                               });
+    REQUIRE(added.has_value());
+}
+
+} // namespace
+
+TEST_CASE("command bus supports undo and redo", "[command]") {
+    CommandLog log;
+    CommandBus bus(log);
+    int value = 0;
+    add_increment(bus, value);
+
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 5}}}).ok);
+    REQUIRE(value == 5);
+    REQUIRE(bus.can_undo());
+    REQUIRE_FALSE(bus.can_redo());
+
+    REQUIRE(bus.undo().has_value());
+    REQUIRE(value == 0);
+    REQUIRE_FALSE(bus.can_undo());
+    REQUIRE(bus.can_redo());
+
+    REQUIRE(bus.redo().has_value());
+    REQUIRE(value == 5);
+    REQUIRE(bus.can_undo());
+    REQUIRE_FALSE(bus.can_redo());
+}
+
+TEST_CASE("command bus clears redo after a new command", "[command]") {
+    CommandLog log;
+    CommandBus bus(log);
+    int value = 0;
+    add_increment(bus, value);
+
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 2}}}).ok);
+    REQUIRE(bus.undo().has_value());
+    REQUIRE(bus.can_redo());
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 3}}}).ok);
+    REQUIRE_FALSE(bus.can_redo());
+    REQUIRE(value == 3);
+}
+
+TEST_CASE("command bus commits transactions as one undo step", "[command]") {
+    CommandLog log;
+    CommandBus bus(log);
+    int value = 0;
+    add_increment(bus, value);
+
+    REQUIRE(bus.begin_transaction().has_value());
+    REQUIRE(bus.in_transaction());
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 2}}}).ok);
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 3}}}).ok);
+    REQUIRE(value == 5);
+    REQUIRE_FALSE(bus.can_undo());
+
+    REQUIRE(bus.commit_transaction().has_value());
+    REQUIRE_FALSE(bus.in_transaction());
+    REQUIRE(bus.can_undo());
+
+    REQUIRE(bus.undo().has_value());
+    REQUIRE(value == 0);
+    REQUIRE(bus.redo().has_value());
+    REQUIRE(value == 5);
+}
+
+TEST_CASE("command bus rolls back transactions", "[command]") {
+    CommandLog log;
+    CommandBus bus(log);
+    int value = 0;
+    add_increment(bus, value);
+
+    REQUIRE(bus.begin_transaction().has_value());
+    REQUIRE(bus.execute(CommandRequest{"test.increment@1", {{"delta", 4}}}).ok);
+    REQUIRE(value == 4);
+    REQUIRE(bus.rollback_transaction().has_value());
+    REQUIRE(value == 0);
+    REQUIRE_FALSE(bus.in_transaction());
+    REQUIRE_FALSE(bus.can_undo());
+}
+
+TEST_CASE("command bus reports invalid transaction and history operations", "[command]") {
+    CommandLog log;
+    CommandBus bus(log);
+
+    REQUIRE_FALSE(bus.commit_transaction().has_value());
+    REQUIRE_FALSE(bus.rollback_transaction().has_value());
+    REQUIRE_FALSE(bus.undo().has_value());
+    REQUIRE_FALSE(bus.redo().has_value());
+
+    REQUIRE(bus.begin_transaction().has_value());
+    REQUIRE_FALSE(bus.begin_transaction().has_value());
+    REQUIRE(bus.commit_transaction().has_value());
 }
 
 TEST_CASE("command registry exposes sorted names and schemas", "[command]") {
