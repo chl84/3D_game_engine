@@ -156,6 +156,24 @@ TEST_CASE("scene loader rejects missing IDs and negative revisions", "[project]"
 }
 
 #ifndef _WIN32
+TEST_CASE("atomic writes preserve existing file permissions", "[project]") {
+    engine::test::TempDir temp("atomic-permissions");
+    const auto target = temp.path() / "permissions.txt";
+
+    REQUIRE(engine::platform::atomic_write_file(target, "first").has_value());
+    const auto permissions = std::filesystem::perms::owner_read |
+                             std::filesystem::perms::owner_write |
+                             std::filesystem::perms::group_read;
+    std::error_code error;
+    std::filesystem::permissions(target, permissions, std::filesystem::perm_options::replace,
+                                 error);
+    REQUIRE_FALSE(error);
+
+    REQUIRE(engine::platform::atomic_write_file(target, "second").has_value());
+    REQUIRE(std::filesystem::status(target, error).permissions() == permissions);
+    REQUIRE_FALSE(error);
+}
+
 TEST_CASE("atomic writes do not follow a pre-existing temporary symlink", "[project]") {
     engine::test::TempDir temp("atomic-symlink");
     const auto outside = temp.path() / "outside.txt";

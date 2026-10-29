@@ -14,6 +14,7 @@
 #include <windows.h>
 #else
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -58,10 +59,15 @@ core::Result<void> atomic_write_file(const std::filesystem::path& path, std::str
 #ifdef O_NOFOLLOW
     flags |= O_NOFOLLOW;
 #endif
-    const int descriptor = ::open(temporary.c_str(), flags, 0600);
+    const int descriptor = ::open(temporary.c_str(), flags, 0666);
     if (descriptor < 0) {
         return core::make_failure<void>(
             io_error("could not create temporary file", temporary, std::strerror(errno)));
+    }
+
+    struct stat target_status {};
+    if (::stat(path.c_str(), &target_status) == 0) {
+        (void)::fchmod(descriptor, target_status.st_mode & 07777);
     }
 
     std::size_t written = 0;

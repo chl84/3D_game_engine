@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M1.10. Eight CTest tests exist; `engine_core_tests` contains 55
-test cases and 412 assertions. CI also runs clang-format, clang-tidy with
+**Status:** M1.10. Eight CTest tests exist; `engine_core_tests` contains 56
+test cases and 417 assertions. CI also runs clang-format, clang-tidy with
 project headers included, ASan/UBSan, and Vulkan detection with pinned CMake
 4.4.5 and Ninja 1.13.2.
 

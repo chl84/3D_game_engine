@@ -820,14 +820,61 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
 
 int project_create(const std::string& root, const std::string& name, bool json, bool dry_run) {
     if (dry_run) {
-        if (std::filesystem::exists(std::filesystem::path(root) / "project.json")) {
-            const CommandResult result = failure(core::make_error(
-                ErrorCode::Conflict, "project.json already exists", {}, {{"path", root}}));
+        std::error_code error;
+        const std::filesystem::path target = std::filesystem::weakly_canonical(root, error);
+        if (error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "could not resolve project root",
+                                         error.message(), {{"path", root}}));
             print_result(result, json);
             return exit_code_for(result);
         }
+        if (std::filesystem::exists(target / "project.json")) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Conflict, "project.json already exists", {},
+                                         {{"path", target.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        if (std::filesystem::exists(target) && !std::filesystem::is_directory(target)) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Validation, "project path is not a directory",
+                                         {}, {{"path", target.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+
+        std::filesystem::path parent = target;
+        while (!std::filesystem::exists(parent) && parent.has_parent_path()) {
+            parent = parent.parent_path();
+        }
+        if (!std::filesystem::is_directory(parent)) {
+            const CommandResult result = failure(
+                core::make_error(ErrorCode::Io, "project parent is not a writable directory", {},
+                                 {{"path", parent.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        const std::filesystem::path probe =
+            parent / (".engine-dry-run-" + Uuid::generate().to_string());
+        if (!std::filesystem::create_directory(probe, error) || error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "project destination is not writable",
+                                         error.message(), {{"path", parent.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        std::filesystem::remove(probe, error);
+        if (error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "could not clean up dry-run probe",
+                                         error.message(), {{"path", probe.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+
         const CommandResult result = success({{"dryRun", true},
-                                              {"root", root},
+                                              {"root", target.string()},
                                               {"name", name},
                                               {"scene", "scenes/main.scene.json"}});
         print_result(result, json);

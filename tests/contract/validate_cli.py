@@ -286,6 +286,23 @@ def main() -> int:
             if dry_project.exists():
                 return fail("project create --dry-run created files")
 
+            blocker = Path(temporary) / "blocker"
+            blocker.write_text("blocker", encoding="utf-8")
+            blocked = run_engine(
+                engine,
+                [
+                    "project",
+                    "create",
+                    str(blocker / "child"),
+                    "--dry-run",
+                    "--json",
+                ],
+            )
+            if blocked.returncode == 0:
+                return fail("project create --dry-run accepted an invalid destination")
+            if not blocker.is_file() or blocker.read_text(encoding="utf-8") != "blocker":
+                return fail("project create --dry-run changed the blocking file")
+
             root_created = run_command(
                 ["entity", "create", str(project_dir), "--name", "Root"],
                 "entity create root",
