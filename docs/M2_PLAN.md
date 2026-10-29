@@ -1,7 +1,8 @@
 # M2 Plan — Vulkan Renderer
 
-**Status:** Approved by the owner on 2026-10-29. M2.1–M2.5 are approved;
-M2.6 is implemented and reviewer GODKJENT, awaiting owner approval.
+**Status:** Approved by the owner on 2026-10-29. M2.1–M2.6 are approved.
+M2.7 starts with the descriptor-strategy ADR, which is proposed and awaits
+owner approval before implementation.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -134,11 +135,17 @@ new transitive dependency follows A.6 and is recorded in
 
 ### M2.7 Descriptor strategy and validation
 
-- Write an ADR for the descriptor strategy (bindless versus per-material sets).
+- Write ADR-0011 for the descriptor strategy (bindless, classic sets and
+  buffer device address), including support on Iris Xe and lavapipe and the
+  consequences for M3 materials and textures.
+- Add a device-capability query for the accepted descriptor features and
+  limits, and fail with a clear error when a required path is unavailable.
 - Add validation scenarios for resize, minimize, swapchain recreation and
   device loss handling where practical.
 - Ensure the debug messenger count is zero in every documented scenario.
 - Document descriptor limits and the reference-scene budget.
+- Assert the exact `E_VALIDATION` code and details in the `engine screenshot`
+  limit tests, not only the error status. This is an owner requirement.
 
 ### M2.8 Hardening and M2 acceptance
 

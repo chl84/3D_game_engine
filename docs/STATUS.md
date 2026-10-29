@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.6 reviewer GODKJENT — the Dear ImGui debug overlay, screenshot sandbox/limits and the CI Xvfb regression fix are on `m2/vulkan-renderer`. Owner approval is pending; M2.5 is reviewer GODKJENT and owner-approved.
+**Current substep:** M2.7 ADR proposal — ADR-0011 proposes the descriptor strategy for materials and textures and awaits owner approval. M2.6 is owner-approved.
 
 ## Substeps
 
@@ -41,8 +41,8 @@
 | M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Done — reviewer GODKJENT |
 | M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
-| M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; awaiting owner approval |
-| M2.7 | Descriptor strategy and validation hardening | Planned |
+| M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
+| M2.7 | Descriptor strategy and validation hardening | In progress — ADR-0011 proposed; awaiting owner approval |
 | M2.8 | Hardening and M2 acceptance | Planned |
 
 ## Repository state
@@ -145,13 +145,15 @@
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `72d6a92`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
 | M2.5 Windows ICD evaluation | Evaluated; moved to M2.8 | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. The owner approved moving the follow-up to M2.8 on 2026-10-29, including an evaluation of prebuilt Mesa lavapipe packages. Windows graphics remains not verified |
 | M2.5 Linux glslc evaluation | Evaluated; moved to M2.8 | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. The owner approved moving the cached pinned SDK `glslc` follow-up to M2.8 on 2026-10-29 |
-| M2.6 ImGui dependency | Automatically tested | Dear ImGui 1.93.0-docking is pinned in vcpkg and built through `cmake/vcpkg-overlay/imgui`. The overlay keeps SDL3 at `default-features: false` and builds the Vulkan backend against volk; it adds no dbus, systemd, libxcrypt or second Vulkan loader. ADR-0010 records the decision |
+| M2.6 ImGui dependency | Automatically tested | Dear ImGui 1.93.0-docking is pinned in vcpkg to the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049` with the SHA512 of that commit's archive, and built through `cmake/vcpkg-overlay/imgui`. The overlay keeps SDL3 at `default-features: false` and builds the Vulkan backend against volk; it adds no dbus, systemd, libxcrypt or second Vulkan loader. ADR-0010 records the decision |
 | M2.6 ImGui overlay | Automatically tested | `engine_overlay_test` renders four frames with a camera and two meshes, checks the entity list, CPU/GPU frame statistics including at least one GPU timestamp sample, non-empty draw data, unchanged scene revision and camera position, and zero validation errors. Local result: 480 vertices for 3 entities, CPU 1.76 ms, GPU 0.10 ms on Intel Iris Xe |
 | M2.6 screenshot sandbox and limits | Automatically tested | `engine screenshot --out` resolves through `PathSandbox`; `../escape.png` is rejected and nothing is written outside the project. Width and height are capped at 8192 and frames at 1000; `--width 8193`, `--height 8193` and `--frames 1001` are rejected. `tests/smoke/screenshot.py` covers all four cases |
 | M2.6 CI Xvfb regression | Fixed | The CTest step was never under Xvfb: `engine_window_smoke` was always skipped and `engine_swapchain_test` ran only in the separate `--require-minimize` step. M2.6 runs the whole CTest suite under Xvfb + openbox and keeps the strict minimize step. `VK_ICD_FILENAMES` is selected from `lvp_icd*.json` before the tests |
 | M2.6 local suites | Automatically tested | `ci-linux-clang` and `linux-debug` → 14 registered, 13 passed and the golden test skipped without lavapipe; `linux-asan` → same; `linux-tsan` → 11/11 CPU-side tests. Golden image on lavapipe still matches with maximum channel difference 0 |
 | M2.6 CI | Automatically tested | Manual dispatch [40931398435](https://github.com/chl84/3D_game_engine/actions/runs/40931398435) on `a0dca57` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest with `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and `engine_screenshot_golden` passed on lavapipe under Xvfb; the strict minimize step printed `minimize: renderer reported no frames`. ASan/UBSan: 14/14. Windows MSVC: 9/9 with graphics tests not registered. Quality: clang-format and clang-tidy green |
 | M2.6 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `a0dca57`, built with the overlay port, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.6 ImGui exact pin | Verified | The overlay port uses `REF b916186e66aa3c02b72c6ca17455516512ed8049` (the commit behind the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's archive. A moved tag or rewritten commit fails the vcpkg source check |
+| M2.7 descriptor ADR | Proposed | ADR-0011 compares classic sets, descriptor indexing and BDA, records the measured Iris Xe and lavapipe support, recommends bindless with a classic fallback, and defers BDA to M5/M8. Awaiting owner approval |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -326,7 +328,8 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M2.6 review, then M2.7 — descriptor strategy and validation hardening. Merging
-to `main`, creating or pushing a tag and closing M2 as `v0.3.0` require the
-owner's explicit approval. The agent does not merge, tag or use `--admin`
-without that approval.
+Review ADR-0011 and approve or reject the descriptor strategy. M2.7
+implementation starts only after that decision. Merging to `main`, creating or
+pushing a tag and closing M2 as `v0.3.0` require the owner's explicit
+approval. The agent does not merge, tag or use `--admin` without that
+approval.

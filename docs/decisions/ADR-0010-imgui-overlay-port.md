@@ -30,8 +30,9 @@ crash at renderer creation in the first integration attempt.
 
 Use a local vcpkg overlay port at `cmake/vcpkg-overlay/imgui`:
 
-- It pins the same ImGui 1.93.0-docking source archive and SHA512 as the
-  baseline port.
+- It pins the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049`
+  (the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's source
+  archive. A moved tag or rewritten commit fails the build.
 - Its `sdl3-binding` feature depends on `sdl3` with `default-features: false`.
 - Its `vulkan-binding` feature depends on `volk`, defines
   `IMGUI_IMPL_VULKAN_USE_VOLK` and links `volk::volk_headers` instead of

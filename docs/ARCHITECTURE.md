@@ -129,6 +129,8 @@ animation mutate the runtime state directly during a fixed tick.
   result to camera-relative floats for model matrices; the camera view is
   rotation-only. M5's large-world work can add chunk-relative transforms on top
   without changing the v2 field types.
+- The M3 descriptor strategy is proposed in ADR-0011 and awaits owner
+  approval; no material or texture descriptor path is implemented in M2.
 - The windowed `Renderer` owns an optional Dear ImGui debug overlay. It is
   enabled by default in debug builds and disabled by default in release
   builds. It reads only `SceneView`, shows FPS, CPU frame time, GPU timestamp

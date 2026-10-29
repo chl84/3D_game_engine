@@ -99,8 +99,9 @@ and the license texts used for redistribution.
   pulls dbus, systemd and libxcrypt, and its `vulkan-binding` pulls a second
   Vulkan loader from vcpkg. The overlay port keeps `sdl3` at
   `default-features: false` and builds the Vulkan backend against `volk`.
-  ADR-0010 records the decision. The overlay port is pinned to the same source
-  archive and version as the vcpkg baseline; update both together.
+  ADR-0010 records the decision. The overlay port pins ImGui 1.93.0-docking to
+  the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049` with the SHA512
+  of that commit's source archive; update the version, commit and hash together.
 - `glslc` is executed as a build tool. The shaderc library is not linked and is
   not a runtime dependency. Linux CI installs the distro `glslc` package;
   Windows CI installs the LunarG Vulkan SDK 1.4.363 and adds its `Bin`
