@@ -1,6 +1,7 @@
 #pragma once
 
 #include <engine/core/error.hpp>
+#include <engine/core/math.hpp>
 #include <engine/platform/window.hpp>
 #include <engine/render/device.hpp>
 
@@ -34,6 +35,13 @@ struct FrameStats {
 #endif
 }
 
+// Presentation-only camera pose. It is supplied by the application and never
+// written into the authoritative scene.
+struct CameraPose {
+    core::Vec3d position{};
+    core::Quatd rotation{};
+};
+
 struct SwapchainOptions {
     VkPresentModeKHR present_mode{VK_PRESENT_MODE_FIFO_KHR};
     // The overlay is a debug aid. It never mutates the scene and is disabled
@@ -59,6 +67,11 @@ public:
     // when the window is minimized or a new swapchain could not be created yet.
     [[nodiscard]] core::Result<bool> draw_frame(const scene::SceneView& view);
 
+    // Uses a presentation-only camera pose instead of the scene's active
+    // camera transform. Projection parameters still come from the scene camera.
+    [[nodiscard]] core::Result<bool> draw_frame(const scene::SceneView& view,
+                                                const CameraPose& camera);
+
     [[nodiscard]] core::Result<void> wait_idle() const;
 
     [[nodiscard]] bool has_swapchain() const noexcept;
@@ -73,15 +86,24 @@ public:
     // follows presented_frames().
     [[nodiscard]] FrameStats frame_stats() const noexcept;
     [[nodiscard]] bool overlay_enabled() const noexcept;
+    [[nodiscard]] bool overlay_visible() const noexcept;
+    void set_overlay_visible(bool visible) noexcept;
     // Number of entities the overlay listed on the last frame it was built.
     [[nodiscard]] std::uint64_t overlay_entity_count() const noexcept;
     // Vertices submitted by the overlay on the last frame it was built.
     [[nodiscard]] std::uint32_t overlay_draw_vertices() const noexcept;
+    // Routes an SDL event to ImGui. The application should call this before
+    // handling the same event itself.
+    void process_sdl_event(const SDL_Event& event) noexcept;
+    [[nodiscard]] bool overlay_wants_mouse() const noexcept;
+    [[nodiscard]] bool overlay_wants_keyboard() const noexcept;
 
 private:
     struct Impl;
 
     explicit Renderer(std::unique_ptr<Impl> impl) noexcept;
+    [[nodiscard]] core::Result<bool> draw_frame_impl(const scene::SceneView& view,
+                                                     const CameraPose* camera);
 
     std::unique_ptr<Impl> impl_;
 };

@@ -8,6 +8,8 @@
 #include "shaders.hpp"
 #include "vulkan_util.hpp"
 
+#include <SDL3/SDL_events.h>
+
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
@@ -245,6 +247,7 @@ struct Renderer::Impl {
     const Device* device{nullptr};
     const platform::Window* window{nullptr};
     SwapchainOptions options;
+    bool overlay_visible{true};
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
     VkFormat format{VK_FORMAT_UNDEFINED};
     VkExtent2D extent{};
@@ -306,7 +309,8 @@ struct Renderer::Impl {
     [[nodiscard]] core::Result<void> recreate_swapchain();
     void destroy_swapchain();
     [[nodiscard]] core::Result<void> record_frame(std::uint32_t image_index,
-                                                  const scene::SceneView& scene_view);
+                                                  const scene::SceneView& scene_view,
+                                                  const CameraPose* camera_pose);
 };
 
 Renderer::Impl::~Impl() {
@@ -344,6 +348,7 @@ core::Result<void> Renderer::Impl::initialize(const Device& render_device,
     device = &render_device;
     window = &render_window;
     options = swapchain_options;
+    overlay_visible = options.debug_overlay;
 
     auto overlay_context = create_overlay_context();
     if (!overlay_context) {
@@ -925,7 +930,7 @@ void Renderer::Impl::destroy_overlay_vulkan() {
 }
 
 void Renderer::Impl::build_overlay(const scene::SceneView& scene_view) {
-    if (!overlay_vulkan_initialized) {
+    if (!overlay_vulkan_initialized || !overlay_visible) {
         return;
     }
 
@@ -1201,13 +1206,20 @@ void Renderer::Impl::destroy_swapchain() {
 }
 
 core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
-                                                const scene::SceneView& scene_view) {
+                                                const scene::SceneView& scene_view,
+                                                const CameraPose* camera_pose) {
     const auto camera_entity = scene_view.active_camera();
     if (!camera_entity.has_value()) {
         return core::make_failure<void>(core::make_error(
             core::ErrorCode::NotFound, "the scene has no active camera", {}, {{"stage", "scene"}}));
     }
-    const scene::WorldTransform camera_world = scene_view.world_transform(*camera_entity);
+    scene::WorldTransform camera_world;
+    if (camera_pose != nullptr) {
+        camera_world.position = camera_pose->position;
+        camera_world.rotation = camera_pose->rotation;
+    } else {
+        camera_world = scene_view.world_transform(*camera_entity);
+    }
     const scene::Camera& camera_component = scene_view.camera(*camera_entity);
 
     Camera camera;
@@ -1336,12 +1348,14 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
     }
     last_visible_entities = visible;
 
-    if (overlay_vulkan_initialized) {
+    if (overlay_vulkan_initialized && overlay_visible) {
         ImDrawData* draw_data = ImGui::GetDrawData();
         if (draw_data != nullptr) {
             overlay_draw_vertices = static_cast<std::uint32_t>(draw_data->TotalVtxCount);
             ImGui_ImplVulkan_RenderDrawData(draw_data, frame.command_buffer);
         }
+    } else {
+        overlay_draw_vertices = 0;
     }
 
     vkCmdEndRendering(frame.command_buffer);
@@ -1385,6 +1399,15 @@ Renderer& Renderer::operator=(Renderer&&) noexcept = default;
 Renderer::~Renderer() = default;
 
 core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
+    return draw_frame_impl(view, nullptr);
+}
+
+core::Result<bool> Renderer::draw_frame(const scene::SceneView& view, const CameraPose& camera) {
+    return draw_frame_impl(view, &camera);
+}
+
+core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
+                                             const CameraPose* camera) {
     if (impl_->window->minimized()) {
         return false;
     }
@@ -1485,7 +1508,7 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
     }
 
     impl_->build_overlay(view);
-    auto recorded = impl_->record_frame(image_index, view);
+    auto recorded = impl_->record_frame(image_index, view, camera);
     if (!recorded) {
         return core::make_failure<bool>(recorded.error());
     }
@@ -1618,6 +1641,30 @@ FrameStats Renderer::frame_stats() const noexcept {
 
 bool Renderer::overlay_enabled() const noexcept {
     return impl_->options.debug_overlay;
+}
+
+bool Renderer::overlay_visible() const noexcept {
+    return impl_->overlay_visible && impl_->overlay_vulkan_initialized;
+}
+
+void Renderer::set_overlay_visible(bool visible) noexcept {
+    impl_->overlay_visible = impl_->options.debug_overlay && visible;
+}
+
+void Renderer::process_sdl_event(const SDL_Event& event) noexcept {
+    if (impl_->overlay_context_initialized && impl_->overlay_visible) {
+        (void)ImGui_ImplSDL3_ProcessEvent(&event);
+    }
+}
+
+bool Renderer::overlay_wants_mouse() const noexcept {
+    return overlay_visible() && ImGui::GetCurrentContext() != nullptr &&
+           ImGui::GetIO().WantCaptureMouse;
+}
+
+bool Renderer::overlay_wants_keyboard() const noexcept {
+    return overlay_visible() && ImGui::GetCurrentContext() != nullptr &&
+           ImGui::GetIO().WantCaptureKeyboard;
 }
 
 std::uint64_t Renderer::overlay_entity_count() const noexcept {
