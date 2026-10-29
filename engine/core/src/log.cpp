@@ -5,7 +5,6 @@
 #include <spdlog/spdlog.h>
 
 #include <chrono>
-#include <cstdint>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -34,42 +33,6 @@ namespace {
     return spdlog::level::info;
 }
 
-[[nodiscard]] std::string timestamp_utc() {
-    using namespace std::chrono;
-
-    const auto now = system_clock::now();
-    const auto since_epoch = now.time_since_epoch();
-    const auto day_count = duration_cast<days>(since_epoch);
-    const auto time_of_day = since_epoch - day_count;
-
-    const auto hour_count = duration_cast<hours>(time_of_day).count();
-    const auto minute_count = duration_cast<minutes>(time_of_day).count() % 60;
-    const auto second_count = duration_cast<seconds>(time_of_day).count() % 60;
-    const auto millisecond_count = duration_cast<milliseconds>(time_of_day).count() % 1000;
-
-    // Civil date from days since 1970-01-01 (Howard Hinnant's algorithm).
-    const std::int64_t z = static_cast<std::int64_t>(day_count.count()) + 719468;
-    const std::int64_t era = (z >= 0 ? z : z - 146096) / 146097;
-    const auto day_of_era = static_cast<unsigned>(z - (era * 146097));
-    const auto year_of_era =
-        (day_of_era - (day_of_era / 1460) + (day_of_era / 36524) - (day_of_era / 146096)) / 365;
-    const std::int64_t year_base = static_cast<std::int64_t>(year_of_era) + (era * 400);
-    const int day_of_year = static_cast<int>(
-        day_of_era - ((365 * year_of_era) + (year_of_era / 4) - (year_of_era / 100)));
-    const int month_part = ((5 * day_of_year) + 2) / 153;
-    const int day = day_of_year - (((153 * month_part) + 2) / 5) + 1;
-    const int month = month_part + (month_part < 10 ? 3 : -9);
-    const int year = static_cast<int>(year_base) + (month <= 2 ? 1 : 0);
-
-    std::ostringstream output;
-    output << std::setfill('0') << std::setw(4) << year << '-' << std::setw(2) << month << '-'
-           << std::setw(2) << day << 'T' << std::setw(2) << static_cast<int>(hour_count) << ':'
-           << std::setw(2) << static_cast<int>(minute_count) << ':' << std::setw(2)
-           << static_cast<int>(second_count) << '.' << std::setw(3)
-           << static_cast<int>(millisecond_count) << 'Z';
-    return output.str();
-}
-
 [[nodiscard]] std::string thread_id_string() {
     std::ostringstream output;
     output << std::this_thread::get_id();
@@ -77,6 +40,24 @@ namespace {
 }
 
 } // namespace
+
+std::string format_timestamp_utc(std::chrono::system_clock::time_point time) {
+    using namespace std::chrono;
+
+    const auto day_point = floor<days>(time);
+    const year_month_day date{day_point};
+    const hh_mm_ss<milliseconds> time_of_day{floor<milliseconds>(time - day_point)};
+
+    std::ostringstream output;
+    output << std::setfill('0') << std::setw(4) << static_cast<int>(date.year()) << '-'
+           << std::setw(2) << static_cast<int>(static_cast<unsigned>(date.month())) << '-'
+           << std::setw(2) << static_cast<int>(static_cast<unsigned>(date.day())) << 'T'
+           << std::setw(2) << static_cast<int>(time_of_day.hours().count()) << ':' << std::setw(2)
+           << static_cast<int>(time_of_day.minutes().count()) << ':' << std::setw(2)
+           << static_cast<int>(time_of_day.seconds().count()) << '.' << std::setw(3)
+           << static_cast<int>(time_of_day.subseconds().count()) << 'Z';
+    return output.str();
+}
 
 struct Log::Impl {
     LogLevel level{LogLevel::Info};
@@ -126,7 +107,7 @@ void Log::log(LogLevel level, std::string_view category, std::string_view messag
     }
 
     std::scoped_lock lock(impl_->mutex);
-    const std::string timestamp = timestamp_utc();
+    const std::string timestamp = format_timestamp_utc(std::chrono::system_clock::now());
 
     if (impl_->console) {
         std::string line = timestamp;

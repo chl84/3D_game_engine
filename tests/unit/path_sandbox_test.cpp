@@ -50,8 +50,7 @@ TEST_CASE("path sandbox rejects symlink escapes", "[core][path]") {
     std::error_code error;
     std::filesystem::create_symlink(outside.path(), root.path() / "link", error);
     if (error) {
-        SUCCEED("symlinks are not available on this platform");
-        return;
+        SKIP("symlinks are not available on this platform: " + error.message());
     }
 
     const auto sandbox = PathSandbox::create(root.path());

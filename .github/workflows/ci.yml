@@ -60,6 +60,9 @@ jobs:
       - name: Test
         run: ctest --preset ${{ matrix.preset }} --output-on-failure
 
+      - name: Core test summary
+        run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
+
   windows:
     name: Windows (MSVC)
     runs-on: windows-2022
@@ -111,3 +114,8 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: ctest --preset ci-windows --output-on-failure
+
+      - name: Core test summary
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: ctest --preset ci-windows -R engine_core_tests -V

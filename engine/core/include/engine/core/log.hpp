@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -50,5 +51,7 @@ private:
 };
 
 [[nodiscard]] const char* log_level_name(LogLevel level) noexcept;
+
+[[nodiscard]] std::string format_timestamp_utc(std::chrono::system_clock::time_point time);
 
 } // namespace engine::core
