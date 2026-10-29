@@ -1,0 +1,99 @@
+{
+  "entities": [
+    {
+      "components": {
+        "engine.scene.Mesh": {
+          "meshId": "engine.builtin.plane"
+        },
+        "engine.scene.Transform": {
+          "position": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "id": "807597fd-4aed-42ff-b2fe-b05b213c8bce",
+      "metadata": {},
+      "name": "Ground",
+      "parentId": null
+    },
+    {
+      "components": {
+        "engine.scene.Mesh": {
+          "meshId": "engine.builtin.cube"
+        },
+        "engine.scene.Transform": {
+          "position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "id": "8d64f5aa-a12b-489b-a191-faa72db6414e",
+      "metadata": {},
+      "name": "Cube",
+      "parentId": null
+    },
+    {
+      "components": {
+        "engine.scene.Camera": {
+          "enabled": true,
+          "far": 1000.0,
+          "fovYRadians": 1.0471975803375244,
+          "near": 0.10000000149011612
+        },
+        "engine.scene.Transform": {
+          "position": [
+            0.0,
+            1.0,
+            5.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "id": "ad85f5db-87bd-4794-8655-56b3fa287909",
+      "metadata": {},
+      "name": "Camera",
+      "parentId": null
+    }
+  ],
+  "formatVersion": 2,
+  "metadata": {},
+  "name": "main",
+  "revision": 9,
+  "sceneId": "979a55aa-d507-4529-bd23-15e627790795"
+}

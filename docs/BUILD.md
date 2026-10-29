@@ -53,6 +53,15 @@ installed on the development machine:
 sudo pacman -S --needed vulkan-headers vulkan-validation-layers vulkan-tools vulkan-swrast ccache
 ```
 
+A minimal sample project is in `samples/m2-demo`. After building, run it with:
+
+```bash
+./build/linux-debug/tools/engine/engine run samples/m2-demo scenes/main.scene.json
+```
+
+Use `WASD`, `Q`/`E`, Shift, the right mouse button, `F1` for the overlay and
+`Escape` to close.
+
 `vulkan-swrast` provides lavapipe, the software Vulkan device used for
 headless tests and golden images. The validation layers are required by the
 `required validation layers report no errors` test; CI installs
@@ -184,7 +193,7 @@ The CI version is authoritative for formatting.
 Expected shape:
 
 ```json
-{"name":"engine","version":"0.2.1","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
+{"name":"engine","version":"0.3.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
 
 ## Doctor

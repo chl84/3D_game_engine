@@ -32,6 +32,17 @@ version command:
 
 See `docs/BUILD.md` for platform notes, and `docs/STATUS.md` for the current state.
 
+## Try the renderer
+
+A minimal sample project is included:
+
+```bash
+engine run samples/m2-demo scenes/main.scene.json
+```
+
+Use `WASD`, `Q`/`E`, Shift, the right mouse button, `F1` for the debug overlay
+and `Escape` to close. See `samples/m2-demo/README.md` for details.
+
 ## Documentation
 
 - `docs/VISION.md` — vision, technology stack and milestones
