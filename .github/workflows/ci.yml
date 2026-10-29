@@ -240,9 +240,37 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            throw "vswhere.exe was not found"
+          }
+          $installation = & $vswhere -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if (-not $installation) {
+            throw "No Visual Studio installation with the x64 C++ tools was found"
+          }
+          $vcvars = Join-Path $installation "VC\Auxiliary\Build\vcvarsall.bat"
+          if (-not (Test-Path $vcvars)) {
+            throw "vcvarsall.bat was not found at $vcvars"
+          }
+          $environment = cmd /c "`"$vcvars`" x64 >nul && set"
+          foreach ($line in $environment) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              "$($matches[1])=$($matches[2])" |
+                Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            }
+          }
+
+      - name: Verify MSVC
+        shell: pwsh
+        run: |
+          if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
+            throw "cl.exe was not found after vcvarsall"
+          }
+          cl.exe 2>&1 | Select-Object -First 1
 
       - name: Restore vcpkg binary cache
         uses: actions/cache@v6
