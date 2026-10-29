@@ -68,3 +68,13 @@ add_test(
 set_tests_properties(engine_cli_contract PROPERTIES
     LABELS "contract;cli"
 )
+
+add_test(
+    NAME engine_docs_links
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/check_links.py"
+)
+
+set_tests_properties(engine_docs_links PROPERTIES
+    LABELS "docs"
+)
