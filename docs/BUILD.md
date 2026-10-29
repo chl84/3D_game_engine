@@ -194,6 +194,20 @@ with CMake 4.4.5 and Ninja 1.13.2 passed all four CTest tests, so the local
 4.4.4 difference does not hide an unverified CI path. CI remains the source of
 truth for reproducible builds.
 
+## M0 clean-clone acceptance
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m0.sh
+```
+
+The script clones the current branch from `origin` into a temporary directory,
+creates `.venv`, configures and builds `linux-debug`, runs all CTest tests, and
+validates `engine --version --json` and `engine doctor --json` against
+`version@1` and `doctor@1`. It exits non-zero if any step fails. Pass a
+repository URL and branch as arguments to test another checkout, or set
+`KEEP=1` to keep the clone for inspection.
+
 ## Memory
 
 The development machine has 30 GiB of RAM. The project reference requirement

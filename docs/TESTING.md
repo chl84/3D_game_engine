@@ -106,6 +106,16 @@ Documentation links:
 python3 tests/docs/check_links.py
 ```
 
+Clean-clone M0 acceptance:
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m0.sh
+```
+
+The script clones the current branch, builds `linux-debug`, runs all five
+CTest tests and validates the version and doctor JSON against their schemas.
+
 Windows MSVC + vcpkg:
 
 ```powershell

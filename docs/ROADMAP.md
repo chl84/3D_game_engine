@@ -27,7 +27,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.4 | CLI skeleton and `engine doctor --json` | Done |
 | M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe/Vulkan detection tests, Linux CI matrix, caching, artifacts and branch protection on `main` | Done |
 | M0.6 | Full documentation, ADRs and VISION translation | Done |
-| M0.7 | Hardening and M0 acceptance | Next |
+| M0.7 | Hardening and M0 acceptance | In progress |
 
 ### M0.5 follow-ups (non-blocking)
 
