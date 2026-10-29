@@ -155,6 +155,8 @@ struct Renderer::Impl {
     std::array<Frame, kFramesInFlight> frames{};
     std::size_t frame_index{0};
     std::uint64_t presented_frames{0};
+    int window_width{0};
+    int window_height{0};
 
     ~Impl();
 
@@ -448,6 +450,8 @@ core::Result<void> Renderer::Impl::create_swapchain() {
     images = std::move(new_images);
     image_views = std::move(new_views);
     render_finished = std::move(new_render_finished);
+    window_width = window->width();
+    window_height = window->height();
     return {};
 }
 
@@ -575,8 +579,7 @@ core::Result<bool> Renderer::draw_frame() {
     if (pixel_width <= 0 || pixel_height <= 0) {
         return false;
     }
-    if (std::cmp_not_equal(impl_->extent.width, pixel_width) ||
-        std::cmp_not_equal(impl_->extent.height, pixel_height)) {
+    if (pixel_width != impl_->window_width || pixel_height != impl_->window_height) {
         auto recreated = impl_->recreate_swapchain();
         if (!recreated) {
             return core::make_failure<bool>(recreated.error());
