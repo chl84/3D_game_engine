@@ -108,6 +108,9 @@ new transitive dependency follows A.6 and is recorded in
 - Evaluate installing the Vulkan loader and lavapipe or SwiftShader on the
   Windows runner so the offscreen screenshot test runs there instead of being
   skipped.
+- Evaluate using `glslc` from the pinned Vulkan SDK on Linux CI as well, so
+  SPIR-V is produced by the same tool version on Linux and Windows. Linux
+  currently uses the Ubuntu distro `glslc` (shaderc 2023.8).
 - Implement `engine screenshot <project> <scene> --frames N --out <file>`.
 - Encode PNG with `stb_image_write`.
 - Force lavapipe in CI with `VK_ICD_FILENAMES` and compare against golden
