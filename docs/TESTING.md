@@ -42,7 +42,10 @@ with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_swapchain_test` creates a hidden window,
 presents frames, resizes the hidden window, shows it, minimizes and restores
 it, and asserts that the swapchain follows the window and that the validation
-layers report no errors. It also exits with code 77 when the environment is
+layers report no errors. Minimization is asserted only when SDL reports the
+window as minimized; the Linux CI job additionally runs the test under Xvfb
+with openbox and `--require-minimize`, so a window manager that ignores
+minimize fails that step. It also exits with code 77 when the environment is
 unavailable. The window and swapchain tests are not registered on Windows
 because Windows graphics is not verified.
 
