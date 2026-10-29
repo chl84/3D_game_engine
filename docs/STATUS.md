@@ -3,7 +3,7 @@
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.1 — decisions, scene format v3, fastgltf dependency and CI tooling. Image decoding still needs explicit owner approval before texture-decode code is written.
+**Current substep:** M3.1 implemented — decisions, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement, `stb_image` approval and PointLight warnings. Reviewer approval is pending before M3.2.
 
 ## Substeps
 
@@ -51,7 +51,7 @@
 
 | Substep | Scope | Status |
 |---|---|---|
-| M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency and `ilammy` replacement | In progress |
+| M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Implemented — reviewer pending |
 | M3.2 | GLB import core; animation channels reported only | Planned |
 | M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
 | M3.4 | Asset CLI | Planned |
@@ -93,9 +93,9 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 15 registered; CI runs 15/15 with lavapipe and Xvfb. Locally `linux-debug` passes 14/15 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 15 registered; locally 14/15 with the golden test skipped without lavapipe. CI runs 15/15 with lavapipe and Xvfb |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 15 registered; locally 14/15 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 16 registered; CI runs 16/16 with lavapipe and Xvfb. Locally `linux-debug` passes 15/16 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 16 registered; locally 15/16 with the golden test skipped without lavapipe. CI runs 16/16 with lavapipe and Xvfb |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 16 registered; locally 15/16 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test\|engine_run_smoke"` → 11/11 CPU-side tests. The four GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
@@ -192,6 +192,8 @@
 | M3.1 asset schemas | Documented | `schemas/asset@1.schema.json` and `schemas/asset-cooked@1.schema.json` define the approved asset sidecar and cooked manifest, including stable node IDs, original source path and source copy |
 | M3.1 fastgltf dependency | Automatically tested | fastgltf 0.9.1 and simdjson 5.0.5 are pinned in vcpkg with overrides; `engine_dependencies_smoke` constructs a `fastgltf::Parser` and passes |
 | M3.1 cache and source rules | Documented | `.engine/cache/` is explicitly ignored by git; `asset@1` stores the original reimport source and a project-relative source copy (ADR-0012) |
+| M3.1 stb_image approval | Documented | PNG/JPEG only via `STBI_ONLY_PNG`/`STBI_ONLY_JPEG`, 8192×8192 and 256 MiB pre-decode limits, `E_VALIDATION`, and truncated/corrupt/oversized ASan/UBSan tests |
+| M3.1 PointLight warnings | Automatically tested | `engine_point_light_warning` checks `project validate`, `engine run` and `engine screenshot` warnings; no silent ignore |
 | M3.1 `ilammy` replacement | Automatically tested | The Windows job uses `vswhere` + `vcvarsall.bat x64`; `Verify MSVC` passes `cl.exe`, and the Windows matrix is green |
 | M3.1 CI | Automatically tested | Manual dispatch [40973936972](https://github.com/chl84/3D_game_engine/actions/runs/40973936972) on `a55d568` → all five jobs green. Linux 15/15; Windows 11/11 with native MSVC setup, fastgltf and scene v3; ASan 15/15; Quality green |
 | M3.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `a55d568` → 15 registered tests (14 passed, golden skipped on local Intel) and `M1 acceptance passed` |

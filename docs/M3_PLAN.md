@@ -1,10 +1,9 @@
 # M3 Plan — Asset pipeline and live control
 
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
-in progress: scene v3, asset schemas, fastgltf/simdjson and the `ilammy`
-replacement are in place and CI-green. The image-decoding decision is still
-awaiting explicit approval; texture decoding is not used until it is approved.
-M3.2 is next.
+implemented: scene v3, asset schemas, fastgltf/simdjson, `ilammy` replacement,
+PointLight warnings and the approved `stb_image` PNG/JPEG requirements are in
+place. M3.1 awaits review; M3.2 starts after reviewer approval.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -40,7 +39,7 @@ Additional M2 decisions carried into M3:
 |---|---|---|---|---|
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB parsing, accessors, materials and node hierarchy | **Approved 2026-10-30; add in M3.1** |
 | simdjson (transitive) | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | fastgltf's JSON parser | **Approved 2026-10-30** |
-| stb_image | 2026-08-02 | MIT OR Unlicense | PNG/JPEG texture decoding | **Presented for explicit M3 approval; not used for texture decoding until approved** |
+| stb_image | 2026-08-02 | MIT OR Unlicense | PNG/JPEG texture decoding | **Approved 2026-10-30 with PNG/JPEG-only macros, pre-decode limits and sanitizer tests** |
 
 No other runtime dependency is proposed. The live API uses the existing
 nlohmann/json and platform sockets. Compressed-texture codecs (KTX2/Basis),
@@ -49,8 +48,11 @@ IBL tools and animation runtimes are not added in M3.
 The image decoder is `stb_image` from the already pinned **stb 2026-08-02**
 package (`MIT OR Unlicense`, exact vcpkg commit). It is already in the build for
 golden-image reading; M3 would use it only to decode PNG/JPEG textures during
-asset cooking. The owner must explicitly approve that M3 use before any texture
-decode code is added. No new package is required.
+asset cooking. The owner approved this M3 use on 2026-10-30 with these requirements:
+`STBI_ONLY_PNG`, `STBI_ONLY_JPEG`; maximum width/height 8192; maximum decoded
+RGBA allocation 256 MiB; `E_VALIDATION` before allocation when a limit is
+exceeded; and tests for truncated, corrupt and oversized images under
+ASan/UBSan. No new package is required.
 
 `fastgltf` and `simdjson` are added to `vcpkg.json` and `docs/DEPENDENCIES.md`
 in M3.1 after the 2026-10-30 approval. They are pinned through the existing
@@ -380,8 +382,9 @@ M3 is complete only when all of these hold:
 1. Approve the M3 scope, substeps and acceptance criteria.
 2. **Approved:** `fastgltf` 0.9.1 and transitive `simdjson` 5.0.5 are added in
    M3.1.
-   **Still required:** explicit approval to use `stb_image` from the pinned
-   stb 2026-08-02 commit for M3 PNG/JPEG texture decoding.
+   **Approved:** `stb_image` from the pinned stb 2026-08-02 commit for M3
+   PNG/JPEG texture decoding, with PNG/JPEG-only macros, pre-decode limits and
+   ASan/UBSan tests for malformed images.
 3. **Approved:** scene format **v3** with `engine.scene.AssetInstance` and
    `engine.scene.DirectionalLight`; `engine.scene.PointLight` is reserved in
    v3 so M5 needs no new format version.
@@ -396,7 +399,6 @@ M3 is complete only when all of these hold:
    skeletal playback in M3; animations are reported but not imported.
 8. **Approved:** replace `ilammy/msvc-dev-cmd` with native `vcvars` in M3.1.
 
-M3.1 starts with the approved decisions. The only open approval item is the
-M3 use of `stb_image` for texture decoding; no texture decoding is added until
-it is approved. New ADRs record the approved decisions before the corresponding
-code is written.
+M3.1 starts with the approved decisions. The `stb_image` texture-decoding use
+is approved and documented. New ADRs record the approved decisions before the
+corresponding code is written.

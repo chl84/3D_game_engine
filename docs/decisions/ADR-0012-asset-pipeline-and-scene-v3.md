@@ -86,9 +86,14 @@ assets/<assetId>/source.glb          # project-relative source copy
 
 - Animation channels are detected and reported by `asset inspect`; no animation
   data is cooked or played in M3. Animation import/playback moves to M4.
-- `stb_image` from the pinned stb 2026-08-02 commit is proposed for PNG/JPEG
-  texture decoding. The owner must explicitly approve that M3 use before any
-  texture-decode code is added. No other image decoder is proposed.
+- `stb_image` from the pinned stb 2026-08-02 commit is approved for PNG/JPEG
+  texture decoding in M3.
+- The decoder defines `STBI_ONLY_PNG` and `STBI_ONLY_JPEG`.
+- Before decoding, the header is inspected. Width above 8192, height above
+  8192 or a decoded RGBA allocation above 256 MiB fails with `E_VALIDATION`
+  and the measured/limit values. No allocation happens before the check.
+- Truncated, corrupt and oversized inputs are covered by tests under
+  ASan/UBSan.
 
 ### Test models
 
@@ -105,8 +110,8 @@ unlicensed model is committed.
 - The original source path is stored for reimport, while the project-relative
   copy keeps a clean clone self-contained when the original is unavailable.
 - The M3 renderer ignores point lights until M5.
-- The image decoder remains a separate approval gate even though `stb_image` is
-  already in the build for golden-image reading.
+- The image decoder is limited to PNG/JPEG and has hard dimension/memory
+  checks before allocation.
 - Scenes written by M3 cannot be read by the M2 release; this is explicit and
   versioned.
 
