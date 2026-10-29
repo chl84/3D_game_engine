@@ -1,8 +1,8 @@
 # Project and Scene Format
 
-**Status:** Planned. No project or scene format is implemented yet. M1
-implements the format, schemas, migrations and round-trip tests described
-here.
+**Status:** Implemented in M1.5. The project and scene readers/writers,
+canonical JSON, atomic saves, project locks and round-trip tests exist.
+Generated JSON Schemas and the `scene validate` CLI arrive in M1.6.
 
 ## Principles
 

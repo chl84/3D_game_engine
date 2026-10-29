@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M1.4. Six CTest tests exist; `engine_core_tests` contains 45 test
-cases and 317 assertions. CI also runs clang-format, clang-tidy with project
+**Status:** M1.5. Six CTest tests exist; `engine_core_tests` contains 50 test
+cases and 372 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
 
@@ -40,6 +40,9 @@ on both Linux and Windows.
 - command-name validation, JSON Schema argument validation, handler success and
   failure, unknown commands, duplicate registration, command-log entries,
   undo/redo, redo invalidation, transactions and rollback
+- project create/load, canonical byte-identical scene round-trip, entity
+  hierarchy and components, unknown fields, newer format versions, path
+  traversal and exclusive project locks
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.

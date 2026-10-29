@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.4. This document describes the approved module boundaries and
+**Status:** M1.5. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -164,8 +164,11 @@ M1.2 contains:
   sinks, the reflection registry with draft-07 component schemas, and the
   `Vec3`/`Quat` math types
 - `engine/scene`: EnTT-backed ECS with stable UUIDs, `Transform`, `Camera`,
-  parent/child links, world-transform composition, cycle rejection and
-  recursive subtree destruction
+  parent/child links, world-transform composition, cycle rejection,
+  recursive subtree destruction, and the project/scene JSON format with
+  canonical output, atomic saves and project locks
+- `engine/platform`: atomic file replacement with `fsync` on POSIX and
+  `MoveFileExW` on Windows
 - `engine/command`: versioned command registry, JSON Schema validation via
   json-schema-validator, structured success/error results with warnings, an
   in-memory command log with sequence numbers, undo/redo stacks, redo
