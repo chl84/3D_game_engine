@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.5 implemented — offscreen rendering, `engine screenshot`, PNG output, golden images and the `stb_image_write` dependency are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
+**Current substep:** M2.6 implemented — the Dear ImGui debug overlay, screenshot sandbox/limits and the CI Xvfb regression fix are on `m2/vulkan-renderer`. Reviewer approval is pending; M2.5 is reviewer GODKJENT and owner-approved.
 
 ## Substeps
 
@@ -40,8 +40,8 @@
 | M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Done — reviewer GODKJENT |
 | M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Done — reviewer GODKJENT |
 | M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
-| M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Implemented — review pending |
-| M2.6 | ImGui debug overlay | Planned |
+| M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
+| M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Implemented — review pending |
 | M2.7 | Descriptor strategy and validation hardening | Planned |
 | M2.8 | Hardening and M2 acceptance | Planned |
 
@@ -77,10 +77,10 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 13/13 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
-| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 13/13 passed |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 14 registered; CI runs 14/14 with lavapipe and Xvfb. Locally `linux-debug` passes 13/14 and skips the golden test without lavapipe; `engine_core_tests` → 60 cases / 468 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped without lavapipe. CI runs 14/14 with lavapipe and Xvfb |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test"` → 11/11 CPU-side tests. The three GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -88,7 +88,7 @@
 | log-record@1 schema | Automatically tested | `tests/contract/validate_cli.py` validates `tests/fixtures/log-record.jsonl` against `schemas/log-record@1.schema.json`; `log_test.cpp` checks the C++ output structurally |
 | UTC timestamp formatting | Automatically tested | `std::chrono::year_month_day` and `hh_mm_ss`; tests cover epoch, leap day, month boundary and year boundary |
 | Symlink test on Windows | Automatically tested | Run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) Windows summary reports 21/21 test cases and 132 assertions with no skipped cases, so the symlink test ran. `SKIP` is used if symlink creation is unavailable, and `ctest -R engine_core_tests -V` in CI displays skipped cases |
-| Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected`, Catch2 and volk |
+| Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected`, Catch2, volk, SDL3, VMA, GLM and Dear ImGui |
 | `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` and `engine_cli_contract` validate the JSON and `version@1` schema |
 | `engine doctor --json` | Automatically tested | `engine_cli_contract` validates against `doctor@1`; local run reports Intel Iris Xe, llvmpipe, loader 1.4.363 and `VK_LAYER_KHRONOS_validation` |
 | `--require vulkan` | Automatically tested | CI `Vulkan doctor detection` captures the exit code explicitly and asserts 0; `Vulkan doctor missing ICD` asserts 8. The contract test also checks `--require unknown` → 2 |
@@ -144,6 +144,11 @@
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `72d6a92`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
 | M2.5 Windows ICD evaluation | Evaluated | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. Installing lavapipe/SwiftShader is proposed for M2.8 and requires owner approval. Windows graphics remains not verified |
 | M2.5 Linux glslc evaluation | Evaluated | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. A cached pinned SDK glslc is proposed for M2.8 and requires owner approval |
+| M2.6 ImGui dependency | Automatically tested | Dear ImGui 1.93.0-docking is pinned in vcpkg and built through `cmake/vcpkg-overlay/imgui`. The overlay keeps SDL3 at `default-features: false` and builds the Vulkan backend against volk; it adds no dbus, systemd, libxcrypt or second Vulkan loader. ADR-0010 records the decision |
+| M2.6 ImGui overlay | Automatically tested | `engine_overlay_test` renders four frames with a camera and two meshes, checks the entity list, CPU/GPU frame statistics, non-empty draw data, unchanged scene revision and camera position, and zero validation errors. Local result: 480 vertices for 3 entities, CPU 1.76 ms, GPU 0.10 ms on Intel Iris Xe |
+| M2.6 screenshot sandbox and limits | Automatically tested | `engine screenshot --out` resolves through `PathSandbox`; `../escape.png` is rejected and nothing is written outside the project. Width and height are capped at 8192 and frames at 1000; `--width 8193` is rejected. `tests/smoke/screenshot.py` covers both cases |
+| M2.6 CI Xvfb regression | Fixed | The CTest step was never under Xvfb: `engine_window_smoke` was always skipped and `engine_swapchain_test` ran only in the separate `--require-minimize` step. M2.6 runs the whole CTest suite under Xvfb + openbox and keeps the strict minimize step. `VK_ICD_FILENAMES` is selected from `lvp_icd*.json` before the tests |
+| M2.6 local suites | Automatically tested | `ci-linux-clang` and `linux-debug` → 14 registered, 13 passed and the golden test skipped without lavapipe; `linux-asan` → same; `linux-tsan` → 11/11 CPU-side tests. Golden image on lavapipe still matches with maximum channel difference 0 |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -288,8 +293,15 @@ The Windows job caught two real portability issues before the milestone closed:
   save. The M1 release cannot read v2 scenes. ADR-0009 records the change.
 - `Mesh` asset UUIDs are not resolved until the asset pipeline in M3. M2.4
   resolves only `engine.builtin.cube` and `engine.builtin.plane`.
-- The window smoke test is skipped in headless CI. It runs locally and on any
-  Linux machine with a display server.
+- The full Linux CTest suite runs under Xvfb + openbox in CI, so the window,
+  swapchain and overlay tests execute there. A separate step keeps the strict
+  `--require-minimize` contract. Windows still does not register the window,
+  swapchain, overlay or golden tests.
+- TSan covers the CPU-side tests only. The window, swapchain and overlay tests
+  are excluded because the Khronos validation layer reports a lock-order
+  inversion inside the uninstrumented layer; GPU drivers are not instrumented.
+- `engine screenshot --out` is confined to the project sandbox, and width,
+  height and frame count have upper bounds.
 - The renderer requires Vulkan 1.3 with Synchronization2 and Dynamic
   Rendering. Older devices are rejected with `E_UNSUPPORTED` and the rejected
   devices are listed in the error details.
@@ -310,6 +322,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M2.1 review, then M2.2 — swapchain and frame loop. Merging to `main`, creating
-or pushing a tag and closing M2 as `v0.3.0` require the owner's explicit
-approval. The agent does not merge, tag or use `--admin` without that approval.
+M2.6 review, then M2.7 — descriptor strategy and validation hardening. Merging
+to `main`, creating or pushing a tag and closing M2 as `v0.3.0` require the
+owner's explicit approval. The agent does not merge, tag or use `--admin`
+without that approval.

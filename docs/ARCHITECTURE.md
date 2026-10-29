@@ -105,7 +105,9 @@ animation mutate the runtime state directly during a fixed tick.
   allocator and the debug messenger. It requires Vulkan 1.3 with
   Synchronization2 and Dynamic Rendering.
 - Rendering can run headless: a device without a window is enough for
-  offscreen rendering, screenshots and golden-image tests.
+  offscreen rendering, screenshots and golden-image tests. `engine screenshot`
+  resolves `--out` through `PathSandbox` and caps width and height at 8192 and
+  frames at 1000.
 - Validation layers are enabled in debug builds when available. The `Required`
   mode fails when the layer is missing, and the debug messenger counts errors
   and warnings so tests can assert zero errors.
@@ -127,6 +129,12 @@ animation mutate the runtime state directly during a fixed tick.
   result to camera-relative floats for model matrices; the camera view is
   rotation-only. M5's large-world work can add chunk-relative transforms on top
   without changing the v2 field types.
+- The windowed `Renderer` owns an optional Dear ImGui debug overlay. It is
+  enabled by default in debug builds and disabled by default in release
+  builds. It reads only `SceneView`, shows FPS, CPU frame time, GPU timestamp
+  time and the entity list, and records its draw data inside the same
+  dynamic-rendering pass. The ImGui Vulkan backend uses the volk-loaded
+  function table; ADR-0010 records the local overlay port.
 - `SceneView` is the read-only boundary between `scene` and `render`. It
   exposes mesh IDs, cameras and world transforms but no mutation methods.
 - A scene `Mesh` component stores only `meshId`: a future asset UUID or a fixed

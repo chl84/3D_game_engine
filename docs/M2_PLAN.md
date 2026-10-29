@@ -1,7 +1,7 @@
 # M2 Plan — Vulkan Renderer
 
-**Status:** Approved by the owner on 2026-10-29. Implementation started with
-M2.1–M2.4 are approved and M2.5 is implemented.
+**Status:** Approved by the owner on 2026-10-29. M2.1–M2.5 are approved and
+M2.6 is implemented.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -128,6 +128,9 @@ new transitive dependency follows A.6 and is recorded in
 - Show FPS, CPU/GPU frame time and the entity list.
 - Keep the overlay debug-only; it must not mutate authoritative state.
 - Add a compile/run smoke test for the overlay.
+- Implement the pre-merge screenshot hardening: resolve `--out` through
+  `PathSandbox` and cap `--width`/`--height` at 8192 and `--frames` at 1000.
+  This was implemented in M2.6.
 
 ### M2.7 Descriptor strategy and validation
 

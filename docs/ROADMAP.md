@@ -8,7 +8,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 |---|---|---|
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
-| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | In progress — M2.1–M2.4 done, M2.5 implemented |
+| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | In progress — M2.1–M2.6 done, M2.7–M2.8 remaining |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits | Planned |
@@ -20,7 +20,8 @@ The detailed M2 plan is in [`docs/M2_PLAN.md`](M2_PLAN.md). It was approved by
 the owner on 2026-10-29. M2.1 implements the render device and window; M2.2 adds the swapchain and
 frame loop; M2.3 adds glslc-compiled shaders and the first triangle; M2.4 adds
 scene format v2, camera-relative scene rendering, depth and culling; M2.5 adds
-offscreen rendering and screenshots. The remaining substeps are M2.6–M2.8.
+offscreen rendering and screenshots; M2.6 adds the ImGui debug overlay and the
+screenshot sandbox/limits. The remaining substeps are M2.7–M2.8.
 
 ## M0 substeps
 

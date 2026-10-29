@@ -143,7 +143,7 @@ registration. Read-only commands do not need it.
 ## Renderer
 
 The render module is `engine::render`; it is not exposed through the CLI yet.
-`engine screenshot` arrives in M2.5. The current API creates a Vulkan 1.3
+`engine screenshot` is available in M2.5. The current API creates a Vulkan 1.3
 device with Synchronization2, Dynamic Rendering and VMA, either headless or
 from an SDL3 window. `render::Renderer` owns the swapchain and frame loop; it
 clears, draws scene meshes and presents, and recreates the swapchain after
@@ -152,7 +152,10 @@ double precision and converted to camera-relative floats before rendering.
 `SceneView` is the read-only boundary into the renderer. GLSL shaders are
 compiled by `glslc` at build time; the shaderc library is not linked.
 `engine.scene.Mesh` stores a `meshId` (`engine.builtin.cube`,
-`engine.builtin.plane` or a future asset UUID), never mesh data.
+`engine.builtin.plane` or a future asset UUID), never mesh data. The windowed
+renderer owns a Dear ImGui debug overlay that shows FPS, CPU/GPU frame time and
+the entity list; it is enabled by default in debug builds and reads only
+`SceneView`. See ADR-0010 for the ImGui integration.
 
 ## Screenshots
 
@@ -164,8 +167,9 @@ engine screenshot ./my-game scenes/main.scene.json \
 ```
 
 The command creates a headless Vulkan device, renders the scene with the built-in
-meshes, writes a PNG, and returns a `command-result@1` document. `--json` is
-supported. The screenshot test uses `tests/fixtures/golden/m2_scene_64.png` on
+meshes, writes a PNG, and returns a `command-result@1` document. `--out` is
+resolved inside the project sandbox; width and height are capped at 8192 and
+frames at 1000. `--json` is supported. The screenshot test uses `tests/fixtures/golden/m2_scene_64.png` on
 lavapipe. `render::Device::create` returns `E_UNSUPPORTED` when the
 loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
 layers are missing; the error details name the failing stage.
