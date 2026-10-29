@@ -316,7 +316,7 @@ int main(int argc, char** argv) {
             engine::cli::print_doctor_human(result.report, std::cout);
         }
 
-        return result.failed_requirements.empty() && !result.engine_requirements_failed
+        return result.failed_requirements.empty()
                    ? 0
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
     }

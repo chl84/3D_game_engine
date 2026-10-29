@@ -282,6 +282,9 @@ DoctorResult run_doctor(const DoctorOptions& options) {
             failed_requirements.push_back(requirement);
         }
     }
+    if (has_devices && !has_descriptor_indexing) {
+        failed_requirements.emplace_back("descriptor-indexing");
+    }
 
     nlohmann::json requirements{
         {"requested", options.requirements},
@@ -311,7 +314,6 @@ DoctorResult run_doctor(const DoctorOptions& options) {
         {"checks", checks},
     };
     result.failed_requirements = std::move(failed_requirements);
-    result.engine_requirements_failed = has_devices && !has_descriptor_indexing;
     return result;
 }
 
@@ -362,6 +364,8 @@ void print_doctor_human(const nlohmann::json& report, std::ostream& out) {
         if (!requirements.at("failed").empty()) {
             out << "  failed: " << join(requirements.at("failed")) << '\n';
         }
+    } else if (!requirements.at("failed").empty()) {
+        out << "Engine requirements failed: " << join(requirements.at("failed")) << '\n';
     }
 }
 

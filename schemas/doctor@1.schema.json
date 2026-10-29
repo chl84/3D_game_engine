@@ -190,7 +190,33 @@
                       "E_UNSUPPORTED"
                     ]
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "supported": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "supported"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "errorCode"
+                      ]
+                    },
+                    "else": {
+                      "not": {
+                        "required": [
+                          "errorCode"
+                        ]
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
@@ -255,7 +281,8 @@
               "vulkan",
               "gpu",
               "validation-layers",
-              "lavapipe"
+              "lavapipe",
+              "descriptor-indexing"
             ]
           }
         },
