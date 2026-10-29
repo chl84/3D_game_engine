@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.6 implemented — the Dear ImGui debug overlay, screenshot sandbox/limits and the CI Xvfb regression fix are on `m2/vulkan-renderer`. Reviewer approval is pending; M2.5 is reviewer GODKJENT and owner-approved.
+**Current substep:** M2.6 reviewer GODKJENT — the Dear ImGui debug overlay, screenshot sandbox/limits and the CI Xvfb regression fix are on `m2/vulkan-renderer`. Owner approval is pending; M2.5 is reviewer GODKJENT and owner-approved.
 
 ## Substeps
 
@@ -41,7 +41,7 @@
 | M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Done — reviewer GODKJENT |
 | M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
-| M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Implemented — review pending |
+| M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; awaiting owner approval |
 | M2.7 | Descriptor strategy and validation hardening | Planned |
 | M2.8 | Hardening and M2 acceptance | Planned |
 
