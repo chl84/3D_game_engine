@@ -54,7 +54,7 @@ Out of scope:
 | GLM | 1.0.3 | MIT | Matrix/vector math for the renderer | Approved in the milestone plan |
 | glslc | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step | Approved in the milestone plan; only the CLI is used, not the shaderc library |
 | Dear ImGui | 1.93.0-docking | MIT | Debug overlay and later editor UI | Approved in the milestone plan |
-| stb_image_write | 2026-08-02 | MIT OR Unlicense | PNG screenshots | Approved for M2 on 2026-10-29 |
+| stb_image / stb_image_write | 2026-08-02 | MIT OR Unlicense | PNG screenshots and golden-image decoding | Approved for M2 on 2026-10-29 |
 
 `volk` and the Vulkan headers are already in the build. The Vulkan SDK remains
 the source of validation layers and tools. Any dependency version change or
@@ -106,12 +106,15 @@ new transitive dependency follows A.6 and is recorded in
 
 - Create offscreen images and render targets without a window.
 - Evaluation result: the Windows runner has the Vulkan loader and validation
-  layers from the SDK, but no ICD. Installing lavapipe or SwiftShader is not
-  reliable enough on the current Windows image; Windows graphics stays
-  **not verified** in M2. Revisit in M2.8 hardening.
-- Evaluation result: the LunarG Linux SDK download is 366 MB per CI job. The
-  Ubuntu distro `glslc` (shaderc 2023.8) produces valid SPIR-V and is kept for
-  M2. Revisit pinned Linux `glslc` in M2.8 with a cached SDK.
+  layers from the SDK, but no ICD. This is a documented assessment, not a
+  tested installation. Windows graphics stays **not verified** in M2.
+  **Proposed follow-up for M2.8 — requires owner approval:** install lavapipe
+  or SwiftShader on the Windows runner. It is not implemented in M2.5.
+- Evaluation result: the LunarG Linux SDK download is 366 MB per CI job, so it
+  was not adopted. The Ubuntu distro `glslc` (shaderc 2023.8) produces valid
+  SPIR-V and is kept for M2. **Proposed follow-up for M2.8 — requires owner
+  approval:** use a cached pinned SDK `glslc` on Linux. It is not implemented
+  in M2.5.
 - Implement `engine screenshot <project> <scene> --frames N --out <file>`.
 - Encode PNG with `stb_image_write`.
 - Force lavapipe in CI with `VK_ICD_FILENAMES` and compare against golden

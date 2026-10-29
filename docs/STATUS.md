@@ -142,8 +142,8 @@
 | M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
 | M2.5 CI | Automatically tested | Manual dispatch [40925072019](https://github.com/chl84/3D_game_engine/actions/runs/40925072019) → Linux 13/13 including `engine_screenshot_golden` on lavapipe and `engine_screenshot_cli`; Windows 9/9 with graphics tests skipped; Quality green |
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `6e69a51`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
-| M2.5 Windows ICD evaluation | Evaluated | The Windows runner has loader and validation layers but no ICD; lavapipe/SwiftShader installation is deferred to M2.8. Windows graphics remains not verified |
-| M2.5 Linux glslc evaluation | Evaluated | The LunarG Linux SDK is 366 MB per CI job; the Ubuntu distro `glslc` is kept for M2. Pinned SDK glslc is proposed for M2.8 with caching |
+| M2.5 Windows ICD evaluation | Evaluated | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. Installing lavapipe/SwiftShader is proposed for M2.8 and requires owner approval. Windows graphics remains not verified |
+| M2.5 Linux glslc evaluation | Evaluated | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. A cached pinned SDK glslc is proposed for M2.8 and requires owner approval |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
