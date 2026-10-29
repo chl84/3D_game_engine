@@ -161,6 +161,9 @@ def main() -> int:
         for name in ("engine.scene.Transform", "engine.scene.Camera", "engine.scene.Motion"):
             if name not in components:
                 return fail(f"schema output is missing {name}")
+        commands = schema_document["data"].get("commands")
+        if not isinstance(commands, dict) or "scene.entity.create@1" not in commands:
+            return fail("schema output has no command schemas")
 
         with tempfile.TemporaryDirectory(prefix="engine-cli-contract-") as temporary:
             project_dir = Path(temporary) / "demo"
@@ -177,6 +180,21 @@ def main() -> int:
             if inspected["data"].get("entities") != []:
                 return fail("new project should have an empty scene")
 
+            dry_project = Path(temporary) / "dry-project"
+            run_command(
+                [
+                    "project",
+                    "create",
+                    str(dry_project),
+                    "--name",
+                    "Dry",
+                    "--dry-run",
+                ],
+                "project create dry-run",
+            )
+            if dry_project.exists():
+                return fail("project create --dry-run created files")
+
             root_created = run_command(
                 ["entity", "create", str(project_dir), "--name", "Root"],
                 "entity create root",
@@ -184,6 +202,40 @@ def main() -> int:
             root_id = root_created["data"]["result"]["id"]
             if not isinstance(root_id, str):
                 return fail("entity create did not return an entity id")
+
+            run_command(
+                [
+                    "entity",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "DryEntity",
+                    "--dry-run",
+                ],
+                "entity create dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after dry-run"
+            )
+            if len(inspected["data"]["entities"]) != 1:
+                return fail("entity create --dry-run changed the scene")
+
+            extra_scene = project_dir / "scenes" / "extra.scene.json"
+            run_command(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "extra",
+                    "--path",
+                    "scenes/extra.scene.json",
+                    "--dry-run",
+                ],
+                "scene create dry-run",
+            )
+            if extra_scene.exists():
+                return fail("scene create --dry-run created a file")
 
             child_created = run_command(
                 [
@@ -198,6 +250,31 @@ def main() -> int:
                 "entity create child",
             )
             child_id = child_created["data"]["result"]["id"]
+
+            run_command(
+                [
+                    "component",
+                    "set",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Camera",
+                    "--value",
+                    json.dumps({"fovYRadians": 0.5}),
+                    "--dry-run",
+                ],
+                "component set dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after component dry-run"
+            )
+            child = next(
+                (entity for entity in inspected["data"]["entities"] if entity.get("id") == child_id),
+                None,
+            )
+            if child is None or "engine.scene.Camera" in child["components"]:
+                return fail("component set --dry-run changed the scene")
 
             run_command(
                 [
@@ -305,6 +382,67 @@ def main() -> int:
             )
             if len(inspected["data"]["entities"]) != 2:
                 return fail("batch undo did not restore the entity count")
+
+            delete_file = Path(temporary) / "delete.json"
+            delete_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.entity.delete@1",
+                                "arguments": {"id": root_id},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(delete_file),
+                    "--undo",
+                    "1",
+                ],
+                "batch delete subtree undo",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after subtree undo"
+            )
+            if len(inspected["data"]["entities"]) != 2:
+                return fail("subtree undo did not restore the hierarchy")
+
+            dry_batch_file = Path(temporary) / "dry-batch.json"
+            dry_batch_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.entity.create@1",
+                                "arguments": {"name": "DryBatch"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(dry_batch_file),
+                    "--dry-run",
+                ],
+                "batch dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after batch dry-run"
+            )
+            if len(inspected["data"]["entities"]) != 2:
+                return fail("batch --dry-run changed the scene")
 
             missing = run_engine(
                 engine,

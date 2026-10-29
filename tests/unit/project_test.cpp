@@ -129,6 +129,50 @@ TEST_CASE("project and scene loaders reject unknown fields and newer versions", 
     REQUIRE(newer_scene.error().code == engine::core::ErrorCode::Unsupported);
 }
 
+TEST_CASE("scene loader rejects missing IDs and negative revisions", "[project]") {
+    engine::test::TempDir temp("invalid-scene");
+    auto project = Project::create(temp.path() / "demo", "Demo");
+    REQUIRE(project.has_value());
+
+    ReflectionRegistry registry;
+    register_scene_components(registry);
+    const auto scene_file = project->root() / "scenes" / "main.scene.json";
+    const auto original = nlohmann::json::parse(read_file(scene_file));
+
+    auto missing_id = original;
+    missing_id.erase("sceneId");
+    REQUIRE(engine::platform::atomic_write_file(scene_file, missing_id.dump(2) + "\n").has_value());
+    auto invalid = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE_FALSE(invalid.has_value());
+    REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
+
+    auto negative_revision = original;
+    negative_revision["revision"] = -1;
+    REQUIRE(engine::platform::atomic_write_file(scene_file, negative_revision.dump(2) + "\n")
+                .has_value());
+    auto negative = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE_FALSE(negative.has_value());
+    REQUIRE(negative.error().code == engine::core::ErrorCode::Validation);
+}
+
+#ifndef _WIN32
+TEST_CASE("atomic writes do not follow a pre-existing temporary symlink", "[project]") {
+    engine::test::TempDir temp("atomic-symlink");
+    const auto outside = temp.path() / "outside.txt";
+    const auto target = temp.path() / "target.txt";
+    const auto temporary = temp.path() / "target.txt.tmp";
+
+    REQUIRE(engine::platform::atomic_write_file(outside, "safe").has_value());
+    std::error_code error;
+    std::filesystem::create_symlink(outside, temporary, error);
+    REQUIRE_FALSE(error);
+
+    REQUIRE(engine::platform::atomic_write_file(target, "new").has_value());
+    REQUIRE(read_file(outside) == "safe");
+    REQUIRE(read_file(target) == "new");
+}
+#endif
+
 TEST_CASE("project paths cannot escape the project root", "[project]") {
     engine::test::TempDir temp("paths");
     auto project = Project::create(temp.path() / "demo", "Demo");

@@ -1,6 +1,7 @@
 #include <engine/scene/project.hpp>
 
 #include <engine/core/path_sandbox.hpp>
+#include <engine/core/version.hpp>
 #include <engine/platform/atomic_file.hpp>
 
 #include <algorithm>
@@ -205,9 +206,9 @@ Result<Project> Project::create(const std::filesystem::path& root, std::string n
     std::filesystem::create_directories(canonical / ".engine");
 
     ProjectSettings settings;
-    Project project(canonical, core::Uuid::generate(), std::move(name), "0.1.0",
-                    {"scenes/main.scene.json"}, "assets", "scripts", settings,
-                    nlohmann::json::object());
+    Project project(canonical, core::Uuid::generate(), std::move(name),
+                    std::string(core::version()), {"scenes/main.scene.json"}, "assets", "scripts",
+                    settings, nlohmann::json::object());
 
     core::ReflectionRegistry registry;
     register_scene_components(registry);
@@ -432,12 +433,21 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
                              {{"formatVersion", format_version.value_or(-1)}}));
     }
 
-    auto scene_id = parse_uuid(document->at("sceneId"), "sceneId");
+    const auto scene_id_iterator = document->find("sceneId");
+    if (scene_id_iterator == document->end()) {
+        return core::make_failure<Scene>(
+            core::make_error(core::ErrorCode::Validation, "sceneId is missing"));
+    }
+    auto scene_id = parse_uuid(*scene_id_iterator, "sceneId");
     auto name = require_string(*document, "name");
     auto revision = require_int(*document, "revision");
     if (!scene_id || !name || !revision) {
         return core::make_failure<Scene>(
             core::make_error(core::ErrorCode::Validation, "scene header is invalid"));
+    }
+    if (*revision < 0) {
+        return core::make_failure<Scene>(
+            core::make_error(core::ErrorCode::Validation, "revision must not be negative"));
     }
 
     nlohmann::json metadata = nlohmann::json::object();
@@ -475,7 +485,12 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
         if (!entity_unknown) {
             return core::make_failure<Scene>(entity_unknown.error());
         }
-        auto id = parse_uuid(entity_document.at("id"), "id");
+        const auto id_iterator = entity_document.find("id");
+        if (id_iterator == entity_document.end()) {
+            return core::make_failure<Scene>(
+                core::make_error(core::ErrorCode::Validation, "entity id is missing"));
+        }
+        auto id = parse_uuid(*id_iterator, "id");
         auto entity_name = require_string(entity_document, "name");
         if (!id || !entity_name) {
             return core::make_failure<Scene>(
@@ -499,7 +514,12 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
     }
 
     for (const auto& entity_document : *entities_iterator) {
-        auto id = parse_uuid(entity_document.at("id"), "id");
+        const auto id_iterator = entity_document.find("id");
+        if (id_iterator == entity_document.end()) {
+            return core::make_failure<Scene>(
+                core::make_error(core::ErrorCode::Validation, "entity id is missing"));
+        }
+        auto id = parse_uuid(*id_iterator, "id");
         if (!id) {
             return core::make_failure<Scene>(id.error());
         }
