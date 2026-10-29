@@ -1,11 +1,11 @@
 # Build
 
-**Status:** M2.1. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M2.3. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
-simulation, `engine schema`, and the M2.1 Vulkan render device with an SDL3
-window. Version, doctor and all offline commands support `--json` and
+simulation, `engine schema`, and the M2.3 Vulkan renderer with an SDL3
+window, glslc-compiled shaders and a triangle. Version, doctor and all offline commands support `--json` and
 state-changing commands support `--dry-run`. Catch2, contract, render and M1
 acceptance tests cover the CLI and the renderer, and
 `scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
@@ -38,6 +38,8 @@ and are reported here.
 - CMake 3.28 or newer
 - Ninja
 - A C++20 compiler: GCC 14+, Clang 18+, or MSVC 19.4+
+- `glslc` for the GLSL to SPIR-V build step. The build fails with a clear
+  error if it is missing.
 - Python 3.10+ (test scripts and contract validation)
 - `jsonschema` from `requirements-dev.txt` (installed in `.venv`)
 
@@ -52,6 +54,12 @@ sudo pacman -S --needed vulkan-headers vulkan-validation-layers vulkan-tools vul
 headless tests and golden images. The validation layers are required by the
 `required validation layers report no errors` test; CI installs
 `vulkan-validationlayers` on Ubuntu.
+
+`glslc` is a build tool, not a linked library. On Arch it comes with the
+`shaderc` package; on Ubuntu CI the `glslc` package is installed. On Windows
+CI the LunarG Vulkan SDK 1.4.363 is installed and its `Bin` directory is added
+to `PATH`; `VULKAN_SDK` is also set. CMake searches `PATH` and `VULKAN_SDK` and
+fails at configure time when `glslc` is missing.
 
 SDL3 is built by vcpkg with the Vulkan, X11 and Wayland features. On Debian and
 Ubuntu the build needs the X11 and Wayland development headers:

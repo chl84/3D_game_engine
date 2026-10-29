@@ -1,8 +1,9 @@
 # Testing
 
-**Status:** M2.2. Eleven CTest tests exist on Linux; Windows registers nine
+**Status:** M2.3. Eleven CTest tests exist on Linux; Windows registers nine
 because the window and swapchain tests are not registered there. `engine_core_tests`
-contains 56 test cases and 417 assertions. CI also runs clang-format,
+contains 56 test cases and 417 assertions; `engine_render_tests` contains 6
+test cases and 36 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
 pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -35,8 +36,11 @@ link errors fail on both Linux and Windows.
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
 asserts that the debug messenger counts zero errors, checks the single-device
 guard, and creates devices sequentially to prove that volk can be initialized
-and finalized repeatedly. If the Vulkan loader is missing, the cases are
-reported as skipped. `engine_window_smoke` creates an SDL3 window, checks the
+and finalized repeatedly. The same executable tests the camera: the triangle
+vertices map into Vulkan clip space and a zero aspect is guarded. The shaders
+are compiled by `glslc` at build time and embedded as SPIR-V; CMake fails with a
+clear error when `glslc` is missing. If the Vulkan loader is missing, the
+device cases are reported as skipped. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_swapchain_test` creates a hidden window,

@@ -1,7 +1,7 @@
 # M2 Plan — Vulkan Renderer
 
 **Status:** Approved by the owner on 2026-10-29. Implementation started with
-M2.1; M2.2 is implemented.
+M2.1; M2.2 is approved and M2.3 is implemented.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -105,6 +105,9 @@ new transitive dependency follows A.6 and is recorded in
 ### M2.5 Offscreen rendering and screenshots
 
 - Create offscreen images and render targets without a window.
+- Evaluate installing the Vulkan loader and lavapipe or SwiftShader on the
+  Windows runner so the offscreen screenshot test runs there instead of being
+  skipped.
 - Implement `engine screenshot <project> <scene> --frames N --out <file>`.
 - Encode PNG with `stb_image_write`.
 - Force lavapipe in CI with `VK_ICD_FILENAMES` and compare against golden

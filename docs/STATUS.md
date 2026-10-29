@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.2 implemented — swapchain, frame loop, resize/minimize handling and the swapchain integration test are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
+**Current substep:** M2.3 implemented — GLSL compiled to SPIR-V with glslc, graphics pipeline, vertex buffer, camera and triangle rendering are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -37,8 +37,8 @@
 | Substep | Scope | Status |
 |---|---|---|
 | M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Done — reviewer GODKJENT |
-| M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Implemented — review pending |
-| M2.3 | First triangle | Planned |
+| M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Done — reviewer GODKJENT |
+| M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Implemented — review pending |
 | M2.4 | Scene rendering | Planned |
 | M2.5 | Offscreen rendering and screenshots | Planned |
 | M2.6 | ImGui debug overlay | Planned |
@@ -125,6 +125,9 @@
 | M2.2 frame synchronization | Automatically tested | The swapchain test presents 16 frames locally and 6 frames under Xvfb with per-frame image-available semaphores and per-swapchain-image render-finished semaphores; the validation layers report no semaphore-reuse errors |
 | M2.2 CI | Automatically tested | Manual dispatch [40891052868](https://github.com/chl84/3D_game_engine/actions/runs/40891052868) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11 with the window and swapchain tests skipped headless; Windows MSVC 9/9 with the headless render test skipped; Quality green |
 | M2.2 minimize under Xvfb | Automatically tested | The Linux CI jobs run `engine_swapchain_test --require-minimize` under Xvfb + openbox; both report `minimize: renderer reported no frames` and present afterward |
+| M2.3 glslc build step | Automatically tested | CMake finds `glslc` and compiles `triangle.vert` and `triangle.frag` to SPIR-V; the build log shows `Compiling triangle.vert`, `Compiling triangle.frag` and `Embedding SPIR-V shaders` |
+| M2.3 triangle pipeline | Automatically tested locally | `engine_swapchain_test` records the graphics pipeline and three-vertex draw with `Required` validation and zero errors |
+| M2.3 camera | Automatically tested | `engine_render_tests` includes two camera cases: the triangle vertices map into Vulkan clip space and a zero aspect is guarded; 36 assertions in 6 test cases |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

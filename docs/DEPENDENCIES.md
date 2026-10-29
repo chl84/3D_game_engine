@@ -1,6 +1,6 @@
 # Dependencies
 
-**Status:** M2.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M2.3. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
 1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
 Allocator 3.5.0 and GLM 1.0.3. The core library uses nlohmann/json, spdlog and
@@ -45,7 +45,6 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| shaderc / glslc | 2026.4 | Apache-2.0 | GLSL to SPIR-V at build time | M2 |
 | Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M2 |
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
 | stb_image / stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | Image loading and PNG screenshots | M2 |
@@ -59,6 +58,7 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
+| glslc (shaderc CLI) | 2026.4 on Linux; Vulkan SDK on Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine |
 | CMake | 4.4.5 pinned in CI; 4.4.4 on the development machine | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 pinned in CI and on the development machine | Apache-2.0 | Build tool |
 | GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
@@ -92,3 +92,9 @@ and the license texts used for redistribution.
   volk defines `VK_NO_PROTOTYPES`.
 - GLM is used only inside `engine/render`. Authoritative scene data keeps the
   `core::Vec3` and `core::Quat` types.
+- `glslc` is executed as a build tool. The shaderc library is not linked and is
+  not a runtime dependency. Linux CI installs the distro `glslc` package;
+  Windows CI installs the LunarG Vulkan SDK 1.4.363 and adds its `Bin`
+  directory to `PATH`.
+- The generated SPIR-V is embedded in `engine_render` as C++ word arrays, so
+  tests and tools do not need shader files at runtime.

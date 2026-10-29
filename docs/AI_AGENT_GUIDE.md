@@ -1,7 +1,7 @@
 # AI Agent Guide
 
-**Status:** M2.1. Version, doctor, the offline project/scene/entity/component
-CLI, fixed-tick simulation and the Vulkan render device exist. The live API is
+**Status:** M2.3. Version, doctor, the offline project/scene/entity/component
+CLI, fixed-tick simulation and the Vulkan renderer exist. The live API is
 planned for M3.
 
 ## Principles
@@ -146,8 +146,9 @@ The render module is `engine::render`; it is not exposed through the CLI yet.
 `engine screenshot` arrives in M2.5. The current API creates a Vulkan 1.3
 device with Synchronization2, Dynamic Rendering and VMA, either headless or
 from an SDL3 window. `render::Renderer` owns the swapchain and frame loop; it
-clears and presents, and recreates the swapchain after resize, minimize or
-out-of-date events. `render::Device::create` returns `E_UNSUPPORTED` when the
+clears, draws a triangle and presents, and recreates the swapchain after
+resize, minimize or out-of-date events. GLSL shaders are compiled by `glslc`
+at build time; the shaderc library is not linked. `render::Device::create` returns `E_UNSUPPORTED` when the
 loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
 layers are missing; the error details name the failing stage.
 
