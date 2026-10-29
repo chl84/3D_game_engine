@@ -9,7 +9,9 @@
     "cli11",
     "tl-expected",
     "catch2",
-    "volk"
+    "volk",
+    "entt",
+    "json-schema-validator"
   ],
   "overrides": [
     {
@@ -35,6 +37,14 @@
     {
       "name": "volk",
       "version": "1.4.363.0"
+    },
+    {
+      "name": "entt",
+      "version": "4.0.0"
+    },
+    {
+      "name": "json-schema-validator",
+      "version": "2.4.0"
     }
   ]
 }

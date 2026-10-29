@@ -9,6 +9,7 @@ add_library(engine_core STATIC
     src/error.cpp
     src/log.cpp
     src/path_sandbox.cpp
+    src/reflect.cpp
     src/uuid.cpp
     src/version.cpp
 )
