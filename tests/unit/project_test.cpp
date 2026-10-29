@@ -169,9 +169,9 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     auto reloaded = project->load_scene("scenes/main.scene.json", registry);
     REQUIRE(reloaded.has_value());
     REQUIRE(loaded->uuid(entity).has_value());
-    const auto reloaded_entity = reloaded->find(*loaded->uuid(entity));
-    REQUIRE(reloaded_entity.has_value());
-    REQUIRE(reloaded->transform(*reloaded_entity).position == Vec3d{16000.001, 0.0, 8000.0});
+    const auto entity_id = loaded->uuid(entity).value_or(engine::core::Uuid{});
+    const auto reloaded_entity = reloaded->find(entity_id).value_or(entt::null);
+    REQUIRE(reloaded->transform(reloaded_entity).position == Vec3d{16000.001, 0.0, 8000.0});
 
     mesh_document["formatVersion"] = 1;
     REQUIRE(
