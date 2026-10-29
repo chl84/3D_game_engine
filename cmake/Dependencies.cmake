@@ -8,6 +8,7 @@ find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(Stb REQUIRED)
 
 if(BUILD_TESTING)
     find_package(Catch2 3 CONFIG REQUIRED)

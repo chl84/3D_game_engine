@@ -1,7 +1,7 @@
 # M2 Plan — Vulkan Renderer
 
 **Status:** Approved by the owner on 2026-10-29. Implementation started with
-M2.1–M2.3 are approved and M2.4 is implemented.
+M2.1–M2.4 are approved and M2.5 is implemented.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -54,7 +54,7 @@ Out of scope:
 | GLM | 1.0.3 | MIT | Matrix/vector math for the renderer | Approved in the milestone plan |
 | glslc | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step | Approved in the milestone plan; only the CLI is used, not the shaderc library |
 | Dear ImGui | 1.93.0-docking | MIT | Debug overlay and later editor UI | Approved in the milestone plan |
-| stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | PNG screenshots | Planned for M3; proposed to move to M2 for screenshots |
+| stb_image_write | 2026-08-02 | MIT OR Unlicense | PNG screenshots | Approved for M2 on 2026-10-29 |
 
 `volk` and the Vulkan headers are already in the build. The Vulkan SDK remains
 the source of validation layers and tools. Any dependency version change or

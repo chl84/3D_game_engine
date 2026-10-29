@@ -29,7 +29,8 @@
       "default-features": false
     },
     "vulkan-memory-allocator",
-    "glm"
+    "glm",
+    "stb"
   ],
   "overrides": [
     {
@@ -75,6 +76,10 @@
     {
       "name": "glm",
       "version": "1.0.3"
+    },
+    {
+      "name": "stb",
+      "version-date": "2026-08-02"
     }
   ]
 }

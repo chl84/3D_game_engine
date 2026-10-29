@@ -19,6 +19,7 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | SDL3 | 3.4.18 | Zlib AND MIT AND Apache-2.0 AND BSD-3-Clause | Window, input and Vulkan surface (`platform`) |
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation (`render`) |
 | GLM | 1.0.3 | MIT | Renderer math (`render`) |
+| stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding for screenshots |
 
 ## Test and development dependencies
 

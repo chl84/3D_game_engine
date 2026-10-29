@@ -57,6 +57,7 @@ add_library(engine_render STATIC
     src/camera.cpp
     src/device.cpp
     src/frustum.cpp
+    src/offscreen_renderer.cpp
     src/renderer.cpp
     src/scene_transform.cpp
     src/vma.cpp

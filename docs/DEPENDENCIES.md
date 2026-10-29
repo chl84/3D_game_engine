@@ -1,9 +1,9 @@
 # Dependencies
 
-**Status:** M2.3. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M2.5. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
 1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
-Allocator 3.5.0 and GLM 1.0.3. The core library uses nlohmann/json, spdlog and
+Allocator 3.5.0, GLM 1.0.3 and stb 2026-08-02. The core library uses nlohmann/json, spdlog and
 `tl::expected`; the CLI uses CLI11 and volk; Catch2 is test-only. EnTT is the
 ECS; json-schema-validator validates command and format payloads. Python
 `jsonschema` is a development-only contract-test dependency.
@@ -36,6 +36,7 @@ ECS; json-schema-validator validates command and format payloads. Python
 | SDL3 | 3.4.18 | Zlib AND MIT AND Apache-2.0 AND BSD-3-Clause | Window, input, events and Vulkan surface creation | M2 | Mature cross-platform windowing with an explicit Vulkan feature. Built with the `vulkan`, `x11` and `wayland` features; `ibus` and audio features are disabled. All included components are permissive. Approved in the M2 plan on 2026-10-29. |
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 | AMD's official Vulkan allocator. Header-only, integrates with volk, and is the allocator named in the architecture. Approved in the M2 plan on 2026-10-29. |
 | GLM | 1.0.3 | MIT | Matrix and vector math for the renderer | M2 | Header-only C++ math library with Vulkan-compatible clip-space support. The engine keeps its own `Vec3`/`Quat` for scene data and uses GLM only inside `render`. Approved in the M2 plan on 2026-10-29. |
+| stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding for `engine screenshot` | M2 | Single-header PNG writer; no runtime library. Used by the screenshot command and golden-image tooling. The owner explicitly approved the dependency on 2026-10-29. |
 
 ## Planned dependencies
 
@@ -47,7 +48,6 @@ them.
 |---|---|---|---|---|
 | Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M2 |
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
-| stb_image / stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | Image loading and PNG screenshots | M2 |
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
 | Lua | 5.4.8 | MIT | Scripting | M4 |
 | sol2 | 3.5.0 | MIT | Lua bindings generated from reflection | M4 |
@@ -92,6 +92,7 @@ and the license texts used for redistribution.
   volk defines `VK_NO_PROTOTYPES`.
 - GLM is used only inside `engine/render`. Authoritative scene data keeps the
   `core::Vec3` and `core::Quat` types.
+- The `stb` port is header-only. `stb_image_write` is used only by the screenshot command and screenshot tests; it is not linked into the renderer library.
 - `glslc` is executed as a build tool. The shaderc library is not linked and is
   not a runtime dependency. Linux CI installs the distro `glslc` package;
   Windows CI installs the LunarG Vulkan SDK 1.4.363 and adds its `Bin`
