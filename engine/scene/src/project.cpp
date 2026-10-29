@@ -21,7 +21,7 @@ namespace engine::scene {
 namespace {
 
 constexpr int kProjectFormatVersion = 1;
-constexpr int kSceneFormatVersion = 2;
+constexpr int kSceneFormatVersion = 3;
 constexpr int kMinimumSceneFormatVersion = 1;
 
 [[nodiscard]] Error project_error(ErrorCode code, std::string message,
@@ -354,7 +354,11 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
     const auto* camera = registry.find("engine.scene.Camera");
     const auto* motion = registry.find("engine.scene.Motion");
     const auto* mesh = registry.find("engine.scene.Mesh");
-    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr) {
+    const auto* asset_instance = registry.find("engine.scene.AssetInstance");
+    const auto* directional_light = registry.find("engine.scene.DirectionalLight");
+    const auto* point_light = registry.find("engine.scene.PointLight");
+    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr ||
+        asset_instance == nullptr || directional_light == nullptr || point_light == nullptr) {
         return core::make_failure<nlohmann::json>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -376,6 +380,18 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
         }
         if (scene.has<Mesh>(entity)) {
             components["engine.scene.Mesh"] = mesh->to_json(&scene.component<Mesh>(entity));
+        }
+        if (scene.has<AssetInstance>(entity)) {
+            components["engine.scene.AssetInstance"] =
+                asset_instance->to_json(&scene.component<AssetInstance>(entity));
+        }
+        if (scene.has<DirectionalLight>(entity)) {
+            components["engine.scene.DirectionalLight"] =
+                directional_light->to_json(&scene.component<DirectionalLight>(entity));
+        }
+        if (scene.has<PointLight>(entity)) {
+            components["engine.scene.PointLight"] =
+                point_light->to_json(&scene.component<PointLight>(entity));
         }
 
         nlohmann::json parent_id = nullptr;
@@ -436,7 +452,7 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
         *format_version > kSceneFormatVersion) {
         return core::make_failure<Scene>(
             core::make_error(core::ErrorCode::Unsupported, "unsupported scene format version",
-                             "Supported scene format versions are 1 and 2.",
+                             "Supported scene format versions are 1, 2 and 3.",
                              {{"formatVersion", format_version.value_or(-1)}}));
     }
     const int source_version = *format_version;
@@ -483,7 +499,11 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
     const auto* camera = registry.find("engine.scene.Camera");
     const auto* motion = registry.find("engine.scene.Motion");
     const auto* mesh = registry.find("engine.scene.Mesh");
-    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr) {
+    const auto* asset_instance = registry.find("engine.scene.AssetInstance");
+    const auto* directional_light = registry.find("engine.scene.DirectionalLight");
+    const auto* point_light = registry.find("engine.scene.PointLight");
+    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr ||
+        asset_instance == nullptr || directional_light == nullptr || point_light == nullptr) {
         return core::make_failure<Scene>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -608,6 +628,54 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
                 }
                 auto parsed =
                     mesh->from_json(&scene.component<Mesh>(entity_handle), *component_iterator);
+                if (!parsed) {
+                    return core::make_failure<Scene>(parsed.error());
+                }
+            } else if (component_iterator.key() == "engine.scene.AssetInstance") {
+                if (source_version < 3) {
+                    return core::make_failure<Scene>(core::make_error(
+                        core::ErrorCode::Validation,
+                        "engine.scene.AssetInstance requires scene formatVersion 3", {},
+                        {{"component", component_iterator.key()}}));
+                }
+                auto added = scene.add_component<AssetInstance>(entity_handle);
+                if (!added) {
+                    return core::make_failure<Scene>(added.error());
+                }
+                auto parsed = asset_instance->from_json(
+                    &scene.component<AssetInstance>(entity_handle), *component_iterator);
+                if (!parsed) {
+                    return core::make_failure<Scene>(parsed.error());
+                }
+            } else if (component_iterator.key() == "engine.scene.DirectionalLight") {
+                if (source_version < 3) {
+                    return core::make_failure<Scene>(core::make_error(
+                        core::ErrorCode::Validation,
+                        "engine.scene.DirectionalLight requires scene formatVersion 3", {},
+                        {{"component", component_iterator.key()}}));
+                }
+                auto added = scene.add_component<DirectionalLight>(entity_handle);
+                if (!added) {
+                    return core::make_failure<Scene>(added.error());
+                }
+                auto parsed = directional_light->from_json(
+                    &scene.component<DirectionalLight>(entity_handle), *component_iterator);
+                if (!parsed) {
+                    return core::make_failure<Scene>(parsed.error());
+                }
+            } else if (component_iterator.key() == "engine.scene.PointLight") {
+                if (source_version < 3) {
+                    return core::make_failure<Scene>(
+                        core::make_error(core::ErrorCode::Validation,
+                                         "engine.scene.PointLight requires scene formatVersion 3",
+                                         {}, {{"component", component_iterator.key()}}));
+                }
+                auto added = scene.add_component<PointLight>(entity_handle);
+                if (!added) {
+                    return core::make_failure<Scene>(added.error());
+                }
+                auto parsed = point_light->from_json(&scene.component<PointLight>(entity_handle),
+                                                     *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }

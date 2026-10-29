@@ -55,6 +55,7 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     nlohmann_json_schema_validator::validator
     SDL3::SDL3
     glm::glm
+    fastgltf::fastgltf
     imgui::imgui
     GPUOpen::VulkanMemoryAllocator
     volk::volk_headers

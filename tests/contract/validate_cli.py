@@ -192,6 +192,9 @@ def main() -> int:
             "engine.scene.Camera",
             "engine.scene.Motion",
             "engine.scene.Mesh",
+            "engine.scene.AssetInstance",
+            "engine.scene.DirectionalLight",
+            "engine.scene.PointLight",
         ):
             if name not in components:
                 return fail(f"schema output is missing {name}")

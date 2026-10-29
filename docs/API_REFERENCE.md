@@ -26,9 +26,12 @@ All offline commands return a document that validates against
 
 | Component | Fields |
 |---|---|
+| `engine.scene.AssetInstance` | `assetId`: string |
 | `engine.scene.Camera` | `enabled`: boolean, `far`: number, `fovYRadians`: number, `near`: number |
+| `engine.scene.DirectionalLight` | `color`: array[number][3], `direction`: array[number][3], `enabled`: boolean, `intensity`: number |
 | `engine.scene.Mesh` | `meshId`: string |
 | `engine.scene.Motion` | `linearVelocity`: array[number][3] |
+| `engine.scene.PointLight` | `color`: array[number][3], `enabled`: boolean, `intensity`: number, `range`: number |
 | `engine.scene.Transform` | `position`: array[number][3], `rotation`: array[number][4], `scale`: array[number][3] |
 
 ## Commands
