@@ -105,8 +105,8 @@ TEST_CASE("scene composes 8 km transforms in double precision", "[scene]") {
     REQUIRE(scene.set_parent(child, parent).has_value());
 
     const auto world = scene.world_transform(child);
-    CHECK(world.position.x == Catch::Approx(8000.001).margin(1e-9));
-    CHECK(world.position.z == Catch::Approx(7994.999).margin(1e-9));
+    CHECK(world.position.x == Catch::Approx(8000.001).margin(1e-6).epsilon(0));
+    CHECK(world.position.z == Catch::Approx(7994.999).margin(1e-6).epsilon(0));
 
     const Vec3d camera_position{8000.0, 0.0, 8000.0};
     const Vec3d camera_relative = world.position - camera_position;
