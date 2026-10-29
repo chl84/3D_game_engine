@@ -49,8 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch at `96bbec9` (code
-  `a0dca57`); not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch; code head `a0dca57`,
+  with documentation commits after it. Not merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
