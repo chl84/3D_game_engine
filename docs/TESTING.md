@@ -39,8 +39,8 @@ guard, and creates devices sequentially to prove that volk can be initialized
 and finalized repeatedly. The same executable tests the camera: the triangle
 vertices map into Vulkan clip space and a zero aspect is guarded. The shaders
 are compiled by `glslc` at build time and embedded as SPIR-V; CMake fails with a
-clear error when `glslc` is missing. If the Vulkan loader is missing, the
-device cases are reported as skipped. `engine_window_smoke` creates an SDL3 window, checks the
+clear error when `glslc` is missing. If the Vulkan loader or a usable Vulkan 1.3 device is missing, the
+device cases are reported as skipped while the camera cases still run. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_swapchain_test` creates a hidden window,
