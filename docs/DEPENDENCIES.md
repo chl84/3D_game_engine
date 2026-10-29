@@ -1,9 +1,10 @@
 # Dependencies
 
-**Status:** M0.3. The vcpkg manifest is active for nlohmann/json 3.12.0,
-spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1 and Catch2 3.16.1. The core
-library uses nlohmann/json, spdlog and `tl::expected`; Catch2 is test-only.
-CLI11 and volk are added to the engine in M0.4.
+**Status:** M0.4. The vcpkg manifest is active for nlohmann/json 3.12.0,
+spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1 and volk
+1.4.363.0. The core library uses nlohmann/json, spdlog and `tl::expected`; the
+CLI uses CLI11 and volk; Catch2 is test-only. Python `jsonschema` is a
+development-only contract-test dependency.
 
 ## Policy
 
@@ -24,6 +25,10 @@ CLI11 and volk are added to the engine in M0.4.
 |---|---|---|---|---|---|
 | Catch2 | 3.16.1 | BSL-1.0 AND BSD-3-Clause | Unit and integration testing | M0 | Simple test syntax, sections and generators, good CMake/CTest integration, no runtime dependency in the engine. Both licenses are permissive and compatible with MIT. Approved by the owner on 2026-10-29. |
 | tl::expected | 1.3.1 | CC0-1.0 | `Result<T>` for expected errors | M0 | Provides an `expected`-like type in C++20 without requiring C++23 `std::expected`. Mature, header-only, and easy to replace with `std::expected` later. CC0 is a public-domain dedication and compatible with MIT. Approved by the owner on 2026-10-29. |
+| nlohmann/json | 3.12.0 | MIT | JSON parsing, canonical serialization and schemas | M0 | Mature header-only JSON library with deterministic object key ordering and good diagnostics. |
+| spdlog | 1.17.0 | MIT | Logging backend | M0 | Fast compiled logger with console and file sinks; the JSONL formatter stays in `core`. |
+| CLI11 | 2.7.2 | BSD-3-Clause | Command-line parsing | M0 | Header/compiled library with subcommands, global options and predictable error handling. |
+| volk | 1.4.363.0 | MIT | Vulkan function loading for `engine doctor` | M0 | Loads the Vulkan loader dynamically and reports a missing loader gracefully on Windows CI. |
 
 ## Planned dependencies
 
@@ -33,10 +38,6 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| nlohmann/json | 3.12.0 | MIT | JSON parsing and canonical serialization | M0 |
-| spdlog | 1.17.0 | MIT | Logging backend with console and JSONL sinks | M0 |
-| CLI11 | 2.7.2 | BSD-3-Clause | Command-line parsing | M0 |
-| volk | 1.4.363.0 | MIT | Vulkan function loading for `engine doctor` and the renderer | M0/M2 |
 | json-schema-validator (`pboettch`) | 2.4.0 | MIT | Runtime JSON Schema draft-07 validation | M1 |
 | EnTT | 4.0.0 | MIT | Entity-component system | M1 |
 | SDL3 | 3.4.18 | Zlib | Window, input and audio | M2 |
@@ -62,6 +63,7 @@ them.
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |
 | MSVC | Visual Studio 2022 17.14 | Proprietary | Windows compiler |
 | Python | 3.10+ | PSF-2.0 | Test and automation scripts |
+| jsonschema | 4.26.0 | MIT | Development-only JSON Schema validation in contract tests |
 
 Compiler runtime exceptions and the Python license are compatible with
 distributing an MIT-licensed engine. Compilers and SDKs are build tools, not

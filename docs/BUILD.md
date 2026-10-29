@@ -1,8 +1,8 @@
 # Build
 
-**Status:** M0.3. The build uses a pinned vcpkg manifest, the `engine` version
-command, the core library (errors, UUID, filesystem sandbox, config and logging)
-and Catch2 tests. Vulkan (`volk`) and `engine doctor` are added in M0.4.
+**Status:** M0.4. The build uses a pinned vcpkg manifest, CLI11 command
+dispatch, the core library, `engine --version --json`, `engine doctor --json`
+with volk-based Vulkan detection, Catch2 tests and Python contract tests.
 
 ## Local development environment
 
@@ -29,7 +29,8 @@ local Omarchy versions may be newer and are reported here.
 - CMake 3.28 or newer
 - Ninja
 - A C++20 compiler: GCC 14+, Clang 18+, or MSVC 19.4+
-- Python 3.10+ (test scripts)
+- Python 3.10+ (test scripts and contract validation)
+- `jsonschema` from `requirements-dev.txt` (installed in `.venv`)
 
 Vulkan development packages are needed from M2 onward. They are already
 installed on the development machine:
@@ -55,6 +56,25 @@ export VCPKG_ROOT="$HOME/.local/share/vcpkg"
 The CMake presets use `$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake`.
 The first configure installs the pinned dependencies into
 `build/<preset>/vcpkg_installed/`.
+
+## Python development environment
+
+The contract tests validate CLI JSON against the schemas in `schemas/`. Create
+the development environment before configuring CMake:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
+
+CMake prefers `.venv` over the system Python when it exists.
 
 ## Configure and build
 
@@ -130,6 +150,22 @@ Expected shape:
 ```json
 {"name":"engine","version":"0.1.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
+
+## Doctor
+
+```bash
+./build/linux-debug/tools/engine/engine doctor
+./build/linux-debug/tools/engine/engine doctor --json
+./build/linux-debug/tools/engine/engine doctor --require vulkan --json
+```
+
+`doctor` reports the OS, compiler, project root, Vulkan loader and instance,
+physical devices, validation layers and lavapipe. It exits 0 by default even
+when Vulkan is missing, so it can run on a Windows CI runner without a GPU.
+`--require` accepts `vulkan`, `gpu`, `validation-layers` and `lavapipe`; a
+failed requirement exits with code 8.
+
+The JSON output is validated against `schemas/doctor@1.schema.json`.
 
 ## Windows
 

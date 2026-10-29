@@ -26,6 +26,7 @@ version command:
 
 ```bash
 ./build/linux-debug/tools/engine/engine --version --json
+./build/linux-debug/tools/engine/engine doctor --json
 ```
 
 See `docs/BUILD.md` for platform notes, and `docs/STATUS.md` for the current state.

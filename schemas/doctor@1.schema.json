@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/schemas/doctor@1.schema.json",
+  "title": "doctor@1",
+  "description": "Output of engine doctor --json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "version",
+    "gitCommit",
+    "buildType",
+    "compiler",
+    "platform",
+    "cxxStandard",
+    "os",
+    "vulkan",
+    "project",
+    "requirements",
+    "checks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "const": "engine"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "buildType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "compiler": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cxxStandard": {
+      "type": "string",
+      "minLength": 1
+    },
+    "os": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "vulkan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loader",
+        "loaderVersion",
+        "instanceCreated",
+        "devices",
+        "validationLayers",
+        "lavapipe"
+      ],
+      "properties": {
+        "loader": {
+          "type": "boolean"
+        },
+        "loaderVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instanceCreated": {
+          "type": "boolean"
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "type",
+              "apiVersion",
+              "driverVersion",
+              "vendorId",
+              "deviceId"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "other",
+                  "integrated-gpu",
+                  "discrete-gpu",
+                  "virtual-gpu",
+                  "cpu"
+                ]
+              },
+              "apiVersion": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+              },
+              "driverVersion": {
+                "type": "string",
+                "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+              },
+              "vendorId": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "deviceId": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "validationLayers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lavapipe": {
+          "type": "boolean"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "writable"],
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "writable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested", "failed", "passed"],
+      "properties": {
+        "requested": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["vulkan", "gpu", "validation-layers", "lavapipe"]
+          }
+        },
+        "failed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["vulkan", "gpu", "validation-layers", "lavapipe"]
+          }
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "message"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "warn", "fail"]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

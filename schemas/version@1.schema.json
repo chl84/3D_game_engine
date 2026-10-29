@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/schemas/version@1.schema.json",
+  "title": "version@1",
+  "description": "Output of engine --version --json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "version",
+    "gitCommit",
+    "buildType",
+    "compiler",
+    "platform",
+    "cxxStandard"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "const": "engine"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gitCommit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "buildType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "compiler": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cxxStandard": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

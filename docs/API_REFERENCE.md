@@ -1,16 +1,20 @@
 # API Reference
 
-**Status:** Generated in M1. The command bus and command schemas do not exist
-yet.
+**Status:** M0.4. The command bus and project/scene command schemas arrive in
+M1. Version and doctor output is validated against published schemas.
 
 ## Implemented surface
 
-| Command | Output |
-|---|---|
-| `engine --version --json` | Build and version metadata as JSON |
+| Command | Output | Schema |
+|---|---|---|
+| `engine --version --json` | Build and version metadata | `schemas/version@1.schema.json` |
+| `engine doctor --json` | OS, compiler, Vulkan, devices and checks | `schemas/doctor@1.schema.json` |
 
-The output fields are `name`, `version`, `gitCommit`, `buildType`, `compiler`,
-`platform` and `cxxStandard`.
+The version output fields are `name`, `version`, `gitCommit`, `buildType`,
+`compiler`, `platform` and `cxxStandard`.
+
+`doctor` accepts repeatable `--require` values: `vulkan`, `gpu`,
+`validation-layers` and `lavapipe`. A failed requirement exits with code 8.
 
 ## Planned surface
 

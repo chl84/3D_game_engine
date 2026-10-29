@@ -8,10 +8,11 @@
 /compile_commands.json
 CMakeUserPresets.json
 
-# Package managers
+# Package managers and Python environment
 /vcpkg_installed/
 **/vcpkg_installed/
 /vcpkg-cache/
+/.venv/
 
 # Engine runtime data
 /.engine/

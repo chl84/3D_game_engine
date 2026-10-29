@@ -51,6 +51,12 @@ jobs:
           mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
           "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
+      - name: Set up Python tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt
+
       - name: Configure
         run: cmake --preset ${{ matrix.preset }}
 
@@ -99,6 +105,13 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
           & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
           "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Set up Python tools
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 
       - name: Configure
         env:

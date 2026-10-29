@@ -39,14 +39,15 @@ target with explicit dependencies; cycles are forbidden.
 
 ## Current implementation
 
-M0.3 contains:
+M0.4 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, and `Log` with console and
   JSONL sinks
-- `tools/engine`: the `engine` CLI with `--version`
+- `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
+  volk-based Vulkan enumeration
 - `tests/unit`: core unit tests
-- `tests/smoke`: the version JSON smoke test
-- `schemas/log-record@1.schema.json`
+- `tests/smoke`, `tests/contract`: CLI JSON and schema tests
+- `schemas/`: `version@1`, `doctor@1` and `log-record@1` schemas
 
 The remaining modules are planned, not implemented.

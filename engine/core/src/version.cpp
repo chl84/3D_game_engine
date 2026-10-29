@@ -28,4 +28,12 @@ std::string_view cxx_standard() noexcept {
     return ENGINE_CXX_STANDARD;
 }
 
+std::string_view os_name() noexcept {
+    return ENGINE_OS_NAME;
+}
+
+std::string_view os_version() noexcept {
+    return ENGINE_OS_VERSION;
+}
+
 } // namespace engine::core

@@ -8,7 +8,8 @@
     "spdlog",
     "cli11",
     "tl-expected",
-    "catch2"
+    "catch2",
+    "volk"
   ],
   "overrides": [
     {
@@ -30,6 +31,10 @@
     {
       "name": "catch2",
       "version": "3.16.1"
+    },
+    {
+      "name": "volk",
+      "version": "1.4.363.0"
     }
   ]
 }

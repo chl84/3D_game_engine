@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M0.3. Three CTest tests exist; `engine_core_tests` contains 20 test
-cases and 126 assertions.
+**Status:** M0.4. Four CTest tests exist; `engine_core_tests` contains 21 test
+cases and 132 assertions.
 
 ## Current tests
 
@@ -10,11 +10,15 @@ cases and 126 assertions.
 | `engine_core_tests` | Catch2 unit test | `unit` |
 | `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0 dependencies | `unit`, `dependencies` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
+| `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
-metadata. `engine_dependencies_smoke` includes and links nlohmann/json, spdlog,
-CLI11, `tl::expected` and Catch2, so missing include paths or link errors fail
+metadata. `engine_cli_contract` validates `engine --version --json` against
+`version@1` and `engine doctor --json` against `doctor@1`, checks the
+`log-record@1` fixture, and verifies the `--require` exit codes.
+`engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
+`tl::expected`, Catch2 and volk, so missing include paths or link errors fail
 on both Linux and Windows.
 
 `engine_core_tests` covers:
@@ -24,15 +28,20 @@ on both Linux and Windows.
 - filesystem sandbox escapes, symlinks and invalid roots
 - JSON configuration loading, type errors and recursive merge
 - JSONL logging, level filtering and required record fields
+- UTC timestamp formatting at the epoch, leap day, month boundary and year boundary
 
-The `log-record@1` schema is in `schemas/log-record@1.schema.json`. M0.3 checks
-the required fields structurally; full JSON Schema validation is added with the
-M0.4 schema infrastructure.
+The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
+validated against `tests/fixtures/log-record.jsonl` by the contract test.
+Tests that cannot run on a platform use Catch2 `SKIP`, and the CI
+`Core test summary` step runs `ctest -R engine_core_tests -V` so skipped cases
+are visible instead of being reported as ordinary passes.
 
 ## How to run
 
 ```bash
 export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
 cmake --preset linux-debug
 cmake --build --preset linux-debug
 ctest --preset linux-debug --output-on-failure
@@ -108,9 +117,9 @@ labelled `render` or `golden`.
 
 - Windows graphics; the Windows CI job compiles and runs headless tests, but
   the runner has no GPU
-- Anything that requires Vulkan device creation
-- Full JSON Schema validation of `log-record@1`; it is added with the M0.4
-  schema infrastructure
+- Anything that requires creating a Vulkan device; `doctor` only creates an
+  instance and enumerates devices
+- The console log sink; the JSONL sink is automatically tested
 - clang-format and clang-tidy in CI; they run locally and are added to CI in
   M0.5
 - ASan/UBSan as a Linux CI job; the local job runs, and the CI job is added in

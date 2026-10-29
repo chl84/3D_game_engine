@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.3 complete; M0.4 is next
+**Current substep:** M0.4 complete locally; M0.5 is next
 
 ## Completed
 
@@ -12,6 +12,7 @@
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases; Linux and Windows CI green |
+| M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases |
 
 ## Repository state
 
@@ -23,17 +24,22 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC C++20 build | Automatically tested | `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; `engine_core_tests` → 20 cases / 126 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 3/3 passed; `engine_core_tests` → 20 cases / 126 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 3/3 passed |
-| TSan | Automatically tested | `cmake --preset linux-tsan`, build, `ctest` → 3/3 passed |
+| GCC C++20 build | Automatically tested | `cmake --preset ci-linux-gcc`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 4/4 passed |
+| TSan | Automatically tested | `cmake --preset linux-tsan`, build, `ctest` → 4/4 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
 | JSONL logging | Automatically tested | `log_test.cpp` → filtered records, required fields, `fields` object, level names |
-| log-record@1 schema | Implemented | `schemas/log-record@1.schema.json`; structural checks in `log_test.cpp`; full JSON Schema validation arrives with the M0.4 schema infrastructure |
-| Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2 |
-| `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` parsed the JSON and checked required fields |
+| log-record@1 schema | Automatically tested | `tests/contract/validate_cli.py` validates `tests/fixtures/log-record.jsonl` against `schemas/log-record@1.schema.json`; `log_test.cpp` checks the C++ output structurally |
+| UTC timestamp formatting | Automatically tested | `std::chrono::year_month_day` and `hh_mm_ss`; tests cover epoch, leap day, month boundary and year boundary |
+| Symlink test on Windows | Automatically tested | Windows CI summary reports 21/21 test cases and 132 assertions with no skipped cases; `SKIP` is used if symlink creation is unavailable, and the CI `Core test summary` step displays skipped cases |
+| Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected`, Catch2 and volk |
+| `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` and `engine_cli_contract` validate the JSON and `version@1` schema |
+| `engine doctor --json` | Automatically tested | `engine_cli_contract` validates against `doctor@1`; local run reports Intel Iris Xe, llvmpipe, loader 1.4.363 and `VK_LAYER_KHRONOS_validation` |
+| `--require vulkan` | Manually verified | Local GPU/loader → exit 0; forced no-ICD run (`VK_ICD_FILENAMES` pointing to a missing file) → exit 8 |
+| CLI contract test | Automatically tested | `engine_cli_contract` validates version and doctor output against published schemas and checks `--require unknown` exits 2 |
 | clang-format | Manually verified | `clang-format --dry-run --Werror` on all C++ files → no changes |
 | clang-tidy | Manually verified | `clang-tidy -p build/ci-linux-clang` on the C++ sources → exit 0; all warnings were in non-user code |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
@@ -62,22 +68,25 @@ The Windows job caught two real portability issues before the milestone closed:
   path components and the canonical sandbox root.
 - Run [40790041428](https://github.com/chl84/3D_game_engine/actions/runs/40790041428):
   Linux GCC, Linux Clang and Windows MSVC all green.
+- Run [40791373717](https://github.com/chl84/3D_game_engine/actions/runs/40791373717):
+  the `std::chrono::year_month_day` timestamp change and the `SKIP`/summary
+  change were green on all three compilers. The Windows summary reported
+  21/21 test cases and 132 assertions with no skipped cases, so the symlink
+  test ran on the Windows runner.
 
 ## Known issues and gaps
 
 - The M0.2 Linux GCC CI job uses the Ubuntu 24.04 runner default GCC 13.3;
   M0.5 pins GCC 14. This is the only toolchain deviation from the approved CI
   matrix.
-- Full JSON Schema validation of `log-record@1` is deferred to M0.4, when the
-  schema and contract-test infrastructure is introduced. M0.3 checks the
-  required fields structurally.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
   are planned for M0.6.
 - `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
   `docs/AI_AGENT_GUIDE.md` and `docs/PROJECT_FORMAT.md` are skeletons or drafts.
-- volk and `engine doctor` are not implemented; they belong to M0.4.
+- `engine doctor` reports the current working directory as the project root
+  until the project format and project-root discovery land in M1.
 
 ## Planned for M0.5
 

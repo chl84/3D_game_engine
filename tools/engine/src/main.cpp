@@ -1,8 +1,16 @@
+#include "doctor.hpp"
+
+#include <engine/core/error.hpp>
 #include <engine/core/version.hpp>
 
+#include <CLI/CLI.hpp>
+
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace {
 
@@ -35,14 +43,6 @@ std::string json_quote(std::string_view value) {
     return out;
 }
 
-void print_usage(std::ostream& out) {
-    out << "Usage: engine [--version] [--json]\n"
-        << "\n"
-        << "  --version, -v  Print the engine version.\n"
-        << "  --json         Emit a machine-readable JSON document.\n"
-        << "  --help, -h     Print this help.\n";
-}
-
 void print_version_json() {
     std::cout << '{' << "\"name\":" << json_quote("engine") << ','
               << "\"version\":" << json_quote(engine::core::version()) << ','
@@ -59,43 +59,82 @@ void print_version_human() {
               << engine::core::platform() << ")\n";
 }
 
+bool valid_requirement(std::string_view requirement) {
+    constexpr std::array<std::string_view, 4> kRequirements{
+        "vulkan",
+        "gpu",
+        "validation-layers",
+        "lavapipe",
+    };
+    return std::ranges::any_of(
+        kRequirements, [requirement](std::string_view value) { return requirement == value; });
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
-    bool show_version = false;
+    CLI::App app{"AI-first 3D game engine", "engine"};
+    app.set_help_flag("--help,-h", "Print help.");
+
     bool json = false;
-    bool help = false;
+    app.add_flag("--json", json, "Emit a machine-readable JSON document.");
 
-    for (int i = 1; i < argc; ++i) {
-        const std::string_view arg = argv[i];
-        if (arg == "--version" || arg == "-v") {
-            show_version = true;
-        } else if (arg == "--json") {
-            json = true;
-        } else if (arg == "--help" || arg == "-h") {
-            help = true;
-        } else {
-            std::cerr << "error: unknown argument: " << arg << '\n';
-            print_usage(std::cerr);
-            return 2;
-        }
+    bool show_version = false;
+    app.add_flag("--version,-v", show_version, "Print the engine version.");
+
+    auto* doctor = app.add_subcommand("doctor", "Report environment and Vulkan capabilities.");
+    bool doctor_json = false;
+    doctor->add_flag("--json", doctor_json, "Emit a machine-readable JSON document.");
+
+    std::vector<std::string> requirements;
+    doctor
+        ->add_option("--require", requirements,
+                     "Required check: vulkan, gpu, validation-layers or lavapipe.")
+        ->expected(0, 4);
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& error) {
+        const int code = app.exit(error);
+        return code == 0 ? 0 : 2;
     }
 
-    if (help) {
-        print_usage(std::cout);
-        return 0;
-    }
-
-    if (!show_version) {
-        print_usage(std::cerr);
+    if (show_version && *doctor) {
+        std::cerr << "error: --version and the doctor command cannot be combined\n";
         return 2;
     }
 
-    if (json) {
-        print_version_json();
-    } else {
-        print_version_human();
+    if (show_version) {
+        if (json) {
+            print_version_json();
+        } else {
+            print_version_human();
+        }
+        return 0;
     }
 
-    return 0;
+    if (*doctor) {
+        const auto invalid_requirement =
+            std::ranges::find_if(requirements, [](const std::string& requirement) {
+                return !valid_requirement(requirement);
+            });
+        if (invalid_requirement != requirements.end()) {
+            std::cerr << "error: unknown requirement: " << *invalid_requirement << '\n';
+            return 2;
+        }
+
+        const auto result = engine::cli::run_doctor({requirements});
+        if (json || doctor_json) {
+            std::cout << result.report.dump(2) << '\n';
+        } else {
+            engine::cli::print_doctor_human(result.report, std::cout);
+        }
+
+        return result.failed_requirements.empty()
+                   ? 0
+                   : engine::core::exit_code(engine::core::ErrorCode::Precondition);
+    }
+
+    std::cerr << "error: no command\n" << app.help() << '\n';
+    return 2;
 }

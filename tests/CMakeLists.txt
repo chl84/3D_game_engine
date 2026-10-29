@@ -1,3 +1,9 @@
+if(EXISTS "${CMAKE_SOURCE_DIR}/.venv/bin/python3")
+    set(Python3_EXECUTABLE "${CMAKE_SOURCE_DIR}/.venv/bin/python3")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
+    set(Python3_EXECUTABLE "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
+endif()
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
@@ -50,4 +56,15 @@ add_test(
 
 set_tests_properties(engine_version_json PROPERTIES
     LABELS "unit;cli"
+)
+
+add_test(
+    NAME engine_cli_contract
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/contract/validate_cli.py"
+            "$<TARGET_FILE:engine>"
+)
+
+set_tests_properties(engine_cli_contract PROPERTIES
+    LABELS "contract;cli"
 )

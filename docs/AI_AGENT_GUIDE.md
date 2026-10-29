@@ -1,12 +1,15 @@
 # AI Agent Guide
 
-**Status:** M0.1. Only the version command exists. The command bus and full CLI
-are implemented in M0.4/M1.
+**Status:** M0.4. Version and doctor commands exist. The command bus and the
+project/scene CLI are implemented in M1.
 
 ## Current commands
 
 ```bash
 engine --version --json
+engine doctor --json
+engine doctor --require vulkan --json
+engine doctor --require gpu --require validation-layers --json
 ```
 
 Output:
@@ -17,8 +20,15 @@ Output:
 
 - `--json` writes one JSON document to stdout. Diagnostics go to stderr.
 - `--version` prints human-readable output.
+- `doctor` reports OS, compiler, Vulkan loader, physical devices, validation
+  layers, lavapipe and the project root.
+- `--require` accepts `vulkan`, `gpu`, `validation-layers` and `lavapipe`.
+  A failed requirement exits with code 8; unknown values exit with code 2.
 - `--help` prints usage.
 - An unknown argument exits with code 2.
+
+The version output validates against `schemas/version@1.schema.json`; the
+doctor output validates against `schemas/doctor@1.schema.json`.
 
 ## Rules for automation
 

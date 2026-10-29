@@ -10,5 +10,7 @@ namespace engine::core {
 [[nodiscard]] std::string_view compiler() noexcept;
 [[nodiscard]] std::string_view platform() noexcept;
 [[nodiscard]] std::string_view cxx_standard() noexcept;
+[[nodiscard]] std::string_view os_name() noexcept;
+[[nodiscard]] std::string_view os_version() noexcept;
 
 } // namespace engine::core
