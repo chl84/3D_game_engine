@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.7 reviewer GODKJENT — descriptor indexing is a minimum requirement, device creation and `engine doctor` reject unsupported devices, and the exact screenshot error codes are tested. Owner approval is pending.
+**Current substep:** M2.8 hardening — Windows offscreen lavapipe, pinned Linux glslc and the consolidated M2 acceptance report are in progress. M2.7 is owner-approved.
 
 ## Substeps
 
@@ -42,8 +42,8 @@
 | M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
-| M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; awaiting owner approval |
-| M2.8 | Hardening and M2 acceptance | Planned |
+| M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
+| M2.8 | Hardening and M2 acceptance | In progress — Windows offscreen ICD, pinned Linux glslc and the acceptance report |
 
 ## Repository state
 
@@ -78,7 +78,7 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 14 registered; CI runs 14/14 with lavapipe and Xvfb. Locally `linux-debug` passes 13/14 and skips the golden test without lavapipe; `engine_core_tests` → 60 cases / 468 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 14 registered; CI runs 14/14 with lavapipe and Xvfb. Locally `linux-debug` passes 13/14 and skips the golden test without lavapipe; `engine_core_tests` → 62 cases / 474 assertions |
 | Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped without lavapipe. CI runs 14/14 with lavapipe and Xvfb |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 14 registered; locally 13/14 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test"` → 11/11 CPU-side tests. The three GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
@@ -159,6 +159,7 @@
 | M2.7 doctor | Automatically tested | `engine doctor` reports `vulkan.descriptorIndexing` and a per-device `descriptorIndexing` object with `errorCode: E_UNSUPPORTED` and missing lists. `--require vulkan` exits 8 when no device satisfies the requirement; an enumerated but unsupported device adds `descriptor-indexing` to `requirements.failed` and makes plain `doctor` exit 8, so the exit code and JSON agree. The doctor schema and contract test cover the new fields |
 | M2.7 screenshot error codes | Automatically tested | `tests/smoke/screenshot.py` requires `E_VALIDATION` and the exact `path`, `maxDimension` and `maxFrames` details for `../escape.png`, `--width 8193`, `--height 8193` and `--frames 1001` |
 | M2.7 budgets | Documented | Engine budget is 4096 sampled images + 2 samplers and 4096 material records. The 1 GiB texture budget is a sub-budget of the 4 GiB total GPU memory budget |
+| M2.8 performance plan | Documented | `docs/PERFORMANCE.md` records the M2 reference budget, the current small-scene baseline and the M5/M8 measurement plan. M2 does not claim reference-scene budget compliance |
 | M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
 | M2.7 CI | Automatically tested | Manual dispatch [40950970681](https://github.com/chl84/3D_game_engine/actions/runs/40950970681) on `dbc313a` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest; lavapipe LLVM 20.1.2 reports `descriptorIndexing: true` and `descriptor-indexing: pass`. ASan/UBSan: 14/14. Windows MSVC: 9/9; graphics tests not registered. Quality green |
 | M2.7 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `dbc313a`, built the exact-commit dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
@@ -309,8 +310,9 @@ The Windows job caught two real portability issues before the milestone closed:
   resolves only `engine.builtin.cube` and `engine.builtin.plane`.
 - The full Linux CTest suite runs under Xvfb + openbox in CI, so the window,
   swapchain and overlay tests execute there. A separate step keeps the strict
-  `--require-minimize` contract. Windows still does not register the window,
-  swapchain, overlay or golden tests.
+  `--require-minimize` contract. Windows installs pinned lavapipe and runs the
+  offscreen golden and screenshot tests; window, swapchain and overlay remain
+  Linux-only because Windows presentation is not verified.
 - Descriptor indexing is a hard requirement. A device that lacks it is rejected
   by `Device::create` and by `engine doctor --require vulkan`; there is no
   fallback. A fallback would require a new ADR for a concrete target device.

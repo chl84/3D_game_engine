@@ -21,7 +21,9 @@ the owner on 2026-10-29. M2.1 implements the render device and window; M2.2 adds
 frame loop; M2.3 adds glslc-compiled shaders and the first triangle; M2.4 adds
 scene format v2, camera-relative scene rendering, depth and culling; M2.5 adds
 offscreen rendering and screenshots; M2.6 adds the ImGui debug overlay and the
-screenshot sandbox/limits. M2.7 adds the mandatory descriptor-indexing gate, doctor report and exact screenshot error codes. The remaining substep is M2.8.
+screenshot sandbox/limits. M2.7 adds the mandatory descriptor-indexing gate,
+doctor report and exact screenshot error codes. M2.8 records the reference-scene
+budget and measurement plan in [PERFORMANCE.md](PERFORMANCE.md).
 
 ## M0 substeps
 

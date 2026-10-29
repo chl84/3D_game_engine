@@ -1,8 +1,9 @@
 # Testing
 
-**Status:** M2.7. Fourteen CTest tests exist on Linux; Windows registers nine
-because the window, swapchain, overlay and screenshot tests are not registered
-there. `engine_core_tests` contains 60 test cases and 468 assertions;
+**Status:** M2.8. Fourteen CTest tests exist on Linux; Windows registers eleven
+because the window, swapchain and overlay tests remain Linux-only while the
+offscreen golden and screenshot tests are registered on both platforms.
+`engine_core_tests` contains 62 test cases and 474 assertions;
 `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
@@ -31,7 +32,8 @@ checks the `name`, `version` and `cxxStandard` fields plus the presence of build
 metadata. `engine_cli_contract` validates `engine --version --json` against
 `version@1` and `engine doctor --json` against `doctor@1`, including the
 top-level and per-device descriptor-indexing report, checks the
-`log-record@1` fixture, and verifies the `--require` exit codes. On a machine
+`log-record@1` fixture, verifies the `--require` exit codes, and covers
+`project unlock --dry-run` with a manually created stale lock. On a machine
 with a device that lacks the required descriptor features, plain `doctor`
 reports `descriptor-indexing` in `requirements.failed` and exits 8; on a
 machine with no Vulkan device it remains diagnostic unless `--require vulkan`
@@ -85,8 +87,14 @@ tests, so the render tests and `engine_screenshot_golden` execute on lavapipe
 `engine_window_smoke`, `engine_swapchain_test` and `engine_overlay_test` execute
 instead of being skipped as headless. A separate step runs
 `engine_swapchain_test --require-minimize` so a window manager that ignores
-minimize still fails. Linux therefore reports 14/14 with lavapipe. Windows has
-no ICD and does not register the golden, window, swapchain or overlay tests.
+minimize still fails. Linux therefore reports 14/14 with lavapipe.
+
+The Windows job installs a pinned Mesa lavapipe package and registers its ICD,
+so the offscreen golden and screenshot tests run there too. The window,
+swapchain and overlay tests remain Linux-only because Windows presentation is
+not verified. Without an ICD the offscreen tests report exit code 77 and are
+shown as skipped; the Windows doctor step fails if lavapipe cannot satisfy the
+descriptor requirements.
 
 `engine_core_tests` covers:
 
@@ -120,6 +128,9 @@ no ICD and does not register the golden, window, swapchain or overlay tests.
 - double-precision world transforms for root entities directly at 8 km and
   16 km, plus an 8 km hierarchy with a 1 mm child offset
 - `SceneView` mesh and camera access without mutation
+- Doctor aggregation with a mixed device set: one supported and one unsupported
+  device must pass, while all-unsupported must fail and an empty device list
+  remains diagnostic
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.

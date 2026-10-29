@@ -202,7 +202,8 @@ with Required validation. Device loss is not simulated in M2.7.
 | Machine | i7-1265U, Iris Xe, AC power, performance profile |
 
 Measurements use Release, validation layers off during measurement and on
-during correctness tests. The budget is not changed by M2.
+during correctness tests. The budget is not changed by M2. Measurement status
+and the M5/M8 plan are in [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Testing
 
