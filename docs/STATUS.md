@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.6 in progress — documentation deliverables are complete and awaiting review. M0.7 is next.
+**Current substep:** M0.6 complete and approved by the reviewer. M0.7 is next.
 
 ## Substeps
 
@@ -14,7 +14,7 @@
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases at M0.3 (21 after M0.4); Linux and Windows CI green |
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
-| M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Awaiting review |
+| M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
 
 ## Repository state
 
@@ -68,7 +68,7 @@
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
 | Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40800147659](https://github.com/chl84/3D_game_engine/actions/runs/40800147659) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 5/5 tests passed, including `engine_docs_links` |
-| Windows graphics | Not verified | Out of scope for M2/M3 approval |
+| Windows graphics | Not verified | The Windows runner has no GPU; graphics is not tested there and is outside the M2/M3 approval |
 | GitHub Actions | Automatically tested | Run [40800147659](https://github.com/chl84/3D_game_engine/actions/runs/40800147659) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
@@ -159,6 +159,5 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M0.7 after M0.6 is reviewed: clean-clone script, ASan/UBSan, TSan smoke test,
-format/tidy, Windows compile + headless, tag `v0.1.0` and the M0 acceptance
-report.
+M0.7: clean-clone script, ASan/UBSan, TSan smoke test, format/tidy, Windows
+compile + headless, tag `v0.1.0` and the M0 acceptance report.

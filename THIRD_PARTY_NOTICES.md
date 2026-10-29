@@ -10,6 +10,7 @@ in the corresponding source distributions and in the vcpkg installed tree.
 |---|---|---|---|
 | nlohmann/json | 3.12.0 | MIT | Engine core |
 | spdlog | 1.17.0 | MIT | Engine core |
+| fmt | 12.2.0 | MIT | Transitive dependency of spdlog |
 | CLI11 | 2.7.2 | BSD-3-Clause | `engine` CLI |
 | tl::expected | 1.3.1 | CC0-1.0 | `Result<T>` |
 | volk | 1.4.363.0 | MIT | Vulkan loading in `doctor` |
@@ -35,7 +36,7 @@ the compiler outputs redistributable under the engine's MIT license.
 ## MIT License
 
 The following components are distributed under the MIT License: nlohmann/json,
-spdlog, volk and jsonschema.
+spdlog, fmt, volk and jsonschema.
 
 ```text
 Permission is hereby granted, free of charge, to any person obtaining a copy
