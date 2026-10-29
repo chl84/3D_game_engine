@@ -6,7 +6,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.5 done) |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.5 done; M0.6 awaiting review) |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Planned |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
