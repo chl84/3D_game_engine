@@ -81,7 +81,7 @@ engine_set_warnings(engine_render_tests)
 add_test(NAME engine_render_tests COMMAND engine_render_tests)
 set_tests_properties(engine_render_tests PROPERTIES
     LABELS "unit;render"
-    SKIP_REGULAR_EXPRESSION "[Ss][Kk][Ii][Pp][Pp][Ee][Dd]"
+    SKIP_RETURN_CODE 4
 )
 
 add_executable(engine_window_smoke

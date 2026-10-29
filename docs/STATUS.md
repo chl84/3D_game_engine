@@ -118,7 +118,7 @@
 | M2.1 window and surface | Automatically tested locally | `engine_window_smoke` created a hidden SDL3 window, a Vulkan surface and a present queue with zero validation errors; the test reports skipped in headless CI |
 | M2.1 validation layers | Automatically tested | The required-mode test fails when `VK_LAYER_KHRONOS_validation` is missing and asserts that the debug messenger counted zero errors |
 | M2.1 dependencies | Automatically tested | `engine_dependencies_smoke` includes and links SDL3, VMA and GLM; the vcpkg manifest pins 3.4.18, 3.5.0 and 1.0.3 |
-| M2.1 CI | Automatically tested | Manual dispatch [40855476468](https://github.com/chl84/3D_game_engine/actions/runs/40855476468) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 10/10 with render tests passed; Windows MSVC 9/9 with the headless render test skipped because the runner has no Vulkan loader; Quality green |
+| M2.1 CI | Automatically tested | Manual dispatch [40856511373](https://github.com/chl84/3D_game_engine/actions/runs/40856511373) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 10/10 with render tests passed; Windows MSVC 9/9 with the headless render test skipped because the runner has no Vulkan loader; Quality green |
 | M2.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer`, built `linux-debug`, ran 10/10 CTest including both render tests and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

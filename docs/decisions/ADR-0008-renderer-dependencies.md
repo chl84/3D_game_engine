@@ -27,7 +27,9 @@ carry unused dependencies.
   `core::Quat`.
 - Versions are pinned through the vcpkg manifest with exact overrides.
 - The Vulkan loader, headers and validation layers continue to come from the
-  Vulkan SDK, not from a second vcpkg Vulkan installation.
+  Vulkan SDK on development machines. Linux CI installs `libvulkan1`,
+  `mesa-vulkan-drivers` and `vulkan-validationlayers` from Ubuntu. vcpkg is not
+  used for a second set of Vulkan headers.
 
 ## Consequences
 
