@@ -160,8 +160,8 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
     auto mesh_document = nlohmann::json::parse(read_file(scene_file));
     REQUIRE(mesh_document["formatVersion"] == 2);
-    REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Mesh"]["meshId"] ==
-            engine::scene::kBuiltinCubeMesh);
+    REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Mesh"]["meshId"]
+                .get<std::string>() == std::string(engine::scene::kBuiltinCubeMesh));
     mesh_document["formatVersion"] = 1;
     REQUIRE(
         engine::platform::atomic_write_file(scene_file, mesh_document.dump(2) + "\n").has_value());
