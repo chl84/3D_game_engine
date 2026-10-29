@@ -6,15 +6,18 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.7 deliverables done; owner approval pending) |
-| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done |
-| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
+| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.0`; M1.10 awaiting `v0.2.1` |
+| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Plan proposed — awaiting owner approval |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
 | M7 | AI-assisted game development, MCP adapter, automation tools | Planned |
 | M8 | Profiling, optimization, packaging, stable stress tests | Planned |
+
+The detailed M2 plan is in [`docs/M2_PLAN.md`](M2_PLAN.md). It is not approved
+and M2 has not started.
 
 ## M0 substeps
 
