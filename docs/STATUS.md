@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.1 implemented — the render module, SDL3 window, Vulkan 1.3 device, VMA allocator and validation messenger are on `m2/vulkan-renderer` with green CI. Reviewer and owner approval are pending.
+**Current substep:** M2.2 implemented — swapchain, frame loop, resize/minimize handling and the swapchain integration test are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -36,8 +36,8 @@
 
 | Substep | Scope | Status |
 |---|---|---|
-| M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Implemented — review pending |
-| M2.2 | Swapchain and frame loop | Planned |
+| M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Done — reviewer GODKJENT |
+| M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Implemented — review pending |
 | M2.3 | First triangle | Planned |
 | M2.4 | Scene rendering | Planned |
 | M2.5 | Offscreen rendering and screenshots | Planned |
@@ -120,6 +120,8 @@
 | M2.1 dependencies | Automatically tested | `engine_dependencies_smoke` includes and links SDL3, VMA and GLM; the vcpkg manifest pins 3.4.18, 3.5.0 and 1.0.3 |
 | M2.1 CI | Automatically tested | Manual dispatch [40857973518](https://github.com/chl84/3D_game_engine/actions/runs/40857973518) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 10/10 with render tests passed; Windows MSVC 9/9 with the headless render test skipped because the runner has no Vulkan loader; Quality green |
 | M2.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer`, built `linux-debug`, ran 10/10 CTest including both render tests and `M1 acceptance passed` |
+| M2.2 swapchain and frame loop | Automatically tested locally | `engine_swapchain_test` presents frames, follows a hidden-window resize, follows the mapped window, survives minimize/restore and reports zero validation errors |
+| M2.2 frame synchronization | Automatically tested | The swapchain test runs 16+ frames with per-frame image-available semaphores and per-swapchain-image render-finished semaphores; the validation layers report no semaphore-reuse errors |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |

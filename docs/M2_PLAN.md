@@ -1,7 +1,7 @@
 # M2 Plan — Vulkan Renderer
 
 **Status:** Approved by the owner on 2026-10-29. Implementation started with
-M2.1.
+M2.1; M2.2 is implemented.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2

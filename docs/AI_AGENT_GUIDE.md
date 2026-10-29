@@ -145,18 +145,21 @@ registration. Read-only commands do not need it.
 The render module is `engine::render`; it is not exposed through the CLI yet.
 `engine screenshot` arrives in M2.5. The current API creates a Vulkan 1.3
 device with Synchronization2, Dynamic Rendering and VMA, either headless or
-from an SDL3 window. `render::Device::create` returns `E_UNSUPPORTED` when the
+from an SDL3 window. `render::Renderer` owns the swapchain and frame loop; it
+clears and presents, and recreates the swapchain after resize, minimize or
+out-of-date events. `render::Device::create` returns `E_UNSUPPORTED` when the
 loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
 layers are missing; the error details name the failing stage.
 
 Run the renderer tests with:
 
 ```bash
-ctest --preset ci-linux-clang -R "engine_render_tests|engine_window_smoke" -V
+ctest --preset ci-linux-clang -R "engine_render_tests|engine_window_smoke|engine_swapchain_test" -V
 ```
 
-`engine_window_smoke` reports exit code 77 when no display server is available.
-The renderer never mutates scene state; M2.4 adds the read-only `SceneView`.
+`engine_window_smoke` and `engine_swapchain_test` report exit code 77 when no
+display server is available. The renderer never mutates scene state; M2.4 adds
+the read-only `SceneView`.
 
 ## Planned commands
 

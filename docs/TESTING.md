@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M2.1. Ten CTest tests exist on Linux; Windows registers nine
-because the window smoke test is not registered there. `engine_core_tests`
+**Status:** M2.2. Eleven CTest tests exist on Linux; Windows registers nine
+because the window and swapchain tests are not registered there. `engine_core_tests`
 contains 56 test cases and 417 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
 pinned CMake 4.4.5 and Ninja 1.13.2.
@@ -20,6 +20,7 @@ pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_api_reference` | Generated `API_REFERENCE.md` matches `engine schema --json` | `docs`, `contract` |
 | `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, single-device guard and sequential device creation | `unit`, `render` |
 | `engine_window_smoke` | SDL3 window, Vulkan surface, present queue and zero validation errors | `unit`, `render` |
+| `engine_swapchain_test` | Swapchain creation, frames in flight, clear and present, resize, minimize/restore and validation errors | `unit`, `render` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -38,8 +39,12 @@ and finalized repeatedly. If the Vulkan loader is missing, the cases are
 reported as skipped. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
-reports that as skipped. The window test is not registered on Windows because
-Windows graphics is not verified.
+reports that as skipped. `engine_swapchain_test` creates a hidden window,
+presents frames, resizes the hidden window, shows it, minimizes and restores
+it, and asserts that the swapchain follows the window and that the validation
+layers report no errors. It also exits with code 77 when the environment is
+unavailable. The window and swapchain tests are not registered on Windows
+because Windows graphics is not verified.
 
 The Linux CI job runs the render tests against the default Mesa device; the
 lavapipe golden-image work starts in M2.5.

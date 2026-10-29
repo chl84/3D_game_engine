@@ -109,6 +109,18 @@ animation mutate the runtime state directly during a fixed tick.
 - Validation layers are enabled in debug builds when available. The `Required`
   mode fails when the layer is missing, and the debug messenger counts errors
   and warnings so tests can assert zero errors.
+- `Renderer` owns the swapchain, one command buffer and one fence per frame,
+  and two frames in flight. It clears the swapchain image with Dynamic
+  Rendering and uses Synchronization2 image barriers. Render-finished
+  semaphores are per swapchain image, because presentation can outlive the
+  submission fence.
+- Resize, minimization and out-of-date swapchains are handled in `draw_frame`.
+  A changed window size triggers a swapchain recreation after
+  `vkDeviceWaitIdle`; a minimized window reports no frame instead of
+  presenting an invalid extent.
+- The renderer requires one queue family that supports both graphics and
+  present. Devices with separate families are rejected until ownership
+  transfers are implemented.
 - volk keeps process-wide function tables, so a process has one `Device` at a
   time. Device creation happens before worker threads start.
 - `render` reads `scene` through a read-only `SceneView`. It never receives
@@ -174,7 +186,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M2.1 contains:
+M2.2 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -196,13 +208,15 @@ M2.1 contains:
 - `engine/render`: Vulkan 1.3 instance and device creation through volk,
   physical-device and queue selection, Synchronization2 and Dynamic Rendering,
   a VMA allocator, an optional validation-layer debug messenger with error
-  counting, a headless device mode and a windowed surface mode
+  counting, a headless device mode, a windowed surface mode, and a swapchain
+  renderer that clears, presents and recreates on resize, minimize and
+  out-of-date events
 - EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, VMA 3.5.0 and GLM
   1.0.3 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
-- `tests/unit`, `tests/render`: core unit tests and Vulkan device/window smoke
-  tests
+- `tests/unit`, `tests/render`: core unit tests, Vulkan device and window
+  smoke tests, and a swapchain/resize/minimize integration test
 - `tests/smoke`, `tests/contract`: CLI JSON and schema tests
 - `schemas/`: `version@1`, `doctor@1` and `log-record@1` schemas
 - CI: GCC 14, Clang 18, Windows MSVC, clang-format/clang-tidy, ASan/UBSan and
