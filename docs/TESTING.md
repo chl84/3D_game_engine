@@ -1,9 +1,9 @@
 # Testing
 
-**Status:** M2.6. Fourteen CTest tests exist on Linux; Windows registers nine
+**Status:** M2.7. Fourteen CTest tests exist on Linux; Windows registers nine
 because the window, swapchain, overlay and screenshot tests are not registered
 there. `engine_core_tests` contains 60 test cases and 468 assertions;
-`engine_render_tests` contains 9 test cases and 62 assertions. CI also runs
+`engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -19,7 +19,7 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_sensitive_scan` | Credentials, private keys, personal paths and email addresses in tracked files | `docs`, `security` |
 | `engine_acceptance_m1` | CLI-only M1 acceptance: project, hierarchy, components, undo, round-trip and deterministic simulation | `contract`, `acceptance` |
 | `engine_api_reference` | Generated `API_REFERENCE.md` matches `engine schema --json` | `docs`, `contract` |
-| `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, single-device guard and sequential device creation | `unit`, `render` |
+| `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, descriptor-indexing minimum, single-device guard and sequential device creation | `unit`, `render` |
 | `engine_window_smoke` | SDL3 window, Vulkan surface, present queue and zero validation errors | `unit`, `render` |
 | `engine_swapchain_test` | Swapchain creation, frames in flight, clear and present, resize, minimize/restore and validation errors | `unit`, `render` |
 | `engine_overlay_test` | ImGui debug overlay: entity list, CPU/GPU frame statistics, no scene mutation and zero validation errors | `unit`, `render` |
@@ -29,8 +29,12 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
 metadata. `engine_cli_contract` validates `engine --version --json` against
-`version@1` and `engine doctor --json` against `doctor@1`, checks the
-`log-record@1` fixture, and verifies the `--require` exit codes.
+`version@1` and `engine doctor --json` against `doctor@1`, including the
+top-level and per-device descriptor-indexing report, checks the
+`log-record@1` fixture, and verifies the `--require` exit codes. On a machine
+with a device that lacks the required descriptor features, plain `doctor`
+reports the failure and exits 8; on a machine with no Vulkan device it remains
+diagnostic unless `--require vulkan` is used.
 `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
 `tl::expected`, Catch2, volk, SDL3, VMA, GLM and Dear ImGui, so missing include
 paths or link errors fail on both Linux and Windows.
@@ -39,7 +43,12 @@ paths or link errors fail on both Linux and Windows.
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
 asserts that the debug messenger counts zero errors, checks the single-device
 guard, and creates devices sequentially to prove that volk can be initialized
-and finalized repeatedly. The same executable tests the camera and scene
+and finalized repeatedly. It also asserts the engine's descriptor-indexing
+minimum on the real device and unit-tests the required-feature evaluator with
+synthetic capabilities: a missing feature and a low limit must produce
+`E_UNSUPPORTED`, stage `descriptor-indexing`, with the machine-readable
+`missingFeatures` and `missingLimits` entries. There is no fallback path or
+fallback test. The same executable tests the camera and scene
 transform: clip-space mapping, a zero aspect guard, 8 km camera-relative model
 matrices, the rotation-only camera view and frustum culling. The shaders are
 compiled by `glslc` at build time and embedded as SPIR-V; CMake fails with a
@@ -49,7 +58,11 @@ surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_screenshot_golden` renders a fixed scene offscreen with the same built-in meshes and compares RGBA pixels on lavapipe: at most 8 per channel difference, at most 1 % of channels may differ by more than 2. `engine_screenshot_cli` exercises the full CLI path, validates the PNG header
 and dimensions, and rejects `--out` paths outside the project as well as
-`--width 8193`, `--height 8193` and `--frames 1001`. `engine_overlay_test` creates a hidden window,
+`--width 8193`, `--height 8193` and `--frames 1001`. Each rejection must carry
+the exact `E_VALIDATION` code and the `path`, `maxDimension` or `maxFrames`
+detail. The engine budgets are 4096 sampled images plus two samplers and 4096
+material records; the 1 GiB texture budget is part of the 4 GiB total GPU
+memory budget. `engine_overlay_test` creates a hidden window,
 builds a camera and two meshes, renders four frames with the overlay enabled,
 checks that the overlay lists every entity and submits vertices, checks that
 CPU and GPU timing are reported (GPU timing is optional), and compares the
@@ -281,5 +294,7 @@ labelled `render` or `golden`.
   `doctor` only creates an instance and enumerates devices
 - Windowed and overlay tests under TSan; the validation layer is not
   TSan-clean
+- Device loss; resize, minimize/restore and swapchain recreation are covered,
+  but the harness has no practical way to force device loss
 - The console log sink; the JSONL sink is automatically tested
 - Branch protection enforcement; the GitHub plan blocks it (see `STATUS.md`)

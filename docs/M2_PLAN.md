@@ -1,8 +1,8 @@
 # M2 Plan — Vulkan Renderer
 
 **Status:** Approved by the owner on 2026-10-29. M2.1–M2.6 are approved.
-M2.7 starts with the descriptor-strategy ADR, which is proposed and awaits
-owner approval before implementation.
+M2.7 is implemented and awaits review. ADR-0011 was approved with the change
+that descriptor indexing is a minimum requirement and there is no fallback.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -135,17 +135,30 @@ new transitive dependency follows A.6 and is recorded in
 
 ### M2.7 Descriptor strategy and validation
 
-- Write ADR-0011 for the descriptor strategy (bindless, classic sets and
-  buffer device address), including support on Iris Xe and lavapipe and the
-  consequences for M3 materials and textures.
-- Add a device-capability query for the accepted descriptor features and
-  limits, and fail with a clear error when a required path is unavailable.
+- ADR-0011 is accepted. Descriptor indexing is a minimum requirement; there
+  is no classic fallback and only one descriptor path is implemented.
+- Add a device-capability query for the required descriptor features and
+  limits. Device creation fails with `E_UNSUPPORTED`, stage
+  `descriptor-indexing`, and machine-readable missing feature and limit lists.
+- Extend `engine doctor` with the same report; `--require vulkan` exits 8 when
+  no device satisfies the requirement.
+- Add a test for the clear failure path using synthetic capabilities with a
+  missing feature and a low limit, including the machine-readable error code
+  and detail lists.
 - Add validation scenarios for resize, minimize, swapchain recreation and
   device loss handling where practical.
 - Ensure the debug messenger count is zero in every documented scenario.
-- Document descriptor limits and the reference-scene budget.
+- Document descriptor limits, the 4096-slot budget and the reference-scene
+  budget. The 1 GiB texture budget is part of the 4 GiB total GPU memory
+  budget.
 - Assert the exact `E_VALIDATION` code and details in the `engine screenshot`
   limit tests, not only the error status. This is an owner requirement.
+
+Implementation result: the device gate, doctor report, descriptor requirement
+tests and exact screenshot error-code assertions are in place. `engine doctor
+--require vulkan` exits 8 when no device meets the descriptor requirements.
+The swapchain test covers resize, minimize/restore and swapchain recreation
+with Required validation. Device loss is not simulated in M2.7.
 
 ### M2.8 Hardening and M2 acceptance
 
@@ -180,7 +193,8 @@ new transitive dependency follows A.6 and is recorded in
 | Draw calls per frame | ≤ 200 including the shadow pass |
 | Lights | 1 directional + 4 point lights; 1 shadow-casting directional light |
 | Materials | ≤ 100 unique PBR materials |
-| Texture memory | ≤ 1 GiB |
+| Texture memory | ≤ 1 GiB, a sub-budget of the total GPU memory |
+| Total GPU memory | ≤ 4 GiB, including textures, material records and descriptor pools |
 | CPU time | ≤ 8 ms |
 | GPU time | ≤ 12 ms |
 | Machine | i7-1265U, Iris Xe, AC power, performance profile |

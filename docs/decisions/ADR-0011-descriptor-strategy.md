@@ -1,6 +1,6 @@
 # ADR-0011: Descriptor strategy for materials and textures
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-29
 
 ## Context
@@ -105,8 +105,8 @@ Advantages:
 
 Disadvantages:
 
-- Requires feature detection and a portability fallback; Windows graphics is
-  unverified.
+- Requires feature detection; unsupported devices are rejected because
+  descriptor indexing is a minimum requirement.
 - Descriptor lifetime is explicit: a texture must stay alive while any draw
   can reference its slot. Streaming and hot reload need a free-list and
   synchronization.
@@ -136,10 +136,10 @@ Disadvantages:
 - Better evaluated with M5's streaming and large-world work, where indirect
   and GPU-driven rendering become relevant.
 
-## Decision (proposed)
+## Decision
 
-Adopt **descriptor indexing (bindless) as the primary descriptor strategy** for
-M3 materials and textures:
+Descriptor indexing (bindless) is the mandatory descriptor strategy for M3
+materials and textures. There is no classic-set fallback.
 
 - One persistently bound bindless set contains a bounded array of combined
   image samplers and a storage buffer with material records. The existing
@@ -148,27 +148,39 @@ M3 materials and textures:
 - Texture and material slots are allocated from engine-owned free lists.
   Descriptors are updated after bind; partially bound descriptors cover unused
   slots.
-- The engine budget is 4096 sampled images and 4096 material records, well
-  below the measured limits. The M2 reference scene uses at most 100
-  materials; the larger hard cap leaves headroom for M5 and editor scenes.
-  The 1 GiB texture-memory budget remains the practical limit. The descriptor
-  budget is validated against
+- The engine budget is 4096 sampled images and 4096 material records. The M2
+  reference scene uses at most 100 materials; the larger hard cap leaves
+  headroom for M5 and editor scenes.
+- The 1 GiB texture-memory budget is a **sub-budget of the engine's 4 GiB
+  total GPU memory budget**. Material records, descriptor pools and other GPU
+  allocations count against the 4 GiB total but not against the 1 GiB texture
+  sub-budget.
+- The descriptor budget is validated against
   `maxPerStageDescriptorUpdateAfterBindSampledImages`,
   `maxDescriptorSetUpdateAfterBindSampledImages`,
   `maxUpdateAfterBindDescriptorsInAllPools` and `maxBoundDescriptorSets` at
-  device creation.
+  device creation. The required minimums are 4096 sampled images, two
+  samplers (4098 update-after-bind descriptors in total) and two bound
+  descriptor sets.
 - Shaders use `nonuniformEXT` indexing for the texture array. Material records
   are indexed by a 32-bit material ID carried in the draw's push constants or
   instance data.
 
-Keep a **classic per-material descriptor-set fallback** for devices that do
-not expose the required descriptor-indexing features. The fallback uses one
-global set plus one set per material and the same material-record layout. Both
-verified target devices use the primary path; the fallback exists for the
-unverified Windows driver and future low-end devices.
+Device creation must fail with the machine-readable error code
+`E_UNSUPPORTED` when any required descriptor-indexing feature or limit is
+missing. The error details name the stage `descriptor-indexing` and list
+`missingFeatures` and `missingLimits` (name, required value and supported
+value). `engine doctor --require vulkan` must treat the same feature set as
+part of the Vulkan requirement and exit 8 when it is missing; the doctor JSON
+reports `descriptorIndexing` per device with `errorCode: "E_UNSUPPORTED"` and
+the same missing lists.
 
 Do **not** adopt BDA for M3. Re-evaluate BDA in M5/M8 for GPU-driven geometry,
 indirect draws and large-world streaming, where its benefits are concrete.
+
+There is exactly one descriptor path in M3 and later. If a concrete target
+device lacks the required features, a new ADR must be approved before adding a
+fallback; the engine does not silently degrade.
 
 ## Consequences
 
@@ -182,28 +194,35 @@ indirect draws and large-world streaming, where its benefits are concrete.
 - Texture streaming and hot reload update existing slots after bind. A
   slot must not be reused until all frames that referenced it have completed;
   the renderer needs a deferred-free queue tied to frame fences.
-- The fallback path needs its own descriptor pool and per-material set
-  management. It must produce the same material record layout so shaders and
-  tests can cover both paths.
-- M3 tests should cover: full and partially filled texture arrays, unused
-  slots, material-ID bounds, texture lifetime across frames in flight, and a
-  forced-fallback build.
+- M3 tests cover full and partially filled texture arrays, unused slots,
+  material-ID bounds and texture lifetime across frames in flight. There is no
+  fallback build.
+- All GPU allocations are accounted against the 4 GiB total budget; textures
+  are additionally capped at 1 GiB.
 
 ### M2.7
 
 M2.7 is the decision and validation substep, not the material implementation.
-After owner approval it should:
+It must:
 
 - Accept this ADR and record the decision in `ARCHITECTURE.md` and
   `STATUS.md`.
-- Add a `DeviceCapabilities` query for the descriptor-indexing and BDA
-  features and the limits above; fail with a clear `E_UNSUPPORTED` error when
-  a required primary-path feature is missing and the fallback is unavailable.
+- Add a `DeviceCapabilities` query for the descriptor-indexing features and
+  limits. Device creation fails with a clear `E_UNSUPPORTED` error, stage
+  `descriptor-indexing`, when any required feature or limit is missing.
+- Extend `engine doctor` with the same capability report. The doctor JSON
+  carries `descriptorIndexing` per device and a top-level supported flag;
+  `engine doctor --require vulkan` exits 8 when no device satisfies the
+  requirement.
+- Add a test for the clear failure path using synthetic capabilities with a
+  missing feature and a low limit, and assert the error code, stage and
+  machine-readable detail lists.
 - Add validation scenarios for resize, minimize, swapchain recreation and
   device loss where practical, and assert zero debug-messenger errors.
 - Assert the exact `E_VALIDATION` code and detail keys in the `engine
   screenshot` limit tests, not only the error status.
-- Document the engine budgets and the reference-scene descriptor budget.
+- Document the engine budgets, including the 1 GiB texture sub-budget of the
+  4 GiB total.
 
 Material and texture implementation starts in M3. No bindless descriptor heap
 is added to the M2 renderer unless it is needed to validate the capability
@@ -211,9 +230,10 @@ query.
 
 ### Risks
 
-- **Unverified Windows driver:** the fallback path is the portability answer,
-  but Windows graphics remains not verified until an ICD is available. The M2.8
-  Windows ICD evaluation must include the descriptor-indexing feature report.
+- **Unverified Windows driver:** Windows graphics remains not verified until an
+  ICD is available. If the driver lacks the required features, device creation
+  rejects it; a fallback would require a new ADR. The M2.8 Windows ICD
+  evaluation must include the descriptor-indexing feature report.
 - **Descriptor lifetime:** streaming and hot reload are the main source of
   use-after-free bugs. The deferred-free queue is mandatory.
 - **Validation coverage:** lavapipe and ANV can differ in update-after-bind
@@ -221,14 +241,12 @@ query.
 - **Performance:** bindless reduces binds but can be slower on some tilers.
   Measure in M3 and M8; do not assume a win.
 - **Budget drift:** the 4096-slot budget is an engine limit, not a driver
-  limit. Enforce it in code and tests.
+  limit. Enforce it in code and tests, and account all GPU memory against the
+  4 GiB total.
 
-## Approval requested
+## Owner decision
 
-1. Approve descriptor indexing as the primary strategy for M3 materials and
-   textures, with a classic-set fallback.
-2. Approve deferring BDA to M5/M8.
-3. Approve the M2.7 deliverables listed above, including the exact error-code
-   assertions in the screenshot limit tests.
-
-Implementation of M2.7 starts after this ADR is accepted.
+Approved by the owner on 2026-10-29 with one change: there is no classic
+fallback. Descriptor indexing, with the listed feature bits and limits, is a
+minimum requirement. A fallback may be considered in a new ADR only if a
+concrete target device lacks the required support.

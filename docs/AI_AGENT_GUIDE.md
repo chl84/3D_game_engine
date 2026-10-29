@@ -155,7 +155,12 @@ compiled by `glslc` at build time; the shaderc library is not linked.
 `engine.builtin.plane` or a future asset UUID), never mesh data. The windowed
 renderer owns a Dear ImGui debug overlay that shows FPS, CPU/GPU frame time and
 the entity list; it is enabled by default in debug builds and reads only
-`SceneView`. See ADR-0010 for the ImGui integration.
+`SceneView`. See ADR-0010 for the ImGui integration. Device creation requires
+descriptor indexing, update-after-bind, partially bound descriptors, variable
+descriptor counts, runtime descriptor arrays and the descriptor limits in
+ADR-0011. There is no fallback; `Device::create` returns `E_UNSUPPORTED` with
+stage `descriptor-indexing` and machine-readable missing lists. `engine doctor
+--require vulkan` applies the same gate and exits 8 when it is not met.
 
 ## Screenshots
 

@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.7 ADR proposal — ADR-0011 proposes the descriptor strategy for materials and textures and awaits owner approval. M2.6 is owner-approved.
+**Current substep:** M2.7 implementation — descriptor indexing is a minimum requirement, device creation and `engine doctor --require vulkan` reject unsupported devices, and the exact screenshot error codes are tested. Review pending.
 
 ## Substeps
 
@@ -42,7 +42,7 @@
 | M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
-| M2.7 | Descriptor strategy and validation hardening | In progress — ADR-0011 proposed; awaiting owner approval |
+| M2.7 | Descriptor strategy and validation hardening | Implemented — review pending |
 | M2.8 | Hardening and M2 acceptance | Planned |
 
 ## Repository state
@@ -153,7 +153,13 @@
 | M2.6 CI | Automatically tested | Final run [40941397208](https://github.com/chl84/3D_game_engine/actions/runs/40941397208) on `7496661` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest with `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and `engine_screenshot_golden` passed on lavapipe under Xvfb; the strict minimize step printed `minimize: renderer reported no frames`. ASan/UBSan: 14/14. Windows MSVC: 9/9 with graphics tests not registered. Quality: clang-format and clang-tidy green |
 | M2.6 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `7496661`, built with the exact-commit overlay port, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.6 ImGui exact pin | Verified | The overlay port uses `REF b916186e66aa3c02b72c6ca17455516512ed8049` (the commit behind the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's archive; the non-docking branch is pinned to `c1aaac65e896a45f81f47a4d68f9959e0f86c859`. A moved tag or rewritten commit fails the vcpkg source check. CI [40941397208](https://github.com/chl84/3D_game_engine/actions/runs/40941397208) built the pinned ports on Linux and Windows |
-| M2.7 descriptor ADR | Proposed | ADR-0011 compares classic sets, descriptor indexing and BDA, records the measured Iris Xe and lavapipe support, recommends bindless with a classic fallback, and defers BDA to M5/M8. Awaiting owner approval |
+| M2.7 descriptor strategy | Implemented | ADR-0011 is accepted: descriptor indexing (bindless) is a minimum requirement, there is no classic fallback, and BDA is deferred to M5/M8. The support table records Iris Xe and lavapipe |
+| M2.7 device capability gate | Automatically tested | `Device::create` queries the required descriptor-indexing features and limits. A missing feature or limit returns `E_UNSUPPORTED`, stage `descriptor-indexing`, with `missingFeatures` and `missingLimits` (name, required, supported). `Device::descriptor_capabilities()` exposes the queried values |
+| M2.7 descriptor failure test | Automatically tested | `engine_render_tests` constructs capabilities with a missing feature and a low limit, asserts `E_UNSUPPORTED`, stage `descriptor-indexing`, `missingFeatures` and the machine-readable limit entry. There is no fallback test because there is no fallback path |
+| M2.7 doctor | Automatically tested | `engine doctor` reports `vulkan.descriptorIndexing` and a per-device `descriptorIndexing` object with `errorCode: E_UNSUPPORTED` and missing lists. `--require vulkan` exits 8 when no device satisfies the requirement; an enumerated but unsupported device also makes plain `doctor` exit 8. The doctor schema and contract test cover the new fields |
+| M2.7 screenshot error codes | Automatically tested | `tests/smoke/screenshot.py` requires `E_VALIDATION` and the exact `path`, `maxDimension` and `maxFrames` details for `../escape.png`, `--width 8193`, `--height 8193` and `--frames 1001` |
+| M2.7 budgets | Documented | Engine budget is 4096 sampled images + 2 samplers and 4096 material records. The 1 GiB texture budget is a sub-budget of the 4 GiB total GPU memory budget |
+| M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -303,6 +309,12 @@ The Windows job caught two real portability issues before the milestone closed:
   swapchain and overlay tests execute there. A separate step keeps the strict
   `--require-minimize` contract. Windows still does not register the window,
   swapchain, overlay or golden tests.
+- Descriptor indexing is a hard requirement. A device that lacks it is rejected
+  by `Device::create` and by `engine doctor --require vulkan`; there is no
+  fallback. A fallback would require a new ADR for a concrete target device.
+- Device loss is not simulated in M2.7. Resize, minimize/restore and swapchain
+  recreation are covered; device loss remains an M2.8 hardening item where
+  practical.
 - TSan covers the CPU-side tests only. The window, swapchain and overlay tests
   are excluded because the Khronos validation layer reports a lock-order
   inversion inside the uninstrumented layer; GPU drivers are not instrumented.
@@ -328,8 +340,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Review ADR-0011 and approve or reject the descriptor strategy. M2.7
-implementation starts only after that decision. Merging to `main`, creating or
-pushing a tag and closing M2 as `v0.3.0` require the owner's explicit
-approval. The agent does not merge, tag or use `--admin` without that
+M2.7 review, then M2.8 — hardening and M2 acceptance. Merging to `main`,
+creating or pushing a tag and closing M2 as `v0.3.0` require the owner's
+explicit approval. The agent does not merge, tag or use `--admin` without that
 approval.

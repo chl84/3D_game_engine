@@ -1,13 +1,14 @@
 # Build
 
-**Status:** M2.6. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M2.7. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
 simulation, `engine schema`, the M2 Vulkan renderer with an SDL3 window,
 glslc-compiled shaders, offscreen rendering, `engine screenshot`, PNG golden
-images, the `stb_image_write` encoder and the Dear ImGui debug overlay.
-Version, doctor and all offline commands support `--json` and
+images, the `stb_image_write` encoder, the Dear ImGui debug overlay and the
+mandatory descriptor-indexing device gate. Version, doctor and all offline
+commands support `--json` and
 state-changing commands support `--dry-run`. Catch2, contract, render and M1
 acceptance tests cover the CLI and the renderer, and
 `scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
@@ -55,7 +56,10 @@ sudo pacman -S --needed vulkan-headers vulkan-validation-layers vulkan-tools vul
 `vulkan-swrast` provides lavapipe, the software Vulkan device used for
 headless tests and golden images. The validation layers are required by the
 `required validation layers report no errors` test; CI installs
-`vulkan-validationlayers` on Ubuntu.
+`vulkan-validationlayers` on Ubuntu. Devices must also expose the
+descriptor-indexing features and limits in ADR-0011; there is no classic
+fallback, and `Device::create` rejects an unsupported device with
+`E_UNSUPPORTED`.
 
 `glslc` is a build tool, not a linked library. On Arch it comes with the
 `shaderc` package; on Ubuntu CI the `glslc` package is installed. On Windows

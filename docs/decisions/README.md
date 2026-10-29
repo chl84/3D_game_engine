@@ -32,4 +32,4 @@ ADRs are not rewritten.
 | [0008](ADR-0008-renderer-dependencies.md) | Renderer dependencies for M2 | Accepted |
 | [0009](ADR-0009-scene-format-v2-mesh.md) | Scene format v2 and mesh references | Accepted |
 | [0010](ADR-0010-imgui-overlay-port.md) | Dear ImGui through a local vcpkg overlay port | Accepted |
-| [0011](ADR-0011-descriptor-strategy.md) | Descriptor strategy for materials and textures | Proposed |
+| [0011](ADR-0011-descriptor-strategy.md) | Descriptor strategy for materials and textures | Accepted |

@@ -129,8 +129,15 @@ animation mutate the runtime state directly during a fixed tick.
   result to camera-relative floats for model matrices; the camera view is
   rotation-only. M5's large-world work can add chunk-relative transforms on top
   without changing the v2 field types.
-- The M3 descriptor strategy is proposed in ADR-0011 and awaits owner
-  approval; no material or texture descriptor path is implemented in M2.
+- ADR-0011 makes descriptor indexing mandatory. The windowed and offscreen
+  renderers share the same device gate: a device must expose the required
+  descriptor-indexing features and limits, or creation fails with
+  `E_UNSUPPORTED`, stage `descriptor-indexing`. There is no classic-set
+  fallback. M3 uses one bindless set with a 4096-image array and material
+  records; M2 only implements the capability gate and its tests.
+- The GPU memory budget is 4 GiB total. Textures are capped at 1 GiB as a
+  sub-budget; material records, descriptor pools and other allocations count
+  against the 4 GiB total.
 - The windowed `Renderer` owns an optional Dear ImGui debug overlay. It is
   enabled by default in debug builds and disabled by default in release
   builds. It reads only `SceneView`, shows FPS, CPU frame time, GPU timestamp
