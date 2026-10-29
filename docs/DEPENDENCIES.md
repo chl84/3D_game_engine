@@ -1,12 +1,12 @@
 # Dependencies
 
-**Status:** M1.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M2.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
-1.4.363.0, EnTT 4.0.0 and json-schema-validator 2.4.0. The core library uses
-nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11 and volk; Catch2
-is test-only. EnTT is the ECS; json-schema-validator validates command and
-format payloads. Python `jsonschema` is a development-only contract-test
-dependency.
+1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
+Allocator 3.5.0 and GLM 1.0.3. The core library uses nlohmann/json, spdlog and
+`tl::expected`; the CLI uses CLI11 and volk; Catch2 is test-only. EnTT is the
+ECS; json-schema-validator validates command and format payloads. Python
+`jsonschema` is a development-only contract-test dependency.
 
 ## Policy
 
@@ -33,6 +33,9 @@ dependency.
 | volk | 1.4.363.0 | MIT | Vulkan function loading for `engine doctor` | M0 | Loads the Vulkan loader dynamically and reports a missing loader gracefully on Windows CI. |
 | EnTT | 4.0.0 | MIT | Entity-component system | M1 | Header-only, fast sparse-set ECS with stable entity handles. Reflection remains in `core` (ADR-0007), so the ECS dependency stays small. Approved in the M1 plan. |
 | json-schema-validator (`pboettch`) | 2.4.0 | MIT | Runtime JSON Schema draft-07 validation | M1 | nlohmann/json-based validator with draft-07 support. Used for command and format validation; Python `jsonschema` remains the contract-test validator. Approved in the M1 plan. |
+| SDL3 | 3.4.18 | Zlib AND MIT AND Apache-2.0 AND BSD-3-Clause | Window, input, events and Vulkan surface creation | M2 | Mature cross-platform windowing with an explicit Vulkan feature. Built with the `vulkan`, `x11` and `wayland` features; `ibus` and audio features are disabled. All included components are permissive. Approved in the M2 plan on 2026-10-29. |
+| Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 | AMD's official Vulkan allocator. Header-only, integrates with volk, and is the allocator named in the architecture. Approved in the M2 plan on 2026-10-29. |
+| GLM | 1.0.3 | MIT | Matrix and vector math for the renderer | M2 | Header-only C++ math library with Vulkan-compatible clip-space support. The engine keeps its own `Vec3`/`Quat` for scene data and uses GLM only inside `render`. Approved in the M2 plan on 2026-10-29. |
 
 ## Planned dependencies
 
@@ -42,16 +45,13 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| SDL3 | 3.4.18 | Zlib | Window, input and audio | M2 |
-| Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 |
-| GLM | 1.0.3 | MIT | Mathematics | M2 |
 | shaderc / glslc | 2026.4 | Apache-2.0 | GLSL to SPIR-V at build time | M2 |
+| Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M2 |
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
-| stb_image / stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | Image loading and PNG screenshots | M3 |
+| stb_image / stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | Image loading and PNG screenshots | M2 |
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
 | Lua | 5.4.8 | MIT | Scripting | M4 |
 | sol2 | 3.5.0 | MIT | Lua bindings generated from reflection | M4 |
-| Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M6 |
 
 ## Tooling and SDK
 
@@ -82,3 +82,13 @@ and the license texts used for redistribution.
 - The Vulkan SDK is not managed by vcpkg. Using the SDK for headers and tools
   avoids duplicate Vulkan headers and keeps validation layers and `glslc` on
   the same version.
+- SDL3 is built with the `vulkan`, `x11` and `wayland` features only. `ibus`,
+  audio backends and KMSDRM are disabled; this avoids the dbus and libxcrypt
+  build chain. Linux builds need the X11 and Wayland development headers
+  (`libx11-dev`, `libxft-dev`, `libxext-dev`, `libwayland-dev`,
+  `libxkbcommon-dev`, `libegl1-mesa-dev` on Debian/Ubuntu).
+- VMA is header-only. `VMA_IMPLEMENTATION` is compiled exactly once, in
+  `engine/render/src/vma.cpp`; dynamic Vulkan function loading is used because
+  volk defines `VK_NO_PROTOTYPES`.
+- GLM is used only inside `engine/render`. Authoritative scene data keeps the
+  `core::Vec3` and `core::Quat` types.

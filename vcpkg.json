@@ -11,7 +11,25 @@
     "catch2",
     "volk",
     "entt",
-    "json-schema-validator"
+    "json-schema-validator",
+    {
+      "name": "sdl3",
+      "features": [
+        "vulkan"
+      ],
+      "default-features": false
+    },
+    {
+      "name": "sdl3",
+      "features": [
+        "x11",
+        "wayland"
+      ],
+      "platform": "linux",
+      "default-features": false
+    },
+    "vulkan-memory-allocator",
+    "glm"
   ],
   "overrides": [
     {
@@ -45,6 +63,18 @@
     {
       "name": "json-schema-validator",
       "version": "2.4.0"
+    },
+    {
+      "name": "sdl3",
+      "version": "3.4.18"
+    },
+    {
+      "name": "vulkan-memory-allocator",
+      "version": "3.5.0"
+    },
+    {
+      "name": "glm",
+      "version": "1.0.3"
     }
   ]
 }
