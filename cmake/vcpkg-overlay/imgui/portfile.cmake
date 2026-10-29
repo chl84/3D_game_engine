@@ -15,8 +15,10 @@ else()
     vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO ocornut/imgui
-        REF "v${VERSION}"
-        SHA512 de41ef101f37d09685bf9e69bacefe06a0c010ecd0e6e7ed1e4efbff82fde27a9c3ae36ed436db5bcde4c61de10da984dfb74d6098586a3f78d8a716864460c2
+        # Exact commit for the lightweight v1.93.0 tag. The SHA512 pins the
+        # commit archive; the docking branch above is pinned separately.
+        REF c1aaac65e896a45f81f47a4d68f9959e0f86c859
+        SHA512 ce82cd0fba95984e82484f25e107f3a2ace4742624855a32a756b0fc15f668dab7e435db60d651baa55a7f2814839701e423845f83ac755b65349900448b6d8f
         HEAD_REF master
     )
 endif()

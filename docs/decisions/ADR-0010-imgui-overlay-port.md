@@ -32,7 +32,9 @@ Use a local vcpkg overlay port at `cmake/vcpkg-overlay/imgui`:
 
 - It pins the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049`
   (the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's source
-  archive. A moved tag or rewritten commit fails the build.
+  archive. The non-docking branch is likewise pinned to the `v1.93.0` commit
+  `c1aaac65e896a45f81f47a4d68f9959e0f86c859` and its archive SHA512. A moved
+  tag or rewritten commit fails the build.
 - Its `sdl3-binding` feature depends on `sdl3` with `default-features: false`.
 - Its `vulkan-binding` feature depends on `volk`, defines
   `IMGUI_IMPL_VULKAN_USE_VOLK` and links `volk::volk_headers` instead of
