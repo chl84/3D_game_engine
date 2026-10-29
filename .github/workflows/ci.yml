@@ -1,10 +1,12 @@
 name: CI
 
+# CI runs for pull requests to main, pushes to main and manual dispatches.
+# Feature-branch pushes do not trigger CI; open a pull request or run the
+# workflow manually when a feature branch needs verification.
 on:
   push:
     branches:
       - main
-      - "m0/**"
   pull_request:
     branches:
       - main

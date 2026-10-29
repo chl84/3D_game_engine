@@ -244,6 +244,19 @@ To force lavapipe:
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary
 ```
 
+## CI triggers
+
+CI runs on pull requests to `main`, pushes to `main` and manual dispatches.
+Feature-branch pushes do not trigger CI, so intermediate commits do not spend
+runner time. To verify a feature branch before opening a pull request:
+
+```bash
+gh workflow run ci.yml --ref <branch>
+```
+
+The full five-job matrix is the merge gate and runs on every pull request and
+every push to `main`.
+
 ## CI Vulkan and lavapipe
 
 The Linux CI jobs install:

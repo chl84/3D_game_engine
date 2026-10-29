@@ -50,6 +50,18 @@ are visible instead of being reported as ordinary passes.
 | `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors; project headers are analysed |
 | `Linux ASan/UBSan` | ASan + UBSan build, CTest and Vulkan detection under the sanitizers |
 
+CI runs on pull requests to `main`, pushes to `main` and manual dispatches.
+Feature-branch pushes do not trigger CI. To verify a feature branch, open a
+pull request or run:
+
+```bash
+gh workflow run ci.yml --ref <branch>
+```
+
+This keeps the full five-job matrix as the merge gate without running it on
+every intermediate commit. `concurrency` cancels superseded runs on the same
+ref.
+
 Every job installs CMake 4.4.5 and Ninja 1.13.2 from the official release
 archives and fails if the reported versions differ. The Linux jobs install
 `mesa-vulkan-drivers` and `libvulkan1`, capture the exit code from

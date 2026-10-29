@@ -78,6 +78,7 @@
 | Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 6/6 tests passed, including `engine_docs_links` and `engine_sensitive_scan` |
 | Windows graphics | Not verified | The Windows runner has no GPU; graphics is not tested there and is outside the M2/M3 approval |
 | GitHub Actions | Automatically tested | Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| CI trigger policy | Configured | Feature-branch pushes do not trigger CI; pull requests to `main`, pushes to `main` and manual dispatches run all five jobs |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 6/6 CTest passed |
@@ -180,6 +181,8 @@ The Windows job caught two real portability issues before the milestone closed:
   and force-push, which needs owner approval.
 - Local review reports under `reviews/` are ignored by git and are not part of
   the repository. They may contain local paths and must not be force-added.
+- CI does not run on every feature-branch push. Open a pull request or use
+  `gh workflow run ci.yml --ref <branch>` when a branch needs verification.
 
 ## Next step
 
