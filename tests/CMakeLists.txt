@@ -12,6 +12,7 @@ add_executable(engine_core_tests
     unit/log_test.cpp
     unit/path_sandbox_test.cpp
     unit/reflect_test.cpp
+    unit/scene_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
 )
@@ -22,6 +23,7 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::scene
     Catch2::Catch2WithMain
     spdlog::spdlog
 )
