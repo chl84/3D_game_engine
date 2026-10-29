@@ -122,10 +122,25 @@ On failure, `status` is `error` and the document contains an `error` object
 with a stable `code`, `message`, `details` and an optional `hint`. Use the
 process exit code as the primary success signal.
 
+## Dry run
+
+State-changing offline commands accept `--dry-run`:
+
+```bash
+engine entity create ./my-game --name Preview --dry-run --json
+engine component set ./my-game --id <uuid> --component engine.scene.Motion \
+  --value '{"linearVelocity":[1,0,0]}' --dry-run --json
+engine batch ./my-game --file changes.json --dry-run --json
+```
+
+A dry run returns the same result shape with `"dryRun": true` and writes no
+project or scene files. Entity and component commands and batch execute in
+memory; `project create` and `project unlock` only validate the target and
+report what would happen. `scene create` validates the path and duplicate
+registration. Read-only commands do not need it.
+
 ## Planned commands
 
-- `engine schema` and generated API reference in M1.8.
-- `--dry-run` for state-changing commands in a later M1 substep or M2.
 - Live API (JSON-RPC 2.0 over a local connection) in M3.
 - MCP adapter in M7.
 

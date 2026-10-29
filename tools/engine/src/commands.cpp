@@ -1,11 +1,13 @@
 #include "commands.hpp"
 
 #include <engine/command/command.hpp>
+#include <engine/core/path_sandbox.hpp>
 #include <engine/scene/project.hpp>
 #include <engine/scene/scene.hpp>
 #include <engine/scene/simulation.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -210,6 +212,12 @@ void print_result(const CommandResult& result, bool json) {
         snapshot["components"]["engine.scene.Motion"] =
             motion->to_json(&scene.component<Motion>(entity));
     }
+
+    nlohmann::json children = nlohmann::json::array();
+    for (const Entity child : scene.children(entity)) {
+        children.push_back(entity_snapshot(scene, registry, child));
+    }
+    snapshot["children"] = std::move(children);
     return snapshot;
 }
 
@@ -288,7 +296,91 @@ void print_result(const CommandResult& result, bool json) {
             return core::make_failure<Entity>(parent_set.error());
         }
     }
+
+    if (const auto iterator = snapshot.find("children");
+        iterator != snapshot.end() && iterator->is_array()) {
+        for (const auto& child : *iterator) {
+            auto restored = restore_snapshot(scene, registry, child);
+            if (!restored) {
+                return core::make_failure<Entity>(restored.error());
+            }
+        }
+    }
     return entity;
+}
+
+[[nodiscard]] nlohmann::json scene_command_schemas() {
+    return nlohmann::json::parse(R"JSON({
+  "scene.entity.create@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["name"],
+    "additionalProperties": false,
+    "properties": {
+      "name": {"type": "string"},
+      "id": {"type": "string"},
+      "parentId": {"type": ["string", "null"]}
+    }
+  },
+  "scene.entity.delete@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["id"],
+    "additionalProperties": false,
+    "properties": {"id": {"type": "string"}}
+  },
+  "scene.entity.reparent@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["id", "parentId"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {"type": "string"},
+      "parentId": {"type": ["string", "null"]}
+    }
+  },
+  "scene.component.set@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["id", "component", "value"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {"type": "string"},
+      "component": {"type": "string"},
+      "value": {"type": "object"}
+    }
+  },
+  "scene.component.add@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["id", "component"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {"type": "string"},
+      "component": {"type": "string"}
+    }
+  },
+  "scene.component.remove@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["id", "component"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {"type": "string"},
+      "component": {"type": "string"}
+    }
+  },
+  "scene.inspect@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false
+  },
+  "scene.validate@1": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false
+  }
+})JSON");
 }
 
 void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
@@ -302,27 +394,9 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
         }
     };
 
-    const nlohmann::json object_schema{
-        {"$schema", "http://json-schema.org/draft-07/schema#"},
-        {"type", "object"},
-        {"additionalProperties", false},
-    };
+    const nlohmann::json schemas = scene_command_schemas();
 
-    add("scene.entity.create@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"name"})},
-            {"additionalProperties", false},
-            {
-                "properties",
-                {
-                    {"name", {{"type", "string"}}},
-                    {"id", {{"type", "string"}}},
-                    {"parentId", {{"type", nlohmann::json::array({"string", "null"})}}},
-                },
-            },
-        },
+    add("scene.entity.create@1", schemas.at("scene.entity.create@1"),
         [&scene](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto parent = parse_parent_argument(arguments);
             if (!parent) {
@@ -398,14 +472,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             };
         });
 
-    add("scene.entity.delete@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"id"})},
-            {"additionalProperties", false},
-            {"properties", {{"id", {{"type", "string"}}}}},
-        },
+    add("scene.entity.delete@1", schemas.at("scene.entity.delete@1"),
         [&scene, &registry](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto entity = find_entity(scene, arguments);
             if (!entity) {
@@ -437,20 +504,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
 
-    add("scene.entity.reparent@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"id", "parentId"})},
-            {"additionalProperties", false},
-            {
-                "properties",
-                {
-                    {"id", {{"type", "string"}}},
-                    {"parentId", {{"type", nlohmann::json::array({"string", "null"})}}},
-                },
-            },
-        },
+    add("scene.entity.reparent@1", schemas.at("scene.entity.reparent@1"),
         [&scene](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto entity = find_entity(scene, arguments);
             auto parent = parse_parent_argument(arguments);
@@ -506,21 +560,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
 
-    add("scene.component.set@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"id", "component", "value"})},
-            {"additionalProperties", false},
-            {
-                "properties",
-                {
-                    {"id", {{"type", "string"}}},
-                    {"component", {{"type", "string"}}},
-                    {"value", {{"type", "object"}}},
-                },
-            },
-        },
+    add("scene.component.set@1", schemas.at("scene.component.set@1"),
         [&scene, &registry](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto entity = find_entity(scene, arguments);
             if (!entity) {
@@ -571,7 +611,12 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                 if (!target) {
                     return core::make_failure<void>(target.error());
                 }
-                return desc->from_json(*target, old_value);
+                auto restored = desc->from_json(*target, old_value);
+                if (!restored) {
+                    return restored;
+                }
+                scene.bump_revision();
+                return {};
             };
             auto redo = [&scene, &registry, entity_id, component_name, new_value,
                          was_present]() -> Result<void> {
@@ -590,25 +635,17 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                 if (!target) {
                     return core::make_failure<void>(target.error());
                 }
-                return desc->from_json(*target, new_value);
+                auto reapplied = desc->from_json(*target, new_value);
+                if (!reapplied) {
+                    return reapplied;
+                }
+                scene.bump_revision();
+                return {};
             };
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
 
-    add("scene.component.add@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"id", "component"})},
-            {"additionalProperties", false},
-            {
-                "properties",
-                {
-                    {"id", {{"type", "string"}}},
-                    {"component", {{"type", "string"}}},
-                },
-            },
-        },
+    add("scene.component.add@1", schemas.at("scene.component.add@1"),
         [&scene](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto entity = find_entity(scene, arguments);
             if (!entity) {
@@ -655,20 +692,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
 
-    add("scene.component.remove@1",
-        nlohmann::json{
-            {"$schema", "http://json-schema.org/draft-07/schema#"},
-            {"type", "object"},
-            {"required", nlohmann::json::array({"id", "component"})},
-            {"additionalProperties", false},
-            {
-                "properties",
-                {
-                    {"id", {{"type", "string"}}},
-                    {"component", {{"type", "string"}}},
-                },
-            },
-        },
+    add("scene.component.remove@1", schemas.at("scene.component.remove@1"),
         [&scene, &registry](const nlohmann::json& arguments) -> Result<CommandOutput> {
             auto entity = find_entity(scene, arguments);
             if (!entity) {
@@ -731,7 +755,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
 
-    add("scene.inspect@1", object_schema,
+    add("scene.inspect@1", schemas.at("scene.inspect@1"),
         [&project, &scene, &registry](const nlohmann::json&) -> Result<CommandOutput> {
             auto document = project.scene_json(scene, registry);
             if (!document) {
@@ -740,7 +764,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return CommandOutput{std::move(*document)};
         });
 
-    add("scene.validate@1", object_schema,
+    add("scene.validate@1", schemas.at("scene.validate@1"),
         [&scene](const nlohmann::json&) -> Result<CommandOutput> {
             return CommandOutput{{{"valid", true}, {"entities", scene.size()}}};
         });
@@ -748,8 +772,8 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
 
 [[nodiscard]] CommandResult execute_scene_command(const std::string& project_root,
                                                   const std::string& scene_path,
-                                                  const CommandRequest& request,
-                                                  int undo_count = 0) {
+                                                  const CommandRequest& request, int undo_count = 0,
+                                                  bool dry_run = false) {
     auto project = Project::load(project_root);
     if (!project) {
         return failure(project.error());
@@ -783,16 +807,80 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
             return failure(undone.error());
         }
     }
-    auto saved = project->save_scene(scene_path, *scene, registry);
-    if (!saved) {
-        return failure(saved.error());
+    if (!dry_run) {
+        auto saved = project->save_scene(scene_path, *scene, registry);
+        if (!saved) {
+            return failure(saved.error());
+        }
     }
-    return success({{"result", result.data}, {"undoCount", undo_count}});
+    return success({{"result", result.data}, {"undoCount", undo_count}, {"dryRun", dry_run}});
 }
 
 } // namespace
 
-int project_create(const std::string& root, const std::string& name, bool json) {
+int project_create(const std::string& root, const std::string& name, bool json, bool dry_run) {
+    if (dry_run) {
+        std::error_code error;
+        const std::filesystem::path target = std::filesystem::weakly_canonical(root, error);
+        if (error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "could not resolve project root",
+                                         error.message(), {{"path", root}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        if (std::filesystem::exists(target / "project.json")) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Conflict, "project.json already exists", {},
+                                         {{"path", target.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        if (std::filesystem::exists(target) && !std::filesystem::is_directory(target)) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Validation, "project path is not a directory",
+                                         {}, {{"path", target.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+
+        std::filesystem::path parent = target;
+        while (!std::filesystem::exists(parent) && parent.has_parent_path()) {
+            parent = parent.parent_path();
+        }
+        if (!std::filesystem::is_directory(parent)) {
+            const CommandResult result = failure(
+                core::make_error(ErrorCode::Io, "project parent is not a writable directory", {},
+                                 {{"path", parent.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        const std::filesystem::path probe =
+            parent / (".engine-dry-run-" + Uuid::generate().to_string());
+        if (!std::filesystem::create_directory(probe, error) || error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "project destination is not writable",
+                                         error.message(), {{"path", parent.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        std::filesystem::remove(probe, error);
+        if (error) {
+            const CommandResult result =
+                failure(core::make_error(ErrorCode::Io, "could not clean up dry-run probe",
+                                         error.message(), {{"path", probe.string()}}));
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+
+        const CommandResult result = success({{"dryRun", true},
+                                              {"root", target.string()},
+                                              {"name", name},
+                                              {"scene", "scenes/main.scene.json"}});
+        print_result(result, json);
+        return 0;
+    }
+
     auto project = Project::create(root, name);
     if (!project) {
         const CommandResult result = failure(project.error());
@@ -834,12 +922,20 @@ int project_validate(const std::string& root, bool json) {
     return 0;
 }
 
-int project_unlock(const std::string& root, bool force, bool json) {
+int project_unlock(const std::string& root, bool force, bool json, bool dry_run) {
     if (!force) {
         const CommandResult result =
             failure(core::make_error(ErrorCode::Validation, "project unlock requires --force"));
         print_result(result, json);
         return exit_code_for(result);
+    }
+    if (dry_run) {
+        const bool lock_exists =
+            std::filesystem::exists(std::filesystem::path(root) / ".engine" / "lock");
+        const CommandResult result =
+            success({{"dryRun", true}, {"root", root}, {"lockExists", lock_exists}});
+        print_result(result, json);
+        return 0;
     }
     auto unlocked = Project::force_unlock(root);
     if (!unlocked) {
@@ -853,7 +949,7 @@ int project_unlock(const std::string& root, bool force, bool json) {
 }
 
 int scene_create(const std::string& project_root, const std::string& name,
-                 const std::string& relative_path, bool json) {
+                 const std::string& relative_path, bool json, bool dry_run) {
     auto project = Project::load(project_root);
     if (!project) {
         const CommandResult result = failure(project.error());
@@ -866,6 +962,33 @@ int scene_create(const std::string& project_root, const std::string& name,
         print_result(result, json);
         return exit_code_for(result);
     }
+
+    auto sandbox = core::PathSandbox::create(project->root());
+    if (!sandbox) {
+        const CommandResult result = failure(sandbox.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    auto target = sandbox->resolve(relative_path);
+    if (!target) {
+        const CommandResult result = failure(target.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    if (std::filesystem::exists(*target) ||
+        std::ranges::find(project->scenes(), relative_path) != project->scenes().end()) {
+        const CommandResult result = failure(core::make_error(
+            ErrorCode::Conflict, "scene already exists", {}, {{"scene", relative_path}}));
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    if (dry_run) {
+        const CommandResult result =
+            success({{"dryRun", true}, {"scene", relative_path}, {"name", name}});
+        print_result(result, json);
+        return 0;
+    }
+
     ReflectionRegistry registry = make_registry();
     Scene scene;
     scene.set_scene_name(name);
@@ -877,6 +1000,8 @@ int scene_create(const std::string& project_root, const std::string& name,
     }
     auto added = project->add_scene(relative_path);
     if (!added) {
+        std::error_code ignored;
+        std::filesystem::remove(*target, ignored);
         const CommandResult result = failure(added.error());
         print_result(result, json);
         return exit_code_for(result);
@@ -933,7 +1058,7 @@ int scene_validate(const std::string& project_root, const std::string& scene_pat
 
 int entity_create(const std::string& project_root, const std::string& scene_path,
                   const std::string& name, const std::string& parent, const std::string& id,
-                  bool json) {
+                  bool json, bool dry_run) {
     nlohmann::json arguments{{"name", name}};
     if (!parent.empty()) {
         arguments["parentId"] = parent == "null" ? nlohmann::json(nullptr) : nlohmann::json(parent);
@@ -942,34 +1067,35 @@ int entity_create(const std::string& project_root, const std::string& scene_path
         arguments["id"] = id;
     }
     const CommandResult result = execute_scene_command(
-        project_root, scene_path, CommandRequest{"scene.entity.create@1", arguments});
+        project_root, scene_path, CommandRequest{"scene.entity.create@1", arguments}, 0, dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
 
 int entity_delete(const std::string& project_root, const std::string& scene_path,
-                  const std::string& id, bool json) {
-    const CommandResult result = execute_scene_command(
-        project_root, scene_path, CommandRequest{"scene.entity.delete@1", {{"id", id}}});
+                  const std::string& id, bool json, bool dry_run) {
+    const CommandResult result =
+        execute_scene_command(project_root, scene_path,
+                              CommandRequest{"scene.entity.delete@1", {{"id", id}}}, 0, dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
 
 int entity_reparent(const std::string& project_root, const std::string& scene_path,
-                    const std::string& id, const std::string& parent, bool json) {
+                    const std::string& id, const std::string& parent, bool json, bool dry_run) {
     nlohmann::json arguments{
         {"id", id},
         {"parentId", parent == "null" ? nlohmann::json(nullptr) : nlohmann::json(parent)},
     };
     const CommandResult result = execute_scene_command(
-        project_root, scene_path, CommandRequest{"scene.entity.reparent@1", arguments});
+        project_root, scene_path, CommandRequest{"scene.entity.reparent@1", arguments}, 0, dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
 
 int component_set(const std::string& project_root, const std::string& scene_path,
                   const std::string& entity_id, const std::string& component,
-                  const std::string& value, bool json) {
+                  const std::string& value, bool json, bool dry_run) {
     nlohmann::json parsed;
     try {
         parsed = nlohmann::json::parse(value);
@@ -983,25 +1109,30 @@ int component_set(const std::string& project_root, const std::string& scene_path
                               CommandRequest{
                                   "scene.component.set@1",
                                   {{"id", entity_id}, {"component", component}, {"value", parsed}},
-                              });
+                              },
+                              0, dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
 
 int component_add(const std::string& project_root, const std::string& scene_path,
-                  const std::string& entity_id, const std::string& component, bool json) {
+                  const std::string& entity_id, const std::string& component, bool json,
+                  bool dry_run) {
     const CommandResult result = execute_scene_command(
         project_root, scene_path,
-        CommandRequest{"scene.component.add@1", {{"id", entity_id}, {"component", component}}});
+        CommandRequest{"scene.component.add@1", {{"id", entity_id}, {"component", component}}}, 0,
+        dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
 
 int component_remove(const std::string& project_root, const std::string& scene_path,
-                     const std::string& entity_id, const std::string& component, bool json) {
+                     const std::string& entity_id, const std::string& component, bool json,
+                     bool dry_run) {
     const CommandResult result = execute_scene_command(
         project_root, scene_path,
-        CommandRequest{"scene.component.remove@1", {{"id", entity_id}, {"component", component}}});
+        CommandRequest{"scene.component.remove@1", {{"id", entity_id}, {"component", component}}},
+        0, dry_run);
     print_result(result, json);
     return exit_code_for(result);
 }
@@ -1028,13 +1159,14 @@ int simulate(const std::string& project_root, const std::string& scene_path, int
 
 int schema(bool json) {
     const ReflectionRegistry registry = make_registry();
-    const CommandResult result = success({{"components", registry.schemas()}});
+    const CommandResult result =
+        success({{"components", registry.schemas()}, {"commands", scene_command_schemas()}});
     print_result(result, json);
     return 0;
 }
 
 int batch(const std::string& project_root, const std::string& scene_path, const std::string& file,
-          int undo_count, bool json) {
+          int undo_count, bool json, bool dry_run) {
     std::ifstream input(file, std::ios::binary);
     if (!input) {
         const CommandResult result = failure(
@@ -1139,14 +1271,16 @@ int batch(const std::string& project_root, const std::string& scene_path, const 
         }
     }
 
-    auto saved = project->save_scene(scene_path, *scene, registry);
-    if (!saved) {
-        const CommandResult result = failure(saved.error());
-        print_result(result, json);
-        return exit_code_for(result);
+    if (!dry_run) {
+        auto saved = project->save_scene(scene_path, *scene, registry);
+        if (!saved) {
+            const CommandResult result = failure(saved.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
     }
     const CommandResult result =
-        success({{"results", std::move(results)}, {"undoCount", undo_count}});
+        success({{"results", std::move(results)}, {"undoCount", undo_count}, {"dryRun", dry_run}});
     print_result(result, json);
     return 0;
 }

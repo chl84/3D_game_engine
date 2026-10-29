@@ -109,3 +109,15 @@ add_test(
 set_tests_properties(engine_acceptance_m1 PROPERTIES
     LABELS "contract;acceptance"
 )
+
+add_test(
+    NAME engine_api_reference
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_SOURCE_DIR}/scripts/generate_api_reference.py"
+            --engine "$<TARGET_FILE:engine>"
+            --check
+)
+
+set_tests_properties(engine_api_reference PROPERTIES
+    LABELS "docs;contract"
+)

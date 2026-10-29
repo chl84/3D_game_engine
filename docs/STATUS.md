@@ -1,8 +1,8 @@
 # Status
 
 **Last updated:** 2026-10-29
-**Current milestone:** M1 — headless core
-**Current substep:** M1.9 complete — full CI, clean-clone acceptance, ASan/UBSan, TSan, format/tidy and the CLI acceptance script are green. M1 is ready for release.
+**Current milestone:** M1 — headless core (maintenance)
+**Current substep:** M1.10 implemented — `--dry-run`, generated API reference and the security fixes are on `m1.10/maintenance`. Awaiting owner approval for tag `v0.2.1`.
 
 ## Substeps
 
@@ -30,23 +30,42 @@
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
 | M1.9 | Hardening and M1 acceptance | Done |
+| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, and fixes from the Codex review (symlink-safe temp files, scene-create overwrite, subtree undo, missing scene IDs, revision handling) | Done — awaiting owner tag approval |
 
 ## Repository state
 
-- `main`: the M0 release, merged from `m0/foundation` on 2026-10-29.
-- `m0/foundation`: all M0 work, merged into `main` and tagged `v0.1.0`.
-- The repository is public, and branch protection is **enabled** on `main` via
+- `main`: the M1 release `89f52a0`, merged from `m1/headless-core` on
+  2026-10-29 and tagged `v0.2.0`.
+- `m1.10/maintenance`: the M1.10 changes; not merged.
+- `m0/foundation`, `m1/headless-core`: merged milestone branches, tagged
+  `v0.1.0` and `v0.2.0`.
+- The repository is **public**. The owner made that change; the agent did not
+  change repository visibility. It was done to enable branch protection on the
+  GitHub Free plan.
+- Branch protection is enabled on `main` via
   `scripts/setup_branch_protection.sh`. Required checks are
   `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
   `Quality` and `Linux ASan/UBSan`; force pushes and deletions are disabled,
   and conversations must be resolved before merging.
+- **Branch protection blocker:** PR #2 was blocked by
+  `required_conversation_resolution`, because six Codex review threads were
+  unresolved. `--admin` bypassed the rule and must not be used again.
+
+## Owner approval required
+
+- Merging to `main`, creating or pushing a tag, and using GitHub admin bypass
+  (`--admin`) **always require the owner's explicit approval**.
+- Reviewer approval covers a substep only; it never authorizes a merge, tag or
+  milestone closure.
+- When branch protection blocks a merge, stop and ask the owner; do not use
+  `--admin`.
 
 ## Verification evidence
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 53 cases / 397 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 53 cases / 397 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 8/8 passed; `engine_core_tests` → 56 cases / 417 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 8/8 passed; `engine_core_tests` → 56 cases / 417 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -74,13 +93,16 @@
 | Command bus | Automatically tested | `command_test.cpp` covers schema validation, successful and failed handlers, unknown commands, duplicate/malformed registration, sorted schemas, command-log entries, undo/redo, redo invalidation, transactions and rollback |
 | Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
 | Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
-| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 53 core cases / 397 assertions |
+| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 56 core cases / 417 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
-| M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 7/7 CTest |
-| M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1/headless-core`, built `linux-debug`, ran 7/7 CTest and `M1 acceptance passed` |
+| M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
+| `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
+| Generated API reference | Automatically tested | `engine schema --json` exposes 3 components and 8 command schemas; `engine_api_reference` checks `docs/API_REFERENCE.md` against the generator |
+| Codex review fixes | Automatically tested, redo manually verified | Symlink-safe exclusive temp files, scene-create overwrite rejection (existing and listed-but-missing), recursive subtree undo, missing sceneId and negative revision validation, and revision bump on component undo; redo is manually verified because the CLI has no redo command |
+| M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1.10/maintenance`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
 | M1 CI | Automatically tested | Manual dispatch [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
-| M1 ASan/UBSan | Automatically tested | `linux-asan` → 7/7 CTest locally |
-| M1 TSan | Locally automatically tested | `linux-tsan` → 7/7 CTest |
+| M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
+| M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
@@ -207,9 +229,10 @@ The Windows job caught two real portability issues before the milestone closed:
   a Node 20 warning. The actions are CI tooling, not runtime dependencies.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
-- `docs/API_REFERENCE.md` is handwritten. Generated command schemas and
-  `--dry-run` for state-changing commands are deferred to M1.10/M2 and tracked
-  in `ROADMAP.md`.
+- `docs/API_REFERENCE.md` is generated by
+  `scripts/generate_api_reference.py` from `engine schema --json`; the
+  `engine_api_reference` test fails if it is out of date.
+- `--dry-run` is implemented for state-changing offline commands.
 - `docs/PROJECT_FORMAT.md` describes the implemented M1 format.
 - `engine doctor` reports the current working directory as the project root
   until project-root discovery is added.
@@ -226,6 +249,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Reviewer approval of M0.7. After approval, the owner decides whether to merge
-`m0/foundation` into `main` and publish tag `v0.1.0` as the M0 release. The
-agent does not merge to `main` without explicit owner approval.
+Owner approval of M1.10. After approval, the owner decides whether to merge
+`m1.10/maintenance` into `main` and publish tag `v0.2.1`. The agent does not
+merge, tag or use `--admin` without explicit owner approval. After that, the
+owner reviews the M2 plan before M2 starts.

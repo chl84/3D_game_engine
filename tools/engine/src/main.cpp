@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
     app.set_help_flag("--help,-h", "Print help.");
 
     bool json = false;
+    bool dry_run = false;
     app.add_flag("--json", json, "Emit a machine-readable JSON document.");
 
     bool show_version = false;
@@ -242,6 +243,20 @@ int main(int argc, char** argv) {
          }) {
         command->add_flag("--json", json, "Emit a machine-readable JSON document.");
     }
+    for (CLI::App* command : {
+             project_create,
+             project_unlock,
+             scene_create,
+             entity_create,
+             entity_delete,
+             entity_reparent,
+             component_set,
+             component_add,
+             component_remove,
+             batch_command,
+         }) {
+        command->add_flag("--dry-run", dry_run, "Validate without writing any files.");
+    }
 
     try {
         app.parse(argc, argv);
@@ -288,19 +303,20 @@ int main(int argc, char** argv) {
 
     if (*project_command) {
         if (*project_create) {
-            return engine::cli::project_create(project_path, project_name, json);
+            return engine::cli::project_create(project_path, project_name, json, dry_run);
         }
         if (*project_validate) {
             return engine::cli::project_validate(validate_path, json);
         }
         if (*project_unlock) {
-            return engine::cli::project_unlock(unlock_path, unlock_force, json);
+            return engine::cli::project_unlock(unlock_path, unlock_force, json, dry_run);
         }
     }
 
     if (*scene_command) {
         if (*scene_create) {
-            return engine::cli::scene_create(scene_project, scene_name, scene_relative, json);
+            return engine::cli::scene_create(scene_project, scene_name, scene_relative, json,
+                                             dry_run);
         }
         if (*scene_inspect) {
             return engine::cli::scene_inspect(inspect_project, inspect_scene, json);
@@ -313,28 +329,30 @@ int main(int argc, char** argv) {
     if (*entity_command) {
         if (*entity_create) {
             return engine::cli::entity_create(entity_project, entity_scene, entity_name,
-                                              entity_parent, entity_id, json);
+                                              entity_parent, entity_id, json, dry_run);
         }
         if (*entity_delete) {
-            return engine::cli::entity_delete(delete_project, delete_scene, delete_id, json);
+            return engine::cli::entity_delete(delete_project, delete_scene, delete_id, json,
+                                              dry_run);
         }
         if (*entity_reparent) {
             return engine::cli::entity_reparent(reparent_project, reparent_scene, reparent_id,
-                                                reparent_parent, json);
+                                                reparent_parent, json, dry_run);
         }
     }
 
     if (*component_command) {
         if (*component_set) {
             return engine::cli::component_set(set_project, set_scene, set_id, set_component,
-                                              set_value, json);
+                                              set_value, json, dry_run);
         }
         if (*component_add) {
-            return engine::cli::component_add(add_project, add_scene, add_id, add_component, json);
+            return engine::cli::component_add(add_project, add_scene, add_id, add_component, json,
+                                              dry_run);
         }
         if (*component_remove) {
             return engine::cli::component_remove(remove_project, remove_scene, remove_id,
-                                                 remove_component, json);
+                                                 remove_component, json, dry_run);
         }
     }
 
@@ -347,7 +365,8 @@ int main(int argc, char** argv) {
     }
 
     if (*batch_command) {
-        return engine::cli::batch(batch_project, batch_scene, batch_file, batch_undo, json);
+        return engine::cli::batch(batch_project, batch_scene, batch_file, batch_undo, json,
+                                  dry_run);
     }
 
     std::cerr << "error: no command\n" << app.help() << '\n';

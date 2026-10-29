@@ -153,6 +153,22 @@ def main() -> int:
             raise RuntimeError(f"{label} did not report status ok")
         return document
 
+    def run_failure(arguments: list[str], label: str, expected_exit: int) -> dict[str, Any]:
+        result = run_engine(engine, [*arguments, "--json"])
+        if result.returncode != expected_exit:
+            raise RuntimeError(
+                f"{label} exited with {result.returncode}, expected {expected_exit}: "
+                f"{result.stderr.strip()}"
+            )
+        try:
+            document = json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(f"{label} output is not valid JSON: {error}") from error
+        validate(command_schema, document, label)
+        if document.get("status") != "error":
+            raise RuntimeError(f"{label} did not report status error")
+        return document
+
     try:
         schema_document = run_command(["schema"], "schema")
         components = schema_document["data"].get("components")
@@ -161,6 +177,9 @@ def main() -> int:
         for name in ("engine.scene.Transform", "engine.scene.Camera", "engine.scene.Motion"):
             if name not in components:
                 return fail(f"schema output is missing {name}")
+        commands = schema_document["data"].get("commands")
+        if not isinstance(commands, dict) or "scene.entity.create@1" not in commands:
+            return fail("schema output has no command schemas")
 
         with tempfile.TemporaryDirectory(prefix="engine-cli-contract-") as temporary:
             project_dir = Path(temporary) / "demo"
@@ -177,6 +196,113 @@ def main() -> int:
             if inspected["data"].get("entities") != []:
                 return fail("new project should have an empty scene")
 
+            main_scene = project_dir / "scenes" / "main.scene.json"
+            main_scene_before = main_scene.read_bytes()
+            conflict = run_failure(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "Overwrite",
+                    "--path",
+                    "scenes/main.scene.json",
+                ],
+                "scene create existing file",
+                5,
+            )
+            if conflict["error"]["code"] != "E_CONFLICT":
+                return fail("scene create existing file did not report E_CONFLICT")
+            if main_scene.read_bytes() != main_scene_before:
+                return fail("failed scene create changed the existing scene")
+
+            orphan_scene = project_dir / "scenes" / "orphan.scene.json"
+            orphan_scene.write_bytes(main_scene_before)
+            orphan_before = orphan_scene.read_bytes()
+            orphan_conflict = run_failure(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "Orphan",
+                    "--path",
+                    "scenes/orphan.scene.json",
+                ],
+                "scene create unregistered existing file",
+                5,
+            )
+            if orphan_conflict["error"]["code"] != "E_CONFLICT":
+                return fail("scene create unregistered existing file did not report E_CONFLICT")
+            if orphan_scene.read_bytes() != orphan_before:
+                return fail("failed scene create changed an unregistered existing scene")
+
+            second_scene = project_dir / "scenes" / "second.scene.json"
+            run_command(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "second",
+                    "--path",
+                    "scenes/second.scene.json",
+                ],
+                "scene create second",
+            )
+            second_scene_before = second_scene.read_bytes()
+            second_scene.unlink()
+            listed_conflict = run_failure(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "second",
+                    "--path",
+                    "scenes/second.scene.json",
+                ],
+                "scene create listed but missing",
+                5,
+            )
+            if listed_conflict["error"]["code"] != "E_CONFLICT":
+                return fail("scene create listed but missing did not report E_CONFLICT")
+            if second_scene.exists():
+                return fail("failed scene create recreated a missing listed scene")
+            second_scene.write_bytes(second_scene_before)
+
+            dry_project = Path(temporary) / "dry-project"
+            run_command(
+                [
+                    "project",
+                    "create",
+                    str(dry_project),
+                    "--name",
+                    "Dry",
+                    "--dry-run",
+                ],
+                "project create dry-run",
+            )
+            if dry_project.exists():
+                return fail("project create --dry-run created files")
+
+            blocker = Path(temporary) / "blocker"
+            blocker.write_text("blocker", encoding="utf-8")
+            blocked = run_engine(
+                engine,
+                [
+                    "project",
+                    "create",
+                    str(blocker / "child"),
+                    "--dry-run",
+                    "--json",
+                ],
+            )
+            if blocked.returncode == 0:
+                return fail("project create --dry-run accepted an invalid destination")
+            if not blocker.is_file() or blocker.read_text(encoding="utf-8") != "blocker":
+                return fail("project create --dry-run changed the blocking file")
+
             root_created = run_command(
                 ["entity", "create", str(project_dir), "--name", "Root"],
                 "entity create root",
@@ -184,6 +310,40 @@ def main() -> int:
             root_id = root_created["data"]["result"]["id"]
             if not isinstance(root_id, str):
                 return fail("entity create did not return an entity id")
+
+            run_command(
+                [
+                    "entity",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "DryEntity",
+                    "--dry-run",
+                ],
+                "entity create dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after dry-run"
+            )
+            if len(inspected["data"]["entities"]) != 1:
+                return fail("entity create --dry-run changed the scene")
+
+            extra_scene = project_dir / "scenes" / "extra.scene.json"
+            run_command(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "extra",
+                    "--path",
+                    "scenes/extra.scene.json",
+                    "--dry-run",
+                ],
+                "scene create dry-run",
+            )
+            if extra_scene.exists():
+                return fail("scene create --dry-run created a file")
 
             child_created = run_command(
                 [
@@ -209,6 +369,31 @@ def main() -> int:
                     "--component",
                     "engine.scene.Camera",
                     "--value",
+                    json.dumps({"fovYRadians": 0.5}),
+                    "--dry-run",
+                ],
+                "component set dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after component dry-run"
+            )
+            child = next(
+                (entity for entity in inspected["data"]["entities"] if entity.get("id") == child_id),
+                None,
+            )
+            if child is None or "engine.scene.Camera" in child["components"]:
+                return fail("component set --dry-run changed the scene")
+
+            run_command(
+                [
+                    "component",
+                    "set",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Camera",
+                    "--value",
                     json.dumps(
                         {
                             "fovYRadians": 0.75,
@@ -220,6 +405,127 @@ def main() -> int:
                 ],
                 "component set",
             )
+
+            before_undo = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect before component undo"
+            )
+            before_revision = before_undo["data"]["revision"]
+            undo_file = Path(temporary) / "component-undo.json"
+            undo_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.component.set@1",
+                                "arguments": {
+                                    "id": child_id,
+                                    "component": "engine.scene.Camera",
+                                    "value": {"fovYRadians": 0.9},
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(undo_file),
+                    "--undo",
+                    "1",
+                ],
+                "component set undo",
+            )
+            after_undo = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after component undo"
+            )
+            if after_undo["data"]["revision"] != before_revision + 2:
+                return fail("component undo did not bump the revision exactly once")
+            undone_child = next(
+                (
+                    entity
+                    for entity in after_undo["data"]["entities"]
+                    if entity.get("id") == child_id
+                ),
+                None,
+            )
+            if undone_child is None or (
+                undone_child["components"]["engine.scene.Camera"]["fovYRadians"] != 0.75
+            ):
+                return fail("component undo did not restore the previous value")
+
+            run_command(
+                [
+                    "component",
+                    "add",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Motion",
+                    "--dry-run",
+                ],
+                "component add dry-run",
+            )
+            run_command(
+                [
+                    "component",
+                    "remove",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Camera",
+                    "--dry-run",
+                ],
+                "component remove dry-run",
+            )
+            run_command(
+                [
+                    "entity",
+                    "delete",
+                    str(project_dir),
+                    "--id",
+                    root_id,
+                    "--dry-run",
+                ],
+                "entity delete dry-run",
+            )
+            run_command(
+                [
+                    "entity",
+                    "reparent",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--parent",
+                    "null",
+                    "--dry-run",
+                ],
+                "entity reparent dry-run",
+            )
+            dry_checked = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after more dry-runs"
+            )
+            dry_child = next(
+                (
+                    entity
+                    for entity in dry_checked["data"]["entities"]
+                    if entity.get("id") == child_id
+                ),
+                None,
+            )
+            if dry_child is None or "engine.scene.Motion" in dry_child["components"]:
+                return fail("component add --dry-run changed the scene")
+            if "engine.scene.Camera" not in dry_child["components"]:
+                return fail("component remove --dry-run changed the scene")
+            if dry_child.get("parentId") != root_id:
+                return fail("entity reparent --dry-run changed the hierarchy")
+            if len(dry_checked["data"]["entities"]) != 2:
+                return fail("entity delete --dry-run changed the scene")
 
             run_command(
                 [
@@ -305,6 +611,67 @@ def main() -> int:
             )
             if len(inspected["data"]["entities"]) != 2:
                 return fail("batch undo did not restore the entity count")
+
+            delete_file = Path(temporary) / "delete.json"
+            delete_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.entity.delete@1",
+                                "arguments": {"id": root_id},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(delete_file),
+                    "--undo",
+                    "1",
+                ],
+                "batch delete subtree undo",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after subtree undo"
+            )
+            if len(inspected["data"]["entities"]) != 2:
+                return fail("subtree undo did not restore the hierarchy")
+
+            dry_batch_file = Path(temporary) / "dry-batch.json"
+            dry_batch_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.entity.create@1",
+                                "arguments": {"name": "DryBatch"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(dry_batch_file),
+                    "--dry-run",
+                ],
+                "batch dry-run",
+            )
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after batch dry-run"
+            )
+            if len(inspected["data"]["entities"]) != 2:
+                return fail("batch --dry-run changed the scene")
 
             missing = run_engine(
                 engine,
