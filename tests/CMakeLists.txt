@@ -7,6 +7,7 @@ endif()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
+    unit/command_test.cpp
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
@@ -23,6 +24,7 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::command
     engine::scene
     Catch2::Catch2WithMain
     spdlog::spdlog
