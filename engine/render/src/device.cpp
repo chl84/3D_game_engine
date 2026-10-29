@@ -9,9 +9,9 @@
 #include <cstdint>
 #include <cstring>
 #include <deque>
+#include <limits>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -214,31 +214,30 @@ void add_unique(std::vector<std::string>& names, std::string name) {
         }
     }
 
-    std::optional<std::uint32_t> graphics;
-    std::optional<std::uint32_t> present;
+    constexpr std::uint32_t kNoFamily = std::numeric_limits<std::uint32_t>::max();
+    std::uint32_t graphics = kNoFamily;
+    std::uint32_t present = kNoFamily;
     for (std::uint32_t index = 0; index < count; ++index) {
-        if ((families[index].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0 && !graphics) {
+        if ((families[index].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0 && graphics == kNoFamily) {
             graphics = index;
         }
-        if (needs_present && supports_present(index) && !present) {
+        if (needs_present && supports_present(index) && present == kNoFamily) {
             present = index;
         }
     }
 
-    if (!graphics) {
+    if (graphics == kNoFamily) {
         return core::make_failure<QueueFamilies>(core::make_error(
             core::ErrorCode::Unsupported, "the physical device has no graphics queue", {},
             {{"stage", "queue"}}));
     }
-    if (needs_present && !present) {
+    if (needs_present && present == kNoFamily) {
         return core::make_failure<QueueFamilies>(core::make_error(
             core::ErrorCode::Unsupported, "the physical device cannot present to the surface", {},
             {{"stage", "queue"}}));
     }
 
-    const std::uint32_t graphics_family = graphics.value();
-    const std::uint32_t present_family = present.value_or(graphics_family);
-    return QueueFamilies{graphics_family, present_family, needs_present};
+    return QueueFamilies{graphics, needs_present ? present : graphics, needs_present};
 }
 
 [[nodiscard]] bool supports_swapchain(VkPhysicalDevice device, VkSurfaceKHR surface) {
