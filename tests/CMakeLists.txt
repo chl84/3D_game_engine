@@ -7,10 +7,15 @@ endif()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
+    unit/command_test.cpp
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
     unit/path_sandbox_test.cpp
+    unit/project_test.cpp
+    unit/reflect_test.cpp
+    unit/scene_test.cpp
+    unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
 )
@@ -21,6 +26,9 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::platform
+    engine::command
+    engine::scene
     Catch2::Catch2WithMain
     spdlog::spdlog
 )
@@ -40,6 +48,8 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     spdlog::spdlog
     CLI11::CLI11
     tl::expected
+    EnTT::EnTT
+    nlohmann_json_schema_validator::validator
 )
 
 engine_set_warnings(engine_dependencies_smoke)
@@ -87,4 +97,15 @@ add_test(
 
 set_tests_properties(engine_sensitive_scan PROPERTIES
     LABELS "docs;security"
+)
+
+add_test(
+    NAME engine_acceptance_m1
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_SOURCE_DIR}/scripts/acceptance_m1.py"
+            "$<TARGET_FILE:engine>"
+)
+
+set_tests_properties(engine_acceptance_m1 PROPERTIES
+    LABELS "contract;acceptance"
 )

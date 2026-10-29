@@ -1,8 +1,9 @@
 # Project and Scene Format
 
-**Status:** Planned. No project or scene format is implemented yet. M1
-implements the format, schemas, migrations and round-trip tests described
-here.
+**Status:** Implemented in M1.5 and extended with `engine.scene.Motion` in
+M1.7. The project and scene readers/writers, canonical JSON, atomic saves,
+project locks, round-trip tests and `scene validate` exist. Generated JSON
+Schemas are completed in M1.8.
 
 ## Principles
 
@@ -130,6 +131,9 @@ This matches glTF, which simplifies asset import.
   concurrency.
 - `engine.scene.Camera` is a normal component. It does not affect M1
   simulation, but makes the format ready for M2.
+- `engine.scene.Motion` has a `linearVelocity` Vec3 and is read by the
+  fixed-tick simulation. Simulation mutates runtime transforms without saving
+  the scene; `engine simulate` returns a state dump instead.
 
 ## Canonical form
 

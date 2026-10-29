@@ -1,10 +1,12 @@
 # Dependencies
 
-**Status:** M0.6. The vcpkg manifest is active for nlohmann/json 3.12.0,
-spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1 and volk
-1.4.363.0. The core library uses nlohmann/json, spdlog and `tl::expected`; the
-CLI uses CLI11 and volk; Catch2 is test-only. Python `jsonschema` is a
-development-only contract-test dependency.
+**Status:** M1.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
+spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
+1.4.363.0, EnTT 4.0.0 and json-schema-validator 2.4.0. The core library uses
+nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11 and volk; Catch2
+is test-only. EnTT is the ECS; json-schema-validator validates command and
+format payloads. Python `jsonschema` is a development-only contract-test
+dependency.
 
 ## Policy
 
@@ -29,6 +31,8 @@ development-only contract-test dependency.
 | spdlog | 1.17.0 | MIT | Logging backend | M0 | Fast compiled logger with console and file sinks; the JSONL formatter stays in `core`. |
 | CLI11 | 2.7.2 | BSD-3-Clause | Command-line parsing | M0 | Header/compiled library with subcommands, global options and predictable error handling. |
 | volk | 1.4.363.0 | MIT | Vulkan function loading for `engine doctor` | M0 | Loads the Vulkan loader dynamically and reports a missing loader gracefully on Windows CI. |
+| EnTT | 4.0.0 | MIT | Entity-component system | M1 | Header-only, fast sparse-set ECS with stable entity handles. Reflection remains in `core` (ADR-0007), so the ECS dependency stays small. Approved in the M1 plan. |
+| json-schema-validator (`pboettch`) | 2.4.0 | MIT | Runtime JSON Schema draft-07 validation | M1 | nlohmann/json-based validator with draft-07 support. Used for command and format validation; Python `jsonschema` remains the contract-test validator. Approved in the M1 plan. |
 
 ## Planned dependencies
 
@@ -38,8 +42,6 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| json-schema-validator (`pboettch`) | 2.4.0 | MIT | Runtime JSON Schema draft-07 validation | M1 |
-| EnTT | 4.0.0 | MIT | Entity-component system | M1 |
 | SDL3 | 3.4.18 | Zlib | Window, input and audio | M2 |
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 |
 | GLM | 1.0.3 | MIT | Mathematics | M2 |

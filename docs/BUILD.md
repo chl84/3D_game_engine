@@ -1,10 +1,13 @@
 # Build
 
-**Status:** M0.6. The build uses a pinned vcpkg manifest, CLI11 command
-dispatch, the core library, `engine --version --json`, `engine doctor --json`
-with volk-based Vulkan detection, Catch2 tests and Python contract tests. CI
-pins CMake 4.4.5 and Ninja 1.13.2 and runs clang-format, clang-tidy and
-ASan/UBSan. Documentation links are checked by `engine_docs_links`.
+**Status:** M1.9. The build uses a pinned vcpkg manifest, CLI11 command
+dispatch, the core library with the reflection registry, the command bus with
+transactions and undo/redo, the scene/ECS module, the project/scene format with
+atomic saves, the offline project/scene/entity/component CLI, fixed-tick
+simulation and `engine schema`. Version, doctor and all offline commands
+support `--json`; Catch2, contract and M1 acceptance tests cover the CLI. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
+clang-format, clang-tidy and ASan/UBSan. Documentation links and
+sensitive-data checks run as CTest tests.
 
 ## Local development environment
 
@@ -218,6 +221,19 @@ validates `engine --version --json` and `engine doctor --json` against
 `version@1` and `doctor@1`. It exits non-zero if any step fails. Pass a
 repository URL and branch as arguments to test another checkout, or set
 `KEEP=1` to keep the clone for inspection.
+
+## M1 clean-clone acceptance
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m1.sh
+```
+
+The script clones the current branch, builds `linux-debug`, runs all seven
+CTest tests and then executes the CLI-only M1 acceptance script. The acceptance
+script creates a project, builds an entity hierarchy, sets components, runs a
+batch with undo, checks byte-identical save/load/save and compares two fixed-
+tick simulation dumps.
 
 ## Memory
 

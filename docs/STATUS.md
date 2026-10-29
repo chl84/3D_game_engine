@@ -1,8 +1,8 @@
 # Status
 
 **Last updated:** 2026-10-29
-**Current milestone:** M0 — project foundation, complete
-**Current substep:** M0 complete — approved by the owner on 2026-10-29. `v0.1.0` is tagged and `m0/foundation` is merged into `main`. M1 is next.
+**Current milestone:** M1 — headless core
+**Current substep:** M1.9 complete — full CI, clean-clone acceptance, ASan/UBSan, TSan, format/tidy and the CLI acceptance script are green. M1 is ready for release.
 
 ## Substeps
 
@@ -16,6 +16,20 @@
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 | M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
 | M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, sensitive-data scan, tag `v0.1.0` and the M0 acceptance report. Approved by the owner on 2026-10-29 |
+
+## M1 substeps
+
+| Substep | Scope | Status |
+|---|---|---|
+| M1.1 | Reflection registry and JSON Schema generation | Done |
+| M1.2 | ECS, UUID and transform hierarchy | Done |
+| M1.3 | Command bus with validation and command log | Done |
+| M1.4 | Transactions and undo/redo | Done |
+| M1.5 | Project and scene format | Done |
+| M1.6 | Offline CLI | Done |
+| M1.7 | Fixed tick and determinism | Done |
+| M1.8 | API reference, AI guide and acceptance script | Done |
+| M1.9 | Hardening and M1 acceptance | Done |
 
 ## Repository state
 
@@ -31,8 +45,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 53 cases / 397 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 53 cases / 397 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -55,6 +69,19 @@
 | English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
 | Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
 | Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 72 tracked files passed |
+| Reflection registry | Automatically tested | `reflect_test.cpp` covers component registration, field metadata, JSON round-trip, partial updates, unknown fields, wrong types and generated draft-07 schemas |
+| Scene ECS and hierarchy | Automatically tested | `scene_test.cpp` covers deterministic UUIDs, duplicate UUID rejection, parent/child links, world transforms, cycle rejection and recursive subtree destruction |
+| Command bus | Automatically tested | `command_test.cpp` covers schema validation, successful and failed handlers, unknown commands, duplicate/malformed registration, sorted schemas, command-log entries, undo/redo, redo invalidation, transactions and rollback |
+| Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
+| Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
+| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 53 core cases / 397 assertions |
+| Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
+| M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 7/7 CTest |
+| M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1/headless-core`, built `linux-debug`, ran 7/7 CTest and `M1 acceptance passed` |
+| M1 CI | Automatically tested | Manual dispatch [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
+| M1 ASan/UBSan | Automatically tested | `linux-asan` → 7/7 CTest locally |
+| M1 TSan | Locally automatically tested | `linux-tsan` → 7/7 CTest |
+| EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
 | Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |
@@ -156,6 +183,17 @@ The Windows job caught two real portability issues before the milestone closed:
 - Run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029):
   manual dispatch after the trigger change; all five jobs green with 6/6 CTest.
 
+## M1 CI history
+
+- Run [40809628430](https://github.com/chl84/3D_game_engine/actions/runs/40809628430):
+  the first M1 quality run failed on a clang-format 18 difference in
+  `reflect.hpp`; the header was formatted with clang-format 18.
+- Run [40810065232](https://github.com/chl84/3D_game_engine/actions/runs/40810065232):
+  clang-tidy 18 flagged unchecked optional access in `project.cpp`; the loader
+  now uses a resolved entity handle.
+- Run [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784):
+  all five jobs green on `35dec3d` with 7/7 CTest.
+
 ## Known issues and gaps
 
 - Branch protection is enabled on `main`. The repository is public, so the
@@ -169,10 +207,12 @@ The Windows job caught two real portability issues before the milestone closed:
   a Node 20 warning. The actions are CI tooling, not runtime dependencies.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
-- `docs/API_REFERENCE.md` and the command schemas are generated in M1.
-  `docs/PROJECT_FORMAT.md` describes the planned M1 format.
+- `docs/API_REFERENCE.md` is handwritten. Generated command schemas and
+  `--dry-run` for state-changing commands are deferred to M1.10/M2 and tracked
+  in `ROADMAP.md`.
+- `docs/PROJECT_FORMAT.md` describes the implemented M1 format.
 - `engine doctor` reports the current working directory as the project root
-  until the project format and project-root discovery land in M1.
+  until project-root discovery is added.
 - The English `VISION.md` translation is complete; the Norwegian master prompt
   remains the source of truth outside the repository.
 - **Git history:** rewritten on 2026-10-29 to remove a local absolute path

@@ -14,6 +14,8 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | CLI11 | 2.7.2 | BSD-3-Clause | `engine` CLI |
 | tl::expected | 1.3.1 | CC0-1.0 | `Result<T>` |
 | volk | 1.4.363.0 | MIT | Vulkan loading in `doctor` |
+| EnTT | 4.0.0 | MIT | Entity-component system |
+| json-schema-validator (`pboettch`) | 2.4.0 | MIT | JSON Schema validation |
 
 ## Test and development dependencies
 
@@ -36,7 +38,7 @@ the compiler outputs redistributable under the engine's MIT license.
 ## MIT License
 
 The following components are distributed under the MIT License: nlohmann/json,
-spdlog, fmt, volk and jsonschema.
+spdlog, fmt, volk, EnTT, json-schema-validator and jsonschema.
 
 ```text
 Permission is hereby granted, free of charge, to any person obtaining a copy

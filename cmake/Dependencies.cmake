@@ -3,6 +3,8 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(tl-expected CONFIG REQUIRED)
 find_package(volk CONFIG REQUIRED)
+find_package(EnTT CONFIG REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 
 if(BUILD_TESTING)
     find_package(Catch2 3 CONFIG REQUIRED)

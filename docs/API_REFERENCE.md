@@ -1,7 +1,9 @@
 # API Reference
 
-**Status:** M0.6. The command bus and project/scene command schemas arrive in
-M1. Version and doctor output is validated against published schemas.
+**Status:** M1.8. Environment commands, the offline project/scene/entity/
+component CLI, fixed-tick simulation, `engine schema` and `command-result@1`
+exist. The reference is still handwritten; generation from the command registry
+is planned for M1.9 or later.
 
 ## Implemented surface
 
@@ -9,6 +11,13 @@ M1. Version and doctor output is validated against published schemas.
 |---|---|---|
 | `engine --version --json` | Build and version metadata | `schemas/version@1.schema.json` |
 | `engine doctor --json` | OS, compiler, Vulkan, devices and checks | `schemas/doctor@1.schema.json` |
+| `engine schema --json` | Draft-07 schemas for built-in components | `schemas/command-result@1.schema.json` |
+| `engine project ... --json` | Project create/validate/unlock result | `schemas/command-result@1.schema.json` |
+| `engine scene ... --json` | Scene create/inspect/validate result | `schemas/command-result@1.schema.json` |
+| `engine entity ... --json` | Entity create/delete/reparent result | `schemas/command-result@1.schema.json` |
+| `engine component ... --json` | Component set/add/remove result | `schemas/command-result@1.schema.json` |
+| `engine simulate ... --json` | Deterministic fixed-tick state dump | `schemas/command-result@1.schema.json` |
+| `engine batch ... --json` | Batch results and undo count | `schemas/command-result@1.schema.json` |
 
 The version output fields are `name`, `version`, `gitCommit`, `buildType`,
 `compiler`, `platform` and `cxxStandard`.
@@ -17,9 +26,17 @@ The version output fields are `name`, `version`, `gitCommit`, `buildType`,
 `validation-layers` and `lavapipe`. A failed requirement exits with code 8.
 Unknown requirement names and unknown arguments exit with code 2.
 
-## Error contract
+## Command result envelope
 
-Every error document has:
+```json
+{
+  "status": "ok",
+  "data": {},
+  "warnings": []
+}
+```
+
+A failed command sets `status` to `error` and includes:
 
 ```json
 {
@@ -29,6 +46,8 @@ Every error document has:
   "hint": "optional next step"
 }
 ```
+
+## Error contract
 
 | Error code | Exit code | Meaning |
 |---|---|---|
@@ -44,17 +63,23 @@ Every error document has:
 
 The codes and exit codes are stable and are part of the public contract.
 
+## Scenes and components
+
+The scene document format is in `docs/PROJECT_FORMAT.md`. The built-in
+components are:
+
+| Component | Fields |
+|---|---|
+| `engine.scene.Transform` | `position` (Vec3), `rotation` (Quat), `scale` (Vec3) |
+| `engine.scene.Camera` | `fovYRadians`, `near`, `far`, `enabled` |
+| `engine.scene.Motion` | `linearVelocity` (Vec3, metres per second) |
+
+Component schemas are generated from the reflection registry by
+`engine::core::ReflectionRegistry::schemas()`.
+
 ## Planned surface
 
-From M1 onward this file is generated from the command registry and reflection
-metadata. It will contain:
-
-- every command name and version
-- argument and result JSON Schemas
-- error codes
-- examples
-- stability and deprecation notes
-
-The file must not be edited by hand once generation is enabled. Until then,
-the planned command list is in `docs/AI_AGENT_GUIDE.md` and the planned format
-is in `docs/PROJECT_FORMAT.md`.
+From M1.8 this file is generated from the command registry and reflection
+metadata. It will contain every command name and version, argument and result
+JSON Schemas, error codes, examples and stability notes. The file must not be
+edited by hand once generation is enabled.

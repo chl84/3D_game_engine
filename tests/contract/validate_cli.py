@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -134,6 +135,185 @@ def main() -> int:
             validate(log_schema, json.loads(line), "log fixture record")
         except (json.JSONDecodeError, RuntimeError) as error:
             return fail(str(error))
+
+    command_schema = load_schema(root, "command-result@1.schema.json")
+
+    def run_command(arguments: list[str], label: str) -> dict[str, Any]:
+        result = run_engine(engine, [*arguments, "--json"])
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"{label} exited with {result.returncode}: {result.stderr.strip()}"
+            )
+        try:
+            document = json.loads(result.stdout)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(f"{label} output is not valid JSON: {error}") from error
+        validate(command_schema, document, label)
+        if document.get("status") != "ok":
+            raise RuntimeError(f"{label} did not report status ok")
+        return document
+
+    try:
+        schema_document = run_command(["schema"], "schema")
+        components = schema_document["data"].get("components")
+        if not isinstance(components, dict):
+            return fail("schema output has no components object")
+        for name in ("engine.scene.Transform", "engine.scene.Camera", "engine.scene.Motion"):
+            if name not in components:
+                return fail(f"schema output is missing {name}")
+
+        with tempfile.TemporaryDirectory(prefix="engine-cli-contract-") as temporary:
+            project_dir = Path(temporary) / "demo"
+            created = run_command(
+                ["project", "create", str(project_dir), "--name", "Demo"],
+                "project create",
+            )
+            if created["data"].get("name") != "Demo":
+                return fail("project create did not report the project name")
+
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect"
+            )
+            if inspected["data"].get("entities") != []:
+                return fail("new project should have an empty scene")
+
+            root_created = run_command(
+                ["entity", "create", str(project_dir), "--name", "Root"],
+                "entity create root",
+            )
+            root_id = root_created["data"]["result"]["id"]
+            if not isinstance(root_id, str):
+                return fail("entity create did not return an entity id")
+
+            child_created = run_command(
+                [
+                    "entity",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "Child",
+                    "--parent",
+                    root_id,
+                ],
+                "entity create child",
+            )
+            child_id = child_created["data"]["result"]["id"]
+
+            run_command(
+                [
+                    "component",
+                    "set",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Camera",
+                    "--value",
+                    json.dumps(
+                        {
+                            "fovYRadians": 0.75,
+                            "near": 0.1,
+                            "far": 1000.0,
+                            "enabled": True,
+                        }
+                    ),
+                ],
+                "component set",
+            )
+
+            run_command(
+                [
+                    "component",
+                    "add",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Motion",
+                ],
+                "component add motion",
+            )
+            run_command(
+                [
+                    "component",
+                    "set",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Motion",
+                    "--value",
+                    json.dumps({"linearVelocity": [1.0, 0.0, 0.0]}),
+                ],
+                "component set motion",
+            )
+            simulation_one = run_command(
+                ["simulate", str(project_dir), "--ticks", "60"], "simulate first"
+            )
+            simulation_two = run_command(
+                ["simulate", str(project_dir), "--ticks", "60"], "simulate second"
+            )
+            if simulation_one["data"] != simulation_two["data"]:
+                return fail("two identical simulations produced different state dumps")
+
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after changes"
+            )
+            entities = inspected["data"]["entities"]
+            if len(entities) != 2:
+                return fail(f"expected two entities, got {len(entities)}")
+            child = next(
+                (entity for entity in entities if entity.get("id") == child_id), None
+            )
+            if child is None:
+                return fail("child entity is missing from scene inspect")
+            if "engine.scene.Camera" not in child["components"]:
+                return fail("camera component is missing from child entity")
+
+            run_command(["project", "validate", str(project_dir)], "project validate")
+            run_command(["scene", "validate", str(project_dir)], "scene validate")
+
+            batch_file = Path(temporary) / "batch.json"
+            batch_file.write_text(
+                json.dumps(
+                    {
+                        "commands": [
+                            {
+                                "name": "scene.entity.create@1",
+                                "arguments": {"name": "Temporary"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            batch_result = run_command(
+                [
+                    "batch",
+                    str(project_dir),
+                    "--file",
+                    str(batch_file),
+                    "--undo",
+                    "1",
+                ],
+                "batch",
+            )
+            if batch_result["data"].get("undoCount") != 1:
+                return fail("batch did not report the undo count")
+            inspected = run_command(
+                ["scene", "inspect", str(project_dir)], "scene inspect after batch"
+            )
+            if len(inspected["data"]["entities"]) != 2:
+                return fail("batch undo did not restore the entity count")
+
+            missing = run_engine(
+                engine,
+                ["project", "validate", str(project_dir / "missing"), "--json"],
+            )
+            if missing.returncode == 0:
+                return fail("project validate should fail for a missing project")
+    except (RuntimeError, OSError) as error:
+        return fail(str(error))
 
     print("CLI contract OK")
     return 0

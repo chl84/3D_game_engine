@@ -1,7 +1,7 @@
 # Architecture
 
-**Status:** M0.6. This document describes the approved module boundaries and
-the current M0 implementation. Planned modules are marked as planned.
+**Status:** M1.7. This document describes the approved module boundaries and
+the current implementation. Planned modules are marked as planned.
 
 ## Principles
 
@@ -157,11 +157,25 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M0.5 contains:
+M1.2 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
-  `UuidGenerator`, `PathSandbox`, JSON `Config`, and `Log` with console and
-  JSONL sinks
+  `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
+  sinks, the reflection registry with draft-07 component schemas, and the
+  `Vec3`/`Quat` math types
+- `engine/scene`: EnTT-backed ECS with stable UUIDs, `Transform`, `Camera`,
+  parent/child links, world-transform composition, cycle rejection,
+  recursive subtree destruction, and the project/scene JSON format with
+  canonical output, atomic saves and project locks
+- `engine/platform`: atomic file replacement with `fsync` on POSIX and
+  `MoveFileExW` on Windows
+- `engine/command`: versioned command registry, JSON Schema validation via
+  json-schema-validator, structured success/error results with warnings, an
+  in-memory command log with sequence numbers, undo/redo stacks, redo
+  invalidation and transactions that commit or roll back as one undo step
+- `engine/scene` also provides a fixed-tick simulation that advances `Motion`
+  velocities into `Transform` positions and emits a deterministic state dump
+- EnTT 4.0.0 and json-schema-validator 2.4.0 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
 - `tests/unit`: core unit tests

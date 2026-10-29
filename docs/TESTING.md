@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M0.7. Six CTest tests exist; `engine_core_tests` contains 21 test
-cases and 132 assertions. CI also runs clang-format, clang-tidy with project
+**Status:** M1.8. Seven CTest tests exist; `engine_core_tests` contains 53 test
+cases and 397 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
 
@@ -10,11 +10,12 @@ Ninja 1.13.2.
 | Test | Type | Labels |
 |---|---|---|
 | `engine_core_tests` | Catch2 unit test | `unit` |
-| `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0 dependencies | `unit`, `dependencies` |
+| `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0/M1 dependencies | `unit`, `dependencies` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
 | `engine_sensitive_scan` | Credentials, private keys, personal paths and email addresses in tracked files | `docs`, `security` |
+| `engine_acceptance_m1` | CLI-only M1 acceptance: project, hierarchy, components, undo, round-trip and deterministic simulation | `contract`, `acceptance` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -33,6 +34,21 @@ on both Linux and Windows.
 - JSON configuration loading, type errors and recursive merge
 - JSONL logging, level filtering and required record fields
 - UTC timestamp formatting at the epoch, leap day, month boundary and year boundary
+- reflection registration, field metadata, JSON round-trip, partial updates,
+  unknown fields, type errors and generated draft-07 component schemas
+- deterministic entity UUIDs, duplicate UUID rejection, parent/child links,
+  world transforms, hierarchy cycle rejection and recursive subtree destruction
+- command-name validation, JSON Schema argument validation, handler success and
+  failure, unknown commands, duplicate registration, command-log entries,
+  undo/redo, redo invalidation, transactions and rollback
+- project create/load, canonical byte-identical scene round-trip, entity
+  hierarchy and components, unknown fields, newer format versions, path
+  traversal and exclusive project locks
+- CLI project creation, scene inspection/validation, entity hierarchy,
+  component setting and batch undo, with every response validated against
+  `command-result@1`
+- fixed-tick motion, unchanged entities and identical state dumps from two
+  identical simulation runs at 60 Hz
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.
@@ -135,6 +151,17 @@ scripts/acceptance_m0.sh
 
 The script clones the current branch, builds `linux-debug`, runs all five
 CTest tests and validates the version and doctor JSON against their schemas.
+
+Clean-clone M1 acceptance:
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m1.sh
+```
+
+The script runs all seven CTest tests and the CLI-only M1 acceptance script,
+which covers project creation, hierarchy, components, batch undo, byte-identical
+save/load/save and deterministic simulation.
 
 Windows MSVC + vcpkg:
 
