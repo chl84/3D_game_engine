@@ -71,8 +71,32 @@ jobs:
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
 
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          "$sdk_root/bin/glslc" --version
+
       - name: Verify glslc
-        run: glslc --version
+        run: |
+          glslc --version
+          test "$(command -v glslc)" = "$VULKAN_SDK/bin/glslc"
 
       - name: Select the lavapipe ICD
         run: |
@@ -183,7 +207,7 @@ jobs:
               document = json.load(input_file)
           assert document["vulkan"]["descriptorIndexing"] is False
           assert document["requirements"]["passed"] is False
-          assert "vulkan" in document["requirements"]["failed"]
+          assert document["requirements"]["failed"] == ["vulkan"]
           print("missing ICD correctly failed with exit 8")
           PY
 
@@ -256,6 +280,36 @@ jobs:
           $env:Path = "$bin;$env:Path"
           glslc --version
 
+      - name: Install software Vulkan ICD (lavapipe)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:RUNNER_TEMP "lavapipe"
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          $archive = Join-Path $root "mesa-lavapipe-x64-26.2.6.7z"
+          Invoke-WebRequest -Uri "https://github.com/mmozeiko/build-mesa/releases/download/26.2.6/mesa-lavapipe-x64-26.2.6.7z" -OutFile $archive
+          $expected = "4ed980046a8d42de4efa74085f00e238a51c774b854d63ecece6dfee59ab3bf3"
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {
+            throw "lavapipe archive checksum mismatch: $actual"
+          }
+          $sevenZip = Join-Path $env:ProgramFiles "7-Zip\7z.exe"
+          if (-not (Test-Path $sevenZip)) {
+            $sevenZip = "7z"
+          }
+          & $sevenZip x $archive "-o$root\mesa" -y
+          if ($LASTEXITCODE -ne 0) {
+            throw "lavapipe extraction failed"
+          }
+          $mesa = Join-Path $root "mesa"
+          $icd = (Resolve-Path (Join-Path $mesa "lvp_icd.x86_64.json")).Path
+          & reg.exe add "HKLM\SOFTWARE\Khronos\Vulkan\Drivers" /v $icd /t REG_DWORD /d 0 /f /reg:64
+          if ($LASTEXITCODE -ne 0) {
+            throw "lavapipe ICD registration failed"
+          }
+          $mesa | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          Write-Host "Registered lavapipe ICD: $icd"
+
       - name: Install pinned CMake and Ninja
         shell: pwsh
         run: |
@@ -293,6 +347,26 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset ci-windows
+
+      - name: Vulkan doctor detection (Windows)
+        shell: pwsh
+        run: |
+          & .\build\ci-windows\tools\engine\engine.exe doctor --json --require vulkan | Out-File -Encoding utf8 doctor-windows.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "engine doctor failed with exit code $LASTEXITCODE"
+          }
+          Get-Content doctor-windows.json
+          @'
+          import json
+          with open("doctor-windows.json", encoding="utf-8-sig") as input_file:
+              document = json.load(input_file)
+          assert document["vulkan"]["loader"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
+          names = [device["name"].lower() for device in document["vulkan"]["devices"]]
+          assert any("llvmpipe" in name for name in names), names
+          assert document["requirements"]["passed"] is True
+          print("Windows lavapipe detected:", names)
+          '@ | & .\.venv\Scripts\python.exe -
 
       - name: Test
         env:
@@ -429,8 +503,32 @@ jobs:
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
 
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          "$sdk_root/bin/glslc" --version
+
       - name: Verify glslc
-        run: glslc --version
+        run: |
+          glslc --version
+          test "$(command -v glslc)" = "$VULKAN_SDK/bin/glslc"
 
       - name: Select the lavapipe ICD
         run: |
