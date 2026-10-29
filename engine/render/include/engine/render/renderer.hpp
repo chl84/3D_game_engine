@@ -15,8 +15,29 @@ class SceneView;
 
 namespace engine::render {
 
+// Debug-only frame statistics. They are read from the previous completed
+// frame, so the overlay can display them without stalling the GPU.
+struct FrameStats {
+    std::uint64_t frames{0};
+    double frames_per_second{0.0};
+    double cpu_frame_ms{0.0};
+    double gpu_frame_ms{0.0};
+    bool gpu_timing_supported{false};
+};
+
+[[nodiscard]] constexpr bool default_debug_overlay() noexcept {
+#ifdef NDEBUG
+    return false;
+#else
+    return true;
+#endif
+}
+
 struct SwapchainOptions {
     VkPresentModeKHR present_mode{VK_PRESENT_MODE_FIFO_KHR};
+    // The overlay is a debug aid. It never mutates the scene and is disabled
+    // by default in release builds.
+    bool debug_overlay{default_debug_overlay()};
 };
 
 // Clears and presents a swapchain attached to a window. The device and the
@@ -46,6 +67,15 @@ public:
     [[nodiscard]] std::uint32_t image_count() const noexcept;
     [[nodiscard]] std::uint64_t presented_frames() const noexcept;
     [[nodiscard]] std::uint32_t last_visible_entities() const noexcept;
+
+    // Returns statistics from the last completed frame. FrameStats::frames
+    // follows presented_frames().
+    [[nodiscard]] FrameStats frame_stats() const noexcept;
+    [[nodiscard]] bool overlay_enabled() const noexcept;
+    // Number of entities the overlay listed on the last frame it was built.
+    [[nodiscard]] std::uint64_t overlay_entity_count() const noexcept;
+    // Vertices submitted by the overlay on the last frame it was built.
+    [[nodiscard]] std::uint32_t overlay_draw_vertices() const noexcept;
 
 private:
     struct Impl;

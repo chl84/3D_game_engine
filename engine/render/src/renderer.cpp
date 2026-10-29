@@ -9,14 +9,19 @@
 #include "vulkan_util.hpp"
 
 #include <glm/glm.hpp>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_vulkan.h>
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -260,6 +265,17 @@ struct Renderer::Impl {
     std::uint32_t last_visible_entities{0};
     int window_width{0};
     int window_height{0};
+    FrameStats stats;
+    std::chrono::steady_clock::time_point last_present;
+    VkQueryPool timestamp_pool{VK_NULL_HANDLE};
+    double timestamp_period{0.0};
+    bool timestamp_supported{false};
+    std::array<bool, kFramesInFlight> timestamp_ready{};
+    bool overlay_context_initialized{false};
+    bool overlay_platform_initialized{false};
+    bool overlay_vulkan_initialized{false};
+    std::uint64_t overlay_entity_count{0};
+    std::uint32_t overlay_draw_vertices{0};
 
     ~Impl();
 
@@ -278,6 +294,13 @@ struct Renderer::Impl {
     [[nodiscard]] core::Result<void> create_depth_resources();
     void destroy_depth_resources();
     [[nodiscard]] core::Result<void> create_pipeline();
+    [[nodiscard]] core::Result<void> create_timestamp_pool();
+    void destroy_timestamp_pool();
+    [[nodiscard]] core::Result<void> create_overlay_context();
+    void destroy_overlay_context();
+    [[nodiscard]] core::Result<void> create_overlay_vulkan();
+    void destroy_overlay_vulkan();
+    void build_overlay(const scene::SceneView& scene_view);
     [[nodiscard]] core::Result<void> create_swapchain();
     [[nodiscard]] core::Result<void> recreate_swapchain();
     void destroy_swapchain();
@@ -290,6 +313,8 @@ Renderer::Impl::~Impl() {
         (void)vkDeviceWaitIdle(device->device());
     }
     destroy_swapchain();
+    destroy_overlay_context();
+    destroy_timestamp_pool();
     destroy_builtin_meshes();
     destroy_pipeline_layout();
     destroy_frame_resources();
@@ -319,6 +344,14 @@ core::Result<void> Renderer::Impl::initialize(const Device& render_device,
     window = &render_window;
     options = swapchain_options;
 
+    auto overlay_context = create_overlay_context();
+    if (!overlay_context) {
+        return overlay_context;
+    }
+    auto timestamp_pool_result = create_timestamp_pool();
+    if (!timestamp_pool_result) {
+        return timestamp_pool_result;
+    }
     auto frame_resources = create_frame_resources();
     if (!frame_resources) {
         return frame_resources;
@@ -758,6 +791,181 @@ core::Result<void> Renderer::Impl::create_pipeline() {
     return {};
 }
 
+core::Result<void> Renderer::Impl::create_timestamp_pool() {
+    timestamp_supported = false;
+    stats.gpu_timing_supported = false;
+
+    const std::uint32_t graphics_family = device->queue_families().graphics;
+    std::uint32_t family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device->physical_device(), &family_count, nullptr);
+    if (family_count <= graphics_family) {
+        return {};
+    }
+    std::vector<VkQueueFamilyProperties> families(family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(device->physical_device(), &family_count,
+                                             families.data());
+
+    const float period = device->properties().limits.timestampPeriod;
+    if (families[graphics_family].timestampValidBits == 0 || period <= 0.0F) {
+        return {};
+    }
+
+    VkQueryPoolCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+    create_info.queryType = VK_QUERY_TYPE_TIMESTAMP;
+    create_info.queryCount = static_cast<std::uint32_t>(kFramesInFlight * 2);
+    VkQueryPool pool = VK_NULL_HANDLE;
+    const VkResult result = vkCreateQueryPool(device->device(), &create_info, nullptr, &pool);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the timestamp query pool", "timestamp", result));
+    }
+
+    timestamp_pool = pool;
+    timestamp_period = static_cast<double>(period);
+    timestamp_supported = true;
+    stats.gpu_timing_supported = true;
+    return {};
+}
+
+void Renderer::Impl::destroy_timestamp_pool() {
+    if (device != nullptr && timestamp_pool != VK_NULL_HANDLE) {
+        vkDestroyQueryPool(device->device(), timestamp_pool, nullptr);
+        timestamp_pool = VK_NULL_HANDLE;
+    }
+    timestamp_supported = false;
+}
+
+core::Result<void> Renderer::Impl::create_overlay_context() {
+    if (!options.debug_overlay) {
+        return {};
+    }
+    if (ImGui::GetCurrentContext() != nullptr) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::Precondition,
+                             "an ImGui context already exists; the renderer owns its own context",
+                             {}, {{"stage", "overlay"}}));
+    }
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    // ImGui stores configuration flags as a signed int.
+    // NOLINTNEXTLINE(bugprone-signed-bitwise)
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGui::StyleColorsDark();
+    overlay_context_initialized = true;
+
+    if (!ImGui_ImplSDL3_InitForVulkan(window->native_handle())) {
+        destroy_overlay_context();
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Internal, "could not initialize the ImGui SDL3 backend", {},
+            {{"stage", "overlay"}}));
+    }
+    overlay_platform_initialized = true;
+    return {};
+}
+
+void Renderer::Impl::destroy_overlay_context() {
+    if (!overlay_context_initialized) {
+        return;
+    }
+    if (overlay_platform_initialized) {
+        ImGui_ImplSDL3_Shutdown();
+        overlay_platform_initialized = false;
+    }
+    ImGui::DestroyContext();
+    overlay_context_initialized = false;
+}
+
+core::Result<void> Renderer::Impl::create_overlay_vulkan() {
+    if (!options.debug_overlay || !overlay_context_initialized || image_views.empty()) {
+        return {};
+    }
+
+    ImGui_ImplVulkan_InitInfo info{};
+    info.ApiVersion = VK_API_VERSION_1_3;
+    info.Instance = device->instance();
+    info.PhysicalDevice = device->physical_device();
+    info.Device = device->device();
+    info.QueueFamily = device->queue_families().graphics;
+    info.Queue = device->graphics_queue();
+    info.DescriptorPoolSize = IMGUI_IMPL_VULKAN_MINIMUM_SAMPLED_IMAGE_POOL_SIZE;
+    info.MinImageCount = 2;
+    info.ImageCount = static_cast<std::uint32_t>(std::max<std::size_t>(image_views.size(), 2));
+    info.MinAllocationSize = static_cast<VkDeviceSize>(1024 * 1024);
+    info.UseDynamicRendering = true;
+    info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineRenderingCreateInfo rendering{};
+    rendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    rendering.colorAttachmentCount = 1;
+    rendering.pColorAttachmentFormats = &format;
+    // ImGui does not depth-test, but the pipeline must declare the depth
+    // attachment that the current dynamic-rendering pass uses.
+    rendering.depthAttachmentFormat = depth_format;
+    info.PipelineInfoMain.PipelineRenderingCreateInfo = rendering;
+
+    if (!ImGui_ImplVulkan_Init(&info)) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Internal, "could not initialize the ImGui Vulkan backend", {},
+            {{"stage", "overlay"}}));
+    }
+    overlay_vulkan_initialized = true;
+    return {};
+}
+
+void Renderer::Impl::destroy_overlay_vulkan() {
+    if (overlay_vulkan_initialized) {
+        ImGui_ImplVulkan_Shutdown();
+        overlay_vulkan_initialized = false;
+    }
+}
+
+void Renderer::Impl::build_overlay(const scene::SceneView& scene_view) {
+    if (!overlay_vulkan_initialized) {
+        return;
+    }
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::SetNextWindowPos(ImVec2(16.0F, 16.0F), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(360.0F, 420.0F), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Engine debug")) {
+        ImGui::Text("FPS %.1f", stats.frames_per_second);
+        ImGui::Text("CPU %.2f ms", stats.cpu_frame_ms);
+        if (stats.gpu_timing_supported) {
+            ImGui::Text("GPU %.2f ms", stats.gpu_frame_ms);
+        } else {
+            ImGui::TextUnformatted("GPU n/a");
+        }
+        ImGui::Separator();
+
+        const std::vector<scene::Entity> entities = scene_view.entities();
+        ImGui::Text("%zu entities", entities.size());
+        if (ImGui::BeginChild("entity-list", ImVec2(0.0F, 0.0F), ImGuiChildFlags_Borders)) {
+            for (const scene::Entity entity : entities) {
+                const std::string_view name = scene_view.name(entity);
+                ImGui::Text("%.*s", static_cast<int>(name.size()), name.data());
+                if (scene_view.has_camera(entity)) {
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("[camera]");
+                }
+                if (scene_view.has_mesh(entity)) {
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("%s", scene_view.mesh(entity).mesh_id.c_str());
+                }
+            }
+        }
+        ImGui::EndChild();
+        overlay_entity_count = static_cast<std::uint64_t>(entities.size());
+    }
+    ImGui::End();
+    ImGui::Render();
+}
+
 core::Result<void> Renderer::Impl::create_swapchain() {
     if (window->minimized()) {
         return {};
@@ -943,6 +1151,12 @@ core::Result<void> Renderer::Impl::create_swapchain() {
         destroy_swapchain();
         return pipeline_result;
     }
+
+    auto overlay_result = create_overlay_vulkan();
+    if (!overlay_result) {
+        destroy_swapchain();
+        return overlay_result;
+    }
     return {};
 }
 
@@ -960,6 +1174,7 @@ void Renderer::Impl::destroy_swapchain() {
     if (device == nullptr) {
         return;
     }
+    destroy_overlay_vulkan();
     const VkDevice handle = device->device();
     if (pipeline != VK_NULL_HANDLE) {
         vkDestroyPipeline(handle, pipeline, nullptr);
@@ -1017,6 +1232,13 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(
             detail::vulkan_error("could not begin the command buffer", "command-buffer", result));
+    }
+
+    const auto first_query = static_cast<std::uint32_t>(frame_index * 2);
+    if (timestamp_supported) {
+        vkCmdResetQueryPool(frame.command_buffer, timestamp_pool, first_query, 2);
+        vkCmdWriteTimestamp2(frame.command_buffer, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+                             timestamp_pool, first_query);
     }
 
     transition_image(frame.command_buffer, images[image_index], VK_IMAGE_LAYOUT_UNDEFINED,
@@ -1112,6 +1334,14 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
     }
     last_visible_entities = visible;
 
+    if (overlay_vulkan_initialized) {
+        ImDrawData* draw_data = ImGui::GetDrawData();
+        if (draw_data != nullptr) {
+            overlay_draw_vertices = static_cast<std::uint32_t>(draw_data->TotalVtxCount);
+            ImGui_ImplVulkan_RenderDrawData(draw_data, frame.command_buffer);
+        }
+    }
+
     vkCmdEndRendering(frame.command_buffer);
 
     transition_image(frame.command_buffer, images[image_index],
@@ -1119,6 +1349,11 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
                      VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
                      VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, 0,
                      VK_IMAGE_ASPECT_COLOR_BIT);
+
+    if (timestamp_supported) {
+        vkCmdWriteTimestamp2(frame.command_buffer, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+                             timestamp_pool, first_query + 1);
+    }
 
     result = vkEndCommandBuffer(frame.command_buffer);
     if (result != VK_SUCCESS) {
@@ -1199,6 +1434,20 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
             detail::vulkan_error("could not wait for the frame fence", "frame", result));
     }
 
+    const std::size_t frame_slot = impl_->frame_index;
+    if (impl_->timestamp_supported && impl_->timestamp_ready[frame_slot]) {
+        std::array<std::uint64_t, 2> timestamps{};
+        const VkResult query =
+            vkGetQueryPoolResults(impl_->device->device(), impl_->timestamp_pool,
+                                  static_cast<std::uint32_t>(frame_slot * 2), 2, sizeof(timestamps),
+                                  timestamps.data(), sizeof(std::uint64_t), VK_QUERY_RESULT_64_BIT);
+        if (query == VK_SUCCESS && timestamps[1] >= timestamps[0]) {
+            impl_->stats.gpu_frame_ms = static_cast<double>(timestamps[1] - timestamps[0]) *
+                                        impl_->timestamp_period / 1'000'000.0;
+        }
+    }
+    const auto cpu_start = std::chrono::steady_clock::now();
+
     std::uint32_t image_index = 0;
     result = vkAcquireNextImageKHR(impl_->device->device(), impl_->swapchain,
                                    std::numeric_limits<std::uint64_t>::max(), frame.image_available,
@@ -1226,6 +1475,7 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
             detail::vulkan_error("could not reset the frame fence", "frame", result));
     }
 
+    impl_->build_overlay(view);
     auto recorded = impl_->record_frame(image_index, view);
     if (!recorded) {
         return core::make_failure<bool>(recorded.error());
@@ -1259,6 +1509,10 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
         return core::make_failure<bool>(
             detail::vulkan_error("could not submit the frame", "frame", result));
     }
+    impl_->timestamp_ready[frame_slot] = impl_->timestamp_supported;
+    const auto cpu_end = std::chrono::steady_clock::now();
+    impl_->stats.cpu_frame_ms =
+        std::chrono::duration<double, std::milli>(cpu_end - cpu_start).count();
 
     VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1288,6 +1542,21 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view) {
     }
 
     ++impl_->presented_frames;
+    impl_->stats.frames = impl_->presented_frames;
+    const auto presented_at = std::chrono::steady_clock::now();
+    if (impl_->last_present.time_since_epoch().count() != 0) {
+        const double seconds =
+            std::chrono::duration<double>(presented_at - impl_->last_present).count();
+        if (seconds > 0.0) {
+            const double instant = 1.0 / seconds;
+            impl_->stats.frames_per_second =
+                impl_->stats.frames_per_second > 0.0
+                    ? (impl_->stats.frames_per_second * 0.9) + (instant * 0.1)
+                    : instant;
+        }
+    }
+    impl_->last_present = presented_at;
+
     if (suboptimal || result == VK_SUBOPTIMAL_KHR) {
         auto recreated = impl_->recreate_swapchain();
         if (!recreated) {
@@ -1332,6 +1601,22 @@ std::uint64_t Renderer::presented_frames() const noexcept {
 
 std::uint32_t Renderer::last_visible_entities() const noexcept {
     return impl_->last_visible_entities;
+}
+
+FrameStats Renderer::frame_stats() const noexcept {
+    return impl_->stats;
+}
+
+bool Renderer::overlay_enabled() const noexcept {
+    return impl_->options.debug_overlay;
+}
+
+std::uint64_t Renderer::overlay_entity_count() const noexcept {
+    return impl_->overlay_entity_count;
+}
+
+std::uint32_t Renderer::overlay_draw_vertices() const noexcept {
+    return impl_->overlay_draw_vertices;
 }
 
 } // namespace engine::render

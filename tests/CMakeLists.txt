@@ -53,6 +53,7 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     nlohmann_json_schema_validator::validator
     SDL3::SDL3
     glm::glm
+    imgui::imgui
     GPUOpen::VulkanMemoryAllocator
     volk::volk_headers
     volk::volk
@@ -123,6 +124,17 @@ target_link_libraries(engine_swapchain_test PRIVATE
 
 engine_set_warnings(engine_swapchain_test)
 
+add_executable(engine_overlay_test
+    render/overlay_test.cpp
+)
+
+target_link_libraries(engine_overlay_test PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_overlay_test)
+
 # The window and swapchain tests need a display server. They report exit code 77
 # when no display is available, which CTest renders as skipped. Windows graphics
 # is not verified, so the tests are not registered there.
@@ -135,6 +147,12 @@ if(NOT WIN32)
 
     add_test(NAME engine_swapchain_test COMMAND engine_swapchain_test)
     set_tests_properties(engine_swapchain_test PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(NAME engine_overlay_test COMMAND engine_overlay_test)
+    set_tests_properties(engine_overlay_test PROPERTIES
         LABELS "unit;render"
         SKIP_RETURN_CODE 77
     )
