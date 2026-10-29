@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.1 implemented — the render module, SDL3 window, Vulkan 1.3 device, VMA allocator and validation messenger are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
+**Current substep:** M2.1 implemented — the render module, SDL3 window, Vulkan 1.3 device, VMA allocator and validation messenger are on `m2/vulkan-renderer` with green CI. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -115,9 +115,11 @@
 | M1.10 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned public `v0.2.1`, built `linux-debug`, ran 8/8 CTest and `M1 acceptance passed` |
 | M1.10 CI | Automatically tested | Main push [40848990449](https://github.com/chl84/3D_game_engine/actions/runs/40848990449) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
 | M2.1 headless device | Automatically tested | `engine_render_tests` → 22 assertions in 4 test cases against the local GPU and against lavapipe forced with `VK_ICD_FILENAMES` |
-| M2.1 window and surface | Automatically tested locally | `engine_window_smoke` created a hidden SDL3 window, a Vulkan surface and a present queue with zero validation errors |
+| M2.1 window and surface | Automatically tested locally | `engine_window_smoke` created a hidden SDL3 window, a Vulkan surface and a present queue with zero validation errors; the test reports skipped in headless CI |
 | M2.1 validation layers | Automatically tested | The required-mode test fails when `VK_LAYER_KHRONOS_validation` is missing and asserts that the debug messenger counted zero errors |
 | M2.1 dependencies | Automatically tested | `engine_dependencies_smoke` includes and links SDL3, VMA and GLM; the vcpkg manifest pins 3.4.18, 3.5.0 and 1.0.3 |
+| M2.1 CI | Automatically tested | Manual dispatch [40854292712](https://github.com/chl84/3D_game_engine/actions/runs/40854292712) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 10/10 with render tests passed; Windows MSVC 9/9 with the headless render test skipped because the runner has no Vulkan loader; Quality green |
+| M2.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer`, built `linux-debug`, ran 10/10 CTest including both render tests and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
