@@ -2,6 +2,7 @@ add_executable(engine
     src/commands.cpp
     src/doctor.cpp
     src/main.cpp
+    src/run.cpp
     src/stb_image_write_impl.cpp
 )
 
@@ -15,6 +16,7 @@ target_link_libraries(engine PRIVATE
     volk::volk
     volk::volk_headers
     GPUOpen::VulkanMemoryAllocator
+    SDL3::SDL3
 )
 
 target_include_directories(engine PRIVATE ${Stb_INCLUDE_DIR})

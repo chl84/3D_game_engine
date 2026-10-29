@@ -159,6 +159,17 @@ if(NOT WIN32)
         LABELS "unit;render"
         SKIP_RETURN_CODE 77
     )
+
+    add_test(
+        NAME engine_run_smoke
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/run.py"
+                "$<TARGET_FILE:engine>"
+    )
+    set_tests_properties(engine_run_smoke PROPERTIES
+        LABELS "contract;cli;render"
+        SKIP_RETURN_CODE 77
+    )
 endif()
 
 # Offscreen tests are registered on every platform. They skip when no usable

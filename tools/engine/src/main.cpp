@@ -226,6 +226,21 @@ int main(int argc, char** argv) {
     batch_command->add_option("--undo", batch_undo, "Undo the last N commands before saving.")
         ->check(CLI::NonNegativeNumber);
 
+    auto* run_command = app.add_subcommand("run", "Run a scene in a window with a fly camera.");
+    std::string run_project;
+    std::string run_scene = "scenes/main.scene.json";
+    int run_frames = 0;
+    int run_width = 1280;
+    int run_height = 720;
+    bool run_hidden = false;
+    run_command->add_option("project", run_project, "Project directory.")->required();
+    run_command->add_option("scene", run_scene, "Scene path inside the project.");
+    run_command->add_option("--frames", run_frames, "Frames to render (0 = until close).")
+        ->check(CLI::NonNegativeNumber);
+    run_command->add_option("--width", run_width, "Window width.")->check(CLI::PositiveNumber);
+    run_command->add_option("--height", run_height, "Window height.")->check(CLI::PositiveNumber);
+    run_command->add_flag("--hidden", run_hidden, "Create a hidden window (tests).");
+
     auto* screenshot_command = app.add_subcommand("screenshot", "Render a scene to a PNG file.");
     std::string screenshot_project;
     std::string screenshot_scene = "scenes/main.scene.json";
@@ -260,6 +275,7 @@ int main(int argc, char** argv) {
              simulate_command,
              batch_command,
              screenshot_command,
+             run_command,
          }) {
         command->add_flag("--json", json, "Emit a machine-readable JSON document.");
     }
@@ -387,6 +403,11 @@ int main(int argc, char** argv) {
     if (*batch_command) {
         return engine::cli::batch(batch_project, batch_scene, batch_file, batch_undo, json,
                                   dry_run);
+    }
+
+    if (*run_command) {
+        return engine::cli::run_window(run_project, run_scene, run_frames, run_width, run_height,
+                                       run_hidden, json);
     }
 
     if (*screenshot_command) {

@@ -17,6 +17,7 @@
 | `engine simulate --ticks N --json` | Fixed-tick state dump |
 | `engine batch --file FILE --undo N --json` | Transactional command batch |
 | `engine screenshot <project> <scene> --frames N --out FILE --json` | Offscreen PNG screenshot |
+| `engine run <project> <scene> [--frames N] [--json]` | Windowed fly-camera demo |
 
 All offline commands return a document that validates against
 `schemas/command-result@1.schema.json`.
