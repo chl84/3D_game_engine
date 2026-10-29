@@ -67,9 +67,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers glslc \
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
+
+      - name: Verify glslc
+        run: glslc --version
 
       - name: Install pinned CMake and Ninja
         run: |
@@ -212,6 +215,24 @@ jobs:
           python -m venv .venv
           .\.venv\Scripts\python.exe -m pip install --upgrade pip
           .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+      - name: Install Vulkan SDK for glslc
+        shell: pwsh
+        run: |
+          $glslc = Get-Command glslc -ErrorAction SilentlyContinue
+          if (-not $glslc) {
+            choco install vulkan-sdk --version=1.4.363 -y --no-progress
+            $glslc = Get-ChildItem "C:\VulkanSDK" -Recurse -Filter glslc.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $glslc) {
+              throw "glslc.exe was not found after installing the Vulkan SDK"
+            }
+            $bin = $glslc.Directory.FullName
+            $bin | Out-File -FilePath $env:GITHUB_PATH -Append
+            $sdk = Split-Path $bin -Parent
+            "VULKAN_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Append
+            $env:Path = "$bin;$env:Path"
+          }
+          glslc --version
 
       - name: Install pinned CMake and Ninja
         shell: pwsh
@@ -374,9 +395,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers glslc \
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
+
+      - name: Verify glslc
+        run: glslc --version
 
       - name: Install pinned CMake and Ninja
         run: |
