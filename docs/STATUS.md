@@ -4,7 +4,7 @@
 **Current milestone:** M0 — project foundation
 **Current substep:** M0.5 in progress — CI work is green, branch protection is blocked by the GitHub plan and needs an owner decision. M0.6 has not started.
 
-## Completed
+## Substeps
 
 | Substeps | Result |
 |---|---|
@@ -60,9 +60,9 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40794292610](https://github.com/chl84/3D_game_engine/actions/runs/40794292610) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40796650668](https://github.com/chl84/3D_game_engine/actions/runs/40796650668) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40794292610](https://github.com/chl84/3D_game_engine/actions/runs/40794292610) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Run [40796650668](https://github.com/chl84/3D_game_engine/actions/runs/40796650668) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
@@ -110,6 +110,12 @@ The Windows job caught two real portability issues before the milestone closed:
   the same five jobs green after pinning GCC 14 (`ci-linux-gcc14`) and using
   `g++-14` for ASan/UBSan. Lavapipe detection and missing-ICD exit 8 passed
   again.
+- Run [40796650668](https://github.com/chl84/3D_game_engine/actions/runs/40796650668):
+  all five jobs green after the review fixes. Every job reports
+  `cmake version 4.4.5` and Ninja `1.13.2`; clang-tidy uses the corrected
+  header filter and exits 0; the Vulkan detection step captures exit 0;
+  missing ICD exits 8; ASan/UBSan detects `llvmpipe` under the sanitizers;
+  Windows passes 4/4 CTest with 21/21 test cases.
 
 ## Known issues and gaps
 
