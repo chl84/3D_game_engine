@@ -38,7 +38,8 @@
         "sdl3-binding",
         "vulkan-binding"
       ]
-    }
+    },
+    "fastgltf"
   ],
   "overrides": [
     {
@@ -92,6 +93,14 @@
     {
       "name": "imgui",
       "version": "1.93.0"
+    },
+    {
+      "name": "fastgltf",
+      "version": "0.9.1"
+    },
+    {
+      "name": "simdjson",
+      "version": "5.0.5"
     }
   ]
 }
