@@ -508,6 +508,7 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
             return core::make_failure<Scene>(
                 core::make_error(core::ErrorCode::Validation, "entity disappeared during load"));
         }
+        const Entity entity_handle = entity.value_or(entt::null);
 
         const auto parent_iterator = entity_document.find("parentId");
         if (parent_iterator != entity_document.end() && !parent_iterator->is_null()) {
@@ -521,7 +522,7 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
                     core::make_error(core::ErrorCode::Validation, "parent entity does not exist",
                                      {}, {{"parentId", parent_id->to_string()}}));
             }
-            auto parent_set = scene.set_parent(*entity, *parent_entity);
+            auto parent_set = scene.set_parent(entity_handle, parent_entity.value_or(entt::null));
             if (!parent_set) {
                 return core::make_failure<Scene>(parent_set.error());
             }
@@ -540,27 +541,28 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
         for (auto component_iterator = components_iterator->begin();
              component_iterator != components_iterator->end(); ++component_iterator) {
             if (component_iterator.key() == "engine.scene.Transform") {
-                auto parsed = transform->from_json(&scene.transform(*entity), *component_iterator);
+                auto parsed =
+                    transform->from_json(&scene.transform(entity_handle), *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }
             } else if (component_iterator.key() == "engine.scene.Camera") {
-                auto added = scene.add_component<Camera>(*entity);
+                auto added = scene.add_component<Camera>(entity_handle);
                 if (!added) {
                     return core::make_failure<Scene>(added.error());
                 }
                 auto parsed =
-                    camera->from_json(&scene.component<Camera>(*entity), *component_iterator);
+                    camera->from_json(&scene.component<Camera>(entity_handle), *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }
             } else if (component_iterator.key() == "engine.scene.Motion") {
-                auto added = scene.add_component<Motion>(*entity);
+                auto added = scene.add_component<Motion>(entity_handle);
                 if (!added) {
                     return core::make_failure<Scene>(added.error());
                 }
                 auto parsed =
-                    motion->from_json(&scene.component<Motion>(*entity), *component_iterator);
+                    motion->from_json(&scene.component<Motion>(entity_handle), *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }
