@@ -100,8 +100,8 @@ TEST_CASE("render devices can be created sequentially", "[render]") {
             device_options(engine::render::ValidationMode::Disabled));
         if (!device) {
             const std::string message = device.error().message + " " + device.error().hint +
-                                        " (stage " +
-                                        device.error().details.value("stage", "?") + ")";
+                                        " (stage " + device.error().details.value("stage", "?") +
+                                        ")";
             if (environment_unavailable(device.error())) {
                 SKIP("Vulkan environment is unavailable: " + message);
             }
