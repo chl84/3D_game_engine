@@ -108,8 +108,8 @@ new transitive dependency follows A.6 and is recorded in
 - Evaluation result: the Windows runner has the Vulkan loader and validation
   layers from the SDK, but no ICD. This is a documented assessment, not a
   tested installation. Windows graphics stays **not verified** in M2.
-  **Proposed follow-up for M2.8 — requires owner approval:** install lavapipe
-  or SwiftShader on the Windows runner. It is not implemented in M2.5.
+  **Moved to M2.8 with owner approval on 2026-10-29:** install lavapipe or
+  SwiftShader on the Windows runner. It is not implemented in M2.5.
 - Evaluation result: the LunarG Linux SDK download is 366 MB per CI job, so it
   was not adopted. The Ubuntu distro `glslc` (shaderc 2023.8) produces valid
   SPIR-V and is kept for M2. **Proposed follow-up for M2.8 — requires owner
@@ -142,6 +142,12 @@ new transitive dependency follows A.6 and is recorded in
 
 ### M2.8 Hardening and M2 acceptance
 
+- Evaluate a Windows ICD for graphics tests, including prebuilt Mesa lavapipe
+  packages, which are much smaller than the full SDK. The decision is made
+  before M2 closes. This is the owner-approved M2.5 follow-up.
+- Evaluate a cached pinned Linux `glslc` from the LunarG SDK, so Linux and
+  Windows produce SPIR-V with the same tool version. This is the
+  owner-approved M2.5 follow-up.
 - Clean-clone acceptance on Linux with lavapipe.
 - ASan/UBSan and TSan smoke tests where meaningful; GPU drivers are not
   instrumented.

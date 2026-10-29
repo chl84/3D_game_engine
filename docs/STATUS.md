@@ -49,7 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch; not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch at `a0dca57`; not
+  merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -142,13 +143,15 @@
 | M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
 | M2.5 CI | Automatically tested | Manual dispatch [40925072019](https://github.com/chl84/3D_game_engine/actions/runs/40925072019) → Linux 13/13 including `engine_screenshot_golden` on lavapipe and `engine_screenshot_cli`; Windows 9/9 with graphics tests skipped; Quality green |
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `72d6a92`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
-| M2.5 Windows ICD evaluation | Evaluated | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. Installing lavapipe/SwiftShader is proposed for M2.8 and requires owner approval. Windows graphics remains not verified |
-| M2.5 Linux glslc evaluation | Evaluated | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. A cached pinned SDK glslc is proposed for M2.8 and requires owner approval |
+| M2.5 Windows ICD evaluation | Evaluated; moved to M2.8 | The Windows runner has loader and validation layers but no ICD; this is an assessment, not a tested installation. The owner approved moving the follow-up to M2.8 on 2026-10-29, including an evaluation of prebuilt Mesa lavapipe packages. Windows graphics remains not verified |
+| M2.5 Linux glslc evaluation | Evaluated; moved to M2.8 | The LunarG Linux SDK is 366 MB per CI job, so it was not adopted; the Ubuntu distro `glslc` is kept for M2. The owner approved moving the cached pinned SDK `glslc` follow-up to M2.8 on 2026-10-29 |
 | M2.6 ImGui dependency | Automatically tested | Dear ImGui 1.93.0-docking is pinned in vcpkg and built through `cmake/vcpkg-overlay/imgui`. The overlay keeps SDL3 at `default-features: false` and builds the Vulkan backend against volk; it adds no dbus, systemd, libxcrypt or second Vulkan loader. ADR-0010 records the decision |
 | M2.6 ImGui overlay | Automatically tested | `engine_overlay_test` renders four frames with a camera and two meshes, checks the entity list, CPU/GPU frame statistics, non-empty draw data, unchanged scene revision and camera position, and zero validation errors. Local result: 480 vertices for 3 entities, CPU 1.76 ms, GPU 0.10 ms on Intel Iris Xe |
 | M2.6 screenshot sandbox and limits | Automatically tested | `engine screenshot --out` resolves through `PathSandbox`; `../escape.png` is rejected and nothing is written outside the project. Width and height are capped at 8192 and frames at 1000; `--width 8193` is rejected. `tests/smoke/screenshot.py` covers both cases |
 | M2.6 CI Xvfb regression | Fixed | The CTest step was never under Xvfb: `engine_window_smoke` was always skipped and `engine_swapchain_test` ran only in the separate `--require-minimize` step. M2.6 runs the whole CTest suite under Xvfb + openbox and keeps the strict minimize step. `VK_ICD_FILENAMES` is selected from `lvp_icd*.json` before the tests |
 | M2.6 local suites | Automatically tested | `ci-linux-clang` and `linux-debug` → 14 registered, 13 passed and the golden test skipped without lavapipe; `linux-asan` → same; `linux-tsan` → 11/11 CPU-side tests. Golden image on lavapipe still matches with maximum channel difference 0 |
+| M2.6 CI | Automatically tested | Manual dispatch [40931398435](https://github.com/chl84/3D_game_engine/actions/runs/40931398435) on `a0dca57` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest with `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and `engine_screenshot_golden` passed on lavapipe under Xvfb; the strict minimize step printed `minimize: renderer reported no frames`. ASan/UBSan: 14/14. Windows MSVC: 9/9 with graphics tests not registered. Quality: clang-format and clang-tidy green |
+| M2.6 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `a0dca57`, built with the overlay port, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -287,8 +290,9 @@ The Windows job caught two real portability issues before the milestone closed:
   until project-root discovery is added.
 - Windows graphics is **not verified**: the runner has no GPU. The Windows CI
   job compiles the render module and runs the headless tests; the device cases
-  skip when the Vulkan loader or an ICD is missing. The window and swapchain
-  tests are not registered on Windows.
+  skip when the Vulkan loader or an ICD is missing. The window, swapchain,
+  overlay and golden tests are not registered on Windows. M2.8 must evaluate
+  prebuilt Mesa lavapipe packages for the Windows runner before M2 closes.
 - Scene format v2 adds `engine.scene.Mesh`; v1 scenes load and are upgraded on
   save. The M1 release cannot read v2 scenes. ADR-0009 records the change.
 - `Mesh` asset UUIDs are not resolved until the asset pipeline in M3. M2.4
