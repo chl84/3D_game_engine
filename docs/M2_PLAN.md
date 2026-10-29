@@ -148,6 +148,10 @@ new transitive dependency follows A.6 and is recorded in
 - Evaluate a cached pinned Linux `glslc` from the LunarG SDK, so Linux and
   Windows produce SPIR-V with the same tool version. This is the
   owner-approved M2.5 follow-up.
+- Evaluate a compile-time switch or a separate target for the ImGui debug
+  overlay, so release builds do not link it by default.
+- Measure the ImGui Vulkan backend re-initialization on swapchain recreation
+  and optimize it if the M2 performance budget is affected.
 - Clean-clone acceptance on Linux with lavapipe.
 - ASan/UBSan and TSan smoke tests where meaningful; GPU drivers are not
   instrumented.
