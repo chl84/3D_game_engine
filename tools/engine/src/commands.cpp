@@ -713,8 +713,8 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "component descriptor missing"));
                 }
-                bool present = false;
-                auto target = mutable_component(scene, *current, component_name, present);
+                bool already_present = false;
+                auto target = mutable_component(scene, *current, component_name, already_present);
                 if (!target) {
                     return core::make_failure<void>(target.error());
                 }
