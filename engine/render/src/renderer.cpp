@@ -266,6 +266,8 @@ core::Result<void> Renderer::Impl::initialize(const Device& render_device,
     return create_swapchain();
 }
 
+// clang-tidy cannot see the writes through the frame array.
+// NOLINTNEXTLINE(readability-make-member-function-const)
 core::Result<void> Renderer::Impl::create_frame_resources() {
     const VkDevice handle = device->device();
     const std::uint32_t queue_family = device->queue_families().graphics;
@@ -313,6 +315,8 @@ core::Result<void> Renderer::Impl::create_frame_resources() {
     return {};
 }
 
+// clang-tidy cannot see the writes through the frame array.
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void Renderer::Impl::destroy_frame_resources() {
     if (device == nullptr) {
         return;
