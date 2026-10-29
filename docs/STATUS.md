@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M1 — headless core
-**Current substep:** M1.1 complete — reflection registry and JSON Schema generation. M1.2 is next.
+**Current substep:** M1.2 complete — ECS, stable UUIDs and the transform hierarchy. M1.3 is next.
 
 ## Substeps
 
@@ -22,8 +22,8 @@
 | Substep | Scope | Status |
 |---|---|---|
 | M1.1 | Reflection registry and JSON Schema generation | Done |
-| M1.2 | ECS, UUID and transform hierarchy | Next |
-| M1.3 | Command bus with validation and command log | Planned |
+| M1.2 | ECS, UUID and transform hierarchy | Done |
+| M1.3 | Command bus with validation and command log | Next |
 | M1.4 | Transactions and undo/redo | Planned |
 | M1.5 | Project and scene format | Planned |
 | M1.6 | Offline CLI | Planned |
@@ -45,8 +45,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 26 cases / 172 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 26 cases / 172 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 34 cases / 233 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 34 cases / 233 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -69,7 +69,8 @@
 | English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
 | Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
 | Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 72 tracked files passed |
-| Reflection registry | Automatically tested | `reflect_test.cpp` covers component registration, field metadata, JSON round-trip, partial updates, unknown fields, wrong types and generated draft-07 schemas; 26 core cases / 172 assertions |
+| Reflection registry | Automatically tested | `reflect_test.cpp` covers component registration, field metadata, JSON round-trip, partial updates, unknown fields, wrong types and generated draft-07 schemas |
+| Scene ECS and hierarchy | Automatically tested | `scene_test.cpp` covers deterministic UUIDs, duplicate UUID rejection, parent/child links, world transforms, cycle rejection and recursive subtree destruction; 34 core cases / 233 assertions |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
