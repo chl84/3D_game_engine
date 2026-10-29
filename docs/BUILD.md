@@ -1,11 +1,13 @@
 # Build
 
-**Status:** M1.9. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M1.10. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
 simulation and `engine schema`. Version, doctor and all offline commands
-support `--json`; Catch2, contract and M1 acceptance tests cover the CLI. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
+support `--json` and state-changing commands support `--dry-run`. Catch2,
+contract and M1 acceptance tests cover the CLI, and
+`scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
 clang-format, clang-tidy and ASan/UBSan. Documentation links and
 sensitive-data checks run as CTest tests.
 
@@ -154,7 +156,7 @@ The CI version is authoritative for formatting.
 Expected shape:
 
 ```json
-{"name":"engine","version":"0.1.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
+{"name":"engine","version":"0.2.1","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
 
 ## Doctor

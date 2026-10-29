@@ -6,8 +6,8 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.7 deliverables done; owner approval pending) |
-| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
+| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.0`; M1.10 maintenance awaiting `v0.2.1` |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
@@ -47,12 +47,8 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 
 ### M1 follow-ups
 
-- Add `--dry-run` to state-changing CLI commands. This is required by the
-  vision but was deferred from M1.9; target M1.10 or M2.
-- Generate `docs/API_REFERENCE.md` and the command schemas from the command
-  registry and reflection metadata. Target M1.10 or M2.
 - Extract and run the code examples in the documentation as part of CI, so the
-  examples cannot drift from the implemented commands. Target M1.10 or M2.
+  examples cannot drift from the implemented commands. Target M2 or later.
 
 ## M1 substeps
 
@@ -67,6 +63,7 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
 | M1.9 | Hardening and M1 acceptance | Done |
+| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, security and review fixes | Done — awaiting owner tag `v0.2.1` |
 
 ## Deferred modules
 
