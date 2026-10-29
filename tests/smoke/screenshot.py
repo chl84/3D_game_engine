@@ -170,6 +170,40 @@ def main() -> int:
         if oversized.returncode == 0 or oversized_document.get("status") != "error":
             return fail("screenshot accepted dimensions above the limit")
 
+        too_tall = run_engine(
+            engine,
+            [
+                "screenshot",
+                str(project),
+                "scenes/main.scene.json",
+                "--height",
+                "8193",
+                "--out",
+                "screenshots/too-tall.png",
+                "--json",
+            ],
+        )
+        too_tall_document = parse_result(too_tall, "too-tall screenshot")
+        if too_tall.returncode == 0 or too_tall_document.get("status") != "error":
+            return fail("screenshot accepted a height above the limit")
+
+        too_many_frames = run_engine(
+            engine,
+            [
+                "screenshot",
+                str(project),
+                "scenes/main.scene.json",
+                "--frames",
+                "1001",
+                "--out",
+                "screenshots/too-many-frames.png",
+                "--json",
+            ],
+        )
+        too_many_frames_document = parse_result(too_many_frames, "too-many-frames screenshot")
+        if too_many_frames.returncode == 0 or too_many_frames_document.get("status") != "error":
+            return fail("screenshot accepted a frame count above the limit")
+
     print("screenshot CLI OK")
     return 0
 
