@@ -7,7 +7,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.7 deliverables done; owner approval pending) |
-| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | In progress (M1.8 done) |
+| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
@@ -63,7 +63,7 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 | M1.6 | Offline CLI | Done |
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
-| M1.9 | Hardening and M1 acceptance | Next |
+| M1.9 | Hardening and M1 acceptance | Done |
 
 ## Deferred modules
 

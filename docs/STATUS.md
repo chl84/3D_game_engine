@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M1 — headless core
-**Current substep:** M1.8 complete — component schema output, CLI acceptance script and updated AI/API guides. M1.9 is next.
+**Current substep:** M1.9 complete — full CI, clean-clone acceptance, ASan/UBSan, TSan, format/tidy and the CLI acceptance script are green. M1 is ready for release.
 
 ## Substeps
 
@@ -29,7 +29,7 @@
 | M1.6 | Offline CLI | Done |
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
-| M1.9 | Hardening and M1 acceptance | Next |
+| M1.9 | Hardening and M1 acceptance | Done |
 
 ## Repository state
 
@@ -77,6 +77,10 @@
 | Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 53 core cases / 397 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 7/7 CTest |
+| M1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m1/headless-core`, built `linux-debug`, ran 7/7 CTest and `M1 acceptance passed` |
+| M1 CI | Automatically tested | Manual dispatch [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all green |
+| M1 ASan/UBSan | Automatically tested | `linux-asan` → 7/7 CTest locally |
+| M1 TSan | Locally automatically tested | `linux-tsan` → 7/7 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
@@ -178,6 +182,17 @@ The Windows job caught two real portability issues before the milestone closed:
   `engine_sensitive_scan`.
 - Run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029):
   manual dispatch after the trigger change; all five jobs green with 6/6 CTest.
+
+## M1 CI history
+
+- Run [40809628430](https://github.com/chl84/3D_game_engine/actions/runs/40809628430):
+  the first M1 quality run failed on a clang-format 18 difference in
+  `reflect.hpp`; the header was formatted with clang-format 18.
+- Run [40810065232](https://github.com/chl84/3D_game_engine/actions/runs/40810065232):
+  clang-tidy 18 flagged unchecked optional access in `project.cpp`; the loader
+  now uses a resolved entity handle.
+- Run [40810720784](https://github.com/chl84/3D_game_engine/actions/runs/40810720784):
+  all five jobs green on `35dec3d` with 7/7 CTest.
 
 ## Known issues and gaps
 
