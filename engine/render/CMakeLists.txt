@@ -51,6 +51,8 @@ add_custom_command(
     VERBATIM
 )
 
+add_custom_target(engine_render_shaders DEPENDS "${shader_header}")
+
 add_library(engine_render STATIC
     src/camera.cpp
     src/device.cpp

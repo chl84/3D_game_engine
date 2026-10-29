@@ -348,6 +348,9 @@ jobs:
       - name: Configure for clang-tidy
         run: cmake --preset ci-linux-clang
 
+      - name: Generate shaders for clang-tidy
+        run: cmake --build --preset ci-linux-clang --target engine_render_shaders
+
       - name: clang-format
         run: |
           find engine tools tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0 \
