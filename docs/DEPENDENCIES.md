@@ -1,12 +1,13 @@
 # Dependencies
 
-**Status:** M2.5. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M2.6. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
 1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
-Allocator 3.5.0, GLM 1.0.3 and stb 2026-08-02. The core library uses nlohmann/json, spdlog and
-`tl::expected`; the CLI uses CLI11 and volk; Catch2 is test-only. EnTT is the
-ECS; json-schema-validator validates command and format payloads. Python
-`jsonschema` is a development-only contract-test dependency.
+Allocator 3.5.0, GLM 1.0.3, stb 2026-08-02 and Dear ImGui 1.93.0-docking. The
+core library uses nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11
+and volk; Catch2 is test-only. EnTT is the ECS; json-schema-validator validates
+command and format payloads. Dear ImGui draws the debug overlay in the windowed
+renderer. Python `jsonschema` is a development-only contract-test dependency.
 
 ## Policy
 
@@ -37,6 +38,7 @@ ECS; json-schema-validator validates command and format payloads. Python
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 | AMD's official Vulkan allocator. Header-only, integrates with volk, and is the allocator named in the architecture. Approved in the M2 plan on 2026-10-29. |
 | GLM | 1.0.3 | MIT | Matrix and vector math for the renderer | M2 | Header-only C++ math library with Vulkan-compatible clip-space support. The engine keeps its own `Vec3`/`Quat` for scene data and uses GLM only inside `render`. Approved in the M2 plan on 2026-10-29. |
 | stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding | M2 | Single-header PNG writer/reader; no runtime library. Used by the screenshot command and golden-image test. The owner explicitly approved the dependency on 2026-10-29. |
+| Dear ImGui (`docking-experimental`) | 1.93.0-docking | MIT | Debug overlay and later editor UI | M2 | Immediate-mode UI for the debug overlay. Built with the SDL3 and Vulkan backends and volk, consistent with the renderer's dynamic loader. The owner approved it in the M2 plan on 2026-10-29. |
 
 ## Planned dependencies
 
@@ -46,7 +48,6 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M2 |
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
 | Lua | 5.4.8 | MIT | Scripting | M4 |
@@ -93,6 +94,13 @@ and the license texts used for redistribution.
 - GLM is used only inside `engine/render`. Authoritative scene data keeps the
   `core::Vec3` and `core::Quat` types.
 - The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library.
+- Dear ImGui uses a local overlay port in `cmake/vcpkg-overlay/imgui`.
+  The stock port's `sdl3-binding` enables SDL3's default `ibus` feature, which
+  pulls dbus, systemd and libxcrypt, and its `vulkan-binding` pulls a second
+  Vulkan loader from vcpkg. The overlay port keeps `sdl3` at
+  `default-features: false` and builds the Vulkan backend against `volk`.
+  ADR-0010 records the decision. The overlay port is pinned to the same source
+  archive and version as the vcpkg baseline; update both together.
 - `glslc` is executed as a build tool. The shaderc library is not linked and is
   not a runtime dependency. Linux CI installs the distro `glslc` package;
   Windows CI installs the LunarG Vulkan SDK 1.4.363 and adds its `Bin`

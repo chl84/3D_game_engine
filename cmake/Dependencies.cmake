@@ -9,6 +9,7 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Stb REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 if(BUILD_TESTING)
     find_package(Catch2 3 CONFIG REQUIRED)

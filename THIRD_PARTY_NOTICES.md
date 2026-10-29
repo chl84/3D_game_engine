@@ -20,6 +20,7 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation (`render`) |
 | GLM | 1.0.3 | MIT | Renderer math (`render`) |
 | stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding |
+| Dear ImGui | 1.93.0-docking | MIT | Debug overlay (`render`) |
 
 ## Test and development dependencies
 
@@ -44,7 +45,9 @@ the compiler outputs redistributable under the engine's MIT license.
 
 The following components are distributed under the MIT License: nlohmann/json,
 spdlog, fmt, volk, EnTT, json-schema-validator, jsonschema, Vulkan Memory
-Allocator and GLM.
+Allocator, GLM and Dear ImGui. Dear ImGui's default fonts (ProggyClean and
+ProggyForever) are distributed under their own permissive licenses; the vcpkg
+package copyright file contains all of the notices.
 
 ```text
 Permission is hereby granted, free of charge, to any person obtaining a copy

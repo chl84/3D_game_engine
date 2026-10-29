@@ -97,4 +97,5 @@ target_link_libraries(engine_render
         glm::glm
     PRIVATE
         volk::volk
+        imgui::imgui
 )

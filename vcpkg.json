@@ -30,7 +30,15 @@
     },
     "vulkan-memory-allocator",
     "glm",
-    "stb"
+    "stb",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "sdl3-binding",
+        "vulkan-binding"
+      ]
+    }
   ],
   "overrides": [
     {
@@ -80,6 +88,10 @@
     {
       "name": "stb",
       "version-date": "2026-08-02"
+    },
+    {
+      "name": "imgui",
+      "version": "1.93.0"
     }
   ]
 }

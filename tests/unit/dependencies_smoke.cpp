@@ -4,6 +4,7 @@
 #include <SDL3/SDL_version.h>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
+#include <imgui.h>
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
@@ -50,4 +51,10 @@ TEST_CASE("third-party dependencies compile and link", "[dependencies]") {
 
     VmaAllocatorCreateInfo allocator_info{};
     REQUIRE(allocator_info.instance == VK_NULL_HANDLE);
+
+    ImGuiContext* imgui_context = ImGui::CreateContext();
+    REQUIRE(imgui_context != nullptr);
+    REQUIRE(ImGui::GetCurrentContext() == imgui_context);
+    ImGui::DestroyContext(imgui_context);
+    REQUIRE(ImGui::GetCurrentContext() == nullptr);
 }
