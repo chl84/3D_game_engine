@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.4 complete locally; M0.5 is next
+**Current substep:** M0.4 complete; M0.5 is next
 
 ## Completed
 
@@ -12,7 +12,7 @@
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases; Linux and Windows CI green |
-| M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases |
+| M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 
 ## Repository state
 
@@ -34,7 +34,7 @@
 | JSONL logging | Automatically tested | `log_test.cpp` → filtered records, required fields, `fields` object, level names |
 | log-record@1 schema | Automatically tested | `tests/contract/validate_cli.py` validates `tests/fixtures/log-record.jsonl` against `schemas/log-record@1.schema.json`; `log_test.cpp` checks the C++ output structurally |
 | UTC timestamp formatting | Automatically tested | `std::chrono::year_month_day` and `hh_mm_ss`; tests cover epoch, leap day, month boundary and year boundary |
-| Symlink test on Windows | Automatically tested | Windows CI summary reports 21/21 test cases and 132 assertions with no skipped cases; `SKIP` is used if symlink creation is unavailable, and the CI `Core test summary` step displays skipped cases |
+| Symlink test on Windows | Automatically tested | Run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) Windows summary reports 21/21 test cases and 132 assertions with no skipped cases, so the symlink test ran. `SKIP` is used if symlink creation is unavailable, and `ctest -R engine_core_tests -V` in CI displays skipped cases |
 | Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected`, Catch2 and volk |
 | `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` and `engine_cli_contract` validate the JSON and `version@1` schema |
 | `engine doctor --json` | Automatically tested | `engine_cli_contract` validates against `doctor@1`; local run reports Intel Iris Xe, llvmpipe, loader 1.4.363 and `VK_LAYER_KHRONOS_validation` |
@@ -45,15 +45,16 @@
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
+| Clean clone on Linux (M0.4) | Automatically tested | Clone of `dd3d127`, venv from `requirements-dev.txt`, `cmake --preset ci-linux-gcc`, build, `ctest` → 4/4 passed; `doctor --require vulkan` exit 0 |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
 | Vulkan loader and GPU | Manually verified | `vulkaninfo --summary` → Intel Iris Xe, API 1.4.354, Mesa 26.2.5 |
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40790041428](https://github.com/chl84/3D_game_engine/actions/runs/40790041428) → configure, build and `ctest` all succeeded with MSVC and vcpkg |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40790041428](https://github.com/chl84/3D_game_engine/actions/runs/40790041428) → Linux GCC, Linux Clang and Windows MSVC all succeeded |
+| GitHub Actions | Automatically tested | Run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) → Linux GCC, Linux Clang and Windows MSVC all succeeded |
 
 ## M0.3 CI history
 
@@ -73,6 +74,13 @@ The Windows job caught two real portability issues before the milestone closed:
   change were green on all three compilers. The Windows summary reported
   21/21 test cases and 132 assertions with no skipped cases, so the symlink
   test ran on the Windows runner.
+
+## M0.4 CI history
+
+- Run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820):
+  Linux GCC, Linux Clang and Windows MSVC all green. Windows ran 4/4 CTest
+  tests, including the CLI contract test, and its core summary reported 21/21
+  test cases with no skipped cases.
 
 ## Known issues and gaps
 
@@ -98,6 +106,6 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M0.4: CLI skeleton and `engine doctor --json` — CLI11-based command dispatch,
-version and doctor commands, JSON schemas for both, contract tests, and Vulkan
-detection through volk (including lavapipe and validation layers).
+M0.5: CI hardening — clang-format and clang-tidy jobs, an ASan/UBSan Linux
+job, Linux CI matrix and caching, branch protection/rulesets on `main`, and
+build artifacts. The Windows job from M0.2 stays green.
