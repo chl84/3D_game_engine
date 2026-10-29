@@ -27,10 +27,28 @@ using command::CommandResult;
 using core::Error;
 using core::ErrorCode;
 using core::ReflectionRegistry;
+using scene::PointLight;
 using scene::Project;
 
-[[nodiscard]] CommandResult success(nlohmann::json data) {
-    return CommandResult::success(CommandOutput{std::move(data)});
+[[nodiscard]] CommandResult success(nlohmann::json data, std::vector<std::string> warnings = {}) {
+    return CommandResult::success(CommandOutput{std::move(data), std::move(warnings)});
+}
+
+[[nodiscard]] std::vector<std::string> point_light_warnings(const scene::Scene& scene,
+                                                            std::string_view scene_path) {
+    std::size_t count = 0;
+    for (const scene::Entity entity : scene.entities()) {
+        if (scene.has<PointLight>(entity)) {
+            ++count;
+        }
+    }
+    if (count == 0) {
+        return {};
+    }
+    return {
+        "scene '" + std::string(scene_path) + "' contains " + std::to_string(count) +
+            " PointLight component(s); point lights are not rendered until M5",
+    };
 }
 
 [[nodiscard]] CommandResult failure(Error error) {
@@ -49,6 +67,9 @@ void print_result(const CommandResult& result, bool json) {
         if (!result.error->hint.empty()) {
             std::cerr << "hint: " << result.error->hint << '\n';
         }
+    }
+    for (const std::string& warning : result.warnings) {
+        std::cerr << "warning: " << warning << '\n';
     }
 }
 
@@ -108,6 +129,7 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
         return exit_code_for(result);
     }
     const scene::SceneView view(*scene);
+    const auto warnings = point_light_warnings(*scene, scene_path);
     const auto camera_entity = view.active_camera();
     if (!camera_entity.has_value()) {
         const CommandResult result = failure(core::make_error(
@@ -281,11 +303,13 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
         return exit_code_for(result);
     }
 
-    const CommandResult result = success({
-        {"frames", renderer->presented_frames()},
-        {"width", window->width()},
-        {"height", window->height()},
-    });
+    const CommandResult result = success(
+        {
+            {"frames", renderer->presented_frames()},
+            {"width", window->width()},
+            {"height", window->height()},
+        },
+        warnings);
     print_result(result, json);
     return exit_code_for(result);
 }

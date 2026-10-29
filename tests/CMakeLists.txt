@@ -171,6 +171,17 @@ if(NOT WIN32)
         LABELS "contract;cli;render"
         SKIP_RETURN_CODE 77
     )
+
+    add_test(
+        NAME engine_point_light_warning
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/point_light_warning.py"
+                "$<TARGET_FILE:engine>"
+    )
+    set_tests_properties(engine_point_light_warning PROPERTIES
+        LABELS "contract;cli;render"
+        SKIP_RETURN_CODE 77
+    )
 endif()
 
 # Offscreen tests are registered on every platform. They skip when no usable

@@ -34,16 +34,36 @@ using core::ErrorCode;
 using core::ReflectionRegistry;
 using core::Result;
 using core::Uuid;
+using scene::AssetInstance;
 using scene::Camera;
+using scene::DirectionalLight;
 using scene::Entity;
 using scene::Mesh;
 using scene::Motion;
+using scene::PointLight;
 using scene::Project;
 using scene::Scene;
 using scene::Transform;
 
-[[nodiscard]] CommandResult success(nlohmann::json data) {
-    return CommandResult::success(CommandOutput{std::move(data)});
+[[nodiscard]] CommandResult success(nlohmann::json data, std::vector<std::string> warnings = {}) {
+    return CommandResult::success(CommandOutput{std::move(data), std::move(warnings)});
+}
+
+[[nodiscard]] std::vector<std::string> point_light_warnings(const Scene& scene,
+                                                            std::string_view scene_path) {
+    std::size_t count = 0;
+    for (const Entity entity : scene.entities()) {
+        if (scene.has<PointLight>(entity)) {
+            ++count;
+        }
+    }
+    if (count == 0) {
+        return {};
+    }
+    return {
+        "scene '" + std::string(scene_path) + "' contains " + std::to_string(count) +
+            " PointLight component(s); point lights are not rendered until M5",
+    };
 }
 
 [[nodiscard]] CommandResult failure(Error error) {
@@ -62,6 +82,9 @@ void print_result(const CommandResult& result, bool json) {
         if (!result.error->hint.empty()) {
             std::cerr << "hint: " << result.error->hint << '\n';
         }
+    }
+    for (const std::string& warning : result.warnings) {
+        std::cerr << "warning: " << warning << '\n';
     }
 }
 
@@ -167,6 +190,36 @@ void print_result(const CommandResult& result, bool json) {
         }
         return static_cast<void*>(&scene.component<Mesh>(entity));
     }
+    if (component_name == "engine.scene.AssetInstance") {
+        was_present = scene.has<AssetInstance>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<AssetInstance>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<AssetInstance>(entity));
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        was_present = scene.has<DirectionalLight>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<DirectionalLight>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<DirectionalLight>(entity));
+    }
+    if (component_name == "engine.scene.PointLight") {
+        was_present = scene.has<PointLight>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<PointLight>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<PointLight>(entity));
+    }
     return core::make_failure<void*>(core::make_error(ErrorCode::NotFound, "unsupported component",
                                                       {}, {{"component", component_name}}));
 }
@@ -185,6 +238,15 @@ void print_result(const CommandResult& result, bool json) {
     if (component_name == "engine.scene.Mesh") {
         return scene.has<Mesh>(entity);
     }
+    if (component_name == "engine.scene.AssetInstance") {
+        return scene.has<AssetInstance>(entity);
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        return scene.has<DirectionalLight>(entity);
+    }
+    if (component_name == "engine.scene.PointLight") {
+        return scene.has<PointLight>(entity);
+    }
     return false;
 }
 
@@ -198,6 +260,15 @@ void print_result(const CommandResult& result, bool json) {
     }
     if (component_name == "engine.scene.Mesh") {
         return scene.remove_component<Mesh>(entity);
+    }
+    if (component_name == "engine.scene.AssetInstance") {
+        return scene.remove_component<AssetInstance>(entity);
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        return scene.remove_component<DirectionalLight>(entity);
+    }
+    if (component_name == "engine.scene.PointLight") {
+        return scene.remove_component<PointLight>(entity);
     }
     return core::make_failure<void>(core::make_error(
         ErrorCode::Validation, "component cannot be removed", {}, {{"component", component_name}}));
@@ -237,6 +308,21 @@ void print_result(const CommandResult& result, bool json) {
     if (const auto* mesh = registry.find("engine.scene.Mesh");
         mesh != nullptr && scene.has<Mesh>(entity)) {
         snapshot["components"]["engine.scene.Mesh"] = mesh->to_json(&scene.component<Mesh>(entity));
+    }
+    if (const auto* asset = registry.find("engine.scene.AssetInstance");
+        asset != nullptr && scene.has<AssetInstance>(entity)) {
+        snapshot["components"]["engine.scene.AssetInstance"] =
+            asset->to_json(&scene.component<AssetInstance>(entity));
+    }
+    if (const auto* light = registry.find("engine.scene.DirectionalLight");
+        light != nullptr && scene.has<DirectionalLight>(entity)) {
+        snapshot["components"]["engine.scene.DirectionalLight"] =
+            light->to_json(&scene.component<DirectionalLight>(entity));
+    }
+    if (const auto* light = registry.find("engine.scene.PointLight");
+        light != nullptr && scene.has<PointLight>(entity)) {
+        snapshot["components"]["engine.scene.PointLight"] =
+            light->to_json(&scene.component<PointLight>(entity));
     }
 
     nlohmann::json children = nlohmann::json::array();
@@ -948,6 +1034,7 @@ int project_validate(const std::string& root, bool json) {
         return exit_code_for(result);
     }
     ReflectionRegistry registry = make_registry();
+    std::vector<std::string> warnings;
     for (const auto& scene_path : project->scenes()) {
         auto scene = project->load_scene(scene_path, registry);
         if (!scene) {
@@ -955,12 +1042,16 @@ int project_validate(const std::string& root, bool json) {
             print_result(result, json);
             return exit_code_for(result);
         }
+        const auto scene_warnings = point_light_warnings(*scene, scene_path);
+        warnings.insert(warnings.end(), scene_warnings.begin(), scene_warnings.end());
     }
-    const CommandResult result = success({
-        {"valid", true},
-        {"projectId", project->project_id().to_string()},
-        {"scenes", project->scenes()},
-    });
+    const CommandResult result = success(
+        {
+            {"valid", true},
+            {"projectId", project->project_id().to_string()},
+            {"scenes", project->scenes()},
+        },
+        std::move(warnings));
     print_result(result, json);
     return 0;
 }
@@ -1094,7 +1185,8 @@ int scene_validate(const std::string& project_root, const std::string& scene_pat
         print_result(result, json);
         return exit_code_for(result);
     }
-    const CommandResult result = success({{"valid", true}, {"entities", scene->size()}});
+    const CommandResult result = success({{"valid", true}, {"entities", scene->size()}},
+                                         point_light_warnings(*scene, scene_path));
     print_result(result, json);
     return 0;
 }
@@ -1400,6 +1492,7 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
     }
 
     const scene::SceneView view(*loaded_scene);
+    const auto warnings = point_light_warnings(*loaded_scene, scene_path);
     auto pixels = renderer->render(view, frames);
     if (!pixels) {
         const CommandResult result = failure(pixels.error());
@@ -1426,12 +1519,14 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
         return exit_code_for(result);
     }
 
-    const CommandResult result = success({
-        {"path", output->string()},
-        {"width", width},
-        {"height", height},
-        {"frames", frames},
-    });
+    const CommandResult result = success(
+        {
+            {"path", output->string()},
+            {"width", width},
+            {"height", height},
+            {"frames", frames},
+        },
+        warnings);
     print_result(result, json);
     return exit_code_for(result);
 }
