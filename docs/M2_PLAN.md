@@ -1,11 +1,15 @@
 # M2 Plan — Vulkan Renderer
 
-**Status:** Proposed. Awaiting the owner's approval. M2 has not started.
+**Status:** Approved by the owner on 2026-10-29. M2.1–M2.8 are approved.
+M2.9 adds the windowed fly-camera run command and presentation-only input; it
+is reviewer-approved and owner-tested. The sample project is `samples/m2-demo`.
+Merge and tag `v0.3.0` are approved.
+ADR-0011 was approved with the change that descriptor indexing is a minimum
+requirement and there is no fallback.
 
-M1 is released as `v0.2.0`. M1.10 (`--dry-run`, generated API reference and
-review fixes) is implemented on `m1.10/maintenance` and approved by the
-reviewer; its merge and tag `v0.2.1` still require owner approval. M2 starts
-only after both approvals.
+M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
+`m2/vulkan-renderer` branch. The milestone is not complete until the M2
+acceptance criteria are met and recorded in `docs/STATUS.md`.
 
 ## Goal
 
@@ -52,9 +56,9 @@ Out of scope:
 | SDL3 | 3.4.18 | Zlib | Window, input and platform events | Approved in the milestone plan |
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | Approved in the milestone plan |
 | GLM | 1.0.3 | MIT | Matrix/vector math for the renderer | Approved in the milestone plan |
-| shaderc / glslc | 2026.4 | Apache-2.0 | GLSL to SPIR-V at build time | Approved in the milestone plan; exact vcpkg port/version must be confirmed |
+| glslc | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step | Approved in the milestone plan; only the CLI is used, not the shaderc library |
 | Dear ImGui | 1.93.0-docking | MIT | Debug overlay and later editor UI | Approved in the milestone plan |
-| stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | PNG screenshots | Planned for M3; proposed to move to M2 for screenshots |
+| stb_image / stb_image_write | 2026-08-02 | MIT OR Unlicense | PNG screenshots and golden-image decoding | Approved for M2 on 2026-10-29 |
 
 `volk` and the Vulkan headers are already in the build. The Vulkan SDK remains
 the source of validation layers and tools. Any dependency version change or
@@ -87,7 +91,7 @@ new transitive dependency follows A.6 and is recorded in
 
 ### M2.3 First triangle
 
-- Compile GLSL to SPIR-V at build time with shaderc/glslc.
+- Compile GLSL to SPIR-V at build time with `glslc`.
 - Create the graphics pipeline, vertex buffer and draw path.
 - Add a camera-relative view/projection matrix with GLM.
 - Draw a triangle from a test scene.
@@ -105,6 +109,16 @@ new transitive dependency follows A.6 and is recorded in
 ### M2.5 Offscreen rendering and screenshots
 
 - Create offscreen images and render targets without a window.
+- Evaluation result: the Windows runner has the Vulkan loader and validation
+  layers from the SDK, but no ICD. This is a documented assessment, not a
+  tested installation. Windows graphics stays **not verified** in M2.
+  **Moved to M2.8 with owner approval on 2026-10-29:** install lavapipe or
+  SwiftShader on the Windows runner. It is not implemented in M2.5.
+- Evaluation result: the LunarG Linux SDK download is 366 MB per CI job, so it
+  was not adopted. The Ubuntu distro `glslc` (shaderc 2023.8) produces valid
+  SPIR-V and is kept for M2. **Proposed follow-up for M2.8 — requires owner
+  approval:** use a cached pinned SDK `glslc` on Linux. It is not implemented
+  in M2.5.
 - Implement `engine screenshot <project> <scene> --frames N --out <file>`.
 - Encode PNG with `stb_image_write`.
 - Force lavapipe in CI with `VK_ICD_FILENAMES` and compare against golden
@@ -118,17 +132,51 @@ new transitive dependency follows A.6 and is recorded in
 - Show FPS, CPU/GPU frame time and the entity list.
 - Keep the overlay debug-only; it must not mutate authoritative state.
 - Add a compile/run smoke test for the overlay.
+- Implement the pre-merge screenshot hardening: resolve `--out` through
+  `PathSandbox` and cap `--width`/`--height` at 8192 and `--frames` at 1000.
+  This was implemented in M2.6.
 
 ### M2.7 Descriptor strategy and validation
 
-- Write an ADR for the descriptor strategy (bindless versus per-material sets).
+- ADR-0011 is accepted. Descriptor indexing is a minimum requirement; there
+  is no classic fallback and only one descriptor path is implemented.
+- Add a device-capability query for the required descriptor features and
+  limits. Device creation fails with `E_UNSUPPORTED`, stage
+  `descriptor-indexing`, and machine-readable missing feature and limit lists.
+- Extend `engine doctor` with the same report; `--require vulkan` exits 8 when
+  no device satisfies the requirement.
+- Add a test for the clear failure path using synthetic capabilities with a
+  missing feature and a low limit, including the machine-readable error code
+  and detail lists.
 - Add validation scenarios for resize, minimize, swapchain recreation and
   device loss handling where practical.
 - Ensure the debug messenger count is zero in every documented scenario.
-- Document descriptor limits and the reference-scene budget.
+- Document descriptor limits, the 4096-slot budget and the reference-scene
+  budget. The 1 GiB texture budget is part of the 4 GiB total GPU memory
+  budget.
+- Assert the exact `E_VALIDATION` code and details in the `engine screenshot`
+  limit tests, not only the error status. This is an owner requirement.
+
+Implementation result: the device gate, doctor report, descriptor requirement
+tests and exact screenshot error-code assertions are in place. `engine doctor
+--require vulkan` exits 8 when no device meets the descriptor requirements.
+The swapchain test covers resize, minimize/restore and swapchain recreation
+with Required validation. Device loss is not simulated in M2.7.
 
 ### M2.8 Hardening and M2 acceptance
 
+- Evaluate a Windows ICD for graphics tests, including prebuilt Mesa lavapipe
+  packages, which are much smaller than the full SDK. The decision is made
+  before M2 closes. This is the owner-approved M2.5 follow-up.
+- Evaluate a cached pinned Linux `glslc` from the LunarG SDK, so Linux and
+  Windows produce SPIR-V with the same tool version. This is the
+  owner-approved M2.5 follow-up.
+- Evaluate a compile-time switch or a separate target for the ImGui debug
+  overlay, so release builds do not link it by default.
+- Measure the ImGui Vulkan backend re-initialization on swapchain recreation
+  and optimize it if the M2 performance budget is affected.
+- Add a device-loss validation scenario where the test harness can force it;
+  otherwise document why it remains uncovered.
 - Clean-clone acceptance on Linux with lavapipe.
 - ASan/UBSan and TSan smoke tests where meaningful; GPU drivers are not
   instrumented.
@@ -138,6 +186,29 @@ new transitive dependency follows A.6 and is recorded in
 - Update `STATUS.md`, `TESTING.md`, `BUILD.md`, `DEPENDENCIES.md`,
   `ARCHITECTURE.md`, ADRs and `API_REFERENCE.md`.
 - Reviewer approval, then owner approval for merge to `main` and tag `v0.3.0`.
+
+Implementation result: Windows offscreen graphics now runs on pinned Mesa
+lavapipe 26.2.6 (11/11 Windows CTest); Windows presentation remains not
+verified. Linux CI caches the LunarG SDK 1.4.363.0 and uses its `glslc`.
+`docs/PERFORMANCE.md` records the reference budget and the M5/M8 measurement
+plan. The ImGui compile-time split and re-initialization measurement are
+evaluated but not adopted: the overlay is off by default in release, the
+re-initialization is on the swapchain-recreation path rather than the steady
+state, and the editor/UI split belongs in M6. Device loss and the fake-device
+end-to-end rejection test remain documented gaps.
+
+### M2.9 Windowed run and presentation input
+
+- Add `engine run <project> <scene>` with a WASD + mouse fly camera.
+- Add Q/E vertical movement, Shift speed boost, right-mouse look and Escape to
+  close.
+- Add an F1 toggle for the ImGui debug overlay.
+- Route SDL events to ImGui before the application handles them.
+- Keep the camera pose presentation-only: pass it to `Renderer::draw_frame` as
+  a `CameraPose`; never mutate the scene or authoritative state (ADR-0002).
+- Add an overlay on/off test and a hidden-window `engine run` smoke test.
+- The owner manually verifies the window, fly camera and overlay toggle on
+  Hyprland.
 
 ## M2 reference budget
 
@@ -150,13 +221,15 @@ new transitive dependency follows A.6 and is recorded in
 | Draw calls per frame | ≤ 200 including the shadow pass |
 | Lights | 1 directional + 4 point lights; 1 shadow-casting directional light |
 | Materials | ≤ 100 unique PBR materials |
-| Texture memory | ≤ 1 GiB |
+| Texture memory | ≤ 1 GiB, a sub-budget of the total GPU memory |
+| Total GPU memory | ≤ 4 GiB, including textures, material records and descriptor pools |
 | CPU time | ≤ 8 ms |
 | GPU time | ≤ 12 ms |
 | Machine | i7-1265U, Iris Xe, AC power, performance profile |
 
 Measurements use Release, validation layers off during measurement and on
-during correctness tests. The budget is not changed by M2.
+during correctness tests. The budget is not changed by M2. Measurement status
+and the M5/M8 plan are in [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Testing
 
@@ -181,9 +254,9 @@ on Linux with lavapipe. The Windows runner has no GPU.
   lavapipe; local GPU output is compared with a tolerance.
 - **Swapchain edge cases:** resize, minimize and out-of-date handling are a
   common source of validation errors. Dedicated tests are required.
-- **Shader toolchain:** shaderc/glslc must work on Linux and Windows; the
-  exact vcpkg port/version must be confirmed before M2 starts.
-- **Dependency expansion:** SDL3, VMA, GLM, shaderc, ImGui and stb expand the
+- **Shader toolchain:** `glslc` must work on Linux and Windows. Linux uses the
+  distro package; Windows uses the pinned Vulkan SDK 1.4.363.
+- **Dependency expansion:** SDL3, VMA, GLM, ImGui and stb expand the
   build. Each addition updates `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md`.
 - **Windows graphics:** cannot be verified on the runner. The owner must test
   manually or accept it as not verified.
@@ -200,3 +273,6 @@ on Linux with lavapipe. The Windows runner has no GPU.
 5. Approve that merge, tag and `--admin` remain owner-only decisions.
 
 No implementation starts before this plan is approved.
+
+**Owner decision:** all five points were approved on 2026-10-29 together with
+the merge and the `v0.2.1` tag.

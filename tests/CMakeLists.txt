@@ -8,6 +8,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
     unit/command_test.cpp
+    unit/doctor_support_test.cpp
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
@@ -15,6 +16,7 @@ add_executable(engine_core_tests
     unit/project_test.cpp
     unit/reflect_test.cpp
     unit/scene_test.cpp
+    unit/scene_view_test.cpp
     unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
@@ -22,6 +24,7 @@ add_executable(engine_core_tests
 
 target_include_directories(engine_core_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/unit
+    ${CMAKE_SOURCE_DIR}/tools/engine/src
 )
 
 target_link_libraries(engine_core_tests PRIVATE
@@ -50,12 +53,146 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     tl::expected
     EnTT::EnTT
     nlohmann_json_schema_validator::validator
+    SDL3::SDL3
+    glm::glm
+    imgui::imgui
+    GPUOpen::VulkanMemoryAllocator
+    volk::volk_headers
+    volk::volk
+)
+
+target_compile_definitions(engine_dependencies_smoke PRIVATE
+    VMA_STATIC_VULKAN_FUNCTIONS=0
+    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
 )
 
 engine_set_warnings(engine_dependencies_smoke)
 
 add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
+
+add_executable(engine_render_tests
+    render/camera_test.cpp
+    render/descriptor_requirements_test.cpp
+    render/device_test.cpp
+    render/scene_transform_test.cpp
+)
+
+target_link_libraries(engine_render_tests PRIVATE
+    engine::render
+    Catch2::Catch2WithMain
+)
+
+engine_set_warnings(engine_render_tests)
+
+add_test(NAME engine_render_tests COMMAND engine_render_tests)
+set_tests_properties(engine_render_tests PROPERTIES
+    LABELS "unit;render"
+    SKIP_RETURN_CODE 4
+)
+
+add_executable(engine_screenshot_test
+    render/screenshot_test.cpp
+)
+
+target_link_libraries(engine_screenshot_test PRIVATE
+    engine::render
+)
+
+target_include_directories(engine_screenshot_test PRIVATE
+    ${Stb_INCLUDE_DIR}
+)
+
+engine_set_warnings(engine_screenshot_test)
+
+add_executable(engine_window_smoke
+    render/window_smoke.cpp
+)
+
+target_link_libraries(engine_window_smoke PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_window_smoke)
+
+add_executable(engine_swapchain_test
+    render/swapchain_test.cpp
+)
+
+target_link_libraries(engine_swapchain_test PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_swapchain_test)
+
+add_executable(engine_overlay_test
+    render/overlay_test.cpp
+)
+
+target_link_libraries(engine_overlay_test PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_overlay_test)
+
+# The window, swapchain and overlay tests need a display server. They report
+# exit code 77 when no display is available, which CTest renders as skipped.
+# Windows presentation remains unverified, so they are not registered there.
+if(NOT WIN32)
+    add_test(NAME engine_window_smoke COMMAND engine_window_smoke)
+    set_tests_properties(engine_window_smoke PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(NAME engine_swapchain_test COMMAND engine_swapchain_test)
+    set_tests_properties(engine_swapchain_test PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(NAME engine_overlay_test COMMAND engine_overlay_test)
+    set_tests_properties(engine_overlay_test PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(
+        NAME engine_run_smoke
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/run.py"
+                "$<TARGET_FILE:engine>"
+    )
+    set_tests_properties(engine_run_smoke PROPERTIES
+        LABELS "contract;cli;render"
+        SKIP_RETURN_CODE 77
+    )
+endif()
+
+# Offscreen tests are registered on every platform. They skip when no usable
+# Vulkan device or software ICD is available.
+add_test(NAME engine_screenshot_golden
+    COMMAND engine_screenshot_test
+            "${CMAKE_SOURCE_DIR}/tests/fixtures/golden/m2_scene_64.png"
+)
+set_tests_properties(engine_screenshot_golden PROPERTIES
+    LABELS "unit;render;acceptance"
+    SKIP_RETURN_CODE 77
+)
+
+add_test(
+    NAME engine_screenshot_cli
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/smoke/screenshot.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_screenshot_cli PROPERTIES
+    LABELS "contract;cli;render"
+    SKIP_RETURN_CODE 77
+)
 
 add_test(
     NAME engine_version_json

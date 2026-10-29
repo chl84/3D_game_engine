@@ -1,7 +1,8 @@
 # AI Agent Guide
 
-**Status:** M1.7. Version, doctor, the offline project/scene/entity/component
-CLI and fixed-tick simulation exist. The live API is planned for M3.
+**Status:** M2.5. Version, doctor, the offline project/scene/entity/component
+CLI, fixed-tick simulation, the Vulkan renderer and offscreen screenshots exist. The live API is
+planned for M3.
 
 ## Principles
 
@@ -138,6 +139,70 @@ project or scene files. Entity and component commands and batch execute in
 memory; `project create` and `project unlock` only validate the target and
 report what would happen. `scene create` validates the path and duplicate
 registration. Read-only commands do not need it.
+
+## Renderer
+
+The render module is `engine::render`. `engine screenshot` and `engine run`
+are the windowed/offscreen CLI entry points. The current API creates a Vulkan 1.3
+device with Synchronization2, Dynamic Rendering and VMA, either headless or
+from an SDL3 window. `render::Renderer` owns the swapchain and frame loop; it
+clears, draws scene meshes and presents, and recreates the swapchain after
+resize, minimize or out-of-date events. Scene world transforms are composed in
+double precision and converted to camera-relative floats before rendering.
+`SceneView` is the read-only boundary into the renderer. GLSL shaders are
+compiled by `glslc` at build time; the shaderc library is not linked.
+`engine.scene.Mesh` stores a `meshId` (`engine.builtin.cube`,
+`engine.builtin.plane` or a future asset UUID), never mesh data. The windowed
+renderer owns a Dear ImGui debug overlay that shows FPS, CPU/GPU frame time and
+the entity list; it is enabled by default in debug builds and reads only
+`SceneView`. See ADR-0010 for the ImGui integration. Device creation requires
+descriptor indexing, update-after-bind, partially bound descriptors, variable
+descriptor counts, runtime descriptor arrays and the descriptor limits in
+ADR-0011. There is no fallback; `Device::create` returns `E_UNSUPPORTED` with
+stage `descriptor-indexing` and machine-readable missing lists. `engine doctor
+--require vulkan` applies the same gate and exits 8 when it is not met.
+
+## Windowed run
+
+Run a scene in a window with a fly camera:
+
+```bash
+engine run ./my-game scenes/main.scene.json
+```
+
+Controls: WASD moves, Q/E moves down/up, Shift moves faster, hold the right
+mouse button to look, F1 toggles the debug overlay, and Escape closes the
+window. `--frames N --hidden` runs a bounded hidden-window smoke test.
+
+Input is presentation-only. The fly camera is passed to the renderer as a
+`CameraPose`; it never mutates the scene or authoritative state (ADR-0002).
+
+## Screenshots
+
+Render a scene without a window:
+
+```bash
+engine screenshot ./my-game scenes/main.scene.json \
+  --frames 1 --width 1280 --height 720 --out shot.png --json
+```
+
+The command creates a headless Vulkan device, renders the scene with the built-in
+meshes, writes a PNG, and returns a `command-result@1` document. `--out` is
+resolved inside the project sandbox; width and height are capped at 8192 and
+frames at 1000. `--json` is supported. The screenshot test uses `tests/fixtures/golden/m2_scene_64.png` on
+lavapipe. `render::Device::create` returns `E_UNSUPPORTED` when the
+loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
+layers are missing; the error details name the failing stage.
+
+Run the renderer tests with:
+
+```bash
+ctest --preset ci-linux-clang -R "engine_render_tests|engine_window_smoke|engine_swapchain_test" -V
+```
+
+`engine_window_smoke` and `engine_swapchain_test` report exit code 77 when no
+display server is available. The renderer never mutates scene state; M2.4 adds
+the read-only `SceneView`.
 
 ## Planned commands
 

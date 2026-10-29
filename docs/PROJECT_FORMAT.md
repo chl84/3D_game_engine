@@ -1,9 +1,10 @@
 # Project and Scene Format
 
 **Status:** Implemented in M1.5 and extended with `engine.scene.Motion` in
-M1.7. The project and scene readers/writers, canonical JSON, atomic saves,
-project locks, round-trip tests and `scene validate` exist. Generated JSON
-Schemas are completed in M1.8.
+M1.7 and `engine.scene.Mesh` plus scene format version 2 in M2.4. The project
+and scene readers/writers, canonical JSON, atomic saves, project locks,
+round-trip tests and `scene validate` exist. Generated JSON Schemas are
+completed in M1.8.
 
 ## Principles
 
@@ -28,8 +29,9 @@ Schemas are completed in M1.8.
 | Up | +Y |
 | Forward | −Z |
 | Length | Metres |
-| Rotation | Radians in the API; quaternion `(x, y, z, w)` in files |
-| Scale | Unitless |
+| Position | Double-precision metres in files and in `Transform` |
+| Rotation | Radians in the API; quaternion `(x, y, z, w)` in files, float |
+| Scale | Unitless, float |
 | Projection | Vulkan clip space applies a Y flip in the projection matrix, not in the data |
 
 This matches glTF, which simplifies asset import.
@@ -41,7 +43,7 @@ This matches glTF, which simplifies asset import.
   "formatVersion": 1,
   "projectId": "3f2a7c1e-9b4d-4e6a-8c1f-2d5b7a9e0c31",
   "name": "Hello World",
-  "engineVersion": "0.2.1",
+  "engineVersion": "0.3.0",
   "scenes": [
     "scenes/main.scene.json"
   ],
@@ -69,7 +71,7 @@ This matches glTF, which simplifies asset import.
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "sceneId": "7c1e9b4d-4e6a-4c1f-8d2b-5a9e0c313f2a",
   "name": "main",
   "revision": 42,
@@ -96,6 +98,9 @@ This matches glTF, which simplifies asset import.
           "position": [0.0, 1.7, 0.0],
           "rotation": [0.0, 0.0, 0.0, 1.0],
           "scale": [1.0, 1.0, 1.0]
+        },
+        "engine.scene.Mesh": {
+          "meshId": "engine.builtin.cube"
         }
       },
       "metadata": {}
@@ -134,6 +139,13 @@ This matches glTF, which simplifies asset import.
 - `engine.scene.Motion` has a `linearVelocity` Vec3 and is read by the
   fixed-tick simulation. Simulation mutates runtime transforms without saving
   the scene; `engine simulate` returns a state dump instead.
+- `engine.scene.Transform.position` is stored with double precision. Rotation
+  and scale are float. World composition and camera-relative conversion happen
+  in double until the renderer creates its float matrices.
+- `engine.scene.Mesh` stores only a `meshId` string. The value is an asset UUID
+  (resolved by the asset pipeline from M3) or a fixed built-in ID:
+  `engine.builtin.cube` or `engine.builtin.plane`. Mesh vertices and indices
+  are never stored in the scene file.
 
 ## Canonical form
 
@@ -151,14 +163,19 @@ This matches glTF, which simplifies asset import.
 
 ## Versioning and migration
 
-- `formatVersion` is an integer; the current version is 1.
+- `project.json` uses `formatVersion` 1. Scene files use `formatVersion` 2;
+  the two formats are versioned independently.
+- Scene format 1 loads and is upgraded to 2 when saved. Scene format 1 may not
+  contain `engine.scene.Mesh`.
+- Scene format 2 adds the optional `engine.scene.Mesh` component.
 - On load:
   - equal to current: validate and use
-  - lower: run the migration chain `vN → vN+1 → …`
+  - lower: run the additive migration `vN → vN+1 → …`
   - higher: `E_UNSUPPORTED_FORMAT`
 - Migrations are pure JSON→JSON functions with their own tests.
 - Unknown fields are rejected; `metadata` is preserved.
-- New format versions require an ADR and owner approval.
+- New format versions require an ADR and owner approval. Scene format 2 is
+  recorded in ADR-0009.
 - No automatic "best effort" migration that can lose data.
 
 ## Paths, security and locking

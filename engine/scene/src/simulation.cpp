@@ -13,6 +13,14 @@ namespace {
     return result;
 }
 
+[[nodiscard]] nlohmann::json vec3d_json(const core::Vec3d& value) {
+    nlohmann::json result = nlohmann::json::array();
+    result.push_back(value.x);
+    result.push_back(value.y);
+    result.push_back(value.z);
+    return result;
+}
+
 [[nodiscard]] nlohmann::json quat_json(const core::Quat& value) {
     nlohmann::json result = nlohmann::json::array();
     result.push_back(value.x);
@@ -24,7 +32,7 @@ namespace {
 
 [[nodiscard]] nlohmann::json transform_json(const Transform& transform) {
     return {
-        {"position", vec3_json(transform.position)},
+        {"position", vec3d_json(transform.position)},
         {"rotation", quat_json(transform.rotation)},
         {"scale", vec3_json(transform.scale)},
     };
@@ -33,7 +41,7 @@ namespace {
 } // namespace
 
 nlohmann::json simulate(Scene& scene, int ticks, int tickRate) {
-    const float delta_seconds = 1.0F / static_cast<float>(tickRate);
+    const double delta_seconds = 1.0 / static_cast<double>(tickRate);
 
     for (int tick = 0; tick < ticks; ++tick) {
         for (const Entity entity : scene.entities()) {
@@ -42,7 +50,9 @@ nlohmann::json simulate(Scene& scene, int ticks, int tickRate) {
             }
             const Motion& motion = scene.component<Motion>(entity);
             Transform& transform = scene.transform(entity);
-            transform.position = transform.position + (motion.linearVelocity * delta_seconds);
+            transform.position.x += static_cast<double>(motion.linearVelocity.x) * delta_seconds;
+            transform.position.y += static_cast<double>(motion.linearVelocity.y) * delta_seconds;
+            transform.position.z += static_cast<double>(motion.linearVelocity.z) * delta_seconds;
         }
     }
 

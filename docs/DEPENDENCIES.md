@@ -1,12 +1,13 @@
 # Dependencies
 
-**Status:** M1.1. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M2.6. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1, volk
-1.4.363.0, EnTT 4.0.0 and json-schema-validator 2.4.0. The core library uses
-nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11 and volk; Catch2
-is test-only. EnTT is the ECS; json-schema-validator validates command and
-format payloads. Python `jsonschema` is a development-only contract-test
-dependency.
+1.4.363.0, EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, Vulkan Memory
+Allocator 3.5.0, GLM 1.0.3, stb 2026-08-02 and Dear ImGui 1.93.0-docking. The
+core library uses nlohmann/json, spdlog and `tl::expected`; the CLI uses CLI11
+and volk; Catch2 is test-only. EnTT is the ECS; json-schema-validator validates
+command and format payloads. Dear ImGui draws the debug overlay in the windowed
+renderer. Python `jsonschema` is a development-only contract-test dependency.
 
 ## Policy
 
@@ -33,6 +34,11 @@ dependency.
 | volk | 1.4.363.0 | MIT | Vulkan function loading for `engine doctor` | M0 | Loads the Vulkan loader dynamically and reports a missing loader gracefully on Windows CI. |
 | EnTT | 4.0.0 | MIT | Entity-component system | M1 | Header-only, fast sparse-set ECS with stable entity handles. Reflection remains in `core` (ADR-0007), so the ECS dependency stays small. Approved in the M1 plan. |
 | json-schema-validator (`pboettch`) | 2.4.0 | MIT | Runtime JSON Schema draft-07 validation | M1 | nlohmann/json-based validator with draft-07 support. Used for command and format validation; Python `jsonschema` remains the contract-test validator. Approved in the M1 plan. |
+| SDL3 | 3.4.18 | Zlib AND MIT AND Apache-2.0 AND BSD-3-Clause | Window, input, events and Vulkan surface creation | M2 | Mature cross-platform windowing with an explicit Vulkan feature. Built with the `vulkan`, `x11` and `wayland` features; `ibus` and audio features are disabled. All included components are permissive. Approved in the M2 plan on 2026-10-29. |
+| Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 | AMD's official Vulkan allocator. Header-only, integrates with volk, and is the allocator named in the architecture. Approved in the M2 plan on 2026-10-29. |
+| GLM | 1.0.3 | MIT | Matrix and vector math for the renderer | M2 | Header-only C++ math library with Vulkan-compatible clip-space support. The engine keeps its own `Vec3`/`Quat` for scene data and uses GLM only inside `render`. Approved in the M2 plan on 2026-10-29. |
+| stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding | M2 | Single-header PNG writer/reader; no runtime library. Used by the screenshot command and golden-image test. The owner explicitly approved the dependency on 2026-10-29. |
+| Dear ImGui (`docking-experimental`) | 1.93.0-docking | MIT | Debug overlay and later editor UI | M2 | Immediate-mode UI for the debug overlay. Built with the SDL3 and Vulkan backends and volk, consistent with the renderer's dynamic loader. The owner approved it in the M2 plan on 2026-10-29. |
 
 ## Planned dependencies
 
@@ -42,16 +48,10 @@ them.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
-| SDL3 | 3.4.18 | Zlib | Window, input and audio | M2 |
-| Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | M2 |
-| GLM | 1.0.3 | MIT | Mathematics | M2 |
-| shaderc / glslc | 2026.4 | Apache-2.0 | GLSL to SPIR-V at build time | M2 |
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 |
-| stb_image / stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | Image loading and PNG screenshots | M3 |
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
 | Lua | 5.4.8 | MIT | Scripting | M4 |
 | sol2 | 3.5.0 | MIT | Lua bindings generated from reflection | M4 |
-| Dear ImGui | 1.93.0-docking | MIT | Editor and debug UI | M6 |
 
 ## Tooling and SDK
 
@@ -59,6 +59,8 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
+| glslc (shaderc CLI) | Vulkan SDK 1.4.363.0 on Linux and Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine. Linux CI caches the pinned LunarG SDK and uses its `glslc` |
+| Mesa lavapipe (Windows CI package) | 26.2.6 from `mmozeiko/build-mesa` | MIT and Apache-2.0 with LLVM exceptions | Software Vulkan ICD for Windows offscreen CI tests. Not linked into the engine; SHA-256 verified |
 | CMake | 4.4.5 pinned in CI; 4.4.4 on the development machine | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 pinned in CI and on the development machine | Apache-2.0 | Build tool |
 | GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
@@ -82,3 +84,29 @@ and the license texts used for redistribution.
 - The Vulkan SDK is not managed by vcpkg. Using the SDK for headers and tools
   avoids duplicate Vulkan headers and keeps validation layers and `glslc` on
   the same version.
+- SDL3 is built with the `vulkan`, `x11` and `wayland` features only. `ibus`,
+  audio backends and KMSDRM are disabled; this avoids the dbus and libxcrypt
+  build chain. Linux builds need the X11 and Wayland development headers
+  (`libx11-dev`, `libxft-dev`, `libxext-dev`, `libwayland-dev`,
+  `libxkbcommon-dev`, `libegl1-mesa-dev` on Debian/Ubuntu).
+- VMA is header-only. `VMA_IMPLEMENTATION` is compiled exactly once, in
+  `engine/render/src/vma.cpp`; dynamic Vulkan function loading is used because
+  volk defines `VK_NO_PROTOTYPES`.
+- GLM is used only inside `engine/render`. Authoritative scene data keeps the
+  `core::Vec3` and `core::Quat` types.
+- The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library.
+- Dear ImGui uses a local overlay port in `cmake/vcpkg-overlay/imgui`.
+  The stock port's `sdl3-binding` enables SDL3's default `ibus` feature, which
+  pulls dbus, systemd and libxcrypt, and its `vulkan-binding` pulls a second
+  Vulkan loader from vcpkg. The overlay port keeps `sdl3` at
+  `default-features: false` and builds the Vulkan backend against `volk`.
+  ADR-0010 records the decision. The overlay port pins ImGui 1.93.0-docking to
+  the exact commit `b916186e66aa3c02b72c6ca17455516512ed8049` with the SHA512
+  of that commit's source archive; update the version, commit and hash together.
+- `glslc` is executed as a build tool. The shaderc library is not linked and is
+  not a runtime dependency. Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and
+  adds its `x86_64/bin` directory to `PATH`; Windows CI installs the same
+  LunarG SDK and adds its `Bin` directory to `PATH`. Linux and Windows
+  therefore use the same `glslc` version.
+- The generated SPIR-V is embedded in `engine_render` as C++ word arrays, so
+  tests and tools do not need shader files at runtime.

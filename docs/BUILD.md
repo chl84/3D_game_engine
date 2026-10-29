@@ -1,12 +1,16 @@
 # Build
 
-**Status:** M1.10. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M2.7. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
-simulation and `engine schema`. Version, doctor and all offline commands
-support `--json` and state-changing commands support `--dry-run`. Catch2,
-contract and M1 acceptance tests cover the CLI, and
+simulation, `engine schema`, the M2 Vulkan renderer with an SDL3 window,
+glslc-compiled shaders, offscreen rendering, `engine screenshot`, PNG golden
+images, the `stb_image_write` encoder, the Dear ImGui debug overlay and the
+mandatory descriptor-indexing device gate. Version, doctor and all offline
+commands support `--json` and
+state-changing commands support `--dry-run`. Catch2, contract, render and M1
+acceptance tests cover the CLI and the renderer, and
 `scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
 clang-format, clang-tidy and ASan/UBSan. Documentation links and
 sensitive-data checks run as CTest tests.
@@ -37,6 +41,8 @@ and are reported here.
 - CMake 3.28 or newer
 - Ninja
 - A C++20 compiler: GCC 14+, Clang 18+, or MSVC 19.4+
+- `glslc` for the GLSL to SPIR-V build step. The build fails with a clear
+  error if it is missing.
 - Python 3.10+ (test scripts and contract validation)
 - `jsonschema` from `requirements-dev.txt` (installed in `.venv`)
 
@@ -47,8 +53,39 @@ installed on the development machine:
 sudo pacman -S --needed vulkan-headers vulkan-validation-layers vulkan-tools vulkan-swrast ccache
 ```
 
+A minimal sample project is in `samples/m2-demo`. After building, run it with:
+
+```bash
+./build/linux-debug/tools/engine/engine run samples/m2-demo scenes/main.scene.json
+```
+
+Use `WASD`, `Q`/`E`, Shift, the right mouse button, `F1` for the overlay and
+`Escape` to close.
+
 `vulkan-swrast` provides lavapipe, the software Vulkan device used for
-headless tests and golden images.
+headless tests and golden images. The validation layers are required by the
+`required validation layers report no errors` test; CI installs
+`vulkan-validationlayers` on Ubuntu. Devices must also expose the
+descriptor-indexing features and limits in ADR-0011; there is no classic
+fallback, and `Device::create` rejects an unsupported device with
+`E_UNSUPPORTED`.
+
+`glslc` is a build tool, not a linked library. On Arch it comes with the
+`shaderc` package. Linux CI caches the LunarG Vulkan SDK 1.4.363.0 and uses its
+`glslc`; Windows CI installs the same LunarG SDK and adds its `Bin` directory
+to `PATH`. `VULKAN_SDK` is set on both, and CMake searches `PATH` and
+`VULKAN_SDK` and fails at configure time when `glslc` is missing.
+
+SDL3 is built by vcpkg with the Vulkan, X11 and Wayland features. On Debian and
+Ubuntu the build needs the X11 and Wayland development headers:
+
+```bash
+sudo apt install -y libx11-dev libxft-dev libxext-dev libwayland-dev \
+    libxkbcommon-dev libegl1-mesa-dev
+```
+
+CI installs these before configuring. Windows builds need no extra system
+packages; the Vulkan loader is optional and graphics is not verified there.
 
 ## vcpkg
 
@@ -156,7 +193,7 @@ The CI version is authoritative for formatting.
 Expected shape:
 
 ```json
-{"name":"engine","version":"0.2.1","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
+{"name":"engine","version":"0.3.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
 
 ## Doctor

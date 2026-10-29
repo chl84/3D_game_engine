@@ -13,9 +13,14 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | fmt | 12.2.0 | MIT | Transitive dependency of spdlog |
 | CLI11 | 2.7.2 | BSD-3-Clause | `engine` CLI |
 | tl::expected | 1.3.1 | CC0-1.0 | `Result<T>` |
-| volk | 1.4.363.0 | MIT | Vulkan loading in `doctor` |
+| volk | 1.4.363.0 | MIT | Vulkan loading in `doctor` and `render` |
 | EnTT | 4.0.0 | MIT | Entity-component system |
 | json-schema-validator (`pboettch`) | 2.4.0 | MIT | JSON Schema validation |
+| SDL3 | 3.4.18 | Zlib AND MIT AND Apache-2.0 AND BSD-3-Clause | Window, input and Vulkan surface (`platform`) |
+| Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation (`render`) |
+| GLM | 1.0.3 | MIT | Renderer math (`render`) |
+| stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding |
+| Dear ImGui | 1.93.0-docking | MIT | Debug overlay (`render`) |
 
 ## Test and development dependencies
 
@@ -30,6 +35,8 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |
 | MSVC | Visual Studio 2022 17.14 | Proprietary | Windows compiler |
 | Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Headers, loader, validation layers, `glslc`, `vulkaninfo` |
+| glslc (shaderc CLI) | Vulkan SDK 1.4.363.0 on Linux and Windows | Apache-2.0 | GLSL to SPIR-V build step, not linked |
+| Mesa lavapipe (Windows CI package) | 26.2.6 from `mmozeiko/build-mesa` | MIT and Apache-2.0 with LLVM exceptions | Software Vulkan ICD for Windows offscreen CI, not linked |
 
 Compilers, CMake, Ninja and vcpkg are build tools, not linked engine
 dependencies. The GCC runtime library exception and the LLVM exception make
@@ -38,7 +45,10 @@ the compiler outputs redistributable under the engine's MIT license.
 ## MIT License
 
 The following components are distributed under the MIT License: nlohmann/json,
-spdlog, fmt, volk, EnTT, json-schema-validator and jsonschema.
+spdlog, fmt, volk, EnTT, json-schema-validator, jsonschema, Vulkan Memory
+Allocator, GLM and Dear ImGui. Dear ImGui's default fonts (ProggyClean and
+ProggyForever) are distributed under their own permissive licenses; the vcpkg
+package copyright file contains all of the notices.
 
 ```text
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -131,9 +141,16 @@ full legal text is available at
 
 ## Apache License 2.0
 
-Ninja, Clang and parts of the Vulkan SDK are distributed under the Apache
-License 2.0. The full text is available at
+Ninja, Clang, parts of the Vulkan SDK and bundled SDL3 components are
+distributed under the Apache License 2.0. The full text is available at
 <https://www.apache.org/licenses/LICENSE-2.0>.
+
+## Zlib License
+
+SDL3's core is distributed under the zlib license. The full text is available
+at <https://www.zlib.net/zlib_license.html>. SDL3 also bundles components under
+the MIT, Apache-2.0 and BSD-3-Clause licenses; their texts are included in the
+SDL3 source distribution and in the vcpkg installed tree.
 
 ## Updating this file
 

@@ -25,6 +25,8 @@ CLI_COMMANDS = [
     ("engine component set|add|remove --json", "Component changes"),
     ("engine simulate --ticks N --json", "Fixed-tick state dump"),
     ("engine batch --file FILE --undo N --json", "Transactional command batch"),
+    ("engine screenshot <project> <scene> --frames N --out FILE --json", "Offscreen PNG screenshot"),
+    ("engine run <project> <scene> [--frames N] [--json]", "Windowed fly-camera demo"),
 ]
 
 

@@ -1,0 +1,21 @@
+{
+  "assetRoot": "assets",
+  "engineVersion": "0.3.0",
+  "formatVersion": 1,
+  "metadata": {},
+  "name": "M2 Demo",
+  "projectId": "0a34340a-65cb-45ba-bd26-23d67921ebc2",
+  "scenes": [
+    "scenes/main.scene.json"
+  ],
+  "scriptRoot": "scripts",
+  "settings": {
+    "defaultScene": "scenes/main.scene.json",
+    "tickRate": 60,
+    "window": {
+      "height": 1080,
+      "mode": "windowed",
+      "width": 1920
+    }
+  }
+}

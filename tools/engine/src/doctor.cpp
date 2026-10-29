@@ -1,6 +1,7 @@
 #include "doctor.hpp"
 
 #include <engine/core/version.hpp>
+#include <engine/render/descriptor_requirements.hpp>
 
 #include <volk.h>
 
@@ -61,6 +62,7 @@ namespace {
         {"devices", nlohmann::json::array()},
         {"validationLayers", nlohmann::json::array()},
         {"lavapipe", false},
+        {"descriptorIndexing", false},
     };
 
     if (volkInitialize() != VK_SUCCESS) {
@@ -68,7 +70,8 @@ namespace {
     }
 
     vulkan["loader"] = true;
-    vulkan["loaderVersion"] = format_version(volkGetInstanceVersion());
+    const std::uint32_t loader_version = volkGetInstanceVersion();
+    vulkan["loaderVersion"] = format_version(loader_version);
 
     std::vector<std::string> layers;
     std::uint32_t layer_count = 0;
@@ -89,7 +92,10 @@ namespace {
     application_info.applicationVersion = VK_MAKE_VERSION(0, 1, 0);
     application_info.pEngineName = "engine";
     application_info.engineVersion = VK_MAKE_VERSION(0, 1, 0);
-    application_info.apiVersion = VK_API_VERSION_1_0;
+    const std::uint32_t instance_version =
+        std::min(loader_version, static_cast<std::uint32_t>(VK_API_VERSION_1_3));
+    application_info.apiVersion =
+        instance_version >= VK_API_VERSION_1_1 ? instance_version : VK_API_VERSION_1_0;
 
     VkInstanceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -114,6 +120,13 @@ namespace {
                     const std::string name = properties.deviceName;
                     lavapipe = lavapipe || is_lavapipe(name);
 
+                    const engine::render::DescriptorCapabilities capabilities =
+                        instance_version >= VK_API_VERSION_1_2
+                            ? engine::render::query_descriptor_capabilities(device)
+                            : engine::render::DescriptorCapabilities{};
+                    const engine::render::DescriptorRequirementReport requirement =
+                        engine::render::evaluate_descriptor_requirements(capabilities);
+
                     device_list.push_back({
                         {"name", name},
                         {"type", std::string(device_type_name(properties.deviceType))},
@@ -121,9 +134,14 @@ namespace {
                         {"driverVersion", format_version(properties.driverVersion)},
                         {"vendorId", properties.vendorID},
                         {"deviceId", properties.deviceID},
+                        {
+                            "descriptorIndexing",
+                            engine::render::descriptor_requirement_json(requirement),
+                        },
                     });
                 }
 
+                vulkan["descriptorIndexing"] = any_device_supports_descriptor_indexing(device_list);
                 vulkan["devices"] = std::move(device_list);
                 vulkan["lavapipe"] = lavapipe;
             }
@@ -192,6 +210,8 @@ DoctorResult run_doctor(const DoctorOptions& options) {
     const bool has_gpu = has_gpu_device(vulkan.at("devices"));
     const bool has_layers = has_validation_layer(vulkan.at("validationLayers"));
     const bool has_lavapipe = vulkan.at("lavapipe").get<bool>();
+    const bool has_descriptor_indexing =
+        any_device_supports_descriptor_indexing(vulkan.at("devices"));
     const bool project_writable = project.at("writable").get<bool>();
 
     nlohmann::json checks = nlohmann::json::array();
@@ -205,12 +225,29 @@ DoctorResult run_doctor(const DoctorOptions& options) {
 
     add_check("compiler", "pass", std::string(engine::core::compiler()));
 
-    if (loader && instance_created && has_devices) {
-        add_check("vulkan", "pass", "Vulkan loader and device enumeration succeeded.");
+    if (loader && instance_created && has_devices && has_descriptor_indexing) {
+        add_check("vulkan", "pass",
+                  "Vulkan loader, device enumeration and descriptor indexing succeeded.");
+    } else if (loader && instance_created && has_devices) {
+        add_check("vulkan", "fail",
+                  "Vulkan is available, but no device supports the required descriptor indexing "
+                  "features.");
     } else if (loader) {
         add_check("vulkan", "warn", "Vulkan loader is present, but no device was enumerated.");
     } else {
         add_check("vulkan", "fail", "Vulkan loader is not available.");
+    }
+
+    if (has_descriptor_indexing) {
+        add_check("descriptor-indexing", "pass",
+                  "At least one device meets the required descriptor indexing features and "
+                  "limits.");
+    } else if (has_devices) {
+        add_check("descriptor-indexing", "fail",
+                  "No device meets the required descriptor indexing features and limits.");
+    } else {
+        add_check("descriptor-indexing", "warn",
+                  "No Vulkan device is available to evaluate descriptor indexing.");
     }
 
     add_check("gpu", has_gpu ? "pass" : "warn",
@@ -230,7 +267,8 @@ DoctorResult run_doctor(const DoctorOptions& options) {
 
     std::vector<std::string> failed_requirements;
     for (const auto& requirement : options.requirements) {
-        if (requirement == "vulkan" && !(loader && instance_created && has_devices)) {
+        if (requirement == "vulkan" &&
+            !(loader && instance_created && has_devices && has_descriptor_indexing)) {
             failed_requirements.push_back(requirement);
         } else if (requirement == "gpu" && !has_gpu) {
             failed_requirements.push_back(requirement);
@@ -242,6 +280,9 @@ DoctorResult run_doctor(const DoctorOptions& options) {
                    requirement != "validation-layers" && requirement != "lavapipe") {
             failed_requirements.push_back(requirement);
         }
+    }
+    if (descriptor_indexing_requirement_failed(vulkan.at("devices"))) {
+        failed_requirements.emplace_back("descriptor-indexing");
     }
 
     nlohmann::json requirements{
@@ -305,6 +346,8 @@ void print_doctor_human(const nlohmann::json& report, std::ostream& out) {
 
     out << "Validation layers: " << join(vulkan.at("validationLayers")) << '\n';
     out << "Lavapipe: " << (vulkan.at("lavapipe").get<bool>() ? "yes" : "no") << '\n';
+    out << "Descriptor indexing: " << (vulkan.at("descriptorIndexing").get<bool>() ? "yes" : "no")
+        << '\n';
 
     out << "Checks:\n";
     for (const auto& check : report.at("checks")) {
@@ -320,6 +363,8 @@ void print_doctor_human(const nlohmann::json& report, std::ostream& out) {
         if (!requirements.at("failed").empty()) {
             out << "  failed: " << join(requirements.at("failed")) << '\n';
         }
+    } else if (!requirements.at("failed").empty()) {
+        out << "Engine requirements failed: " << join(requirements.at("failed")) << '\n';
     }
 }
 

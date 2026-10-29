@@ -10,9 +10,10 @@
 #include "temp_dir.hpp"
 
 using engine::core::ReflectionRegistry;
-using engine::core::Vec3;
+using engine::core::Vec3d;
 using engine::scene::Camera;
 using engine::scene::Entity;
+using engine::scene::Mesh;
 using engine::scene::Project;
 using engine::scene::register_scene_components;
 using engine::scene::Scene;
@@ -61,11 +62,13 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     scene.set_scene_name("main");
     const Entity root = require_entity(scene.create_entity("Root"));
     const Entity child = require_entity(scene.create_entity("Child"));
-    scene.transform(root).position = {1.0F, 2.0F, 3.0F};
-    scene.transform(child).position = {0.0F, 5.0F, 0.0F};
+    scene.transform(root).position = {1.0, 2.0, 3.0};
+    scene.transform(child).position = {0.0, 5.0, 0.0};
     REQUIRE(scene.set_parent(child, root).has_value());
     REQUIRE(scene.add_component<Camera>(child).has_value());
     scene.component<Camera>(child).fovYRadians = 0.75F;
+    REQUIRE(scene.add_component<Mesh>(child).has_value());
+    scene.component<Mesh>(child).mesh_id = std::string(engine::scene::kBuiltinPlaneMesh);
     REQUIRE(scene.set_metadata(child, {{"tag", "player"}}).has_value());
 
     const std::string scene_path = "scenes/main.scene.json";
@@ -84,9 +87,12 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     REQUIRE(loaded_root.has_value());
     REQUIRE(loaded_child.has_value());
     REQUIRE(loaded->parent(loaded_child.value_or(entt::null)) == loaded_root.value_or(entt::null));
-    REQUIRE(loaded->transform(loaded_root.value_or(entt::null)).position == Vec3{1.0F, 2.0F, 3.0F});
+    REQUIRE(loaded->transform(loaded_root.value_or(entt::null)).position == Vec3d{1.0, 2.0, 3.0});
     REQUIRE(loaded->has<Camera>(loaded_child.value_or(entt::null)));
     REQUIRE(loaded->component<Camera>(loaded_child.value_or(entt::null)).fovYRadians == 0.75F);
+    REQUIRE(loaded->has<Mesh>(loaded_child.value_or(entt::null)));
+    REQUIRE(loaded->component<Mesh>(loaded_child.value_or(entt::null)).mesh_id ==
+            engine::scene::kBuiltinPlaneMesh);
     REQUIRE(loaded->metadata(loaded_child.value_or(entt::null)).at("tag") == "player");
 
     REQUIRE(project->save_scene(scene_path, *loaded, registry).has_value());
@@ -120,13 +126,60 @@ TEST_CASE("project and scene loaders reject unknown fields and newer versions", 
     register_scene_components(registry);
     auto scene_document =
         nlohmann::json::parse(read_file(project->root() / "scenes/main.scene.json"));
-    scene_document["formatVersion"] = 2;
+    scene_document["formatVersion"] = 3;
     REQUIRE(engine::platform::atomic_write_file(project->root() / "scenes/main.scene.json",
                                                 scene_document.dump(2) + "\n")
                 .has_value());
     auto newer_scene = project->load_scene("scenes/main.scene.json", registry);
     REQUIRE_FALSE(newer_scene.has_value());
     REQUIRE(newer_scene.error().code == engine::core::ErrorCode::Unsupported);
+}
+
+TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
+    engine::test::TempDir temp("scene-v1");
+    auto project = Project::create(temp.path() / "demo", "Demo");
+    REQUIRE(project.has_value());
+
+    ReflectionRegistry registry;
+    register_scene_components(registry);
+    const auto scene_file = project->root() / "scenes/main.scene.json";
+    auto scene_document = nlohmann::json::parse(read_file(scene_file));
+    REQUIRE(scene_document["formatVersion"] == 2);
+    scene_document["formatVersion"] = 1;
+    REQUIRE(
+        engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n").has_value());
+
+    auto loaded = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE(loaded.has_value());
+    REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
+    const auto upgraded = nlohmann::json::parse(read_file(scene_file));
+    REQUIRE(upgraded["formatVersion"] == 2);
+
+    const Entity entity = require_entity(loaded->create_entity("Mesh"));
+    loaded->transform(entity).position = {16000.001, 0.0, 8000.0};
+    REQUIRE(loaded->add_component<Mesh>(entity).has_value());
+    REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
+    auto mesh_document = nlohmann::json::parse(read_file(scene_file));
+    REQUIRE(mesh_document["formatVersion"] == 2);
+    REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Mesh"]["meshId"]
+                .get<std::string>() == std::string(engine::scene::kBuiltinCubeMesh));
+    REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Transform"]["position"][0]
+                .get<double>() == 16000.001);
+
+    auto reloaded = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE(reloaded.has_value());
+    REQUIRE(loaded->uuid(entity).has_value());
+    const auto entity_id = loaded->uuid(entity).value_or(engine::core::Uuid{});
+    const auto reloaded_entity = reloaded->find(entity_id).value_or(entt::null);
+    REQUIRE(reloaded->contains(reloaded_entity));
+    REQUIRE(reloaded->transform(reloaded_entity).position == Vec3d{16000.001, 0.0, 8000.0});
+
+    mesh_document["formatVersion"] = 1;
+    REQUIRE(
+        engine::platform::atomic_write_file(scene_file, mesh_document.dump(2) + "\n").has_value());
+    auto invalid = project->load_scene("scenes/main.scene.json", registry);
+    REQUIRE_FALSE(invalid.has_value());
+    REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
 }
 
 TEST_CASE("scene loader rejects missing IDs and negative revisions", "[project]") {

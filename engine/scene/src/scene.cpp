@@ -202,20 +202,40 @@ const Transform& Scene::transform(Entity entity) const {
     return registry_.get<Transform>(entity);
 }
 
-Transform Scene::world_transform(Entity entity) const {
-    const Transform local = registry_.get<Transform>(entity);
+WorldTransform Scene::world_transform(Entity entity) const {
+    const Transform& local = registry_.get<Transform>(entity);
+    WorldTransform local_world{
+        {
+            static_cast<double>(local.position.x),
+            static_cast<double>(local.position.y),
+            static_cast<double>(local.position.z),
+        },
+        {
+            static_cast<double>(local.rotation.x),
+            static_cast<double>(local.rotation.y),
+            static_cast<double>(local.rotation.z),
+            static_cast<double>(local.rotation.w),
+        },
+        {
+            static_cast<double>(local.scale.x),
+            static_cast<double>(local.scale.y),
+            static_cast<double>(local.scale.z),
+        },
+    };
+
     const Entity parent_entity = parent_of(entity);
     if (parent_entity == entt::null) {
-        return local;
+        local_world.rotation = core::normalize(local_world.rotation);
+        return local_world;
     }
 
-    const Transform parent_world = world_transform(parent_entity);
+    const WorldTransform parent_world = world_transform(parent_entity);
     return {
         parent_world.position +
             core::rotate(parent_world.rotation,
-                         core::component_mul(local.position, parent_world.scale)),
-        parent_world.rotation * local.rotation,
-        core::component_mul(parent_world.scale, local.scale),
+                         core::component_mul(local_world.position, parent_world.scale)),
+        core::normalize(parent_world.rotation * local_world.rotation),
+        core::component_mul(parent_world.scale, local_world.scale),
     };
 }
 
@@ -286,6 +306,10 @@ void register_scene_components(core::ReflectionRegistry& registry) {
 
     registry.component<Motion>("engine.scene.Motion")
         .field("linearVelocity", &Motion::linearVelocity, "Linear velocity in metres per second")
+        .build();
+
+    registry.component<Mesh>("engine.scene.Mesh")
+        .field("meshId", &Mesh::mesh_id, "Asset ID or built-in mesh ID")
         .build();
 }
 

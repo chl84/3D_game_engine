@@ -7,18 +7,25 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
-| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.0`; M1.10 awaiting `v0.2.1` |
-| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Plan approved — starts after `v0.2.1` |
-| M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
+| M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
+| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | M2.1–M2.9 done; merge and `v0.3.0` tag in progress |
+| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and one directional light; replace ilammy/msvc-dev-cmd with native vcvars | Planned |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
-| M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits | Planned |
+| M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
 | M7 | AI-assisted game development, MCP adapter, automation tools | Planned |
 | M8 | Profiling, optimization, packaging, stable stress tests | Planned |
 
 The detailed M2 plan is in [`docs/M2_PLAN.md`](M2_PLAN.md). It was approved by
-the owner on 2026-10-29; M2 starts after M1.10 is merged and `v0.2.1` is
-published.
+the owner on 2026-10-29. M2.1 implements the render device and window; M2.2 adds the swapchain and
+frame loop; M2.3 adds glslc-compiled shaders and the first triangle; M2.4 adds
+scene format v2, camera-relative scene rendering, depth and culling; M2.5 adds
+offscreen rendering and screenshots; M2.6 adds the ImGui debug overlay and the
+screenshot sandbox/limits. M2.7 adds the mandatory descriptor-indexing gate,
+doctor report and exact screenshot error codes. M2.8 records the reference-scene
+budget and measurement plan in [PERFORMANCE.md](PERFORMANCE.md). M2.9 adds the
+windowed fly-camera run command and routes input to ImGui without mutating
+authoritative state.
 
 ## M0 substeps
 

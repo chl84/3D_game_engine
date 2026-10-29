@@ -1,0 +1,82 @@
+#pragma once
+
+#include <engine/core/error.hpp>
+
+#include <volk.h>
+
+#include <string>
+#include <vector>
+
+struct SDL_Window;
+union SDL_Event;
+
+namespace engine::platform {
+
+struct WindowOptions {
+    std::string title{"Engine"};
+    int width{1280};
+    int height{720};
+    bool resizable{true};
+    bool hidden{false};
+    bool high_pixel_density{true};
+};
+
+// Owns the SDL video and event subsystems. The context must outlive every
+// window created from it.
+class SdlContext {
+public:
+    [[nodiscard]] static core::Result<SdlContext> initialize();
+
+    SdlContext(const SdlContext&) = delete;
+    SdlContext& operator=(const SdlContext&) = delete;
+    SdlContext(SdlContext&& other) noexcept;
+    SdlContext& operator=(SdlContext&& other) noexcept;
+    ~SdlContext();
+
+    [[nodiscard]] bool active() const noexcept;
+
+    void pump_events() noexcept;
+    // Polls one SDL event. Returns false when the queue is empty.
+    [[nodiscard]] bool poll_event(SDL_Event& event) noexcept;
+
+private:
+    SdlContext() = default;
+
+    bool active_{false};
+};
+
+// A Vulkan-capable SDL window. The window must outlive the surface created
+// from it.
+class Window {
+public:
+    [[nodiscard]] static core::Result<Window> create(const SdlContext& context,
+                                                     const WindowOptions& options);
+
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+    Window(Window&& other) noexcept;
+    Window& operator=(Window&& other) noexcept;
+    ~Window();
+
+    [[nodiscard]] core::Result<std::vector<std::string>> vulkan_instance_extensions() const;
+    [[nodiscard]] core::Result<VkSurfaceKHR> create_vulkan_surface(VkInstance instance) const;
+
+    [[nodiscard]] core::Result<void> resize(int width, int height);
+    [[nodiscard]] core::Result<void> show();
+    [[nodiscard]] core::Result<void> minimize();
+    [[nodiscard]] core::Result<void> restore();
+
+    [[nodiscard]] SDL_Window* native_handle() const noexcept;
+    [[nodiscard]] int width() const noexcept;
+    [[nodiscard]] int height() const noexcept;
+    [[nodiscard]] bool minimized() const noexcept;
+
+private:
+    explicit Window(SDL_Window* window) noexcept;
+
+    SDL_Window* window_{nullptr};
+    int width_{0};
+    int height_{0};
+};
+
+} // namespace engine::platform

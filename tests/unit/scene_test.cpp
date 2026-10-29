@@ -1,14 +1,17 @@
 #include <engine/scene/scene.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <ranges>
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 using engine::core::Quat;
 using engine::core::ReflectionRegistry;
 using engine::core::Uuid;
 using engine::core::Vec3;
+using engine::core::Vec3d;
 using engine::scene::Entity;
 using engine::scene::register_scene_components;
 using engine::scene::Scene;
@@ -75,21 +78,63 @@ TEST_CASE("scene computes world transforms through the hierarchy", "[scene]") {
     const Entity parent = require_entity(scene.create_entity("Parent"));
     const Entity child = require_entity(scene.create_entity("Child"));
 
-    scene.transform(parent).position = {10.0F, 0.0F, 0.0F};
+    scene.transform(parent).position = {10.0, 0.0, 0.0};
     scene.transform(parent).scale = {2.0F, 2.0F, 2.0F};
-    scene.transform(child).position = {1.0F, 5.0F, 0.0F};
+    scene.transform(child).position = {1.0, 5.0, 0.0};
 
     REQUIRE(scene.set_parent(child, parent).has_value());
 
     const auto world = scene.world_transform(child);
-    REQUIRE(world.position == Vec3{12.0F, 10.0F, 0.0F});
-    REQUIRE(world.scale == Vec3{2.0F, 2.0F, 2.0F});
+    REQUIRE(world.position == Vec3d{12.0, 10.0, 0.0});
+    REQUIRE(world.scale == Vec3d{2.0, 2.0, 2.0});
 
     scene.transform(parent).rotation = Quat{0.0F, 1.0F, 0.0F, 0.0F};
     const auto rotated = scene.world_transform(child);
-    REQUIRE(rotated.position.x == 8.0F);
-    REQUIRE(rotated.position.y == 10.0F);
-    REQUIRE(rotated.position.z == 0.0F);
+    REQUIRE(rotated.position.x == 8.0);
+    REQUIRE(rotated.position.y == 10.0);
+    REQUIRE(rotated.position.z == 0.0);
+}
+
+TEST_CASE("scene stores root positions in double at 8 km and 16 km", "[scene]") {
+    Scene scene = Scene::with_seed(5);
+    const Entity root8 = require_entity(scene.create_entity("Root8"));
+    const Entity root16 = require_entity(scene.create_entity("Root16"));
+
+    scene.transform(root8).position = {8000.001, 0.0, 8000.001};
+    scene.transform(root16).position = {16000.001, 0.0, 16000.001};
+
+    const auto world8 = scene.world_transform(root8);
+    const auto world16 = scene.world_transform(root16);
+    CHECK(world8.position.x == Catch::Approx(8000.001).margin(1e-9).epsilon(0));
+    CHECK(world16.position.x == Catch::Approx(16000.001).margin(1e-9).epsilon(0));
+
+    const Vec3d camera8{8000.0, 0.0, 8000.0};
+    const Vec3d camera16{16000.0, 0.0, 16000.0};
+    const Vec3d relative8 = world8.position - camera8;
+    const Vec3d relative16 = world16.position - camera16;
+    CHECK(std::abs(static_cast<float>(relative8.x) - 0.001F) < 1e-6F);
+    CHECK(std::abs(static_cast<float>(relative16.x) - 0.001F) < 1e-6F);
+}
+
+TEST_CASE("scene composes 8 km hierarchy transforms in double precision", "[scene]") {
+    Scene scene = Scene::with_seed(6);
+    const Entity parent = require_entity(scene.create_entity("FarParent"));
+    const Entity child = require_entity(scene.create_entity("FarChild"));
+
+    scene.transform(parent).position = {8000.0, 0.0, 8000.0};
+    scene.transform(child).position = {0.001, 0.0, -5.001};
+    REQUIRE(scene.set_parent(child, parent).has_value());
+
+    const auto world = scene.world_transform(child);
+    CHECK(world.position.x == Catch::Approx(8000.001).margin(1e-6).epsilon(0));
+    CHECK(world.position.z == Catch::Approx(7994.999).margin(1e-6).epsilon(0));
+
+    const Vec3d camera_position{8000.0, 0.0, 8000.0};
+    const Vec3d camera_relative = world.position - camera_position;
+    const auto relative_x = static_cast<float>(camera_relative.x);
+    const auto relative_z = static_cast<float>(camera_relative.z);
+    CHECK(std::abs(relative_x - 0.001F) < 1e-6F);
+    CHECK(std::abs(relative_z - (-5.001F)) < 1e-5F);
 }
 
 TEST_CASE("scene rejects hierarchy cycles", "[scene]") {

@@ -91,7 +91,8 @@ int main(int argc, char** argv) {
     std::vector<std::string> requirements;
     doctor
         ->add_option("--require", requirements,
-                     "Required check: vulkan, gpu, validation-layers or lavapipe.")
+                     "Required check: vulkan (includes descriptor indexing), gpu, "
+                     "validation-layers or lavapipe.")
         ->expected(0, 4);
 
     auto* project_command = app.add_subcommand("project", "Create, validate or unlock a project.");
@@ -225,6 +226,39 @@ int main(int argc, char** argv) {
     batch_command->add_option("--undo", batch_undo, "Undo the last N commands before saving.")
         ->check(CLI::NonNegativeNumber);
 
+    auto* run_command = app.add_subcommand("run", "Run a scene in a window with a fly camera.");
+    std::string run_project;
+    std::string run_scene = "scenes/main.scene.json";
+    int run_frames = 0;
+    int run_width = 1280;
+    int run_height = 720;
+    bool run_hidden = false;
+    run_command->add_option("project", run_project, "Project directory.")->required();
+    run_command->add_option("scene", run_scene, "Scene path inside the project.");
+    run_command->add_option("--frames", run_frames, "Frames to render (0 = until close).")
+        ->check(CLI::NonNegativeNumber);
+    run_command->add_option("--width", run_width, "Window width.")->check(CLI::PositiveNumber);
+    run_command->add_option("--height", run_height, "Window height.")->check(CLI::PositiveNumber);
+    run_command->add_flag("--hidden", run_hidden, "Create a hidden window (tests).");
+
+    auto* screenshot_command = app.add_subcommand("screenshot", "Render a scene to a PNG file.");
+    std::string screenshot_project;
+    std::string screenshot_scene = "scenes/main.scene.json";
+    std::string screenshot_out;
+    int screenshot_frames = 1;
+    int screenshot_width = 1280;
+    int screenshot_height = 720;
+    screenshot_command->add_option("project", screenshot_project, "Project directory.")->required();
+    screenshot_command->add_option("scene", screenshot_scene, "Scene path inside the project.");
+    screenshot_command->add_option("--out", screenshot_out, "Output PNG file inside the project.")
+        ->required();
+    screenshot_command->add_option("--frames", screenshot_frames, "Frames to render.")
+        ->check(CLI::PositiveNumber);
+    screenshot_command->add_option("--width", screenshot_width, "Image width.")
+        ->check(CLI::PositiveNumber);
+    screenshot_command->add_option("--height", screenshot_height, "Image height.")
+        ->check(CLI::PositiveNumber);
+
     for (CLI::App* command : {
              project_create,
              project_validate,
@@ -240,6 +274,8 @@ int main(int argc, char** argv) {
              component_remove,
              simulate_command,
              batch_command,
+             screenshot_command,
+             run_command,
          }) {
         command->add_flag("--json", json, "Emit a machine-readable JSON document.");
     }
@@ -367,6 +403,17 @@ int main(int argc, char** argv) {
     if (*batch_command) {
         return engine::cli::batch(batch_project, batch_scene, batch_file, batch_undo, json,
                                   dry_run);
+    }
+
+    if (*run_command) {
+        return engine::cli::run_window(run_project, run_scene, run_frames, run_width, run_height,
+                                       run_hidden, json);
+    }
+
+    if (*screenshot_command) {
+        return engine::cli::screenshot(screenshot_project, screenshot_scene, screenshot_out,
+                                       screenshot_frames, screenshot_width, screenshot_height,
+                                       json);
     }
 
     std::cerr << "error: no command\n" << app.help() << '\n';

@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.7. This document describes the approved module boundaries and
+**Status:** M2.5. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -97,6 +97,82 @@ Structural changes initiated by gameplay — spawning, despawning and component
 changes — go through the command bus. Continuous movement, physics and
 animation mutate the runtime state directly during a fixed tick.
 
+## Rendering
+
+- `platform` owns SDL3: the video and event subsystems, the window and the
+  Vulkan surface. SDL is not exposed to simulation modules.
+- `render` owns the Vulkan instance, physical and logical device, queues, VMA
+  allocator and the debug messenger. It requires Vulkan 1.3 with
+  Synchronization2 and Dynamic Rendering.
+- Rendering can run headless: a device without a window is enough for
+  offscreen rendering, screenshots and golden-image tests. `engine screenshot`
+  resolves `--out` through `PathSandbox` and caps width and height at 8192 and
+  frames at 1000.
+- Validation layers are enabled in debug builds when available. The `Required`
+  mode fails when the layer is missing, and the debug messenger counts errors
+  and warnings so tests can assert zero errors.
+- `Renderer` owns the swapchain, one command buffer and one fence per frame,
+  and two frames in flight. It clears the swapchain image, draws a triangle
+  with Dynamic Rendering and uses Synchronization2 image barriers.
+  Render-finished semaphores are per swapchain image, because presentation can
+  outlive the submission fence.
+- GLSL shaders are compiled to SPIR-V by `glslc` at build time and embedded in
+  `engine_render` as C++ word arrays. The shaderc library is not linked.
+- The M2.4 pipeline uses indexed built-in meshes, a push-constant
+  view-projection and model matrix, a D32 depth buffer and dynamic
+  viewport/scissor. The `Camera` type owns the GLM projection with Vulkan
+  clip-space Y and depth range [0, 1].
+- Scene world transforms are composed in double precision. Local `Transform`
+  positions are stored as double; rotation and scale remain float. A root
+  entity at 8 km or 16 km therefore keeps sub-millimetre position precision.
+  The renderer subtracts the camera position in double, then converts the
+  result to camera-relative floats for model matrices; the camera view is
+  rotation-only. M5's large-world work can add chunk-relative transforms on top
+  without changing the v2 field types.
+- ADR-0011 makes descriptor indexing mandatory. The windowed and offscreen
+  renderers share the same device gate: a device must expose the required
+  descriptor-indexing features and limits, or creation fails with
+  `E_UNSUPPORTED`, stage `descriptor-indexing`. There is no classic-set
+  fallback. M3 uses one bindless set with a 4096-image array and material
+  records; M2 only implements the capability gate and its tests. The Dear ImGui
+  overlay's internal UI descriptor pool is the documented exception (ADR-0010)
+  and is not a material/texture path.
+- The GPU memory budget is 4 GiB total. Textures are capped at 1 GiB as a
+  sub-budget; material records, descriptor pools and other allocations count
+  against the 4 GiB total.
+- `engine run` owns a presentation-only `CameraPose` for its fly camera and
+  passes it to `Renderer::draw_frame`. The pose is never written to the scene;
+  input remains presentation state under ADR-0002. SDL events are routed to
+  ImGui before the application consumes them.
+- The windowed `Renderer` owns an optional Dear ImGui debug overlay. It is
+  enabled by default in debug builds and disabled by default in release
+  builds. It reads only `SceneView`, shows FPS, CPU frame time, GPU timestamp
+  time and the entity list, and records its draw data inside the same
+  dynamic-rendering pass. The ImGui Vulkan backend uses the volk-loaded
+  function table; ADR-0010 records the local overlay port.
+- `SceneView` is the read-only boundary between `scene` and `render`. It
+  exposes mesh IDs, cameras and world transforms but no mutation methods.
+- A scene `Mesh` component stores only `meshId`: a future asset UUID or a fixed
+  built-in ID. Mesh vertex data never enters a scene file.
+- The renderer culls mesh instances by bounding sphere against the six frustum
+  planes before issuing indexed draws.
+- `OffscreenRenderer` renders the same scene into a headless color/depth image
+  and copies RGBA8 pixels into host memory. It does not create a window or
+  swapchain, and it is used by `engine screenshot` and the golden-image test.
+- PNG encoding uses `stb_image_write` in the CLI/test path; the renderer does
+  not depend on the PNG writer.
+- Resize, minimization and out-of-date swapchains are handled in `draw_frame`.
+  A changed window size triggers a swapchain recreation after
+  `vkDeviceWaitIdle`; a minimized window reports no frame instead of
+  presenting an invalid extent.
+- The renderer requires one queue family that supports both graphics and
+  present. Devices with separate families are rejected until ownership
+  transfers are implemented.
+- volk keeps process-wide function tables, so a process has one `Device` at a
+  time. Device creation happens before worker threads start.
+- `render` reads `scene` through a read-only `SceneView`. It never receives
+  `SceneEditor`.
+
 ## Command bus
 
 - Every command has a unique, versioned name such as `scene.entity.create@1`
@@ -157,7 +233,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M1.2 contains:
+M2.5 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -168,21 +244,36 @@ M1.2 contains:
   recursive subtree destruction, and the project/scene JSON format with
   canonical output, atomic saves and project locks
 - `engine/platform`: atomic file replacement with `fsync` on POSIX and
-  `MoveFileExW` on Windows
+  `MoveFileExW` on Windows, plus SDL3 video/event initialization, the window
+  and Vulkan surface creation
 - `engine/command`: versioned command registry, JSON Schema validation via
   json-schema-validator, structured success/error results with warnings, an
   in-memory command log with sequence numbers, undo/redo stacks, redo
   invalidation and transactions that commit or roll back as one undo step
 - `engine/scene` also provides a fixed-tick simulation that advances `Motion`
-  velocities into `Transform` positions and emits a deterministic state dump
-- EnTT 4.0.0 and json-schema-validator 2.4.0 are active
+  velocities into `Transform` positions and emits a deterministic state dump,
+  double-precision world transforms, the read-only `SceneView`, and scene
+  format v2 with `engine.scene.Mesh` references
+- `engine/render`: Vulkan 1.3 instance and device creation through volk,
+  physical-device and queue selection, Synchronization2 and Dynamic Rendering,
+  a VMA allocator, an optional validation-layer debug messenger with error
+  counting, a headless device mode, a windowed surface mode, a swapchain
+  renderer that clears, presents and recreates on resize, minimize and
+  out-of-date events, and a glslc-built triangle pipeline with a vertex
+  buffer, push-constant camera/model matrices, Vulkan-style projection, D32
+  depth, indexed built-in meshes, frustum culling and offscreen rendering with
+  PNG screenshots and golden images
+- EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, VMA 3.5.0 and GLM
+  1.0.3 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
-- `tests/unit`: core unit tests
+- `tests/unit`, `tests/render`: core unit tests, Vulkan device and window
+  smoke tests, a swapchain/resize/minimize integration test, and camera math
+  tests
 - `tests/smoke`, `tests/contract`: CLI JSON and schema tests
 - `schemas/`: `version@1`, `doctor@1` and `log-record@1` schemas
 - CI: GCC 14, Clang 18, Windows MSVC, clang-format/clang-tidy, ASan/UBSan and
   lavapipe-based Vulkan detection
 
-The remaining modules are planned, not implemented. M1 adds reflection, ECS,
-the command bus and the project/scene format.
+The remaining modules are planned, not implemented. M2 adds the Vulkan
+renderer; M3 adds assets.

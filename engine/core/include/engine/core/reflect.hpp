@@ -15,7 +15,7 @@
 
 namespace engine::core {
 
-enum class FieldType : std::uint8_t { Boolean, Integer, Number, String, Vec3, Quat };
+enum class FieldType : std::uint8_t { Boolean, Integer, Number, String, Vec3, Vec3d, Quat };
 
 struct FieldDescriptor {
     std::string name;
@@ -97,6 +97,8 @@ private:
             return FieldType::String;
         } else if constexpr (std::is_same_v<Member, Vec3>) {
             return FieldType::Vec3;
+        } else if constexpr (std::is_same_v<Member, Vec3d>) {
+            return FieldType::Vec3d;
         } else if constexpr (std::is_same_v<Member, Quat>) {
             return FieldType::Quat;
         } else {
@@ -107,6 +109,8 @@ private:
     template <typename Member>
     [[nodiscard]] static nlohmann::json encode_value(const Member& value) {
         if constexpr (std::is_same_v<Member, Vec3>) {
+            return nlohmann::json::array({value.x, value.y, value.z});
+        } else if constexpr (std::is_same_v<Member, Vec3d>) {
             return nlohmann::json::array({value.x, value.y, value.z});
         } else if constexpr (std::is_same_v<Member, Quat>) {
             return nlohmann::json::array({value.x, value.y, value.z, value.w});
@@ -154,6 +158,22 @@ private:
             result.x = value[0].get<float>();
             result.y = value[1].get<float>();
             result.z = value[2].get<float>();
+            return result;
+        } else if constexpr (std::is_same_v<Member, Vec3d>) {
+            if (!value.is_array() || value.size() != 3) {
+                return make_failure<Member>(
+                    make_error(ErrorCode::Validation, "expected an array of three numbers"));
+            }
+            Vec3d result;
+            for (std::size_t index = 0; index < 3; ++index) {
+                if (!value[index].is_number()) {
+                    return make_failure<Member>(
+                        make_error(ErrorCode::Validation, "expected an array of three numbers"));
+                }
+            }
+            result.x = value[0].get<double>();
+            result.y = value[1].get<double>();
+            result.z = value[2].get<double>();
             return result;
         } else if constexpr (std::is_same_v<Member, Quat>) {
             if (!value.is_array() || value.size() != 4) {

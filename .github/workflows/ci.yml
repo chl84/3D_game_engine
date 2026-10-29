@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -66,7 +66,50 @@ jobs:
       - name: Install Vulkan and lavapipe
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools g++-14
+          sudo apt-get install -y \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
+            g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
+            libxkbcommon-dev libegl1-mesa-dev xvfb openbox
+
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          "$sdk_root/bin/glslc" --version
+
+      - name: Verify glslc
+        run: |
+          glslc --version
+          test "$(command -v glslc)" = "$VULKAN_SDK/bin/glslc"
+
+      - name: Select the lavapipe ICD
+        run: |
+          icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd"
+          echo "VK_ICD_FILENAMES=$icd" >> "$GITHUB_ENV"
+          echo "Using $icd"
 
       - name: Install pinned CMake and Ninja
         run: |
@@ -95,8 +138,35 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
+      # Run the whole CTest suite under Xvfb + openbox so the window and
+      # swapchain tests actually execute instead of being skipped as headless.
       - name: Test
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            openbox --sm-disable &
+            wm=$!
+            sleep 1
+            ctest --preset ${{ matrix.preset }} --output-on-failure
+            code=$?
+            kill "$wm" 2>/dev/null || true
+            exit "$code"
+          '
+
+      # Keep the strict minimize contract in addition to the CTest run.
+      - name: Swapchain minimize with Xvfb
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            openbox --sm-disable &
+            wm=$!
+            sleep 1
+            ./build/${{ matrix.preset }}/tests/engine_swapchain_test --require-minimize
+            code=$?
+            kill "$wm" 2>/dev/null || true
+            exit "$code"
+          '
+
+      - name: Render test summary
+        run: ctest --preset ${{ matrix.preset }} -R engine_render_tests -V
 
       - name: Core test summary
         run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
@@ -116,8 +186,13 @@ jobs:
               document = json.load(input_file)
           assert document["vulkan"]["loader"] is True
           assert document["vulkan"]["lavapipe"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
           names = [device["name"].lower() for device in document["vulkan"]["devices"]]
           assert any("llvmpipe" in name for name in names), names
+          assert any(
+              device["descriptorIndexing"]["supported"]
+              for device in document["vulkan"]["devices"]
+          )
           assert document["requirements"]["passed"] is True
           print("lavapipe detected:", names)
           PY
@@ -136,8 +211,9 @@ jobs:
           import json
           with open("doctor-no-icd.json", encoding="utf-8") as input_file:
               document = json.load(input_file)
+          assert document["vulkan"]["descriptorIndexing"] is False
           assert document["requirements"]["passed"] is False
-          assert "vulkan" in document["requirements"]["failed"]
+          assert document["requirements"]["failed"] == ["vulkan"]
           print("missing ICD correctly failed with exit 8")
           PY
 
@@ -172,7 +248,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -194,6 +270,51 @@ jobs:
           python -m venv .venv
           .\.venv\Scripts\python.exe -m pip install --upgrade pip
           .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+      - name: Install Vulkan SDK for glslc
+        shell: pwsh
+        run: |
+          choco install vulkan-sdk --version=1.4.363 -y --no-progress
+          $sdk = "C:\VulkanSDK\1.4.363.0"
+          $glslc = Join-Path $sdk "Bin\glslc.exe"
+          if (-not (Test-Path $glslc)) {
+            throw "Pinned glslc.exe was not found at $glslc"
+          }
+          $bin = Split-Path $glslc -Parent
+          $bin | Out-File -FilePath $env:GITHUB_PATH -Append
+          "VULKAN_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $env:Path = "$bin;$env:Path"
+          glslc --version
+
+      - name: Install software Vulkan ICD (lavapipe)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:RUNNER_TEMP "lavapipe"
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+          $archive = Join-Path $root "mesa-lavapipe-x64-26.2.6.7z"
+          Invoke-WebRequest -Uri "https://github.com/mmozeiko/build-mesa/releases/download/26.2.6/mesa-lavapipe-x64-26.2.6.7z" -OutFile $archive
+          $expected = "4ed980046a8d42de4efa74085f00e238a51c774b854d63ecece6dfee59ab3bf3"
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {
+            throw "lavapipe archive checksum mismatch: $actual"
+          }
+          $sevenZip = Join-Path $env:ProgramFiles "7-Zip\7z.exe"
+          if (-not (Test-Path $sevenZip)) {
+            $sevenZip = "7z"
+          }
+          & $sevenZip x $archive "-o$root\mesa" -y
+          if ($LASTEXITCODE -ne 0) {
+            throw "lavapipe extraction failed"
+          }
+          $mesa = Join-Path $root "mesa"
+          $icd = (Resolve-Path (Join-Path $mesa "lvp_icd.x86_64.json")).Path
+          & reg.exe add "HKLM\SOFTWARE\Khronos\Vulkan\Drivers" /v $icd /t REG_DWORD /d 0 /f /reg:64
+          if ($LASTEXITCODE -ne 0) {
+            throw "lavapipe ICD registration failed"
+          }
+          $mesa | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          Write-Host "Registered lavapipe ICD: $icd"
 
       - name: Install pinned CMake and Ninja
         shell: pwsh
@@ -233,10 +354,35 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset ci-windows
 
+      - name: Vulkan doctor detection (Windows)
+        shell: pwsh
+        run: |
+          & .\build\ci-windows\tools\engine\engine.exe doctor --json --require vulkan | Out-File -Encoding utf8 doctor-windows.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "engine doctor failed with exit code $LASTEXITCODE"
+          }
+          Get-Content doctor-windows.json
+          @'
+          import json
+          with open("doctor-windows.json", encoding="utf-8-sig") as input_file:
+              document = json.load(input_file)
+          assert document["vulkan"]["loader"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
+          names = [device["name"].lower() for device in document["vulkan"]["devices"]]
+          assert any("llvmpipe" in name for name in names), names
+          assert document["requirements"]["passed"] is True
+          print("Windows lavapipe detected:", names)
+          '@ | & .\.venv\Scripts\python.exe -
+
       - name: Test
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: ctest --preset ci-windows --output-on-failure
+
+      - name: Render test summary
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: ctest --preset ci-windows -R engine_render_tests -V
 
       - name: Core test summary
         env:
@@ -270,11 +416,39 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-format-18 clang-tidy-18
 
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          "$sdk_root/bin/glslc" --version
+
       - name: Restore vcpkg binary cache
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -309,6 +483,9 @@ jobs:
       - name: Configure for clang-tidy
         run: cmake --preset ci-linux-clang
 
+      - name: Generate shaders for clang-tidy
+        run: cmake --build --preset ci-linux-clang --target engine_render_shaders
+
       - name: clang-format
         run: |
           find engine tools tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0 \
@@ -335,7 +512,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -355,7 +532,50 @@ jobs:
       - name: Install Vulkan and lavapipe
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools g++-14
+          sudo apt-get install -y \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
+            g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
+            libxkbcommon-dev libegl1-mesa-dev xvfb openbox
+
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          "$sdk_root/bin/glslc" --version
+
+      - name: Verify glslc
+        run: |
+          glslc --version
+          test "$(command -v glslc)" = "$VULKAN_SDK/bin/glslc"
+
+      - name: Select the lavapipe ICD
+        run: |
+          icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd"
+          echo "VK_ICD_FILENAMES=$icd" >> "$GITHUB_ENV"
+          echo "Using $icd"
 
       - name: Install pinned CMake and Ninja
         run: |
@@ -388,7 +608,16 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-        run: ctest --preset linux-asan --output-on-failure
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            openbox --sm-disable &
+            wm=$!
+            sleep 1
+            ctest --preset linux-asan --output-on-failure
+            code=$?
+            kill "$wm" 2>/dev/null || true
+            exit "$code"
+          '
 
       - name: Core test summary
         env:
@@ -413,8 +642,13 @@ jobs:
           with open("doctor-asan.json", encoding="utf-8") as input_file:
               document = json.load(input_file)
           assert document["vulkan"]["lavapipe"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
           names = [device["name"].lower() for device in document["vulkan"]["devices"]]
           assert any("llvmpipe" in name for name in names), names
+          assert any(
+              device["descriptorIndexing"]["supported"]
+              for device in document["vulkan"]["devices"]
+          )
           assert document["requirements"]["passed"] is True
           print("lavapipe detected under ASan/UBSan:", names)
           PY

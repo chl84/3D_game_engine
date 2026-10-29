@@ -20,7 +20,9 @@
 namespace engine::scene {
 namespace {
 
-constexpr int kFormatVersion = 1;
+constexpr int kProjectFormatVersion = 1;
+constexpr int kSceneFormatVersion = 2;
+constexpr int kMinimumSceneFormatVersion = 1;
 
 [[nodiscard]] Error project_error(ErrorCode code, std::string message,
                                   const std::filesystem::path& path) {
@@ -254,10 +256,10 @@ Result<Project> Project::load(const std::filesystem::path& root) {
     }
 
     auto format_version = require_int(*document, "formatVersion");
-    if (!format_version || *format_version != kFormatVersion) {
+    if (!format_version || *format_version != kProjectFormatVersion) {
         return core::make_failure<Project>(
             core::make_error(core::ErrorCode::Unsupported, "unsupported project format version",
-                             "Only formatVersion 1 is supported.",
+                             "Only project formatVersion 1 is supported.",
                              {{"formatVersion", format_version.value_or(-1)}}));
     }
 
@@ -333,7 +335,7 @@ Result<void> Project::save() const {
     settings["window"] = std::move(window);
 
     nlohmann::json document{
-        {"formatVersion", kFormatVersion},
+        {"formatVersion", kProjectFormatVersion},
         {"projectId", project_id_.to_string()},
         {"name", name_},
         {"engineVersion", engine_version_},
@@ -351,7 +353,8 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
     const auto* transform = registry.find("engine.scene.Transform");
     const auto* camera = registry.find("engine.scene.Camera");
     const auto* motion = registry.find("engine.scene.Motion");
-    if (transform == nullptr || camera == nullptr || motion == nullptr) {
+    const auto* mesh = registry.find("engine.scene.Mesh");
+    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr) {
         return core::make_failure<nlohmann::json>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -371,6 +374,9 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
         if (scene.has<Motion>(entity)) {
             components["engine.scene.Motion"] = motion->to_json(&scene.component<Motion>(entity));
         }
+        if (scene.has<Mesh>(entity)) {
+            components["engine.scene.Mesh"] = mesh->to_json(&scene.component<Mesh>(entity));
+        }
 
         nlohmann::json parent_id = nullptr;
         if (const Entity parent = scene.parent(entity); parent != entt::null) {
@@ -389,9 +395,9 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
     }
 
     return nlohmann::json{
-        {"formatVersion", kFormatVersion}, {"sceneId", scene.scene_id().to_string()},
-        {"name", scene.scene_name()},      {"revision", scene.revision()},
-        {"entities", std::move(entities)}, {"metadata", scene.scene_metadata()},
+        {"formatVersion", kSceneFormatVersion}, {"sceneId", scene.scene_id().to_string()},
+        {"name", scene.scene_name()},           {"revision", scene.revision()},
+        {"entities", std::move(entities)},      {"metadata", scene.scene_metadata()},
     };
 }
 
@@ -426,12 +432,14 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
     }
 
     auto format_version = require_int(*document, "formatVersion");
-    if (!format_version || *format_version != kFormatVersion) {
+    if (!format_version || *format_version < kMinimumSceneFormatVersion ||
+        *format_version > kSceneFormatVersion) {
         return core::make_failure<Scene>(
             core::make_error(core::ErrorCode::Unsupported, "unsupported scene format version",
-                             "Only formatVersion 1 is supported.",
+                             "Supported scene format versions are 1 and 2.",
                              {{"formatVersion", format_version.value_or(-1)}}));
     }
+    const int source_version = *format_version;
 
     const auto scene_id_iterator = document->find("sceneId");
     if (scene_id_iterator == document->end()) {
@@ -474,7 +482,8 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
     const auto* transform = registry.find("engine.scene.Transform");
     const auto* camera = registry.find("engine.scene.Camera");
     const auto* motion = registry.find("engine.scene.Motion");
-    if (transform == nullptr || camera == nullptr || motion == nullptr) {
+    const auto* mesh = registry.find("engine.scene.Mesh");
+    if (transform == nullptr || camera == nullptr || motion == nullptr || mesh == nullptr) {
         return core::make_failure<Scene>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -583,6 +592,22 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
                 }
                 auto parsed =
                     motion->from_json(&scene.component<Motion>(entity_handle), *component_iterator);
+                if (!parsed) {
+                    return core::make_failure<Scene>(parsed.error());
+                }
+            } else if (component_iterator.key() == "engine.scene.Mesh") {
+                if (source_version < 2) {
+                    return core::make_failure<Scene>(
+                        core::make_error(core::ErrorCode::Validation,
+                                         "engine.scene.Mesh requires scene formatVersion 2", {},
+                                         {{"component", component_iterator.key()}}));
+                }
+                auto added = scene.add_component<Mesh>(entity_handle);
+                if (!added) {
+                    return core::make_failure<Scene>(added.error());
+                }
+                auto parsed =
+                    mesh->from_json(&scene.component<Mesh>(entity_handle), *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }

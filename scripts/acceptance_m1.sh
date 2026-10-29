@@ -18,6 +18,7 @@ trap cleanup EXIT
 
 echo "cloning $repository ($branch) into $workdir/repo"
 git clone --depth 1 --branch "$branch" "$repository" "$workdir/repo"
+git -C "$workdir/repo" rev-parse HEAD
 cd "$workdir/repo"
 
 export VCPKG_ROOT="${VCPKG_ROOT:-$HOME/.local/share/vcpkg}"
