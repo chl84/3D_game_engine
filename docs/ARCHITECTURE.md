@@ -1,7 +1,7 @@
 # Architecture
 
-**Status:** M0.6. This document describes the approved module boundaries and
-the current M0 implementation. Planned modules are marked as planned.
+**Status:** M1.1. This document describes the approved module boundaries and
+the current implementation. Planned modules are marked as planned.
 
 ## Principles
 
@@ -157,11 +157,13 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M0.5 contains:
+M1.1 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
-  `UuidGenerator`, `PathSandbox`, JSON `Config`, and `Log` with console and
-  JSONL sinks
+  `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
+  sinks, and the reflection registry with draft-07 component schemas
+- EnTT 4.0.0 and json-schema-validator 2.4.0 are available for M1.2 and the
+  command bus
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
 - `tests/unit`: core unit tests

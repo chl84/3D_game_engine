@@ -1,8 +1,8 @@
 # Status
 
 **Last updated:** 2026-10-29
-**Current milestone:** M0 — project foundation, complete
-**Current substep:** M0 complete — approved by the owner on 2026-10-29. `v0.1.0` is tagged and `m0/foundation` is merged into `main`. M1 is next.
+**Current milestone:** M1 — headless core
+**Current substep:** M1.1 complete — reflection registry and JSON Schema generation. M1.2 is next.
 
 ## Substeps
 
@@ -16,6 +16,20 @@
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 | M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
 | M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, sensitive-data scan, tag `v0.1.0` and the M0 acceptance report. Approved by the owner on 2026-10-29 |
+
+## M1 substeps
+
+| Substep | Scope | Status |
+|---|---|---|
+| M1.1 | Reflection registry and JSON Schema generation | Done |
+| M1.2 | ECS, UUID and transform hierarchy | Next |
+| M1.3 | Command bus with validation and command log | Planned |
+| M1.4 | Transactions and undo/redo | Planned |
+| M1.5 | Project and scene format | Planned |
+| M1.6 | Offline CLI | Planned |
+| M1.7 | Fixed tick and determinism | Planned |
+| M1.8 | API reference, AI guide and acceptance script | Planned |
+| M1.9 | Hardening and M1 acceptance | Planned |
 
 ## Repository state
 
@@ -31,8 +45,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 26 cases / 172 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 26 cases / 172 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -55,6 +69,8 @@
 | English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
 | Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
 | Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 72 tracked files passed |
+| Reflection registry | Automatically tested | `reflect_test.cpp` covers component registration, field metadata, JSON round-trip, partial updates, unknown fields, wrong types and generated draft-07 schemas; 26 core cases / 172 assertions |
+| EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
 | Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |

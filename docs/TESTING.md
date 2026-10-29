@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M0.7. Six CTest tests exist; `engine_core_tests` contains 21 test
-cases and 132 assertions. CI also runs clang-format, clang-tidy with project
+**Status:** M1.1. Six CTest tests exist; `engine_core_tests` contains 26 test
+cases and 172 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
 
@@ -10,7 +10,7 @@ Ninja 1.13.2.
 | Test | Type | Labels |
 |---|---|---|
 | `engine_core_tests` | Catch2 unit test | `unit` |
-| `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0 dependencies | `unit`, `dependencies` |
+| `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0/M1 dependencies | `unit`, `dependencies` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
@@ -33,6 +33,8 @@ on both Linux and Windows.
 - JSON configuration loading, type errors and recursive merge
 - JSONL logging, level filtering and required record fields
 - UTC timestamp formatting at the epoch, leap day, month boundary and year boundary
+- reflection registration, field metadata, JSON round-trip, partial updates,
+  unknown fields, type errors and generated draft-07 component schemas
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.
