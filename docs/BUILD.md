@@ -1,11 +1,12 @@
 # Build
 
-**Status:** M2.3. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M2.5. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
-simulation, `engine schema`, and the M2.3 Vulkan renderer with an SDL3
-window, glslc-compiled shaders and a triangle. Version, doctor and all offline commands support `--json` and
+simulation, `engine schema`, the M2.5 Vulkan renderer with an SDL3 window,
+glslc-compiled shaders, offscreen rendering, `engine screenshot`, PNG golden
+images and the `stb_image_write` encoder. Version, doctor and all offline commands support `--json` and
 state-changing commands support `--dry-run`. Catch2, contract, render and M1
 acceptance tests cover the CLI and the renderer, and
 `scripts/generate_api_reference.py` keeps `API_REFERENCE.md` generated. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs

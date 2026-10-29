@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M2.4. Eleven CTest tests exist on Linux; Windows registers nine
-because the window and swapchain tests are not registered there. `engine_core_tests`
+**Status:** M2.5. Thirteen CTest tests exist on Linux; Windows registers nine
+because the window, swapchain and screenshot tests are not registered there. `engine_core_tests`
 contains 60 test cases and 468 assertions; `engine_render_tests` contains 9
 test cases and 62 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
@@ -22,6 +22,8 @@ pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, single-device guard and sequential device creation | `unit`, `render` |
 | `engine_window_smoke` | SDL3 window, Vulkan surface, present queue and zero validation errors | `unit`, `render` |
 | `engine_swapchain_test` | Swapchain creation, frames in flight, clear and present, resize, minimize/restore and validation errors | `unit`, `render` |
+| `engine_screenshot_golden` | 64×64 offscreen scene compared with the lavapipe golden image | `unit`, `render`, `acceptance` |
+| `engine_screenshot_cli` | `engine screenshot` creates a valid 64×64 PNG and `command-result@1` envelope | `contract`, `cli`, `render` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -44,7 +46,7 @@ clear error when `glslc` is missing. If the Vulkan loader or a usable Vulkan 1.3
 device cases are reported as skipped while the camera cases still run. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
-reports that as skipped. `engine_swapchain_test` creates a hidden window,
+reports that as skipped. `engine_screenshot_golden` renders a fixed scene offscreen with the same built-in meshes and compares RGBA pixels with a documented per-channel tolerance on lavapipe. `engine_screenshot_cli` exercises the full CLI path and validates the PNG header and dimensions. `engine_swapchain_test` creates a hidden window,
 presents frames, resizes the hidden window, shows it, minimizes and restores
 it, renders an 8 km scene with a depth buffer and verifies that the far cube
 and ground are visible while an entity behind the camera is culled, and asserts
@@ -55,8 +57,9 @@ minimize fails that step. It also exits with code 77 when the environment is
 unavailable. The window and swapchain tests are not registered on Windows
 because Windows graphics is not verified.
 
-The Linux CI job runs the render tests against the default Mesa device; the
-lavapipe golden-image work starts in M2.5.
+The Linux CI job runs the render tests against lavapipe (the runner has no
+GPU), so `engine_screenshot_golden` executes there. Windows has no ICD and does
+not register the golden or window tests.
 
 `engine_core_tests` covers:
 

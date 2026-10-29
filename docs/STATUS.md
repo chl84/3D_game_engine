@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.4 implemented — scene format v2 with mesh references, double-precision world transforms, camera-relative rendering, depth buffer and scene meshes are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
+**Current substep:** M2.5 implemented — offscreen rendering, `engine screenshot`, PNG output, golden images and the `stb_image_write` dependency are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -39,8 +39,8 @@
 | M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Done — reviewer GODKJENT |
 | M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Done — reviewer GODKJENT |
 | M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Done — reviewer GODKJENT |
-| M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Implemented — review pending |
-| M2.5 | Offscreen rendering and screenshots | Planned |
+| M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Done — owner approved with double-position change; re-review approved |
+| M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Implemented — review pending |
 | M2.6 | ImGui debug overlay | Planned |
 | M2.7 | Descriptor strategy and validation hardening | Planned |
 | M2.8 | Hardening and M2 acceptance | Planned |
@@ -77,8 +77,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 11/11 passed; `engine_core_tests` → 60 cases / 468 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 11/11 passed; `engine_core_tests` → 60 cases / 468 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -137,6 +137,9 @@
 | M2.4 depth and culling | Automatically tested | `engine_swapchain_test` renders a 8 km scene with a depth buffer and checks that the far cube and ground are visible while an entity behind the camera is culled |
 | M2.4 CI | Automatically tested | Manual dispatch [40920229557](https://github.com/chl84/3D_game_engine/actions/runs/40920229557) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with camera/transform cases passing and device cases skipped; Quality green |
 | M2.4 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `d2a9e22`, built with glslc, ran 11/11 CTest and `M1 acceptance passed` |
+| M2.5 offscreen render | Automatically tested | `engine_screenshot_test` renders a 64×64 scene through the headless Vulkan device and compares it to `tests/fixtures/golden/m2_scene_64.png` on lavapipe |
+| M2.5 screenshot CLI | Automatically tested | `tests/smoke/screenshot.py` creates a project, camera and cube, runs `engine screenshot --frames 2 --width 64 --height 64`, validates `command-result@1`, and checks the PNG signature and size |
+| M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

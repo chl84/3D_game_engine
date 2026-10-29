@@ -1,7 +1,7 @@
 # AI Agent Guide
 
-**Status:** M2.4. Version, doctor, the offline project/scene/entity/component
-CLI, fixed-tick simulation and the Vulkan renderer exist. The live API is
+**Status:** M2.5. Version, doctor, the offline project/scene/entity/component
+CLI, fixed-tick simulation, the Vulkan renderer and offscreen screenshots exist. The live API is
 planned for M3.
 
 ## Principles
@@ -152,7 +152,21 @@ double precision and converted to camera-relative floats before rendering.
 `SceneView` is the read-only boundary into the renderer. GLSL shaders are
 compiled by `glslc` at build time; the shaderc library is not linked.
 `engine.scene.Mesh` stores a `meshId` (`engine.builtin.cube`,
-`engine.builtin.plane` or a future asset UUID), never mesh data. `render::Device::create` returns `E_UNSUPPORTED` when the
+`engine.builtin.plane` or a future asset UUID), never mesh data.
+
+## Screenshots
+
+Render a scene without a window:
+
+```bash
+engine screenshot ./my-game scenes/main.scene.json \
+  --frames 1 --width 1280 --height 720 --out shot.png --json
+```
+
+The command creates a headless Vulkan device, renders the scene with the built-in
+meshes, writes a PNG, and returns a `command-result@1` document. `--json` is
+supported. The screenshot test uses `tests/fixtures/golden/m2_scene_64.png` on
+lavapipe. `render::Device::create` returns `E_UNSUPPORTED` when the
 loader, Vulkan 1.3, Synchronization2, Dynamic Rendering or the validation
 layers are missing; the error details name the failing stage.
 
