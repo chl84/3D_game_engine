@@ -7,8 +7,12 @@
 
 namespace {
 
-[[nodiscard]] bool loader_missing(const engine::core::Error& error) {
-    return error.details.is_object() && error.details.value("stage", "") == "loader";
+[[nodiscard]] bool environment_unavailable(const engine::core::Error& error) {
+    if (!error.details.is_object()) {
+        return false;
+    }
+    const std::string stage = error.details.value("stage", "");
+    return stage == "loader" || stage == "physical-device" || stage == "validation";
 }
 
 [[nodiscard]] engine::render::DeviceOptions
@@ -36,8 +40,8 @@ TEST_CASE("headless Vulkan device initializes", "[render]") {
     auto device =
         engine::render::Device::create(device_options(engine::render::ValidationMode::Auto));
     if (!device) {
-        if (loader_missing(device.error())) {
-            SKIP("Vulkan loader is not available: " + device.error().message);
+        if (environment_unavailable(device.error())) {
+            SKIP("Vulkan environment is unavailable: " + device.error().message);
         }
         INFO("device creation failed: " << device.error().message << " " << device.error().hint);
     }
@@ -60,8 +64,8 @@ TEST_CASE("required validation layers report no errors", "[render][validation]")
     auto device =
         engine::render::Device::create(device_options(engine::render::ValidationMode::Required));
     if (!device) {
-        if (loader_missing(device.error())) {
-            SKIP("Vulkan loader is not available: " + device.error().message);
+        if (environment_unavailable(device.error())) {
+            SKIP("Vulkan environment is unavailable: " + device.error().message);
         }
         INFO("device creation failed: " << device.error().message << " " << device.error().hint);
     }
@@ -77,8 +81,8 @@ TEST_CASE("only one render device can exist per process", "[render]") {
     auto first =
         engine::render::Device::create(device_options(engine::render::ValidationMode::Disabled));
     if (!first) {
-        if (loader_missing(first.error())) {
-            SKIP("Vulkan loader is not available: " + first.error().message);
+        if (environment_unavailable(first.error())) {
+            SKIP("Vulkan environment is unavailable: " + first.error().message);
         }
         INFO("device creation failed: " << first.error().message << " " << first.error().hint);
     }
@@ -95,8 +99,8 @@ TEST_CASE("render devices can be created sequentially", "[render]") {
         auto device = engine::render::Device::create(
             device_options(engine::render::ValidationMode::Disabled));
         if (!device) {
-            if (loader_missing(device.error())) {
-                SKIP("Vulkan loader is not available: " + device.error().message);
+            if (environment_unavailable(device.error())) {
+                SKIP("Vulkan environment is unavailable: " + device.error().message);
             }
             INFO("attempt " << attempt << " failed: " << device.error().message << " "
                             << device.error().hint);

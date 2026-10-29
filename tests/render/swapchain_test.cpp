@@ -25,7 +25,7 @@ int fail(const std::string& message) {
 
 [[nodiscard]] bool is_environment_error(const engine::core::Error& error) {
     const std::string stage = error.details.value("stage", "");
-    return stage == "loader" || stage == "validation";
+    return stage == "loader" || stage == "physical-device" || stage == "validation";
 }
 
 [[nodiscard]] engine::core::Result<engine::render::Renderer>

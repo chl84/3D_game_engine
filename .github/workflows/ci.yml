@@ -307,7 +307,7 @@ jobs:
       - name: Install clang tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format-18 clang-tidy-18
+          sudo apt-get install -y clang-format-18 clang-tidy-18 glslc
 
       - name: Restore vcpkg binary cache
         uses: actions/cache@v6
