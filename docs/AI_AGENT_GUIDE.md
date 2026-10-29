@@ -142,8 +142,8 @@ registration. Read-only commands do not need it.
 
 ## Renderer
 
-The render module is `engine::render`; it is not exposed through the CLI yet.
-`engine screenshot` is available in M2.5. The current API creates a Vulkan 1.3
+The render module is `engine::render`. `engine screenshot` and `engine run`
+are the windowed/offscreen CLI entry points. The current API creates a Vulkan 1.3
 device with Synchronization2, Dynamic Rendering and VMA, either headless or
 from an SDL3 window. `render::Renderer` owns the swapchain and frame loop; it
 clears, draws scene meshes and presents, and recreates the swapchain after
@@ -161,6 +161,21 @@ descriptor counts, runtime descriptor arrays and the descriptor limits in
 ADR-0011. There is no fallback; `Device::create` returns `E_UNSUPPORTED` with
 stage `descriptor-indexing` and machine-readable missing lists. `engine doctor
 --require vulkan` applies the same gate and exits 8 when it is not met.
+
+## Windowed run
+
+Run a scene in a window with a fly camera:
+
+```bash
+engine run ./my-game scenes/main.scene.json
+```
+
+Controls: WASD moves, Q/E moves down/up, Shift moves faster, hold the right
+mouse button to look, F1 toggles the debug overlay, and Escape closes the
+window. `--frames N --hidden` runs a bounded hidden-window smoke test.
+
+Input is presentation-only. The fly camera is passed to the renderer as a
+`CameraPose`; it never mutates the scene or authoritative state (ADR-0002).
 
 ## Screenshots
 

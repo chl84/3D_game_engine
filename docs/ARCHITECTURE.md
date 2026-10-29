@@ -140,6 +140,10 @@ animation mutate the runtime state directly during a fixed tick.
 - The GPU memory budget is 4 GiB total. Textures are capped at 1 GiB as a
   sub-budget; material records, descriptor pools and other allocations count
   against the 4 GiB total.
+- `engine run` owns a presentation-only `CameraPose` for its fly camera and
+  passes it to `Renderer::draw_frame`. The pose is never written to the scene;
+  input remains presentation state under ADR-0002. SDL events are routed to
+  ImGui before the application consumes them.
 - The windowed `Renderer` owns an optional Dear ImGui debug overlay. It is
   enabled by default in debug builds and disabled by default in release
   builds. It reads only `SceneView`, shows FPS, CPU frame time, GPU timestamp

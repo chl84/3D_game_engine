@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.8 reviewer KREVER EIER — the consolidated M2 acceptance report is prepared. The owner must decide on free camera/input/run, the M5/M8 performance measurement timing and the ImGui re-init measurement before merge approval.
+**Current substep:** M2.9 implemented — `engine run` with a presentation-only fly camera, F1 overlay toggle and ImGui input routing awaits reviewer approval and the owner's Hyprland test.
 
 ## Substeps
 
@@ -43,7 +43,8 @@
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
-| M2.8 | Hardening and M2 acceptance | Reviewer KREVER EIER — owner decisions pending |
+| M2.8 | Hardening and M2 acceptance | Approved by the owner 2026-10-29; reference measurement moved to M5/M8 and ImGui re-init to M8 |
+| M2.9 | Windowed `engine run`, fly camera, overlay toggle and ImGui input routing | Implemented — reviewer and owner manual test pending |
 
 ## Repository state
 
@@ -168,6 +169,10 @@
 | M2.8 doctor mixed-device test | Automatically tested | `engine_core_tests` adds mixed supported/unsupported device cases: one supported device passes, all-unsupported fails, and an empty device list remains diagnostic. Core tests are 62 cases / 474 assertions |
 | M2.8 CI | Automatically tested | Final run [40959315657](https://github.com/chl84/3D_game_engine/actions/runs/40959315657) on `330e6b5` → all five jobs green. Linux GCC 14 / Clang 18 / ASan: 14/14; Windows MSVC: 11/11 with lavapipe offscreen tests; Quality green |
 | M2.8 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `330e6b5`, built with pinned dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.9 windowed run | Automatically tested | `engine_run_smoke` creates a project with a camera and cube and runs `engine run --frames 2 --hidden` at 320×240; the command returns `command-result@1` with 2 frames |
+| M2.9 presentation input | Implemented; manual test pending | `engine run` supports WASD + Q/E, Shift, right-mouse look, F1 overlay toggle and Escape close. The camera pose is passed to `Renderer::draw_frame` and never written to the scene (ADR-0002) |
+| M2.9 overlay toggle and ImGui input | Automatically tested | `engine_overlay_test` toggles the overlay off and on and checks visibility/draw vertices; `Renderer::process_sdl_event` routes SDL events to ImGui. The owner verifies the interactive fly camera and toggle on Hyprland |
+| M2.9 CI | Pending | Final CI after implementation |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -354,7 +359,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Owner decision on the M2 acceptance report: free camera/input/run, the
-M5/M8 performance measurement timing and the ImGui re-init measurement. Merge
-to `main`, tag `v0.3.0` and closing M2 require the owner's explicit approval.
-The agent does not merge, tag or use `--admin` without that approval.
+M2.9 review and the owner's manual `engine run` test on Hyprland. After both,
+merge through a normal pull request without `--admin` and tag `v0.3.0`, subject
+to the owner's explicit approval. If branch protection blocks the merge, stop
+and ask the owner.

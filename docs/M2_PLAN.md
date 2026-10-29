@@ -1,11 +1,10 @@
 # M2 Plan — Vulkan Renderer
 
-**Status:** Approved by the owner on 2026-10-29. M2.1–M2.6 are approved.
-M2.7 is approved and M2.8 is implemented. The reviewer requires an owner
-decision on free camera/input/run, the M5/M8 performance measurement timing and
-the ImGui re-init measurement before merge approval. ADR-0011 was approved with
-the change that descriptor indexing is a minimum requirement and there is no
-fallback.
+**Status:** Approved by the owner on 2026-10-29. M2.1–M2.8 are approved.
+M2.9 adds the windowed fly-camera run command and presentation-only input; it
+awaits reviewer approval and the owner's manual Hyprland test before merge.
+ADR-0011 was approved with the change that descriptor indexing is a minimum
+requirement and there is no fallback.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2
@@ -196,6 +195,19 @@ evaluated but not adopted: the overlay is off by default in release, the
 re-initialization is on the swapchain-recreation path rather than the steady
 state, and the editor/UI split belongs in M6. Device loss and the fake-device
 end-to-end rejection test remain documented gaps.
+
+### M2.9 Windowed run and presentation input
+
+- Add `engine run <project> <scene>` with a WASD + mouse fly camera.
+- Add Q/E vertical movement, Shift speed boost, right-mouse look and Escape to
+  close.
+- Add an F1 toggle for the ImGui debug overlay.
+- Route SDL events to ImGui before the application handles them.
+- Keep the camera pose presentation-only: pass it to `Renderer::draw_frame` as
+  a `CameraPose`; never mutate the scene or authoritative state (ADR-0002).
+- Add an overlay on/off test and a hidden-window `engine run` smoke test.
+- The owner manually verifies the window, fly camera and overlay toggle on
+  Hyprland.
 
 ## M2 reference budget
 

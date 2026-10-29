@@ -1,8 +1,9 @@
 # Testing
 
-**Status:** M2.8. Fourteen CTest tests exist on Linux; Windows registers eleven
-because the window, swapchain and overlay tests remain Linux-only while the
-offscreen golden and screenshot tests are registered on both platforms.
+**Status:** M2.9. Fifteen CTest tests exist on Linux; Windows registers eleven
+because the window, swapchain, overlay and `engine run` tests remain Linux-only
+while the offscreen golden and screenshot tests are registered on both
+platforms.
 `engine_core_tests` contains 62 test cases and 474 assertions on Linux;
 Windows reports 60 cases / 462 assertions because two POSIX-only tests are
 compiled out. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
@@ -24,7 +25,8 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_render_tests` | Headless Vulkan 1.3 device, required validation layers, descriptor-indexing minimum, single-device guard and sequential device creation | `unit`, `render` |
 | `engine_window_smoke` | SDL3 window, Vulkan surface, present queue and zero validation errors | `unit`, `render` |
 | `engine_swapchain_test` | Swapchain creation, frames in flight, clear and present, resize, minimize/restore and validation errors | `unit`, `render` |
-| `engine_overlay_test` | ImGui debug overlay: entity list, CPU/GPU frame statistics, no scene mutation and zero validation errors | `unit`, `render` |
+| `engine_overlay_test` | ImGui debug overlay: entity list, CPU/GPU frame statistics, F1-equivalent visibility toggle, no scene mutation and zero validation errors | `unit`, `render` |
+| `engine_run_smoke` | Hidden-window `engine run --frames 2` contract, window creation and clean exit | `contract`, `cli`, `render` |
 | `engine_screenshot_golden` | 64×64 offscreen scene compared with the lavapipe golden image | `unit`, `render`, `acceptance` |
 | `engine_screenshot_cli` | `engine screenshot` creates a valid 64×64 PNG and `command-result@1` envelope | `contract`, `cli`, `render` |
 
@@ -69,9 +71,13 @@ material records; the 1 GiB texture budget is part of the 4 GiB total GPU
 memory budget. `engine_overlay_test` creates a hidden window,
 builds a camera and two meshes, renders four frames with the overlay enabled,
 checks that the overlay lists every entity and submits vertices, checks that
-CPU and GPU timing are reported (GPU timing is optional), and compares the
-scene revision and camera position before and after rendering to prove that the
-overlay did not mutate authoritative state. `engine_swapchain_test` creates a hidden window,
+CPU and GPU timing are reported (GPU timing is optional), toggles the overlay
+off and on, and compares the scene revision and camera position before and
+after rendering to prove that the overlay did not mutate authoritative state.
+`engine_run_smoke` creates a project with a camera and cube, runs
+`engine run --frames 2 --hidden` at 320×240, and validates the
+`command-result@1` envelope. Interactive fly-camera input is verified manually
+by the owner on Hyprland. `engine_swapchain_test` creates a hidden window,
 presents frames, resizes the hidden window, shows it, minimizes and restores
 it, renders an 8 km scene with a depth buffer and verifies that the far cube
 and ground are visible while an entity behind the camera is culled, and asserts
@@ -85,10 +91,10 @@ because Windows graphics is not verified.
 The Linux CI jobs select the lavapipe ICD into `VK_ICD_FILENAMES` before the
 tests, so the render tests and `engine_screenshot_golden` execute on lavapipe
 (the runner has no GPU). The complete CTest suite runs under Xvfb + openbox, so
-`engine_window_smoke`, `engine_swapchain_test` and `engine_overlay_test` execute
-instead of being skipped as headless. A separate step runs
-`engine_swapchain_test --require-minimize` so a window manager that ignores
-minimize still fails. Linux therefore reports 14/14 with lavapipe.
+`engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and
+`engine_run_smoke` execute instead of being skipped as headless. A separate step
+runs `engine_swapchain_test --require-minimize` so a window manager that ignores
+minimize still fails. Linux therefore reports 15/15 with lavapipe.
 
 The Windows job installs pinned Mesa lavapipe 26.2.6 (`mmozeiko/build-mesa`,
 SHA-256 verified) and registers its ICD, so the offscreen golden and screenshot
