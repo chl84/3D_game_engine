@@ -58,7 +58,7 @@ public:
     ComponentBuilder& operator=(ComponentBuilder&&) = delete;
 
     template <typename Member>
-    ComponentBuilder& field(std::string name, Member T::* member, std::string description = {}) {
+    ComponentBuilder& field(std::string name, Member T::*member, std::string description = {}) {
         FieldDescriptor descriptor;
         descriptor.name = std::move(name);
         descriptor.description = std::move(description);
