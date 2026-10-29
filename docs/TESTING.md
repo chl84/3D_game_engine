@@ -48,8 +48,8 @@ device cases are reported as skipped while the camera cases still run. `engine_w
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_screenshot_golden` renders a fixed scene offscreen with the same built-in meshes and compares RGBA pixels on lavapipe: at most 8 per channel difference, at most 1 % of channels may differ by more than 2. `engine_screenshot_cli` exercises the full CLI path, validates the PNG header
-and dimensions, and rejects `--out` paths outside the project and dimensions
-above the 8192-pixel limit. `engine_overlay_test` creates a hidden window,
+and dimensions, and rejects `--out` paths outside the project as well as
+`--width 8193`, `--height 8193` and `--frames 1001`. `engine_overlay_test` creates a hidden window,
 builds a camera and two meshes, renders four frames with the overlay enabled,
 checks that the overlay lists every entity and submits vertices, checks that
 CPU and GPU timing are reported (GPU timing is optional), and compares the
