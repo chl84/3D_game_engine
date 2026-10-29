@@ -1,9 +1,9 @@
 # API Reference
 
-**Status:** M1.7. Environment commands, the offline project/scene/entity/
-component CLI, fixed-tick simulation and `command-result@1` exist. The
-reference is still handwritten; generation from the command registry and
-reflection metadata arrives in M1.8.
+**Status:** M1.8. Environment commands, the offline project/scene/entity/
+component CLI, fixed-tick simulation, `engine schema` and `command-result@1`
+exist. The reference is still handwritten; generation from the command registry
+is planned for M1.9 or later.
 
 ## Implemented surface
 
@@ -11,6 +11,7 @@ reflection metadata arrives in M1.8.
 |---|---|---|
 | `engine --version --json` | Build and version metadata | `schemas/version@1.schema.json` |
 | `engine doctor --json` | OS, compiler, Vulkan, devices and checks | `schemas/doctor@1.schema.json` |
+| `engine schema --json` | Draft-07 schemas for built-in components | `schemas/command-result@1.schema.json` |
 | `engine project ... --json` | Project create/validate/unlock result | `schemas/command-result@1.schema.json` |
 | `engine scene ... --json` | Scene create/inspect/validate result | `schemas/command-result@1.schema.json` |
 | `engine entity ... --json` | Entity create/delete/reparent result | `schemas/command-result@1.schema.json` |

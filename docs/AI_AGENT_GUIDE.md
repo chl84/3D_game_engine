@@ -22,10 +22,12 @@ engine --version --json
 engine doctor --json
 engine doctor --require vulkan --json
 engine doctor --require gpu --require validation-layers --json
+engine schema --json
 ```
 
 The version output validates against `schemas/version@1.schema.json`; the
-doctor output validates against `schemas/doctor@1.schema.json`.
+doctor output validates against `schemas/doctor@1.schema.json`. `engine schema
+--json` returns draft-07 schemas for the built-in scene components.
 
 ## Offline project commands
 

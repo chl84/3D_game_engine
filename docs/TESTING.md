@@ -1,6 +1,6 @@
 # Testing
 
-**Status:** M1.7. Six CTest tests exist; `engine_core_tests` contains 53 test
+**Status:** M1.8. Seven CTest tests exist; `engine_core_tests` contains 53 test
 cases and 397 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
@@ -15,6 +15,7 @@ Ninja 1.13.2.
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
 | `engine_sensitive_scan` | Credentials, private keys, personal paths and email addresses in tracked files | `docs`, `security` |
+| `engine_acceptance_m1` | CLI-only M1 acceptance: project, hierarchy, components, undo, round-trip and deterministic simulation | `contract`, `acceptance` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build

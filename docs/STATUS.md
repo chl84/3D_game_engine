@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M1 — headless core
-**Current substep:** M1.7 complete — fixed-tick simulation and deterministic state dumps. M1.8 is next.
+**Current substep:** M1.8 complete — component schema output, CLI acceptance script and updated AI/API guides. M1.9 is next.
 
 ## Substeps
 
@@ -28,8 +28,8 @@
 | M1.5 | Project and scene format | Done |
 | M1.6 | Offline CLI | Done |
 | M1.7 | Fixed tick and determinism | Done |
-| M1.8 | API reference, AI guide and acceptance script | Next |
-| M1.9 | Hardening and M1 acceptance | Planned |
+| M1.8 | API reference, AI guide and acceptance script | Done |
+| M1.9 | Hardening and M1 acceptance | Next |
 
 ## Repository state
 
@@ -75,6 +75,8 @@
 | Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
 | Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
 | Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 53 core cases / 397 assertions |
+| Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
+| M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 7/7 CTest |
 | EnTT and json-schema-validator | Automatically tested | `engine_dependencies_smoke` creates an EnTT entity and validates a document with json-schema-validator |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
