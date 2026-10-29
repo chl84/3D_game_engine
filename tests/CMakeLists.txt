@@ -78,3 +78,13 @@ add_test(
 set_tests_properties(engine_docs_links PROPERTIES
     LABELS "docs"
 )
+
+add_test(
+    NAME engine_sensitive_scan
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/docs/check_sensitive.py"
+)
+
+set_tests_properties(engine_sensitive_scan PROPERTIES
+    LABELS "docs;security"
+)

@@ -1,6 +1,6 @@
 # Testing
 
-**Status:** M0.6. Five CTest tests exist; `engine_core_tests` contains 21 test
+**Status:** M0.7. Six CTest tests exist; `engine_core_tests` contains 21 test
 cases and 132 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
@@ -14,6 +14,7 @@ Ninja 1.13.2.
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
+| `engine_sensitive_scan` | Credentials, private keys, personal paths and email addresses in tracked files | `docs`, `security` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -100,11 +101,18 @@ cmake --build --preset linux-tsan
 ctest --preset linux-tsan --output-on-failure
 ```
 
-Documentation links:
+Documentation links and sensitive-data scan:
 
 ```bash
 python3 tests/docs/check_links.py
+python3 tests/docs/check_sensitive.py
 ```
+
+The sensitive-data scan reads tracked files only, reports the pattern name and
+location without printing the matched text, and fails on private keys, known
+token formats, credential assignments, absolute home paths, Windows user paths,
+email addresses and SSH public keys. It does not scan git history; history is
+reviewed separately before a repository is made public.
 
 Clean-clone M0 acceptance:
 
@@ -150,6 +158,7 @@ CTest labels are used to select subsets:
 - `cli`
 - `contract`
 - `docs`
+- `security`
 - `roundtrip`
 - `determinism`
 - `render`

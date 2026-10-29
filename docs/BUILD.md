@@ -10,7 +10,7 @@ ASan/UBSan. Documentation links are checked by `engine_docs_links`.
 
 | Component | Version |
 |---|---|
-| OS | Omarchy 4.0.6 (Arch-based), Linux 7.2.8-9-omarchy, x86_64 |
+| OS | Omarchy 4.x (Arch-based), Linux x86_64 |
 | CPU | Intel Core i7-1265U, 10 cores / 12 threads |
 | GPU | Intel Iris Xe Graphics (ADL GT2), Mesa 26.2.5, Vulkan 1.4.354 |
 | RAM | 30 GiB local |
@@ -193,6 +193,17 @@ The development machine has CMake 4.4.4 and Ninja 1.13.2. A clean local build
 with CMake 4.4.5 and Ninja 1.13.2 passed all four CTest tests, so the local
 4.4.4 difference does not hide an unverified CI path. CI remains the source of
 truth for reproducible builds.
+
+## Privacy and repository hygiene
+
+Tracked files must not contain hostnames, usernames, absolute home paths,
+email addresses, credentials, tokens or private keys. `engine_sensitive_scan`
+checks tracked files and fails on those patterns. The scan does not replace a
+review of git history before a repository is made public.
+
+The environment table keeps the reference CPU, GPU and RAM needed for the
+performance budget. Exact kernel and host-specific details are intentionally
+not recorded.
 
 ## M0 clean-clone acceptance
 

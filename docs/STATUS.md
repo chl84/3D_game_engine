@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.7 deliverables complete — clean clone, sanitizers, format/tidy, Windows headless CI and tag `v0.1.0` are in place. Awaiting reviewer approval before merge to `main`.
+**Current substep:** M0.7 deliverables complete — clean clone, sanitizers, format/tidy, Windows headless CI, sensitive-data scan and tag `v0.1.0` are in place. Awaiting owner approval before merge to `main`.
 
 ## Substeps
 
@@ -15,7 +15,7 @@
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 | M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
-| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, tag `v0.1.0` and the M0 acceptance report. Deliverables complete; awaiting reviewer approval |
+| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, sensitive-data scan, tag `v0.1.0` and the M0 acceptance report. Deliverables complete; awaiting owner approval |
 
 ## Repository state
 
@@ -31,10 +31,10 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 5/5 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 5/5 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 5/5 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
-| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 5/5 passed |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 6/6 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -54,6 +54,7 @@
 | Windows `doctor` command | Automatically tested | `engine_cli_contract` runs `engine doctor --json` and validates `doctor@1` on Windows; when no Vulkan device exists it accepts exit 8 for `--require vulkan` instead of claiming Vulkan support |
 | English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
 | Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
+| Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 71 tracked files passed |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
 | Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |
@@ -62,11 +63,11 @@
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.4) | Automatically tested | Clone of `dd3d127`, venv from `requirements-dev.txt`, `cmake --preset ci-linux-gcc`, build, `ctest` → 4/4 passed; `doctor --require vulkan` exit 0 |
-| Clean clone on Linux (M0.7) | Automatically tested | `scripts/acceptance_m0.sh` cloned `m0/foundation`, built `linux-debug`, ran 5/5 CTest, and validated `version@1` and `doctor@1`; output ended with `M0 clean-clone acceptance passed` |
-| ASan/UBSan (M0.7) | Automatically tested | `linux-asan` → 5/5 CTest locally; CI `Linux ASan/UBSan` → 5/5 |
-| TSan (M0.7) | Locally automatically tested | `linux-tsan` → 5/5 CTest |
+| Clean clone on Linux (M0.7) | Automatically tested | `scripts/acceptance_m0.sh` cloned `v0.1.0`, built `linux-debug`, ran 6/6 CTest, and validated `version@1` and `doctor@1`; output ended with `M0 clean-clone acceptance passed` |
+| ASan/UBSan (M0.7) | Automatically tested | `linux-asan` → 6/6 CTest locally; CI `Linux ASan/UBSan` → 6/6 |
+| TSan (M0.7) | Locally automatically tested | `linux-tsan` → 6/6 CTest |
 | Format and tidy (M0.7) | Automatically tested | `clang-format --dry-run --Werror` over all C++ files → clean; `clang-tidy -p build/ci-linux-clang --warnings-as-errors='*'` → exit 0 |
-| Windows headless (M0.7) | Automatically tested | CI `Windows (MSVC)` → 5/5 CTest, no GPU; graphics remains not verified |
+| Windows headless (M0.7) | Automatically tested | CI `Windows (MSVC)` → 6/6 CTest, no GPU; graphics remains not verified |
 | Release tag | Created locally | Annotated tag `v0.1.0` on the M0.7 commit; pushed after reviewer approval |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
@@ -79,7 +80,7 @@
 | GitHub Actions | Automatically tested | Run [40800147659](https://github.com/chl84/3D_game_engine/actions/runs/40800147659) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
-| ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 5/5 CTest passed |
+| ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 6/6 CTest passed |
 | Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → CI loader 1.3.275, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0. The local loader is 1.4.363 |
 | Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `vulkan` is present in `requirements.failed`. The test asserts membership, not exact array equality; a local run produced exactly `["vulkan"]` |
 | Failure artifacts | Implemented | CTest `Testing/` and doctor JSON are uploaded on failed Linux/Windows/ASan jobs |
@@ -163,6 +164,14 @@ The Windows job caught two real portability issues before the milestone closed:
   until the project format and project-root discovery land in M1.
 - The English `VISION.md` translation is complete; the Norwegian master prompt
   remains the source of truth outside the repository.
+- **Git history:** earlier revisions of `docs/STATUS.md` (commits `a35cd53`
+  through `ed9784d`) contain one local absolute path with the username
+  `chrlep`. It was removed from the current file in `66602f4`. No tokens,
+  private keys, passwords or non-noreply email addresses were found in tracked
+  files or history. Removing the path from history requires a history rewrite
+  and force-push, which needs owner approval.
+- Local review reports under `reviews/` are ignored by git and are not part of
+  the repository. They may contain local paths and must not be force-added.
 
 ## Next step
 

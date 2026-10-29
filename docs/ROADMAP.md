@@ -40,6 +40,13 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 - Consider SHA-256 verification for the downloaded CMake/Ninja archives and SHA
   pinning of GitHub actions.
 
+### Security follow-ups
+
+- Decide whether to rewrite the public history to remove the local absolute
+  path that remains in `docs/STATUS.md` revisions `a35cd53` through `ed9784d`.
+  This requires a history rewrite and force-push, so it needs explicit owner
+  approval. The current file and the sensitive-data scan are clean.
+
 ### M1 follow-ups
 
 - Extract and run the code examples in the documentation as part of CI, so the

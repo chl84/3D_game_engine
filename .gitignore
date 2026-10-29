@@ -46,3 +46,8 @@ Thumbs.db
 
 # Local review reports (Norwegian, not part of the repository)
 /reviews/
+
+# Local prompt sources, kept outside version control
+/VISION.md
+/MASTERPROMPT_v0.2.md
+/AGENT_RULES.md
