@@ -236,7 +236,9 @@ void add_unique(std::vector<std::string>& names, std::string name) {
             {{"stage", "queue"}}));
     }
 
-    return QueueFamilies{*graphics, present.value_or(*graphics), needs_present};
+    const std::uint32_t graphics_family = graphics.value();
+    const std::uint32_t present_family = present.value_or(graphics_family);
+    return QueueFamilies{graphics_family, present_family, needs_present};
 }
 
 [[nodiscard]] bool supports_swapchain(VkPhysicalDevice device, VkSurfaceKHR surface) {
