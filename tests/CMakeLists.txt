@@ -95,12 +95,29 @@ target_link_libraries(engine_window_smoke PRIVATE
 
 engine_set_warnings(engine_window_smoke)
 
-# The window smoke test needs a display server. It reports exit code 77 when no
-# display is available, which CTest renders as skipped. Windows graphics is not
-# verified, so the test is not registered there.
+add_executable(engine_swapchain_test
+    render/swapchain_test.cpp
+)
+
+target_link_libraries(engine_swapchain_test PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_swapchain_test)
+
+# The window and swapchain tests need a display server. They report exit code 77
+# when no display is available, which CTest renders as skipped. Windows graphics
+# is not verified, so the tests are not registered there.
 if(NOT WIN32)
     add_test(NAME engine_window_smoke COMMAND engine_window_smoke)
     set_tests_properties(engine_window_smoke PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+
+    add_test(NAME engine_swapchain_test COMMAND engine_swapchain_test)
+    set_tests_properties(engine_swapchain_test PROPERTIES
         LABELS "unit;render"
         SKIP_RETURN_CODE 77
     )
