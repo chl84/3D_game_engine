@@ -42,10 +42,8 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 
 ### Security follow-ups
 
-- Decide whether to rewrite the public history to remove the local absolute
-  path that remains in `docs/STATUS.md` revisions `a35cd53` through `ed9784d`.
-  This requires a history rewrite and force-push, so it needs explicit owner
-  approval. The current file and the sensitive-data scan are clean.
+- History rewrite completed on 2026-10-29. The local absolute path is removed
+  from all revisions, and `engine_sensitive_scan` remains in the test suite.
 
 ### M1 follow-ups
 

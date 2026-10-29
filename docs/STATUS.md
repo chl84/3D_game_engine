@@ -1,8 +1,8 @@
 # Status
 
 **Last updated:** 2026-10-29
-**Current milestone:** M0 — project foundation
-**Current substep:** M0.7 deliverables complete — clean clone, sanitizers, format/tidy, Windows headless CI, sensitive-data scan and tag `v0.1.0` are in place. Awaiting owner approval before merge to `main`.
+**Current milestone:** M0 — project foundation, complete
+**Current substep:** M0 complete — approved by the owner on 2026-10-29. `v0.1.0` is tagged and `m0/foundation` is merged into `main`. M1 is next.
 
 ## Substeps
 
@@ -15,12 +15,12 @@
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 | M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
-| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, sensitive-data scan, tag `v0.1.0` and the M0 acceptance report. Deliverables complete; awaiting owner approval |
+| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, sensitive-data scan, tag `v0.1.0` and the M0 acceptance report. Approved by the owner on 2026-10-29 |
 
 ## Repository state
 
-- `main`: initial bootstrap commit, pushed to GitHub and set as the default branch.
-- `m0/foundation`: all M0 work, pushed; not merged into `main`.
+- `main`: the M0 release, merged from `m0/foundation` on 2026-10-29.
+- `m0/foundation`: all M0 work, merged into `main` and tagged `v0.1.0`.
 - The repository is public, and branch protection is **enabled** on `main` via
   `scripts/setup_branch_protection.sh`. Required checks are
   `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
@@ -68,7 +68,7 @@
 | TSan (M0.7) | Locally automatically tested | `linux-tsan` → 6/6 CTest |
 | Format and tidy (M0.7) | Automatically tested | `clang-format --dry-run --Werror` over all C++ files → clean; `clang-tidy -p build/ci-linux-clang --warnings-as-errors='*'` → exit 0 |
 | Windows headless (M0.7) | Automatically tested | CI `Windows (MSVC)` → 6/6 CTest, no GPU; graphics remains not verified |
-| Release tag | Created locally | Annotated tag `v0.1.0` on the M0.7 commit; pushed after reviewer approval |
+| Release tag | Published | Annotated tag `v0.1.0` on the M0 release commit, pushed to GitHub |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
 | Vulkan loader and GPU | Manually verified | `vulkaninfo --summary` → Intel Iris Xe, API 1.4.354, Mesa 26.2.5 |
@@ -133,10 +133,10 @@ The Windows job caught two real portability issues before the milestone closed:
   missing ICD exits 8; ASan/UBSan detects `llvmpipe` under the sanitizers;
   Windows passes 4/4 CTest with 21/21 test cases.
 - Run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796):
-  all five jobs green on the documentation commit (`3381761`), with the same
+  all five jobs green on the documentation commit (`91a6935`), with the same
   tool versions and Vulkan checks.
 - Run [40798154876](https://github.com/chl84/3D_game_engine/actions/runs/40798154876):
-  all five jobs green on `9915170` after correcting the CI evidence.
+  all five jobs green on `ef97fa7` after correcting the CI evidence.
 
 ## M0.6 CI history
 
@@ -149,9 +149,9 @@ The Windows job caught two real portability issues before the milestone closed:
 ## M0.7 CI history
 
 - Run [40802140579](https://github.com/chl84/3D_game_engine/actions/runs/40802140579):
-  all five jobs green on `af1b182` with 5/5 CTest.
+  all five jobs green on `81c4b4c` with 5/5 CTest.
 - Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153):
-  all five jobs green on `8fcd7bc` with 6/6 CTest, including the new
+  all five jobs green on `c446c8c` with 6/6 CTest, including the new
   `engine_sensitive_scan`.
 - Run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029):
   manual dispatch after the trigger change; all five jobs green with 6/6 CTest.
@@ -175,12 +175,10 @@ The Windows job caught two real portability issues before the milestone closed:
   until the project format and project-root discovery land in M1.
 - The English `VISION.md` translation is complete; the Norwegian master prompt
   remains the source of truth outside the repository.
-- **Git history:** earlier revisions of `docs/STATUS.md` (commits `a35cd53`
-  through `ed9784d`) contain one local absolute path with the username
-  `chrlep`. It was removed from the current file in `66602f4`. No tokens,
-  private keys, passwords or non-noreply email addresses were found in tracked
-  files or history. Removing the path from history requires a history rewrite
-  and force-push, which needs owner approval.
+- **Git history:** rewritten on 2026-10-29 to remove a local absolute path
+  that appeared in earlier `docs/STATUS.md` revisions. The current history
+  contains no such path. No tokens, private keys, passwords or non-noreply
+  email addresses were found in tracked files or history.
 - Local review reports under `reviews/` are ignored by git and are not part of
   the repository. They may contain local paths and must not be force-added.
 - CI does not run on every feature-branch push. Open a pull request or use
