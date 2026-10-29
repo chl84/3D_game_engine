@@ -27,7 +27,7 @@ struct Error {
     ErrorCode code{ErrorCode::Internal};
     std::string message;
     std::string hint;
-    nlohmann::json details{nlohmann::json::object()};
+    nlohmann::json details = nlohmann::json::object();
 
     [[nodiscard]] nlohmann::json to_json() const;
 };

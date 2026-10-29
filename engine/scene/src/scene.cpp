@@ -18,10 +18,12 @@ namespace {
 
 } // namespace
 
-Scene::Scene() : next_uuid_([] { return core::Uuid::generate(); }) {}
+Scene::Scene()
+    : next_uuid_([] { return core::Uuid::generate(); }), scene_id_(core::Uuid::generate()) {}
 
 Scene::Scene(std::uint64_t seed)
-    : next_uuid_([generator = core::UuidGenerator(seed)]() mutable { return generator.next(); }) {}
+    : next_uuid_([generator = core::UuidGenerator(seed)]() mutable { return generator.next(); }),
+      scene_id_(next_uuid_()) {}
 
 Scene Scene::with_seed(std::uint64_t seed) {
     return Scene(seed);
@@ -46,7 +48,9 @@ Result<Entity> Scene::create_entity(std::string name, std::optional<core::Uuid> 
     registry_.emplace<Parent>(entity, Parent{entt::null});
     registry_.emplace<Children>(entity, Children{});
     registry_.emplace<Transform>(entity, Transform{});
+    registry_.emplace<EntityMetadata>(entity, EntityMetadata{});
     by_uuid_.emplace(value, entity);
+    bump_revision();
     return entity;
 }
 
@@ -75,6 +79,7 @@ Result<void> Scene::destroy_entity(Entity entity) {
         by_uuid_.erase(id->value);
     }
     registry_.destroy(entity);
+    bump_revision();
     return {};
 }
 
@@ -123,6 +128,24 @@ Result<void> Scene::set_name(Entity entity, std::string name) {
         return core::make_failure<void>(not_found(entity));
     }
     registry_.get<Name>(entity).value = std::move(name);
+    bump_revision();
+    return {};
+}
+
+const nlohmann::json& Scene::metadata(Entity entity) const {
+    static const nlohmann::json empty = nlohmann::json::object();
+    if (!contains(entity)) {
+        return empty;
+    }
+    return registry_.get<EntityMetadata>(entity).value;
+}
+
+Result<void> Scene::set_metadata(Entity entity, nlohmann::json metadata) {
+    if (!contains(entity)) {
+        return core::make_failure<void>(not_found(entity));
+    }
+    registry_.get<EntityMetadata>(entity).value = std::move(metadata);
+    bump_revision();
     return {};
 }
 
@@ -159,6 +182,7 @@ Result<void> Scene::set_parent(Entity child, Entity parent) {
     if (parent != entt::null) {
         registry_.get<Children>(parent).entities.push_back(child);
     }
+    bump_revision();
     return {};
 }
 
@@ -194,6 +218,26 @@ Transform Scene::world_transform(Entity entity) const {
         core::component_mul(parent_world.scale, local.scale),
     };
 }
+
+const core::Uuid& Scene::scene_id() const noexcept { return scene_id_; }
+
+void Scene::set_scene_id(const core::Uuid& id) { scene_id_ = id; }
+
+const std::string& Scene::scene_name() const noexcept { return scene_name_; }
+
+void Scene::set_scene_name(std::string name) { scene_name_ = std::move(name); }
+
+const nlohmann::json& Scene::scene_metadata() const noexcept { return scene_metadata_; }
+
+void Scene::set_scene_metadata(nlohmann::json metadata) {
+    scene_metadata_ = std::move(metadata);
+}
+
+std::uint64_t Scene::revision() const noexcept { return revision_; }
+
+void Scene::set_revision(std::uint64_t revision) noexcept { revision_ = revision; }
+
+void Scene::bump_revision() noexcept { ++revision_; }
 
 entt::registry& Scene::registry() noexcept {
     return registry_;

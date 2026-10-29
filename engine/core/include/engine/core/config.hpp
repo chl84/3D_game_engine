@@ -29,7 +29,7 @@ public:
     template <typename T> [[nodiscard]] T get_or(std::string_view pointer, T fallback) const;
 
 private:
-    nlohmann::json data_{nlohmann::json::object()};
+    nlohmann::json data_ = nlohmann::json::object();
 };
 
 template <typename T> Result<T> Config::get(std::string_view pointer) const {

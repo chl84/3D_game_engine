@@ -20,13 +20,13 @@ using core::Result;
 
 struct CommandRequest {
     std::string name;
-    nlohmann::json arguments{nlohmann::json::object()};
+    nlohmann::json arguments = nlohmann::json::object();
 };
 
 using UndoAction = std::function<Result<void>()>;
 
 struct CommandOutput {
-    nlohmann::json data{nlohmann::json::object()};
+    nlohmann::json data = nlohmann::json::object();
     std::vector<std::string> warnings;
     UndoAction undo;
     UndoAction redo;
@@ -34,7 +34,7 @@ struct CommandOutput {
 
 struct CommandResult {
     bool ok{false};
-    nlohmann::json data{nlohmann::json::object()};
+    nlohmann::json data = nlohmann::json::object();
     std::optional<Error> error;
     std::vector<std::string> warnings;
     UndoAction undo;
@@ -48,8 +48,8 @@ struct CommandResult {
 struct CommandLogEntry {
     std::uint64_t sequence{0};
     std::string name;
-    nlohmann::json arguments{nlohmann::json::object()};
-    nlohmann::json result{nlohmann::json::object()};
+    nlohmann::json arguments = nlohmann::json::object();
+    nlohmann::json result = nlohmann::json::object();
 };
 
 class CommandLog {

@@ -1,4 +1,5 @@
 add_library(engine_scene STATIC
+    src/project.cpp
     src/scene.cpp
 )
 
@@ -18,4 +19,6 @@ target_link_libraries(engine_scene
     PUBLIC
         engine::core
         EnTT::EnTT
+    PRIVATE
+        engine::platform
 )

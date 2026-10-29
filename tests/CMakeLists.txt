@@ -12,6 +12,7 @@ add_executable(engine_core_tests
     unit/error_test.cpp
     unit/log_test.cpp
     unit/path_sandbox_test.cpp
+    unit/project_test.cpp
     unit/reflect_test.cpp
     unit/scene_test.cpp
     unit/uuid_test.cpp
@@ -24,6 +25,7 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::platform
     engine::command
     engine::scene
     Catch2::Catch2WithMain
