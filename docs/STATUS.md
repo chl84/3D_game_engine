@@ -54,7 +54,7 @@
 | Windows `doctor` command | Automatically tested | `engine_cli_contract` runs `engine doctor --json` and validates `doctor@1` on Windows; when no Vulkan device exists it accepts exit 8 for `--require vulkan` instead of claiming Vulkan support |
 | English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
 | Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
-| Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 71 tracked files passed |
+| Sensitive-data scan | Automatically tested | `engine_sensitive_scan` checks tracked files for private keys, token formats, credential assignments, absolute home paths, Windows user paths, email addresses and SSH public keys; 72 tracked files passed |
 | External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
 | ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
 | Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |
@@ -75,9 +75,9 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40800147659](https://github.com/chl84/3D_game_engine/actions/runs/40800147659) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 5/5 tests passed, including `engine_docs_links` |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 6/6 tests passed, including `engine_docs_links` and `engine_sensitive_scan` |
 | Windows graphics | Not verified | The Windows runner has no GPU; graphics is not tested there and is outside the M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40800147659](https://github.com/chl84/3D_game_engine/actions/runs/40800147659) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 6/6 CTest passed |
@@ -144,6 +144,14 @@ The Windows job caught two real portability issues before the milestone closed:
   including `engine_docs_links`; `engine_core_tests` still reports 21 cases /
   132 assertions. Pinned CMake 4.4.5, Ninja 1.13.2, lavapipe detection and
   ASan/UBSan remained green.
+
+## M0.7 CI history
+
+- Run [40802140579](https://github.com/chl84/3D_game_engine/actions/runs/40802140579):
+  all five jobs green on `af1b182` with 5/5 CTest.
+- Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153):
+  all five jobs green on `8fcd7bc` with 6/6 CTest, including the new
+  `engine_sensitive_scan`.
 
 ## Known issues and gaps
 
