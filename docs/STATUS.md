@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.9 reviewer GODKJENT — `engine run` with a presentation-only fly camera, F1 overlay toggle and ImGui input routing awaits the owner's manual Hyprland test and merge approval.
+**Current substep:** M2.9 is owner-tested and approved. Normal PR, merge and tag `v0.3.0` are in progress.
 
 ## Substeps
 
@@ -44,7 +44,7 @@
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.8 | Hardening and M2 acceptance | Approved by the owner 2026-10-29; reference measurement moved to M5/M8 and ImGui re-init to M8 |
-| M2.9 | Windowed `engine run`, fly camera, overlay toggle and ImGui input routing | Done — reviewer GODKJENT; owner manual test pending |
+| M2.9 | Windowed `engine run`, fly camera, overlay toggle and ImGui input routing; sample project | Done — reviewer GODKJENT; owner manual test passed; merge and tag approved |
 
 ## Repository state
 

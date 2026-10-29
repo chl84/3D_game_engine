@@ -43,7 +43,7 @@ This matches glTF, which simplifies asset import.
   "formatVersion": 1,
   "projectId": "3f2a7c1e-9b4d-4e6a-8c1f-2d5b7a9e0c31",
   "name": "Hello World",
-  "engineVersion": "0.2.1",
+  "engineVersion": "0.3.0",
   "scenes": [
     "scenes/main.scene.json"
   ],

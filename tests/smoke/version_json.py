@@ -35,7 +35,7 @@ def main() -> int:
 
     expected = {
         "name": "engine",
-        "version": "0.2.1",
+        "version": "0.3.0",
         "cxxStandard": "20",
     }
     for key, value in expected.items():
