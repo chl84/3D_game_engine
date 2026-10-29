@@ -25,5 +25,5 @@ Checks: >
   -readability-suspicious-call-argument,
   -readability-uppercase-literal-suffix
 WarningsAsErrors: ''
-HeaderFilterRegex: '^(engine|tools|tests)/.*'
+HeaderFilterRegex: '.*/(engine|tools|tests)/.*'
 FormatStyle: file
