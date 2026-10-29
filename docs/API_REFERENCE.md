@@ -1,8 +1,9 @@
 # API Reference
 
-**Status:** M1.6. Environment commands, the offline project/scene/entity/
-component CLI and `command-result@1` exist. The reference is still handwritten;
-generation from the command registry and reflection metadata arrives in M1.8.
+**Status:** M1.7. Environment commands, the offline project/scene/entity/
+component CLI, fixed-tick simulation and `command-result@1` exist. The
+reference is still handwritten; generation from the command registry and
+reflection metadata arrives in M1.8.
 
 ## Implemented surface
 
@@ -14,6 +15,7 @@ generation from the command registry and reflection metadata arrives in M1.8.
 | `engine scene ... --json` | Scene create/inspect/validate result | `schemas/command-result@1.schema.json` |
 | `engine entity ... --json` | Entity create/delete/reparent result | `schemas/command-result@1.schema.json` |
 | `engine component ... --json` | Component set/add/remove result | `schemas/command-result@1.schema.json` |
+| `engine simulate ... --json` | Deterministic fixed-tick state dump | `schemas/command-result@1.schema.json` |
 | `engine batch ... --json` | Batch results and undo count | `schemas/command-result@1.schema.json` |
 
 The version output fields are `name`, `version`, `gitCommit`, `buildType`,
@@ -69,6 +71,7 @@ components are:
 |---|---|
 | `engine.scene.Transform` | `position` (Vec3), `rotation` (Quat), `scale` (Vec3) |
 | `engine.scene.Camera` | `fovYRadians`, `near`, `far`, `enabled` |
+| `engine.scene.Motion` | `linearVelocity` (Vec3, metres per second) |
 
 Component schemas are generated from the reflection registry by
 `engine::core::ReflectionRegistry::schemas()`.

@@ -1,11 +1,11 @@
 # Build
 
-**Status:** M1.6. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M1.7. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
-atomic saves, and the offline project/scene/entity/component CLI. Version,
-doctor and all offline commands support `--json`; Catch2 and Python contract
-tests cover the CLI. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
+atomic saves, the offline project/scene/entity/component CLI and the fixed-tick
+simulation. Version, doctor and all offline commands support `--json`; Catch2
+and Python contract tests cover the CLI. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
 clang-format, clang-tidy and ASan/UBSan. Documentation links and
 sensitive-data checks run as CTest tests.
 

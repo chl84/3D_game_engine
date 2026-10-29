@@ -1,8 +1,7 @@
 # AI Agent Guide
 
-**Status:** M1.6. Version, doctor and the offline project/scene/entity/component
-CLI exist. Fixed-tick simulation arrives in M1.7; the live API is planned for
-M3.
+**Status:** M1.7. Version, doctor, the offline project/scene/entity/component
+CLI and fixed-tick simulation exist. The live API is planned for M3.
 
 ## Principles
 
@@ -93,6 +92,17 @@ A batch runs in one transaction and rolls back if a command fails. `--undo N`
 undoes the last N commands after the transaction commits and before the scene
 is saved. This is the offline equivalent of a short editor session.
 
+## Simulation
+
+```bash
+engine simulate ./my-game --ticks 60 --json
+```
+
+The command loads the scene, runs `ticks` fixed steps at the project tick rate,
+and returns a deterministic state dump with entity positions, rotations, scales
+and velocities. It does not save the scene; simulation state is not
+authoritative. Two identical runs of the same scene produce identical dumps.
+
 ## Response envelope
 
 New commands print one document that validates against
@@ -112,7 +122,6 @@ process exit code as the primary success signal.
 
 ## Planned commands
 
-- `simulate --ticks N` in M1.7.
 - `engine schema` and generated API reference in M1.8.
 - `--dry-run` for state-changing commands in a later M1 substep or M2.
 - Live API (JSON-RPC 2.0 over a local connection) in M3.

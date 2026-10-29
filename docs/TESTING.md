@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M1.6. Six CTest tests exist; `engine_core_tests` contains 50 test
-cases and 372 assertions. CI also runs clang-format, clang-tidy with project
+**Status:** M1.7. Six CTest tests exist; `engine_core_tests` contains 53 test
+cases and 397 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
 
@@ -46,6 +46,8 @@ on both Linux and Windows.
 - CLI project creation, scene inspection/validation, entity hierarchy,
   component setting and batch undo, with every response validated against
   `command-result@1`
+- fixed-tick motion, unchanged entities and identical state dumps from two
+  identical simulation runs at 60 Hz
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.

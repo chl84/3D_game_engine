@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.5. This document describes the approved module boundaries and
+**Status:** M1.7. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -173,6 +173,8 @@ M1.2 contains:
   json-schema-validator, structured success/error results with warnings, an
   in-memory command log with sequence numbers, undo/redo stacks, redo
   invalidation and transactions that commit or roll back as one undo step
+- `engine/scene` also provides a fixed-tick simulation that advances `Motion`
+  velocities into `Transform` positions and emits a deterministic state dump
 - EnTT 4.0.0 and json-schema-validator 2.4.0 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration
