@@ -760,6 +760,19 @@ core::Result<std::vector<std::uint8_t>> OffscreenRenderer::Impl::draw(const scen
         copy.imageExtent = VkExtent3D{width, height, 1};
         vkCmdCopyImageToBuffer(command_buffer, color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                readback_buffer, 1, &copy);
+
+        VkMemoryBarrier2 host_barrier{};
+        host_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+        host_barrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        host_barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        host_barrier.dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT;
+        host_barrier.dstAccessMask = VK_ACCESS_2_HOST_READ_BIT;
+        VkDependencyInfo host_dependency{};
+        host_dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        host_dependency.memoryBarrierCount = 1;
+        host_dependency.pMemoryBarriers = &host_barrier;
+        vkCmdPipelineBarrier2(command_buffer, &host_dependency);
+
         result = vkEndCommandBuffer(command_buffer);
         if (result != VK_SUCCESS) {
             return core::make_failure<std::vector<std::uint8_t>>(detail::vulkan_error(

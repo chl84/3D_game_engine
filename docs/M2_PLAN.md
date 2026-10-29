@@ -105,12 +105,13 @@ new transitive dependency follows A.6 and is recorded in
 ### M2.5 Offscreen rendering and screenshots
 
 - Create offscreen images and render targets without a window.
-- Evaluate installing the Vulkan loader and lavapipe or SwiftShader on the
-  Windows runner so the offscreen screenshot test runs there instead of being
-  skipped.
-- Evaluate using `glslc` from the pinned Vulkan SDK on Linux CI as well, so
-  SPIR-V is produced by the same tool version on Linux and Windows. Linux
-  currently uses the Ubuntu distro `glslc` (shaderc 2023.8).
+- Evaluation result: the Windows runner has the Vulkan loader and validation
+  layers from the SDK, but no ICD. Installing lavapipe or SwiftShader is not
+  reliable enough on the current Windows image; Windows graphics stays
+  **not verified** in M2. Revisit in M2.8 hardening.
+- Evaluation result: the LunarG Linux SDK download is 366 MB per CI job. The
+  Ubuntu distro `glslc` (shaderc 2023.8) produces valid SPIR-V and is kept for
+  M2. Revisit pinned Linux `glslc` in M2.8 with a cached SDK.
 - Implement `engine screenshot <project> <scene> --frames N --out <file>`.
 - Encode PNG with `stb_image_write`.
 - Force lavapipe in CI with `VK_ICD_FILENAMES` and compare against golden

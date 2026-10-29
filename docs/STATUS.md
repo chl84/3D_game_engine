@@ -79,8 +79,8 @@
 |---|---|---|
 | GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
 | Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 13/13 passed; `engine_core_tests` → 60 cases / 468 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
-| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 13/13 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 13/13 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -142,7 +142,8 @@
 | M2.5 stb dependency | Automatically tested | `stb` 2026-08-02 is pinned in vcpkg; `stb_image_write` is linked only into the CLI/test path and documented in `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md` |
 | M2.5 CI | Automatically tested | Manual dispatch [40923042186](https://github.com/chl84/3D_game_engine/actions/runs/40923042186) → Linux 13/13 including `engine_screenshot_golden` on lavapipe and `engine_screenshot_cli`; Windows 9/9 with graphics tests skipped; Quality green |
 | M2.5 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `67e7ec1`, built with glslc and stb, ran 13/13 CTest; the golden test skips on the local Intel device and runs on lavapipe CI |
-| M2.5 Windows ICD note | Documented | `docs/M2_PLAN.md` records the evaluation of Vulkan loader + lavapipe/SwiftShader on the Windows runner for a later step |
+| M2.5 Windows ICD evaluation | Evaluated | The Windows runner has loader and validation layers but no ICD; lavapipe/SwiftShader installation is deferred to M2.8. Windows graphics remains not verified |
+| M2.5 Linux glslc evaluation | Evaluated | The LunarG Linux SDK is 366 MB per CI job; the Ubuntu distro `glslc` is kept for M2. Pinned SDK glslc is proposed for M2.8 with caching |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

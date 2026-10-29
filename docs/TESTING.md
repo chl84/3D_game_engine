@@ -46,7 +46,7 @@ clear error when `glslc` is missing. If the Vulkan loader or a usable Vulkan 1.3
 device cases are reported as skipped while the camera cases still run. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
-reports that as skipped. `engine_screenshot_golden` renders a fixed scene offscreen with the same built-in meshes and compares RGBA pixels with a documented per-channel tolerance on lavapipe. `engine_screenshot_cli` exercises the full CLI path and validates the PNG header and dimensions. `engine_swapchain_test` creates a hidden window,
+reports that as skipped. `engine_screenshot_golden` renders a fixed scene offscreen with the same built-in meshes and compares RGBA pixels on lavapipe: at most 8 per channel difference, at most 1 % of channels may differ by more than 2. `engine_screenshot_cli` exercises the full CLI path and validates the PNG header and dimensions. `engine_swapchain_test` creates a hidden window,
 presents frames, resizes the hidden window, shows it, minimizes and restores
 it, renders an 8 km scene with a depth buffer and verifies that the far cube
 and ground are visible while an entity behind the camera is culled, and asserts
@@ -59,7 +59,9 @@ because Windows graphics is not verified.
 
 The Linux CI job runs the render tests against lavapipe (the runner has no
 GPU), so `engine_screenshot_golden` executes there. Windows has no ICD and does
-not register the golden or window tests.
+not register the golden or window tests. "13/13" on Linux includes the
+window/swapchain tests as skipped in CTest; the golden and screenshot tests
+run.
 
 `engine_core_tests` covers:
 
