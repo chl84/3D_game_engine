@@ -345,17 +345,12 @@ Result<void> Project::save() const {
     return write_json(root_ / "project.json", document);
 }
 
-Result<void> Project::save_scene(const std::string& relative_path, const Scene& scene,
-                                 const core::ReflectionRegistry& registry) const {
-    auto path = resolve_path(root_, relative_path);
-    if (!path) {
-        return core::make_failure<void>(path.error());
-    }
-
+Result<nlohmann::json> Project::scene_json(const Scene& scene,
+                                           const core::ReflectionRegistry& registry) const {
     const auto* transform = registry.find("engine.scene.Transform");
     const auto* camera = registry.find("engine.scene.Camera");
     if (transform == nullptr || camera == nullptr) {
-        return core::make_failure<void>(core::make_error(
+        return core::make_failure<nlohmann::json>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
 
@@ -388,12 +383,24 @@ Result<void> Project::save_scene(const std::string& relative_path, const Scene& 
         });
     }
 
-    const nlohmann::json document{
+    return nlohmann::json{
         {"formatVersion", kFormatVersion}, {"sceneId", scene.scene_id().to_string()},
         {"name", scene.scene_name()},      {"revision", scene.revision()},
         {"entities", std::move(entities)}, {"metadata", scene.scene_metadata()},
     };
-    return write_json(*path, document);
+}
+
+Result<void> Project::save_scene(const std::string& relative_path, const Scene& scene,
+                                 const core::ReflectionRegistry& registry) const {
+    auto path = resolve_path(root_, relative_path);
+    if (!path) {
+        return core::make_failure<void>(path.error());
+    }
+    auto document = scene_json(scene, registry);
+    if (!document) {
+        return core::make_failure<void>(document.error());
+    }
+    return write_json(*path, *document);
 }
 
 Result<Scene> Project::load_scene(const std::string& relative_path,
@@ -552,6 +559,35 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
 
     scene.set_revision(static_cast<std::uint64_t>(*revision));
     return scene;
+}
+
+Result<void> Project::add_scene(std::string relative_path) {
+    auto path = resolve_path(root_, relative_path);
+    if (!path) {
+        return core::make_failure<void>(path.error());
+    }
+    if (std::ranges::find(scenes_, relative_path) != scenes_.end()) {
+        return core::make_failure<void>(core::make_error(core::ErrorCode::Conflict,
+                                                         "scene is already registered", {},
+                                                         {{"path", relative_path}}));
+    }
+    scenes_.push_back(std::move(relative_path));
+    std::ranges::sort(scenes_);
+    return save();
+}
+
+Result<void> Project::force_unlock(const std::filesystem::path& root) {
+    std::error_code error;
+    const std::filesystem::path directory = root / ".engine" / "lock";
+    if (!std::filesystem::exists(directory, error)) {
+        return {};
+    }
+    std::filesystem::remove_all(directory, error);
+    if (error) {
+        return core::make_failure<void>(
+            project_error(core::ErrorCode::Io, "could not remove project lock", directory));
+    }
+    return {};
 }
 
 Result<void> Project::lock() {

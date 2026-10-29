@@ -38,10 +38,14 @@ public:
     [[nodiscard]] static Result<Project> load(const std::filesystem::path& root);
 
     [[nodiscard]] Result<void> save() const;
+    [[nodiscard]] Result<nlohmann::json> scene_json(const Scene& scene,
+                                                    const core::ReflectionRegistry& registry) const;
     [[nodiscard]] Result<void> save_scene(const std::string& relative_path, const Scene& scene,
                                           const core::ReflectionRegistry& registry) const;
     [[nodiscard]] Result<Scene> load_scene(const std::string& relative_path,
                                            const core::ReflectionRegistry& registry) const;
+    [[nodiscard]] Result<void> add_scene(std::string relative_path);
+    [[nodiscard]] static Result<void> force_unlock(const std::filesystem::path& root);
 
     [[nodiscard]] Result<void> lock();
     void unlock() noexcept;

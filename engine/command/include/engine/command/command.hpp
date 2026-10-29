@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace engine::command {
@@ -30,6 +31,13 @@ struct CommandOutput {
     std::vector<std::string> warnings;
     UndoAction undo;
     UndoAction redo;
+
+    CommandOutput() = default;
+    explicit CommandOutput(nlohmann::json output_data,
+                           std::vector<std::string> output_warnings = {},
+                           UndoAction undo_action = {}, UndoAction redo_action = {})
+        : data(std::move(output_data)), warnings(std::move(output_warnings)),
+          undo(std::move(undo_action)), redo(std::move(redo_action)) {}
 };
 
 struct CommandResult {

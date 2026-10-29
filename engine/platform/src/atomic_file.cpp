@@ -40,8 +40,7 @@ void sync_directory(const std::filesystem::path& path) {
 
 } // namespace
 
-core::Result<void> atomic_write_file(const std::filesystem::path& path,
-                                     std::string_view content) {
+core::Result<void> atomic_write_file(const std::filesystem::path& path, std::string_view content) {
     const std::filesystem::path temporary = path.string() + ".tmp";
     {
         std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
@@ -54,8 +53,7 @@ core::Result<void> atomic_write_file(const std::filesystem::path& path,
         if (!output) {
             std::error_code ignored;
             std::filesystem::remove(temporary, ignored);
-            return core::make_failure<void>(
-                io_error("could not write temporary file", temporary));
+            return core::make_failure<void>(io_error("could not write temporary file", temporary));
         }
     }
 
@@ -76,8 +74,7 @@ core::Result<void> atomic_write_file(const std::filesystem::path& path,
                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
         std::error_code ignored;
         std::filesystem::remove(temporary, ignored);
-        return core::make_failure<void>(
-            io_error("could not replace target file", path));
+        return core::make_failure<void>(io_error("could not replace target file", path));
     }
 #endif
     return {};

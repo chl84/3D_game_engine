@@ -219,25 +219,41 @@ Transform Scene::world_transform(Entity entity) const {
     };
 }
 
-const core::Uuid& Scene::scene_id() const noexcept { return scene_id_; }
+const core::Uuid& Scene::scene_id() const noexcept {
+    return scene_id_;
+}
 
-void Scene::set_scene_id(const core::Uuid& id) { scene_id_ = id; }
+void Scene::set_scene_id(const core::Uuid& id) {
+    scene_id_ = id;
+}
 
-const std::string& Scene::scene_name() const noexcept { return scene_name_; }
+const std::string& Scene::scene_name() const noexcept {
+    return scene_name_;
+}
 
-void Scene::set_scene_name(std::string name) { scene_name_ = std::move(name); }
+void Scene::set_scene_name(std::string name) {
+    scene_name_ = std::move(name);
+}
 
-const nlohmann::json& Scene::scene_metadata() const noexcept { return scene_metadata_; }
+const nlohmann::json& Scene::scene_metadata() const noexcept {
+    return scene_metadata_;
+}
 
 void Scene::set_scene_metadata(nlohmann::json metadata) {
     scene_metadata_ = std::move(metadata);
 }
 
-std::uint64_t Scene::revision() const noexcept { return revision_; }
+std::uint64_t Scene::revision() const noexcept {
+    return revision_;
+}
 
-void Scene::set_revision(std::uint64_t revision) noexcept { revision_ = revision; }
+void Scene::set_revision(std::uint64_t revision) noexcept {
+    revision_ = revision;
+}
 
-void Scene::bump_revision() noexcept { ++revision_; }
+void Scene::bump_revision() noexcept {
+    ++revision_;
+}
 
 entt::registry& Scene::registry() noexcept {
     return registry_;
