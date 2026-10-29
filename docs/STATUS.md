@@ -49,8 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch; code head `7496661`
-  (ImGui exact pin) with documentation commits after it. Not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch; code head `47d1003`
+  (M2.7 descriptor gate) with documentation commits after it. Not merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -155,11 +155,13 @@
 | M2.6 ImGui exact pin | Verified | The overlay port uses `REF b916186e66aa3c02b72c6ca17455516512ed8049` (the commit behind the annotated `v1.93.0-docking` tag) and the SHA512 of that commit's archive; the non-docking branch is pinned to `c1aaac65e896a45f81f47a4d68f9959e0f86c859`. A moved tag or rewritten commit fails the vcpkg source check. CI [40941397208](https://github.com/chl84/3D_game_engine/actions/runs/40941397208) built the pinned ports on Linux and Windows |
 | M2.7 descriptor strategy | Implemented | ADR-0011 is accepted: descriptor indexing (bindless) is a minimum requirement, there is no classic fallback, and BDA is deferred to M5/M8. The support table records Iris Xe and lavapipe |
 | M2.7 device capability gate | Automatically tested | `Device::create` queries the required descriptor-indexing features and limits. A missing feature or limit returns `E_UNSUPPORTED`, stage `descriptor-indexing`, with `missingFeatures` and `missingLimits` (name, required, supported). `Device::descriptor_capabilities()` exposes the queried values |
-| M2.7 descriptor failure test | Automatically tested | `engine_render_tests` constructs capabilities with a missing feature and a low limit, asserts `E_UNSUPPORTED`, stage `descriptor-indexing`, `missingFeatures` and the machine-readable limit entry. There is no fallback test because there is no fallback path |
+| M2.7 descriptor failure test | Automatically tested | `engine_render_tests` (13 cases / 105 assertions) constructs capabilities with a missing feature and a low limit, asserts `E_UNSUPPORTED`, stage `descriptor-indexing`, `missingFeatures` and the machine-readable limit entry. There is no fallback test because there is no fallback path |
 | M2.7 doctor | Automatically tested | `engine doctor` reports `vulkan.descriptorIndexing` and a per-device `descriptorIndexing` object with `errorCode: E_UNSUPPORTED` and missing lists. `--require vulkan` exits 8 when no device satisfies the requirement; an enumerated but unsupported device also makes plain `doctor` exit 8. The doctor schema and contract test cover the new fields |
 | M2.7 screenshot error codes | Automatically tested | `tests/smoke/screenshot.py` requires `E_VALIDATION` and the exact `path`, `maxDimension` and `maxFrames` details for `../escape.png`, `--width 8193`, `--height 8193` and `--frames 1001` |
 | M2.7 budgets | Documented | Engine budget is 4096 sampled images + 2 samplers and 4096 material records. The 1 GiB texture budget is a sub-budget of the 4 GiB total GPU memory budget |
 | M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
+| M2.7 CI | Automatically tested | Manual dispatch [40945367597](https://github.com/chl84/3D_game_engine/actions/runs/40945367597) on `47d1003` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest; lavapipe LLVM 20.1.2 reports `descriptorIndexing: true` and `descriptor-indexing: pass`. ASan/UBSan: 14/14. Windows MSVC: 9/9; graphics tests not registered. Quality green |
+| M2.7 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `47d1003`, built the exact-commit dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
