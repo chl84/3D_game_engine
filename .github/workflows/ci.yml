@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -73,6 +73,13 @@ jobs:
 
       - name: Verify glslc
         run: glslc --version
+
+      - name: Select the lavapipe ICD
+        run: |
+          icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd"
+          echo "VK_ICD_FILENAMES=$icd" >> "$GITHUB_ENV"
+          echo "Using $icd"
 
       - name: Install pinned CMake and Ninja
         run: |
@@ -101,13 +108,22 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
+      # Run the whole CTest suite under Xvfb + openbox so the window and
+      # swapchain tests actually execute instead of being skipped as headless.
       - name: Test
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            openbox --sm-disable &
+            wm=$!
+            sleep 1
+            ctest --preset ${{ matrix.preset }} --output-on-failure
+            code=$?
+            kill "$wm" 2>/dev/null || true
+            exit "$code"
+          '
 
-      # The CTest run skips the window and swapchain tests without a display.
-      # Run the swapchain test against Xvfb + openbox so resize and minimize
-      # are exercised in CI as well.
-      - name: Swapchain integration with Xvfb
+      # Keep the strict minimize contract in addition to the CTest run.
+      - name: Swapchain minimize with Xvfb
         run: |
           xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
             openbox --sm-disable &
@@ -196,7 +212,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -318,7 +334,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -382,7 +398,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -409,6 +425,13 @@ jobs:
 
       - name: Verify glslc
         run: glslc --version
+
+      - name: Select the lavapipe ICD
+        run: |
+          icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd"
+          echo "VK_ICD_FILENAMES=$icd" >> "$GITHUB_ENV"
+          echo "Using $icd"
 
       - name: Install pinned CMake and Ninja
         run: |
@@ -441,7 +464,16 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-        run: ctest --preset linux-asan --output-on-failure
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            openbox --sm-disable &
+            wm=$!
+            sleep 1
+            ctest --preset linux-asan --output-on-failure
+            code=$?
+            kill "$wm" 2>/dev/null || true
+            exit "$code"
+          '
 
       - name: Core test summary
         env:
