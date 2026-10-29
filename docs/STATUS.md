@@ -135,6 +135,8 @@
 | M2.4 double world transform | Automatically tested | `scene_test` composes a parent at 8 km with a 1 mm child offset in double precision and checks the camera-relative float offset |
 | M2.4 camera-relative rendering | Automatically tested | `scene_transform_test` builds the 8 km model matrix from the double offset, checks finite values, and verifies the rotation-only camera view |
 | M2.4 depth and culling | Automatically tested | `engine_swapchain_test` renders a 8 km scene with a depth buffer and checks that the far cube and ground are visible while an entity behind the camera is culled |
+| M2.4 CI | Automatically tested | Manual dispatch [40906112033](https://github.com/chl84/3D_game_engine/actions/runs/40906112033) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with camera/transform cases passing and device cases skipped; Quality green |
+| M2.4 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `9fac9f0`, built with glslc, ran 11/11 CTest and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -272,9 +274,13 @@ The Windows job caught two real portability issues before the milestone closed:
 - `engine doctor` reports the current working directory as the project root
   until project-root discovery is added.
 - Windows graphics is **not verified**: the runner has no GPU. The Windows CI
-  job compiles the render module and runs the headless tests, which skip when
-  the Vulkan loader is missing. The window smoke test is not registered on
-  Windows.
+  job compiles the render module and runs the headless tests; the device cases
+  skip when the Vulkan loader or an ICD is missing. The window and swapchain
+  tests are not registered on Windows.
+- Scene format v2 adds `engine.scene.Mesh`; v1 scenes load and are upgraded on
+  save. The M1 release cannot read v2 scenes. ADR-0009 records the change.
+- `Mesh` asset UUIDs are not resolved until the asset pipeline in M3. M2.4
+  resolves only `engine.builtin.cube` and `engine.builtin.plane`.
 - The window smoke test is skipped in headless CI. It runs locally and on any
   Linux machine with a display server.
 - The renderer requires Vulkan 1.3 with Synchronization2 and Dynamic
