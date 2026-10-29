@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/schemas/log-record@1.schema.json",
+  "title": "log-record@1",
+  "description": "One JSONL log record from the engine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts", "level", "category", "message", "thread", "fields"],
+  "properties": {
+    "ts": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["trace", "debug", "info", "warn", "error", "critical"]
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string"
+    },
+    "thread": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fields": {
+      "type": "object"
+    }
+  }
+}

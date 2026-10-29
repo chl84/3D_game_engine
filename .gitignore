@@ -8,10 +8,11 @@
 /compile_commands.json
 CMakeUserPresets.json
 
-# Package managers
+# Package managers and Python environment
 /vcpkg_installed/
 **/vcpkg_installed/
 /vcpkg-cache/
+/.venv/
 
 # Engine runtime data
 /.engine/
@@ -36,7 +37,17 @@ CMakeUserPresets.json
 *.log
 /.cache/
 **/.cache/
+__pycache__/
+*.pyc
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local review reports (Norwegian, not part of the repository)
+/reviews/
+
+# Local prompt sources, kept outside version control
+/VISION.md
+/MASTERPROMPT_v0.2.md
+/AGENT_RULES.md

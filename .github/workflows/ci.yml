@@ -1,0 +1,430 @@
+name: CI
+
+# CI runs for pull requests to main, pushes to main and manual dispatches.
+# Feature-branch pushes do not trigger CI; open a pull request or run the
+# workflow manually when a feature branch needs verification.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_VERSION: 4.4.5
+  NINJA_VERSION: 1.13.2
+
+jobs:
+  linux:
+    name: Linux (${{ matrix.preset }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - ci-linux-gcc14
+          - ci-linux-clang
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Set up Python tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Install Vulkan and lavapipe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools g++-14
+
+      - name: Install pinned CMake and Ninja
+        run: |
+          cmake_archive="/tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          ninja_archive="/tmp/ninja-${NINJA_VERSION}-linux.zip"
+          curl -fsSL -o "$cmake_archive" \
+            "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL -o "$ninja_archive" \
+            "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip"
+          mkdir -p "$HOME/.local/cmake" "$HOME/.local/bin"
+          tar -xzf "$cmake_archive" -C "$HOME/.local/cmake" --strip-components=1
+          unzip -q -o "$ninja_archive" -d "$HOME/.local/bin"
+          echo "$HOME/.local/cmake/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify pinned build tools
+        run: |
+          test "$(cmake --version | head -n 1)" = "cmake version ${CMAKE_VERSION}"
+          test "$(ninja --version)" = "${NINJA_VERSION}"
+          cmake --version | head -n 1
+          ninja --version
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+
+      - name: Core test summary
+        run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
+
+      - name: Vulkan doctor detection
+        run: |
+          set +e
+          ./build/${{ matrix.preset }}/tools/engine/engine \
+            doctor --require vulkan --json > doctor-vulkan.json
+          code=$?
+          set -e
+          cat doctor-vulkan.json
+          test "$code" -eq 0
+          python3 - <<'PY'
+          import json
+          with open("doctor-vulkan.json", encoding="utf-8") as input_file:
+              document = json.load(input_file)
+          assert document["vulkan"]["loader"] is True
+          assert document["vulkan"]["lavapipe"] is True
+          names = [device["name"].lower() for device in document["vulkan"]["devices"]]
+          assert any("llvmpipe" in name for name in names), names
+          assert document["requirements"]["passed"] is True
+          print("lavapipe detected:", names)
+          PY
+
+      - name: Vulkan doctor missing ICD
+        run: |
+          set +e
+          VK_ICD_FILENAMES=/tmp/engine-no-icd.json \
+          VK_DRIVER_FILES=/tmp/engine-no-icd.json \
+            ./build/${{ matrix.preset }}/tools/engine/engine doctor --require vulkan --json \
+            > doctor-no-icd.json
+          code=$?
+          set -e
+          test "$code" -eq 8
+          python3 - <<'PY'
+          import json
+          with open("doctor-no-icd.json", encoding="utf-8") as input_file:
+              document = json.load(input_file)
+          assert document["requirements"]["passed"] is False
+          assert "vulkan" in document["requirements"]["failed"]
+          print("missing ICD correctly failed with exit 8")
+          PY
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-${{ matrix.preset }}-artifacts
+          if-no-files-found: ignore
+          path: |
+            build/${{ matrix.preset }}/Testing
+            doctor-*.json
+
+  windows:
+    name: Windows (MSVC)
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: |
+          $vcpkgRoot = Join-Path $env:GITHUB_WORKSPACE "vcpkg"
+          git clone https://github.com/microsoft/vcpkg $vcpkgRoot
+          git -C $vcpkgRoot checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+          "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Set up Python tools
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+      - name: Install pinned CMake and Ninja
+        shell: pwsh
+        run: |
+          $cmakeVersion = $env:CMAKE_VERSION
+          $ninjaVersion = $env:NINJA_VERSION
+          $cmakeRoot = Join-Path $env:RUNNER_TEMP "cmake-$cmakeVersion"
+          $ninjaRoot = Join-Path $env:RUNNER_TEMP "ninja-$ninjaVersion"
+          Invoke-WebRequest -Uri "https://github.com/Kitware/CMake/releases/download/v$cmakeVersion/cmake-$cmakeVersion-windows-x86_64.zip" -OutFile "$env:RUNNER_TEMP\cmake.zip"
+          Invoke-WebRequest -Uri "https://github.com/ninja-build/ninja/releases/download/v$ninjaVersion/ninja-win.zip" -OutFile "$env:RUNNER_TEMP\ninja.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\cmake.zip" -DestinationPath $cmakeRoot -Force
+          Expand-Archive -Path "$env:RUNNER_TEMP\ninja.zip" -DestinationPath $ninjaRoot -Force
+          "$cmakeRoot\cmake-$cmakeVersion-windows-x86_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          $ninjaRoot | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Verify pinned build tools
+        shell: pwsh
+        run: |
+          $cmakeVersion = (cmake --version | Select-Object -First 1)
+          if ($cmakeVersion -ne "cmake version $env:CMAKE_VERSION") {
+            throw "Unexpected CMake version: $cmakeVersion"
+          }
+          $ninjaVersion = ninja --version
+          if ($ninjaVersion -ne $env:NINJA_VERSION) {
+            throw "Unexpected Ninja version: $ninjaVersion"
+          }
+          $cmakeVersion
+          $ninjaVersion
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --preset ci-windows
+
+      - name: Build
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --build --preset ci-windows
+
+      - name: Test
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: ctest --preset ci-windows --output-on-failure
+
+      - name: Core test summary
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: ctest --preset ci-windows -R engine_core_tests -V
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-artifacts
+          if-no-files-found: ignore
+          path: |
+            build/ci-windows/Testing
+            doctor-*.json
+
+  quality:
+    name: Quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install clang tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18 clang-tidy-18
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Install pinned CMake and Ninja
+        run: |
+          cmake_archive="/tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          ninja_archive="/tmp/ninja-${NINJA_VERSION}-linux.zip"
+          curl -fsSL -o "$cmake_archive" \
+            "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL -o "$ninja_archive" \
+            "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip"
+          mkdir -p "$HOME/.local/cmake" "$HOME/.local/bin"
+          tar -xzf "$cmake_archive" -C "$HOME/.local/cmake" --strip-components=1
+          unzip -q -o "$ninja_archive" -d "$HOME/.local/bin"
+          echo "$HOME/.local/cmake/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify pinned build tools
+        run: |
+          test "$(cmake --version | head -n 1)" = "cmake version ${CMAKE_VERSION}"
+          test "$(ninja --version)" = "${NINJA_VERSION}"
+          cmake --version | head -n 1
+          ninja --version
+
+      - name: Configure for clang-tidy
+        run: cmake --preset ci-linux-clang
+
+      - name: clang-format
+        run: |
+          find engine tools tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0 \
+            | xargs -0 clang-format-18 --dry-run --Werror
+
+      - name: clang-tidy
+        run: |
+          find engine tools tests -type f -name '*.cpp' -print0 \
+            | xargs -0 clang-tidy-18 -p build/ci-linux-clang --warnings-as-errors='*'
+
+  linux-asan:
+    name: Linux ASan/UBSan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Set up Python tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Install Vulkan and lavapipe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools g++-14
+
+      - name: Install pinned CMake and Ninja
+        run: |
+          cmake_archive="/tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          ninja_archive="/tmp/ninja-${NINJA_VERSION}-linux.zip"
+          curl -fsSL -o "$cmake_archive" \
+            "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL -o "$ninja_archive" \
+            "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip"
+          mkdir -p "$HOME/.local/cmake" "$HOME/.local/bin"
+          tar -xzf "$cmake_archive" -C "$HOME/.local/cmake" --strip-components=1
+          unzip -q -o "$ninja_archive" -d "$HOME/.local/bin"
+          echo "$HOME/.local/cmake/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify pinned build tools
+        run: |
+          test "$(cmake --version | head -n 1)" = "cmake version ${CMAKE_VERSION}"
+          test "$(ninja --version)" = "${NINJA_VERSION}"
+          cmake --version | head -n 1
+          ninja --version
+
+      - name: Configure
+        run: cmake --preset linux-asan -DCMAKE_CXX_COMPILER=g++-14
+
+      - name: Build
+        run: cmake --build --preset linux-asan
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: ctest --preset linux-asan --output-on-failure
+
+      - name: Core test summary
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: ctest --preset linux-asan -R engine_core_tests -V
+
+      - name: Vulkan doctor detection (ASan/UBSan)
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set +e
+          ./build/linux-asan/tools/engine/engine \
+            doctor --require vulkan --json > doctor-asan.json
+          code=$?
+          set -e
+          cat doctor-asan.json
+          test "$code" -eq 0
+          python3 - <<'PY'
+          import json
+          with open("doctor-asan.json", encoding="utf-8") as input_file:
+              document = json.load(input_file)
+          assert document["vulkan"]["lavapipe"] is True
+          names = [device["name"].lower() for device in document["vulkan"]["devices"]]
+          assert any("llvmpipe" in name for name in names), names
+          assert document["requirements"]["passed"] is True
+          print("lavapipe detected under ASan/UBSan:", names)
+          PY
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-asan-artifacts
+          if-no-files-found: ignore
+          path: |
+            build/linux-asan/Testing
+            doctor-asan.json

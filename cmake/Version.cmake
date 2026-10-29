@@ -1,0 +1,57 @@
+# Collect build metadata for engine/core/build_info.hpp.
+
+find_package(Git QUIET)
+
+set(ENGINE_GIT_COMMIT "unknown")
+if(GIT_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE ENGINE_GIT_COMMIT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE ENGINE_GIT_RESULT
+    )
+    if(NOT ENGINE_GIT_RESULT EQUAL 0)
+        set(ENGINE_GIT_COMMIT "unknown")
+    endif()
+endif()
+
+if(CMAKE_BUILD_TYPE)
+    set(ENGINE_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+else()
+    set(ENGINE_BUILD_TYPE "unknown")
+endif()
+
+set(ENGINE_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+
+set(ENGINE_OS_NAME "${CMAKE_SYSTEM_NAME}")
+set(ENGINE_OS_VERSION "${CMAKE_SYSTEM_VERSION}")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    execute_process(
+        COMMAND uname -r
+        OUTPUT_VARIABLE ENGINE_OS_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(NOT ENGINE_OS_VERSION)
+        set(ENGINE_OS_VERSION "unknown")
+    endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(ENGINE_OS_NAME "Windows")
+    set(ENGINE_OS_VERSION "${CMAKE_SYSTEM_VERSION}")
+else()
+    set(ENGINE_OS_NAME "${CMAKE_SYSTEM_NAME}")
+    set(ENGINE_OS_VERSION "${CMAKE_SYSTEM_VERSION}")
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(ENGINE_PLATFORM "Windows-${CMAKE_SYSTEM_PROCESSOR}")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(ENGINE_PLATFORM "Linux-${CMAKE_SYSTEM_PROCESSOR}")
+else()
+    set(ENGINE_PLATFORM "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+set(ENGINE_CXX_STANDARD "20")
