@@ -95,7 +95,10 @@ def main() -> int:
 
     vulkan = doctor_document["vulkan"]
     vulkan_available = (
-        vulkan["loader"] and vulkan["instanceCreated"] and bool(vulkan["devices"])
+        vulkan["loader"]
+        and vulkan["instanceCreated"]
+        and bool(vulkan["devices"])
+        and bool(vulkan["descriptorIndexing"])
     )
     require_result = run_engine(engine, ["doctor", "--json", "--require", "vulkan"])
     expected_exit = 0 if vulkan_available else 8

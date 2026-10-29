@@ -156,8 +156,13 @@ jobs:
               document = json.load(input_file)
           assert document["vulkan"]["loader"] is True
           assert document["vulkan"]["lavapipe"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
           names = [device["name"].lower() for device in document["vulkan"]["devices"]]
           assert any("llvmpipe" in name for name in names), names
+          assert any(
+              device["descriptorIndexing"]["supported"]
+              for device in document["vulkan"]["devices"]
+          )
           assert document["requirements"]["passed"] is True
           print("lavapipe detected:", names)
           PY
@@ -176,6 +181,7 @@ jobs:
           import json
           with open("doctor-no-icd.json", encoding="utf-8") as input_file:
               document = json.load(input_file)
+          assert document["vulkan"]["descriptorIndexing"] is False
           assert document["requirements"]["passed"] is False
           assert "vulkan" in document["requirements"]["failed"]
           print("missing ICD correctly failed with exit 8")
@@ -498,8 +504,13 @@ jobs:
           with open("doctor-asan.json", encoding="utf-8") as input_file:
               document = json.load(input_file)
           assert document["vulkan"]["lavapipe"] is True
+          assert document["vulkan"]["descriptorIndexing"] is True
           names = [device["name"].lower() for device in document["vulkan"]["devices"]]
           assert any("llvmpipe" in name for name in names), names
+          assert any(
+              device["descriptorIndexing"]["supported"]
+              for device in document["vulkan"]["devices"]
+          )
           assert document["requirements"]["passed"] is True
           print("lavapipe detected under ASan/UBSan:", names)
           PY

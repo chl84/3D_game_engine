@@ -91,7 +91,8 @@ int main(int argc, char** argv) {
     std::vector<std::string> requirements;
     doctor
         ->add_option("--require", requirements,
-                     "Required check: vulkan, gpu, validation-layers or lavapipe.")
+                     "Required check: vulkan (includes descriptor indexing), gpu, "
+                     "validation-layers or lavapipe.")
         ->expected(0, 4);
 
     auto* project_command = app.add_subcommand("project", "Create, validate or unlock a project.");
@@ -315,7 +316,7 @@ int main(int argc, char** argv) {
             engine::cli::print_doctor_human(result.report, std::cout);
         }
 
-        return result.failed_requirements.empty()
+        return result.failed_requirements.empty() && !result.engine_requirements_failed
                    ? 0
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
     }
