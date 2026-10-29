@@ -192,8 +192,9 @@
 | M3.1 asset schemas | Documented | `schemas/asset@1.schema.json` and `schemas/asset-cooked@1.schema.json` define the approved asset sidecar and cooked manifest, including stable node IDs, original source path and source copy |
 | M3.1 fastgltf dependency | Automatically tested | fastgltf 0.9.1 and simdjson 5.0.5 are pinned in vcpkg with overrides; `engine_dependencies_smoke` constructs a `fastgltf::Parser` and passes |
 | M3.1 cache and source rules | Documented | `.engine/cache/` is explicitly ignored by git; `asset@1` stores the original reimport source and a project-relative source copy (ADR-0012) |
-| M3.1 `ilammy` replacement | Pending CI | The Windows job now uses `vswhere` + `vcvarsall.bat x64` and exports the environment instead of `ilammy/msvc-dev-cmd` |
-| M3.1 CI | Pending | Final CI after implementation |
+| M3.1 `ilammy` replacement | Automatically tested | The Windows job uses `vswhere` + `vcvarsall.bat x64`; `Verify MSVC` passes `cl.exe`, and the Windows matrix is green |
+| M3.1 CI | Automatically tested | Manual dispatch [40973936972](https://github.com/chl84/3D_game_engine/actions/runs/40973936972) on `a55d568` → all five jobs green. Linux 15/15; Windows 11/11 with native MSVC setup, fastgltf and scene v3; ASan 15/15; Quality green |
+| M3.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `a55d568` → 15 registered tests (14 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

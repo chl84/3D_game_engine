@@ -2,8 +2,9 @@
 
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
 in progress: scene v3, asset schemas, fastgltf/simdjson and the `ilammy`
-replacement are in place. The image-decoding decision is still awaiting
-explicit approval; texture decoding is not used until it is approved.
+replacement are in place and CI-green. The image-decoding decision is still
+awaiting explicit approval; texture decoding is not used until it is approved.
+M3.2 is next.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
