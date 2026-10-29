@@ -1,11 +1,17 @@
 #include <engine/render/renderer.hpp>
 
+#include <engine/render/camera.hpp>
+
+#include "shaders.hpp"
 #include "vulkan_util.hpp"
+
+#include <glm/glm.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <string>
 #include <utility>
@@ -15,6 +21,36 @@ namespace engine::render {
 namespace {
 
 constexpr std::size_t kFramesInFlight = 2;
+constexpr std::uint32_t kTriangleVertexCount = 3;
+
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
+[[nodiscard]] std::array<Vertex, 3> triangle_vertices() noexcept {
+    std::array<Vertex, 3> vertices{};
+    vertices[0] = {glm::vec3{-0.6F, -0.5F, 0.0F}, glm::vec3{1.0F, 0.2F, 0.2F}};
+    vertices[1] = {glm::vec3{0.6F, -0.5F, 0.0F}, glm::vec3{0.2F, 1.0F, 0.2F}};
+    vertices[2] = {glm::vec3{0.0F, 0.6F, 0.0F}, glm::vec3{0.2F, 0.4F, 1.0F}};
+    return vertices;
+}
+
+[[nodiscard]] core::Result<VkShaderModule>
+create_shader_module(VkDevice device, const std::uint32_t* code, std::size_t size) {
+    VkShaderModuleCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    create_info.codeSize = size;
+    create_info.pCode = code;
+
+    VkShaderModule module = VK_NULL_HANDLE;
+    const VkResult result = vkCreateShaderModule(device, &create_info, nullptr, &module);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<VkShaderModule>(
+            detail::vulkan_error("could not create a shader module", "shader", result));
+    }
+    return module;
+}
 
 [[nodiscard]] VkClearValue clear_color() noexcept {
     VkClearValue value{};
@@ -152,6 +188,11 @@ struct Renderer::Impl {
     std::vector<VkImage> images;
     std::vector<VkImageView> image_views;
     std::vector<VkSemaphore> render_finished;
+    VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
+    VkPipeline pipeline{VK_NULL_HANDLE};
+    VkBuffer vertex_buffer{VK_NULL_HANDLE};
+    VmaAllocation vertex_allocation{nullptr};
+    Camera camera;
     std::array<Frame, kFramesInFlight> frames{};
     std::size_t frame_index{0};
     std::uint64_t presented_frames{0};
@@ -165,10 +206,15 @@ struct Renderer::Impl {
                                                 const SwapchainOptions& swapchain_options);
     [[nodiscard]] core::Result<void> create_frame_resources();
     void destroy_frame_resources();
+    [[nodiscard]] core::Result<void> create_pipeline_layout();
+    void destroy_pipeline_layout();
+    [[nodiscard]] core::Result<void> create_vertex_buffer();
+    void destroy_vertex_buffer();
+    [[nodiscard]] core::Result<void> create_pipeline();
     [[nodiscard]] core::Result<void> create_swapchain();
     [[nodiscard]] core::Result<void> recreate_swapchain();
     void destroy_swapchain();
-    [[nodiscard]] core::Result<void> record_clear(std::uint32_t image_index);
+    [[nodiscard]] core::Result<void> record_frame(std::uint32_t image_index);
 };
 
 Renderer::Impl::~Impl() {
@@ -176,6 +222,8 @@ Renderer::Impl::~Impl() {
         (void)vkDeviceWaitIdle(device->device());
     }
     destroy_swapchain();
+    destroy_vertex_buffer();
+    destroy_pipeline_layout();
     destroy_frame_resources();
 }
 
@@ -206,6 +254,14 @@ core::Result<void> Renderer::Impl::initialize(const Device& render_device,
     auto frame_resources = create_frame_resources();
     if (!frame_resources) {
         return frame_resources;
+    }
+    auto pipeline_layout_result = create_pipeline_layout();
+    if (!pipeline_layout_result) {
+        return pipeline_layout_result;
+    }
+    auto vertex_buffer_result = create_vertex_buffer();
+    if (!vertex_buffer_result) {
+        return vertex_buffer_result;
     }
     return create_swapchain();
 }
@@ -277,6 +333,212 @@ void Renderer::Impl::destroy_frame_resources() {
             frame.command_buffer = VK_NULL_HANDLE;
         }
     }
+}
+
+core::Result<void> Renderer::Impl::create_pipeline_layout() {
+    VkPushConstantRange push_constant{};
+    push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    push_constant.offset = 0;
+    push_constant.size = sizeof(glm::mat4);
+
+    VkPipelineLayoutCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    create_info.pushConstantRangeCount = 1;
+    create_info.pPushConstantRanges = &push_constant;
+
+    const VkResult result =
+        vkCreatePipelineLayout(device->device(), &create_info, nullptr, &pipeline_layout);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the pipeline layout", "pipeline", result));
+    }
+    return {};
+}
+
+void Renderer::Impl::destroy_pipeline_layout() {
+    if (device == nullptr || pipeline_layout == VK_NULL_HANDLE) {
+        return;
+    }
+    vkDestroyPipelineLayout(device->device(), pipeline_layout, nullptr);
+    pipeline_layout = VK_NULL_HANDLE;
+}
+
+core::Result<void> Renderer::Impl::create_vertex_buffer() {
+    const std::array<Vertex, 3> vertices = triangle_vertices();
+
+    VkBufferCreateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = sizeof(vertices);
+    buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo allocation_info{};
+    allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+    const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
+                                            &vertex_buffer, &vertex_allocation, nullptr);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<void>(detail::vulkan_error(
+            "could not create the triangle vertex buffer", "vertex-buffer", result));
+    }
+
+    void* mapped = nullptr;
+    const VkResult map_result = vmaMapMemory(device->allocator(), vertex_allocation, &mapped);
+    if (map_result != VK_SUCCESS) {
+        vmaDestroyBuffer(device->allocator(), vertex_buffer, vertex_allocation);
+        vertex_buffer = VK_NULL_HANDLE;
+        vertex_allocation = nullptr;
+        return core::make_failure<void>(detail::vulkan_error(
+            "could not map the triangle vertex buffer", "vertex-buffer", map_result));
+    }
+    std::memcpy(mapped, vertices.data(), sizeof(vertices));
+    vmaUnmapMemory(device->allocator(), vertex_allocation);
+    return {};
+}
+
+void Renderer::Impl::destroy_vertex_buffer() {
+    if (device == nullptr || vertex_buffer == VK_NULL_HANDLE) {
+        return;
+    }
+    vmaDestroyBuffer(device->allocator(), vertex_buffer, vertex_allocation);
+    vertex_buffer = VK_NULL_HANDLE;
+    vertex_allocation = nullptr;
+}
+
+core::Result<void> Renderer::Impl::create_pipeline() {
+    if (format == VK_FORMAT_UNDEFINED) {
+        return core::make_failure<void>(core::make_error(core::ErrorCode::Precondition,
+                                                         "the swapchain format is not available",
+                                                         {}, {{"stage", "pipeline"}}));
+    }
+    if (pipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device->device(), pipeline, nullptr);
+        pipeline = VK_NULL_HANDLE;
+    }
+
+    auto vertex_module = create_shader_module(device->device(), shaders::kTriangleVertex,
+                                              shaders::kTriangleVertexSize);
+    if (!vertex_module) {
+        return core::make_failure<void>(vertex_module.error());
+    }
+    auto fragment_module = create_shader_module(device->device(), shaders::kTriangleFragment,
+                                                shaders::kTriangleFragmentSize);
+    if (!fragment_module) {
+        vkDestroyShaderModule(device->device(), *vertex_module, nullptr);
+        return core::make_failure<void>(fragment_module.error());
+    }
+
+    // Vulkan requires every unspecified field to be zero.
+    // NOLINTNEXTLINE(bugprone-invalid-enum-default-initialization)
+    std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+    shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    shader_stages[0].module = *vertex_module;
+    shader_stages[0].pName = "main";
+    shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    shader_stages[1].module = *fragment_module;
+    shader_stages[1].pName = "main";
+
+    VkVertexInputBindingDescription binding{};
+    binding.binding = 0;
+    binding.stride = sizeof(Vertex);
+    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    std::array<VkVertexInputAttributeDescription, 2> attributes{};
+    attributes[0].location = 0;
+    attributes[0].binding = 0;
+    attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributes[0].offset = 0;
+    attributes[1].location = 1;
+    attributes[1].binding = 0;
+    attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributes[1].offset = static_cast<std::uint32_t>(sizeof(glm::vec3));
+
+    VkPipelineVertexInputStateCreateInfo vertex_input{};
+    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input.vertexBindingDescriptionCount = 1;
+    vertex_input.pVertexBindingDescriptions = &binding;
+    vertex_input.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attributes.size());
+    vertex_input.pVertexAttributeDescriptions = attributes.data();
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly{};
+    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly.primitiveRestartEnable = VK_FALSE;
+
+    VkPipelineViewportStateCreateInfo viewport_state{};
+    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount = 1;
+    viewport_state.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterization{};
+    rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterization.cullMode = VK_CULL_MODE_NONE;
+    rasterization.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization.lineWidth = 1.0F;
+
+    // Vulkan requires every unspecified field to be zero.
+    // NOLINTNEXTLINE(bugprone-invalid-enum-default-initialization)
+    VkPipelineMultisampleStateCreateInfo multisample{};
+    multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineColorBlendAttachmentState blend_attachment{};
+    blend_attachment.colorWriteMask = static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_R_BIT) |
+                                      static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_G_BIT) |
+                                      static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_B_BIT) |
+                                      static_cast<VkColorComponentFlags>(VK_COLOR_COMPONENT_A_BIT);
+    blend_attachment.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo color_blend{};
+    color_blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend.attachmentCount = 1;
+    color_blend.pAttachments = &blend_attachment;
+
+    const std::array<VkDynamicState, 2> dynamic_states{
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+    VkPipelineDynamicStateCreateInfo dynamic_state{};
+    dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state.dynamicStateCount = static_cast<std::uint32_t>(dynamic_states.size());
+    dynamic_state.pDynamicStates = dynamic_states.data();
+
+    VkPipelineRenderingCreateInfo rendering{};
+    rendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    rendering.colorAttachmentCount = 1;
+    rendering.pColorAttachmentFormats = &format;
+
+    VkGraphicsPipelineCreateInfo pipeline_info{};
+    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.pNext = &rendering;
+    pipeline_info.stageCount = static_cast<std::uint32_t>(shader_stages.size());
+    pipeline_info.pStages = shader_stages.data();
+    pipeline_info.pVertexInputState = &vertex_input;
+    pipeline_info.pInputAssemblyState = &input_assembly;
+    pipeline_info.pViewportState = &viewport_state;
+    pipeline_info.pRasterizationState = &rasterization;
+    pipeline_info.pMultisampleState = &multisample;
+    pipeline_info.pColorBlendState = &color_blend;
+    pipeline_info.pDynamicState = &dynamic_state;
+    pipeline_info.layout = pipeline_layout;
+    pipeline_info.renderPass = VK_NULL_HANDLE;
+    pipeline_info.subpass = 0;
+
+    VkPipeline new_pipeline = VK_NULL_HANDLE;
+    const VkResult result = vkCreateGraphicsPipelines(device->device(), VK_NULL_HANDLE, 1,
+                                                      &pipeline_info, nullptr, &new_pipeline);
+    vkDestroyShaderModule(device->device(), *vertex_module, nullptr);
+    vkDestroyShaderModule(device->device(), *fragment_module, nullptr);
+    if (result != VK_SUCCESS) {
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the graphics pipeline", "pipeline", result));
+    }
+
+    pipeline = new_pipeline;
+    return {};
 }
 
 core::Result<void> Renderer::Impl::create_swapchain() {
@@ -452,6 +714,12 @@ core::Result<void> Renderer::Impl::create_swapchain() {
     render_finished = std::move(new_render_finished);
     window_width = window->width();
     window_height = window->height();
+
+    auto pipeline_result = create_pipeline();
+    if (!pipeline_result) {
+        destroy_swapchain();
+        return pipeline_result;
+    }
     return {};
 }
 
@@ -470,6 +738,10 @@ void Renderer::Impl::destroy_swapchain() {
         return;
     }
     const VkDevice handle = device->device();
+    if (pipeline != VK_NULL_HANDLE) {
+        vkDestroyPipeline(handle, pipeline, nullptr);
+        pipeline = VK_NULL_HANDLE;
+    }
     for (const VkSemaphore semaphore : render_finished) {
         vkDestroySemaphore(handle, semaphore, nullptr);
     }
@@ -487,7 +759,7 @@ void Renderer::Impl::destroy_swapchain() {
     extent = VkExtent2D{0, 0};
 }
 
-core::Result<void> Renderer::Impl::record_clear(std::uint32_t image_index) {
+core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index) {
     Frame& frame = frames[frame_index];
     VkResult result = vkResetCommandBuffer(frame.command_buffer, 0);
     if (result != VK_SUCCESS) {
@@ -526,6 +798,30 @@ core::Result<void> Renderer::Impl::record_clear(std::uint32_t image_index) {
     rendering_info.pColorAttachments = &color_attachment;
 
     vkCmdBeginRendering(frame.command_buffer, &rendering_info);
+
+    const float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
+    const glm::mat4 view_projection = camera.view_projection(aspect);
+
+    VkViewport viewport{};
+    viewport.x = 0.0F;
+    viewport.y = 0.0F;
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
+    VkRect2D scissor{};
+    scissor.offset = VkOffset2D{0, 0};
+    scissor.extent = extent;
+
+    vkCmdSetViewport(frame.command_buffer, 0, 1, &viewport);
+    vkCmdSetScissor(frame.command_buffer, 0, 1, &scissor);
+    vkCmdBindPipeline(frame.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    VkDeviceSize vertex_offset = 0;
+    vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &vertex_offset);
+    vkCmdPushConstants(frame.command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                       sizeof(view_projection), &view_projection);
+    vkCmdDraw(frame.command_buffer, kTriangleVertexCount, 1, 0, 0);
+
     vkCmdEndRendering(frame.command_buffer);
 
     transition_image(frame.command_buffer, images[image_index],
@@ -624,7 +920,7 @@ core::Result<bool> Renderer::draw_frame() {
             detail::vulkan_error("could not reset the frame fence", "frame", result));
     }
 
-    auto recorded = impl_->record_clear(image_index);
+    auto recorded = impl_->record_frame(image_index);
     if (!recorded) {
         return core::make_failure<bool>(recorded.error());
     }

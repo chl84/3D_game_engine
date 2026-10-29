@@ -68,6 +68,7 @@ add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
 
 add_executable(engine_render_tests
+    render/camera_test.cpp
     render/device_test.cpp
 )
 
