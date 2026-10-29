@@ -52,7 +52,7 @@ Out of scope:
 | SDL3 | 3.4.18 | Zlib | Window, input and platform events | Approved in the milestone plan |
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation | Approved in the milestone plan |
 | GLM | 1.0.3 | MIT | Matrix/vector math for the renderer | Approved in the milestone plan |
-| shaderc / glslc | 2026.4 | Apache-2.0 | GLSL to SPIR-V at build time | Approved in the milestone plan; exact vcpkg port/version must be confirmed |
+| glslc | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step | Approved in the milestone plan; only the CLI is used, not the shaderc library |
 | Dear ImGui | 1.93.0-docking | MIT | Debug overlay and later editor UI | Approved in the milestone plan |
 | stb_image_write | 2026-08-02 snapshot | MIT OR Unlicense | PNG screenshots | Planned for M3; proposed to move to M2 for screenshots |
 
@@ -87,7 +87,7 @@ new transitive dependency follows A.6 and is recorded in
 
 ### M2.3 First triangle
 
-- Compile GLSL to SPIR-V at build time with shaderc/glslc.
+- Compile GLSL to SPIR-V at build time with `glslc`.
 - Create the graphics pipeline, vertex buffer and draw path.
 - Add a camera-relative view/projection matrix with GLM.
 - Draw a triangle from a test scene.
@@ -184,9 +184,9 @@ on Linux with lavapipe. The Windows runner has no GPU.
   lavapipe; local GPU output is compared with a tolerance.
 - **Swapchain edge cases:** resize, minimize and out-of-date handling are a
   common source of validation errors. Dedicated tests are required.
-- **Shader toolchain:** shaderc/glslc must work on Linux and Windows; the
-  exact vcpkg port/version must be confirmed before M2 starts.
-- **Dependency expansion:** SDL3, VMA, GLM, shaderc, ImGui and stb expand the
+- **Shader toolchain:** `glslc` must work on Linux and Windows. Linux uses the
+  distro package; Windows uses the pinned Vulkan SDK 1.4.363.
+- **Dependency expansion:** SDL3, VMA, GLM, ImGui and stb expand the
   build. Each addition updates `DEPENDENCIES.md` and `THIRD_PARTY_NOTICES.md`.
 - **Windows graphics:** cannot be verified on the runner. The owner must test
   manually or accept it as not verified.

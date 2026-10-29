@@ -58,7 +58,7 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| glslc (shaderc CLI) | 2026.4 on Linux; Vulkan SDK on Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine |
+| glslc (shaderc CLI) | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step; not linked into the engine |
 | CMake | 4.4.5 pinned in CI; 4.4.4 on the development machine | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 pinned in CI and on the development machine | Apache-2.0 | Build tool |
 | GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |

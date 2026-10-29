@@ -33,7 +33,7 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |
 | MSVC | Visual Studio 2022 17.14 | Proprietary | Windows compiler |
 | Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| glslc (shaderc CLI) | 2026.4 on Linux; Vulkan SDK on Windows | Apache-2.0 | GLSL to SPIR-V build step, not linked |
+| glslc (shaderc CLI) | distro package on Linux; Vulkan SDK 1.4.363 on Windows | Apache-2.0 | GLSL to SPIR-V build step, not linked |
 
 Compilers, CMake, Ninja and vcpkg are build tools, not linked engine
 dependencies. The GCC runtime library exception and the LLVM exception make
