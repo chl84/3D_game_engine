@@ -113,7 +113,6 @@ namespace {
             if (vkEnumeratePhysicalDevices(instance, &device_count, devices.data()) == VK_SUCCESS) {
                 nlohmann::json device_list = nlohmann::json::array();
                 bool lavapipe = false;
-                bool descriptor_indexing = false;
 
                 for (const VkPhysicalDevice device : devices) {
                     VkPhysicalDeviceProperties properties{};
@@ -127,7 +126,6 @@ namespace {
                             : engine::render::DescriptorCapabilities{};
                     const engine::render::DescriptorRequirementReport requirement =
                         engine::render::evaluate_descriptor_requirements(capabilities);
-                    descriptor_indexing = descriptor_indexing || requirement.supported;
 
                     device_list.push_back({
                         {"name", name},
@@ -143,9 +141,9 @@ namespace {
                     });
                 }
 
+                vulkan["descriptorIndexing"] = any_device_supports_descriptor_indexing(device_list);
                 vulkan["devices"] = std::move(device_list);
                 vulkan["lavapipe"] = lavapipe;
-                vulkan["descriptorIndexing"] = descriptor_indexing;
             }
         }
 
@@ -212,7 +210,8 @@ DoctorResult run_doctor(const DoctorOptions& options) {
     const bool has_gpu = has_gpu_device(vulkan.at("devices"));
     const bool has_layers = has_validation_layer(vulkan.at("validationLayers"));
     const bool has_lavapipe = vulkan.at("lavapipe").get<bool>();
-    const bool has_descriptor_indexing = vulkan.at("descriptorIndexing").get<bool>();
+    const bool has_descriptor_indexing =
+        any_device_supports_descriptor_indexing(vulkan.at("devices"));
     const bool project_writable = project.at("writable").get<bool>();
 
     nlohmann::json checks = nlohmann::json::array();
@@ -282,7 +281,7 @@ DoctorResult run_doctor(const DoctorOptions& options) {
             failed_requirements.push_back(requirement);
         }
     }
-    if (has_devices && !has_descriptor_indexing) {
+    if (descriptor_indexing_requirement_failed(vulkan.at("devices"))) {
         failed_requirements.emplace_back("descriptor-indexing");
     }
 

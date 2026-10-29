@@ -8,6 +8,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(engine_core_tests
     unit/command_test.cpp
+    unit/doctor_support_test.cpp
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
@@ -23,6 +24,7 @@ add_executable(engine_core_tests
 
 target_include_directories(engine_core_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/unit
+    ${CMAKE_SOURCE_DIR}/tools/engine/src
 )
 
 target_link_libraries(engine_core_tests PRIVATE
@@ -136,9 +138,9 @@ target_link_libraries(engine_overlay_test PRIVATE
 
 engine_set_warnings(engine_overlay_test)
 
-# The window and swapchain tests need a display server. They report exit code 77
-# when no display is available, which CTest renders as skipped. Windows graphics
-# is not verified, so the tests are not registered there.
+# The window, swapchain and overlay tests need a display server. They report
+# exit code 77 when no display is available, which CTest renders as skipped.
+# Windows presentation remains unverified, so they are not registered there.
 if(NOT WIN32)
     add_test(NAME engine_window_smoke COMMAND engine_window_smoke)
     set_tests_properties(engine_window_smoke PROPERTIES
@@ -157,27 +159,29 @@ if(NOT WIN32)
         LABELS "unit;render"
         SKIP_RETURN_CODE 77
     )
-
-    add_test(NAME engine_screenshot_golden
-        COMMAND engine_screenshot_test
-                "${CMAKE_SOURCE_DIR}/tests/fixtures/golden/m2_scene_64.png"
-    )
-    set_tests_properties(engine_screenshot_golden PROPERTIES
-        LABELS "unit;render;acceptance"
-        SKIP_RETURN_CODE 77
-    )
-
-    add_test(
-        NAME engine_screenshot_cli
-        COMMAND "${Python3_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/screenshot.py"
-                "$<TARGET_FILE:engine>"
-    )
-    set_tests_properties(engine_screenshot_cli PROPERTIES
-        LABELS "contract;cli;render"
-        SKIP_RETURN_CODE 77
-    )
 endif()
+
+# Offscreen tests are registered on every platform. They skip when no usable
+# Vulkan device or software ICD is available.
+add_test(NAME engine_screenshot_golden
+    COMMAND engine_screenshot_test
+            "${CMAKE_SOURCE_DIR}/tests/fixtures/golden/m2_scene_64.png"
+)
+set_tests_properties(engine_screenshot_golden PROPERTIES
+    LABELS "unit;render;acceptance"
+    SKIP_RETURN_CODE 77
+)
+
+add_test(
+    NAME engine_screenshot_cli
+    COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/smoke/screenshot.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_screenshot_cli PROPERTIES
+    LABELS "contract;cli;render"
+    SKIP_RETURN_CODE 77
+)
 
 add_test(
     NAME engine_version_json

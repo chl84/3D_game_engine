@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -206,6 +207,20 @@ def main() -> int:
             )
             if created["data"].get("name") != "Demo":
                 return fail("project create did not report the project name")
+
+            lock_directory = project_dir / ".engine" / "lock"
+            lock_directory.mkdir(parents=True, exist_ok=True)
+            unlock_dry = run_command(
+                ["project", "unlock", str(project_dir), "--force", "--dry-run"],
+                "project unlock dry-run",
+            )
+            if unlock_dry["data"].get("dryRun") is not True:
+                return fail("project unlock dry-run did not report dryRun")
+            if unlock_dry["data"].get("lockExists") is not True:
+                return fail("project unlock dry-run did not see the lock")
+            if not lock_directory.exists():
+                return fail("project unlock dry-run removed the lock")
+            shutil.rmtree(lock_directory)
 
             inspected = run_command(
                 ["scene", "inspect", str(project_dir)], "scene inspect"
