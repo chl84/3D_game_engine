@@ -49,9 +49,8 @@
 
 - `main`: the M1.10 release `fffe346`, merged from `m1.10/maintenance` on
   2026-10-29 and tagged `v0.2.1`.
-- `m2/vulkan-renderer`: the M2 implementation branch; code head `8cc510e`
-  (M2.7 descriptor gate and doctor consistency) with documentation commits
-  after it. Not merged.
+- `m2/vulkan-renderer`: the M2 implementation branch at `dbc313a`; code head
+  `8cc510e` plus the `e727436` contract-test follow-up. Not merged.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -161,8 +160,8 @@
 | M2.7 screenshot error codes | Automatically tested | `tests/smoke/screenshot.py` requires `E_VALIDATION` and the exact `path`, `maxDimension` and `maxFrames` details for `../escape.png`, `--width 8193`, `--height 8193` and `--frames 1001` |
 | M2.7 budgets | Documented | Engine budget is 4096 sampled images + 2 samplers and 4096 material records. The 1 GiB texture budget is a sub-budget of the 4 GiB total GPU memory budget |
 | M2.7 validation scenarios | Automatically tested | The swapchain test covers resize, minimize/restore and swapchain recreation with Required validation; the overlay test covers frame rendering with Required validation. Device loss is not simulated because the test harness has no practical way to force it |
-| M2.7 CI | Automatically tested | Manual dispatch [40948978890](https://github.com/chl84/3D_game_engine/actions/runs/40948978890) on `482377b` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest; lavapipe LLVM 20.1.2 reports `descriptorIndexing: true` and `descriptor-indexing: pass`. ASan/UBSan: 14/14. Windows MSVC: 9/9; graphics tests not registered. Quality green |
-| M2.7 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `482377b`, built the exact-commit dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
+| M2.7 CI | Automatically tested | Manual dispatch [40950970681](https://github.com/chl84/3D_game_engine/actions/runs/40950970681) on `dbc313a` → all five jobs green. Linux GCC 14 and Clang 18: 14/14 CTest; lavapipe LLVM 20.1.2 reports `descriptorIndexing: true` and `descriptor-indexing: pass`. ASan/UBSan: 14/14. Windows MSVC: 9/9; graphics tests not registered. Quality green |
+| M2.7 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `dbc313a`, built the exact-commit dependencies, ran 14 registered tests (13 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
