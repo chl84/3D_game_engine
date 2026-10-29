@@ -29,6 +29,17 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.6 | Full documentation, ADRs and VISION translation | Next |
 | M0.7 | Hardening and M0 acceptance | Planned |
 
+### M0.5 follow-ups (non-blocking)
+
+Recorded from the M0.5 review. None of these block M0.5 or M0.6.
+
+- Make the missing-ICD test assert `requirements.failed == ["vulkan"]` and print the JSON.
+- Replace or upgrade `ilammy/msvc-dev-cmd@v1`, which still emits a Node 20 warning.
+- Trigger the failure-artifact upload once on a scratch branch and move it from
+  "implemented" to "automatically tested".
+- Consider SHA-256 verification for the downloaded CMake/Ninja archives and SHA
+  pinning of GitHub actions.
+
 ## Deferred modules
 
 These are intentionally outside M0/M1 and do not block the foundation:
