@@ -34,6 +34,8 @@ public:
 
     [[nodiscard]] bool active() const noexcept;
 
+    void pump_events() noexcept;
+
 private:
     SdlContext() = default;
 
@@ -56,9 +58,15 @@ public:
     [[nodiscard]] core::Result<std::vector<std::string>> vulkan_instance_extensions() const;
     [[nodiscard]] core::Result<VkSurfaceKHR> create_vulkan_surface(VkInstance instance) const;
 
+    [[nodiscard]] core::Result<void> resize(int width, int height);
+    [[nodiscard]] core::Result<void> show();
+    [[nodiscard]] core::Result<void> minimize();
+    [[nodiscard]] core::Result<void> restore();
+
     [[nodiscard]] SDL_Window* native_handle() const noexcept;
     [[nodiscard]] int width() const noexcept;
     [[nodiscard]] int height() const noexcept;
+    [[nodiscard]] bool minimized() const noexcept;
 
 private:
     explicit Window(SDL_Window* window) noexcept;

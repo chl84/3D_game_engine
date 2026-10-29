@@ -47,6 +47,10 @@ bool SdlContext::active() const noexcept {
     return active_;
 }
 
+void SdlContext::pump_events() noexcept {
+    SDL_PumpEvents();
+}
+
 core::Result<Window> Window::create(const SdlContext& context, const WindowOptions& options) {
     if (!context.active()) {
         return core::make_failure<Window>(core::make_error(core::ErrorCode::Precondition,
@@ -155,6 +159,61 @@ SDL_Window* Window::native_handle() const noexcept {
     return window_;
 }
 
+core::Result<void> Window::resize(int width, int height) {
+    if (window_ == nullptr) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Precondition, "window is not valid", {}, {{"stage", "window"}}));
+    }
+    if (width <= 0 || height <= 0) {
+        return core::make_failure<void>(core::make_error(core::ErrorCode::Validation,
+                                                         "window size must be positive", {},
+                                                         {{"width", width}, {"height", height}}));
+    }
+    if (!SDL_SetWindowSize(window_, width, height)) {
+        return core::make_failure<void>(sdl_error("could not resize the SDL window"));
+    }
+    (void)SDL_SyncWindow(window_);
+    width_ = width;
+    height_ = height;
+    return {};
+}
+
+core::Result<void> Window::show() {
+    if (window_ == nullptr) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Precondition, "window is not valid", {}, {{"stage", "window"}}));
+    }
+    if (!SDL_ShowWindow(window_)) {
+        return core::make_failure<void>(sdl_error("could not show the SDL window"));
+    }
+    (void)SDL_SyncWindow(window_);
+    return {};
+}
+
+core::Result<void> Window::minimize() {
+    if (window_ == nullptr) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Precondition, "window is not valid", {}, {{"stage", "window"}}));
+    }
+    if (!SDL_MinimizeWindow(window_)) {
+        return core::make_failure<void>(sdl_error("could not minimize the SDL window"));
+    }
+    (void)SDL_SyncWindow(window_);
+    return {};
+}
+
+core::Result<void> Window::restore() {
+    if (window_ == nullptr) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Precondition, "window is not valid", {}, {{"stage", "window"}}));
+    }
+    if (!SDL_RestoreWindow(window_)) {
+        return core::make_failure<void>(sdl_error("could not restore the SDL window"));
+    }
+    (void)SDL_SyncWindow(window_);
+    return {};
+}
+
 int Window::width() const noexcept {
     int width = width_;
     int height = height_;
@@ -171,6 +230,14 @@ int Window::height() const noexcept {
         return height;
     }
     return height_;
+}
+
+bool Window::minimized() const noexcept {
+    if (window_ == nullptr) {
+        return true;
+    }
+    const SDL_WindowFlags flags = SDL_GetWindowFlags(window_);
+    return (flags & SDL_WINDOW_MINIMIZED) != 0 || width() == 0 || height() == 0;
 }
 
 } // namespace engine::platform
