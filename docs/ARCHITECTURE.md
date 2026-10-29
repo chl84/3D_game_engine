@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M1.3. This document describes the approved module boundaries and
+**Status:** M1.4. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -167,8 +167,9 @@ M1.2 contains:
   parent/child links, world-transform composition, cycle rejection and
   recursive subtree destruction
 - `engine/command`: versioned command registry, JSON Schema validation via
-  json-schema-validator, structured success/error results with warnings, and an
-  in-memory command log with sequence numbers
+  json-schema-validator, structured success/error results with warnings, an
+  in-memory command log with sequence numbers, undo/redo stacks, redo
+  invalidation and transactions that commit or roll back as one undo step
 - EnTT 4.0.0 and json-schema-validator 2.4.0 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and
   volk-based Vulkan enumeration

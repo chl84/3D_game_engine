@@ -1,9 +1,10 @@
 # Build
 
-**Status:** M1.3. The build uses a pinned vcpkg manifest, CLI11 command
-dispatch, the core library with the reflection registry, the command bus and
-the scene/ECS module, `engine --version --json`, `engine doctor --json` with
-volk-based Vulkan detection, Catch2 tests and Python contract tests. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
+**Status:** M1.4. The build uses a pinned vcpkg manifest, CLI11 command
+dispatch, the core library with the reflection registry, the command bus with
+transactions and undo/redo, the scene/ECS module, `engine --version --json`,
+`engine doctor --json` with volk-based Vulkan detection, Catch2 tests and
+Python contract tests. CI pins CMake 4.4.5 and Ninja 1.13.2 and runs
 clang-format, clang-tidy and ASan/UBSan. Documentation links and
 sensitive-data checks run as CTest tests.
 
