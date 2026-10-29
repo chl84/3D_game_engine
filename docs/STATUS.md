@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.8 hardening — Windows offscreen lavapipe and pinned Linux glslc are verified; the consolidated M2 acceptance report and reviewer approval remain. M2.7 is owner-approved.
+**Current substep:** M2.8 reviewer KREVER EIER — the consolidated M2 acceptance report is prepared. The owner must decide on free camera/input/run, the M5/M8 performance measurement timing and the ImGui re-init measurement before merge approval.
 
 ## Substeps
 
@@ -43,7 +43,7 @@
 | M2.5 | Offscreen rendering, `engine screenshot`, PNG, golden images and Windows ICD follow-up | Done — reviewer GODKJENT; owner approved 2026-10-29. Windows ICD and pinned Linux `glslc` moved to M2.8 |
 | M2.6 | ImGui debug overlay, screenshot sandbox/limits, full CTest under Xvfb | Done — reviewer GODKJENT; owner approved 2026-10-29 |
 | M2.7 | Descriptor strategy and validation hardening | Done — reviewer GODKJENT; owner approved 2026-10-29 |
-| M2.8 | Hardening and M2 acceptance | In progress — Windows offscreen ICD and pinned Linux glslc verified; acceptance report and reviewer approval remain |
+| M2.8 | Hardening and M2 acceptance | Reviewer KREVER EIER — owner decisions pending |
 
 ## Repository state
 
@@ -354,7 +354,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M2.7 review, then M2.8 — hardening and M2 acceptance. Merging to `main`,
-creating or pushing a tag and closing M2 as `v0.3.0` require the owner's
-explicit approval. The agent does not merge, tag or use `--admin` without that
-approval.
+Owner decision on the M2 acceptance report: free camera/input/run, the
+M5/M8 performance measurement timing and the ImGui re-init measurement. Merge
+to `main`, tag `v0.3.0` and closing M2 require the owner's explicit approval.
+The agent does not merge, tag or use `--admin` without that approval.

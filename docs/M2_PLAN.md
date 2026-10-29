@@ -1,8 +1,11 @@
 # M2 Plan — Vulkan Renderer
 
 **Status:** Approved by the owner on 2026-10-29. M2.1–M2.6 are approved.
-M2.7 is implemented and awaits review. ADR-0011 was approved with the change
-that descriptor indexing is a minimum requirement and there is no fallback.
+M2.7 is approved and M2.8 is implemented. The reviewer requires an owner
+decision on free camera/input/run, the M5/M8 performance measurement timing and
+the ImGui re-init measurement before merge approval. ADR-0011 was approved with
+the change that descriptor indexing is a minimum requirement and there is no
+fallback.
 
 M1 is released as `v0.2.0`; M1.10 is released as `v0.2.1`. M2 starts from the
 `m2/vulkan-renderer` branch. The milestone is not complete until the M2

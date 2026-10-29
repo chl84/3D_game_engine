@@ -73,5 +73,8 @@ packaging. The measurement plan is:
    enable the overlay by default.
 
 M5 adds streaming/large-world content and is the first milestone where the
-entity/triangle/material budget can be exercised realistically. M8 repeats the
-measurement with the final renderer, descriptor path and packaging.
+entity/triangle/material budget can be exercised realistically. M5 must also
+add an explicit renderer subplan for lights, shadows and PBR materials; VISION
+currently assigns only basic PBR to the glTF import in M3, so the reference
+scene cannot be built without that addition. M8 repeats the measurement with
+the final renderer, descriptor path and packaging.
