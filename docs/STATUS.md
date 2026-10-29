@@ -75,9 +75,9 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 6/6 tests passed, including `engine_docs_links` and `engine_sensitive_scan` |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 6/6 tests passed, including `engine_docs_links` and `engine_sensitive_scan` |
 | Windows graphics | Not verified | The Windows runner has no GPU; graphics is not tested there and is outside the M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Manual dispatch run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | CI trigger policy | Configured | Feature-branch pushes do not trigger CI; pull requests to `main`, pushes to `main` and manual dispatches run all five jobs |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
@@ -153,6 +153,8 @@ The Windows job caught two real portability issues before the milestone closed:
 - Run [40802998153](https://github.com/chl84/3D_game_engine/actions/runs/40802998153):
   all five jobs green on `8fcd7bc` with 6/6 CTest, including the new
   `engine_sensitive_scan`.
+- Run [40804123029](https://github.com/chl84/3D_game_engine/actions/runs/40804123029):
+  manual dispatch after the trigger change; all five jobs green with 6/6 CTest.
 
 ## Known issues and gaps
 
