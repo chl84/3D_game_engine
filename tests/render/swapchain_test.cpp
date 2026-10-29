@@ -49,7 +49,14 @@ create_renderer(const engine::render::Device& device, const engine::platform::Wi
 
 } // namespace
 
-int main() {
+int main(int argc, char** argv) {
+    bool require_minimize = false;
+    for (int index = 1; index < argc; ++index) {
+        if (std::string(argv[index]) == "--require-minimize") {
+            require_minimize = true;
+        }
+    }
+
 #ifdef __linux__
     if (std::getenv("DISPLAY") == nullptr && std::getenv("WAYLAND_DISPLAY") == nullptr) {
         return skip("no display server is available");
@@ -164,12 +171,29 @@ int main() {
         return fail("could not minimize the window: " + minimized.error().message);
     }
     sdl->pump_events();
-    for (int frame = 0; frame < 10; ++frame) {
-        auto drawn = renderer->draw_frame();
-        if (!drawn) {
-            return fail("minimized window produced an error: " + drawn.error().message);
+
+    if (window->minimized()) {
+        bool reported_no_frame = false;
+        for (int frame = 0; frame < 10; ++frame) {
+            auto drawn = renderer->draw_frame();
+            if (!drawn) {
+                return fail("minimized window produced an error: " + drawn.error().message);
+            }
+            if (!*drawn) {
+                reported_no_frame = true;
+            } else if (window->minimized()) {
+                return fail("the renderer presented while the window was minimized");
+            }
+            sdl->pump_events();
         }
-        sdl->pump_events();
+        if (!reported_no_frame) {
+            return fail("the renderer kept presenting while the window was minimized");
+        }
+        std::cout << "minimize: renderer reported no frames\n";
+    } else if (require_minimize) {
+        return fail("the window manager did not report a minimized window");
+    } else {
+        std::cout << "NOTE: window manager ignored minimize; the minimize guard was not asserted\n";
     }
 
     auto restored = window->restore();
