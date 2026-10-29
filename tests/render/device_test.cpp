@@ -12,6 +12,9 @@ namespace {
         return false;
     }
     const std::string stage = error.details.value("stage", "");
+    if (stage == "instance") {
+        return error.details.value("vkResult", 0) == static_cast<int>(VK_ERROR_INCOMPATIBLE_DRIVER);
+    }
     return stage == "loader" || stage == "physical-device" || stage == "validation";
 }
 

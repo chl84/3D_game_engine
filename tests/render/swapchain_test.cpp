@@ -25,6 +25,9 @@ int fail(const std::string& message) {
 
 [[nodiscard]] bool is_environment_error(const engine::core::Error& error) {
     const std::string stage = error.details.value("stage", "");
+    if (stage == "instance") {
+        return error.details.value("vkResult", 0) == static_cast<int>(VK_ERROR_INCOMPATIBLE_DRIVER);
+    }
     return stage == "loader" || stage == "physical-device" || stage == "validation";
 }
 
