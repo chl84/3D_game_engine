@@ -234,7 +234,8 @@ int main(int argc, char** argv) {
     int screenshot_height = 720;
     screenshot_command->add_option("project", screenshot_project, "Project directory.")->required();
     screenshot_command->add_option("scene", screenshot_scene, "Scene path inside the project.");
-    screenshot_command->add_option("--out", screenshot_out, "Output PNG file.")->required();
+    screenshot_command->add_option("--out", screenshot_out, "Output PNG file inside the project.")
+        ->required();
     screenshot_command->add_option("--frames", screenshot_frames, "Frames to render.")
         ->check(CLI::PositiveNumber);
     screenshot_command->add_option("--width", screenshot_width, "Image width.")

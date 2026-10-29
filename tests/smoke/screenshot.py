@@ -95,7 +95,8 @@ def main() -> int:
             return fail("mesh component add failed")
         parse_result(mesh_added, "mesh component add")
 
-        out = Path(temporary) / "shot.png"
+        out_relative = "screenshots/shot.png"
+        out = project / out_relative
         shot = run_engine(
             engine,
             [
@@ -109,7 +110,7 @@ def main() -> int:
                 "--height",
                 "64",
                 "--out",
-                str(out),
+                out_relative,
                 "--json",
             ],
         )
@@ -134,6 +135,40 @@ def main() -> int:
             return fail(f"screenshot dimensions are {width}x{height}, expected 64x64")
         if document["data"].get("frames") != 2:
             return fail("screenshot result has the wrong frame count")
+
+        escaped = run_engine(
+            engine,
+            [
+                "screenshot",
+                str(project),
+                "scenes/main.scene.json",
+                "--out",
+                "../escape.png",
+                "--json",
+            ],
+        )
+        escaped_document = parse_result(escaped, "escaped screenshot")
+        if escaped.returncode == 0 or escaped_document.get("status") != "error":
+            return fail("screenshot accepted a path outside the project")
+        if (project.parent / "escape.png").exists():
+            return fail("screenshot wrote outside the project")
+
+        oversized = run_engine(
+            engine,
+            [
+                "screenshot",
+                str(project),
+                "scenes/main.scene.json",
+                "--width",
+                "8193",
+                "--out",
+                "screenshots/too-wide.png",
+                "--json",
+            ],
+        )
+        oversized_document = parse_result(oversized, "oversized screenshot")
+        if oversized.returncode == 0 or oversized_document.get("status") != "error":
+            return fail("screenshot accepted dimensions above the limit")
 
     print("screenshot CLI OK")
     return 0

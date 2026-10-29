@@ -1336,6 +1336,8 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
         print_result(result, json);
         return exit_code_for(result);
     }
+    constexpr int kMaxDimension = 8192;
+    constexpr int kMaxFrames = 1000;
     if (frames <= 0 || width <= 0 || height <= 0) {
         const CommandResult result = failure(
             core::make_error(ErrorCode::Validation, "frames, width and height must be positive", {},
@@ -1343,10 +1345,29 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
         print_result(result, json);
         return exit_code_for(result);
     }
+    if (frames > kMaxFrames || width > kMaxDimension || height > kMaxDimension) {
+        const CommandResult result =
+            failure(core::make_error(ErrorCode::Validation, "screenshot limits exceeded", {},
+                                     {{"maxFrames", kMaxFrames}, {"maxDimension", kMaxDimension}}));
+        print_result(result, json);
+        return exit_code_for(result);
+    }
 
     auto project = Project::load(project_root);
     if (!project) {
         const CommandResult result = failure(project.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    auto sandbox = core::PathSandbox::create(project->root());
+    if (!sandbox) {
+        const CommandResult result = failure(sandbox.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    auto output = sandbox->resolve(out_path);
+    if (!output) {
+        const CommandResult result = failure(output.error());
         print_result(result, json);
         return exit_code_for(result);
     }
@@ -1386,27 +1407,27 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
         return exit_code_for(result);
     }
 
-    const std::filesystem::path output(out_path);
-    if (output.has_parent_path()) {
+    if (output->has_parent_path()) {
         std::error_code error;
-        std::filesystem::create_directories(output.parent_path(), error);
+        std::filesystem::create_directories(output->parent_path(), error);
         if (error) {
             const CommandResult result = failure(
                 core::make_error(ErrorCode::Io, "could not create the screenshot directory",
-                                 error.message(), {{"path", output.parent_path().string()}}));
+                                 error.message(), {{"path", output->parent_path().string()}}));
             print_result(result, json);
             return exit_code_for(result);
         }
     }
-    if (stbi_write_png(output.string().c_str(), width, height, 4, pixels->data(), width * 4) == 0) {
+    if (stbi_write_png(output->string().c_str(), width, height, 4, pixels->data(), width * 4) ==
+        0) {
         const CommandResult result = failure(core::make_error(
-            ErrorCode::Io, "could not write the screenshot", {}, {{"path", output.string()}}));
+            ErrorCode::Io, "could not write the screenshot", {}, {{"path", output->string()}}));
         print_result(result, json);
         return exit_code_for(result);
     }
 
     const CommandResult result = success({
-        {"path", output.string()},
+        {"path", output->string()},
         {"width", width},
         {"height", height},
         {"frames", frames},
