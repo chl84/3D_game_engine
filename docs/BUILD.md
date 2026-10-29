@@ -222,6 +222,19 @@ validates `engine --version --json` and `engine doctor --json` against
 repository URL and branch as arguments to test another checkout, or set
 `KEEP=1` to keep the clone for inspection.
 
+## M1 clean-clone acceptance
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m1.sh
+```
+
+The script clones the current branch, builds `linux-debug`, runs all seven
+CTest tests and then executes the CLI-only M1 acceptance script. The acceptance
+script creates a project, builds an entity hierarchy, sets components, runs a
+batch with undo, checks byte-identical save/load/save and compares two fixed-
+tick simulation dumps.
+
 ## Memory
 
 The development machine has 30 GiB of RAM. The project reference requirement

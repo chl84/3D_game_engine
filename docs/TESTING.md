@@ -152,6 +152,17 @@ scripts/acceptance_m0.sh
 The script clones the current branch, builds `linux-debug`, runs all five
 CTest tests and validates the version and doctor JSON against their schemas.
 
+Clean-clone M1 acceptance:
+
+```bash
+export VCPKG_ROOT="$HOME/.local/share/vcpkg"
+scripts/acceptance_m1.sh
+```
+
+The script runs all seven CTest tests and the CLI-only M1 acceptance script,
+which covers project creation, hierarchy, components, batch undo, byte-identical
+save/load/save and deterministic simulation.
+
 Windows MSVC + vcpkg:
 
 ```powershell
