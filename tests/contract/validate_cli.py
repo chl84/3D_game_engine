@@ -216,6 +216,27 @@ def main() -> int:
             if main_scene.read_bytes() != main_scene_before:
                 return fail("failed scene create changed the existing scene")
 
+            orphan_scene = project_dir / "scenes" / "orphan.scene.json"
+            orphan_scene.write_bytes(main_scene_before)
+            orphan_before = orphan_scene.read_bytes()
+            orphan_conflict = run_failure(
+                [
+                    "scene",
+                    "create",
+                    str(project_dir),
+                    "--name",
+                    "Orphan",
+                    "--path",
+                    "scenes/orphan.scene.json",
+                ],
+                "scene create unregistered existing file",
+                5,
+            )
+            if orphan_conflict["error"]["code"] != "E_CONFLICT":
+                return fail("scene create unregistered existing file did not report E_CONFLICT")
+            if orphan_scene.read_bytes() != orphan_before:
+                return fail("failed scene create changed an unregistered existing scene")
+
             second_scene = project_dir / "scenes" / "second.scene.json"
             run_command(
                 [
@@ -404,8 +425,8 @@ def main() -> int:
             after_undo = run_command(
                 ["scene", "inspect", str(project_dir)], "scene inspect after component undo"
             )
-            if after_undo["data"]["revision"] <= before_revision:
-                return fail("component undo did not bump the revision")
+            if after_undo["data"]["revision"] != before_revision + 2:
+                return fail("component undo did not bump the revision exactly once")
             undone_child = next(
                 (
                     entity
