@@ -25,3 +25,6 @@ ADRs are not rewritten.
 | [0001](ADR-0001-dependency-management.md) | Dependency management with vcpkg | Accepted |
 | [0002](ADR-0002-authoritative-state-vs-simulation.md) | Authoritative state versus simulation state | Accepted |
 | [0003](ADR-0003-uuid-generation.md) | UUID generation and determinism | Accepted |
+| [0004](ADR-0004-build-tools-and-quality-gates.md) | Pinned build tools and CI quality gates | Accepted |
+| [0005](ADR-0005-error-handling.md) | Error handling with `Result` and stable codes | Accepted |
+| [0006](ADR-0006-static-libraries.md) | Static libraries and module boundaries for M0–M4 | Accepted |
