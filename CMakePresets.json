@@ -49,6 +49,17 @@
       }
     },
     {
+      "name": "ci-linux-gcc14",
+      "inherits": "base",
+      "displayName": "CI Linux GCC 14",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "g++-14",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "ENGINE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
       "name": "ci-linux-clang",
       "inherits": "base",
       "displayName": "CI Linux Clang",
@@ -134,6 +145,10 @@
       "configurePreset": "ci-linux-gcc"
     },
     {
+      "name": "ci-linux-gcc14",
+      "configurePreset": "ci-linux-gcc14"
+    },
+    {
       "name": "ci-linux-clang",
       "configurePreset": "ci-linux-clang"
     },
@@ -176,6 +191,13 @@
     {
       "name": "ci-linux-gcc",
       "configurePreset": "ci-linux-gcc",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ci-linux-gcc14",
+      "configurePreset": "ci-linux-gcc14",
       "output": {
         "outputOnFailure": true
       }

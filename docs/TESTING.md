@@ -1,7 +1,7 @@
 # Testing
 
-**Status:** M0.4. Four CTest tests exist; `engine_core_tests` contains 21 test
-cases and 132 assertions.
+**Status:** M0.5. Four CTest tests exist; `engine_core_tests` contains 21 test
+cases and 132 assertions. CI also runs clang-format, clang-tidy and ASan/UBSan.
 
 ## Current tests
 
@@ -35,6 +35,22 @@ validated against `tests/fixtures/log-record.jsonl` by the contract test.
 Tests that cannot run on a platform use Catch2 `SKIP`, and the CI
 `Core test summary` step runs `ctest -R engine_core_tests -V` so skipped cases
 are visible instead of being reported as ordinary passes.
+
+## CI jobs
+
+| Job | Purpose |
+|---|---|
+| `Linux (ci-linux-gcc14)` | GCC 14 build, CTest, lavapipe detection and missing-ICD exit-code test |
+| `Linux (ci-linux-clang)` | Clang 18 build, CTest, lavapipe detection and missing-ICD exit-code test |
+| `Windows (MSVC)` | MSVC build and headless tests; no GPU |
+| `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors |
+| `Linux ASan/UBSan` | ASan + UBSan build and CTest |
+
+The Linux jobs install `mesa-vulkan-drivers` and `libvulkan1`, verify that
+`engine doctor --require vulkan --json` reports `llvmpipe` and exits 0, and
+verify that a run with `VK_ICD_FILENAMES`/`VK_DRIVER_FILES` pointing to a
+missing file exits 8. This also makes lavapipe available for the M2 golden
+image tests.
 
 ## How to run
 
@@ -120,7 +136,4 @@ labelled `render` or `golden`.
 - Anything that requires creating a Vulkan device; `doctor` only creates an
   instance and enumerates devices
 - The console log sink; the JSONL sink is automatically tested
-- clang-format and clang-tidy in CI; they run locally and are added to CI in
-  M0.5
-- ASan/UBSan as a Linux CI job; the local job runs, and the CI job is added in
-  M0.5
+- Branch protection enforcement; the GitHub plan blocks it (see `STATUS.md`)

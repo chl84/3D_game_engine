@@ -20,9 +20,10 @@ with volk-based Vulkan detection, Catch2 tests and Python contract tests.
 | vcpkg | bootstrapped at `~/.local/share/vcpkg`, commit `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
 
 The CI target environment is Ubuntu 24.04 with GCC 14 and Clang 18, plus
-Windows Server 2022 with MSVC. M0.2 uses the runner default GCC 13.3 for the
-GCC job; M0.5 pins GCC 14. CI is the source of truth for reproducible builds;
-local Omarchy versions may be newer and are reported here.
+Windows Server 2022 with MSVC. M0.5 installs `g++-14` and uses the
+`ci-linux-gcc14` preset; the ASan/UBSan job also uses `g++-14`. CI is the
+source of truth for reproducible builds; local Omarchy versions may be newer
+and are reported here.
 
 ## Prerequisites
 
@@ -182,9 +183,10 @@ The CI workflow sets up MSVC with `ilammy/msvc-dev-cmd` and uses the
 
 ## Toolchain versions
 
-M0.2 uses the CI runner's CMake and Ninja (CMake 3.28+). M0.5 pins CMake 4.4.5
-and Ninja 1.13.2 in CI. The development machine has CMake 4.4.4 and Ninja
-1.13.2; the difference is recorded here and CI remains the source of truth.
+CI uses the Ubuntu 24.04 runner's CMake 3.28+ and Ninja. Pinning CMake 4.4.5
+and Ninja 1.13.2 remains a known gap and is deferred beyond M0.5. The
+development machine has CMake 4.4.4 and Ninja 1.13.2; the difference is
+recorded here and CI remains the source of truth.
 
 ## Memory
 
@@ -210,3 +212,22 @@ To force lavapipe:
 ```bash
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary
 ```
+
+## CI Vulkan and lavapipe
+
+The Linux CI jobs install:
+
+```bash
+sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools
+```
+
+They then verify that `engine doctor --require vulkan --json` exits 0 and
+reports an `llvmpipe` device, and that a run with a missing ICD exits 8. This
+also provides lavapipe for the M2 golden image tests.
+
+## Branch protection
+
+`main` is the default branch. Run `scripts/setup_branch_protection.sh` after
+enabling GitHub Pro or making the repository public; GitHub returns HTTP 403
+for branch protection and rulesets on a private repository on the Free plan.
+The script requires the five CI jobs as status checks.

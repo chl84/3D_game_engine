@@ -57,9 +57,9 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| CMake | 4.4.5 target; CI uses 3.28+ in M0.2 and pins 4.4.5 in M0.5 | BSD-3-Clause | Build system |
+| CMake | 4.4.5 target; CI currently uses runner CMake 3.28+ (pinning is a known gap) | BSD-3-Clause | Build system |
 | Ninja | 1.13.2 | Apache-2.0 | Build tool |
-| GCC | 14 target in M0.5; runner default 13.3 in M0.2 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
+| GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |
 | MSVC | Visual Studio 2022 17.14 | Proprietary | Windows compiler |
 | Python | 3.10+ | PSF-2.0 | Test and automation scripts |

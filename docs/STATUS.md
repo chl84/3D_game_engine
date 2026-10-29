@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.4 complete; M0.5 is next
+**Current substep:** M0.5 complete except branch protection; M0.6 is next
 
 ## Completed
 
@@ -13,18 +13,23 @@
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases; Linux and Windows CI green |
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
+| M0.5 | clang-format and clang-tidy in CI, an ASan/UBSan Linux job, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and a branch-protection setup script; all five CI jobs green |
 
 ## Repository state
 
 - `main`: initial bootstrap commit, pushed to GitHub and set as the default branch.
 - `m0/foundation`: all M0 work, pushed; not merged into `main`.
-- Branch protection/rulesets are planned for M0.5.
+- Branch protection/rulesets are **blocked by the GitHub plan**: the API returns
+  HTTP 403 because the private repository needs GitHub Pro (or public
+  visibility). `scripts/setup_branch_protection.sh` contains the intended
+  required checks and can be run after the owner upgrades or makes the
+  repository public.
 
 ## Verification evidence
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC C++20 build | Automatically tested | `cmake --preset ci-linux-gcc`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
 | Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 4/4 passed |
 | TSan | Automatically tested | `cmake --preset linux-tsan`, build, `ctest` → 4/4 passed |
@@ -52,9 +57,16 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40792296820](https://github.com/chl84/3D_game_engine/actions/runs/40792296820) → Linux GCC, Linux Clang and Windows MSVC all succeeded |
+| GitHub Actions | Automatically tested | Run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932) → Linux GCC, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
+| clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
+| ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
+| Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → loader 1.4.363, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0 |
+| Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `requirements.failed = ["vulkan"]` |
+| Failure artifacts | Implemented | CTest `Testing/` and doctor JSON are uploaded on failed Linux/Windows/ASan jobs |
+| Branch protection | Blocked | GitHub API returns HTTP 403: private repository requires GitHub Pro or public visibility; [setup script](../scripts/setup_branch_protection.sh) is ready |
 
 ## M0.3 CI history
 
@@ -82,11 +94,23 @@ The Windows job caught two real portability issues before the milestone closed:
   tests, including the CLI contract test, and its core summary reported 21/21
   test cases with no skipped cases.
 
+## M0.5 CI history
+
+- Run [40793337666](https://github.com/chl84/3D_game_engine/actions/runs/40793337666):
+  the first quality run failed because CMake's C++ module scanning produced
+  `.modmap` arguments that clang-tidy 18 could not read. Module scanning was
+  disabled because the engine does not use C++ modules.
+- Run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932):
+  all five jobs green — Linux GCC, Linux Clang, Windows MSVC, Quality and
+  Linux ASan/UBSan. Linux detected lavapipe and the missing-ICD path exited 8.
+
 ## Known issues and gaps
 
-- The M0.2 Linux GCC CI job uses the Ubuntu 24.04 runner default GCC 13.3;
-  M0.5 pins GCC 14. This is the only toolchain deviation from the approved CI
-  matrix.
+- CI uses the Ubuntu 24.04 runner's CMake 3.28+; pinning CMake 4.4.5 remains a
+  known gap and is deferred beyond M0.5.
+- Branch protection/rulesets are blocked by the GitHub plan: the private
+  repository needs GitHub Pro or public visibility. The ready-to-run script is
+  `scripts/setup_branch_protection.sh`.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
