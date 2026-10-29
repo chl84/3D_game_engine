@@ -67,11 +67,6 @@ def main() -> int:
         return fail(str(error))
 
     doctor_result = run_engine(engine, ["doctor", "--json"])
-    if doctor_result.returncode != 0:
-        return fail(
-            f"engine doctor --json exited with {doctor_result.returncode}: "
-            f"{doctor_result.stderr.strip()}"
-        )
 
     try:
         doctor_document = json.loads(doctor_result.stdout)
@@ -94,6 +89,20 @@ def main() -> int:
         return fail("doctor output has no checks")
 
     vulkan = doctor_document["vulkan"]
+    descriptor_failure = bool(vulkan["devices"]) and not bool(vulkan["descriptorIndexing"])
+    expected_doctor_exit = 8 if descriptor_failure else 0
+    if doctor_result.returncode != expected_doctor_exit:
+        return fail(
+            f"engine doctor --json exited with {doctor_result.returncode}, "
+            f"expected {expected_doctor_exit}: {doctor_result.stderr.strip()}"
+        )
+    if descriptor_failure:
+        requirements = doctor_document["requirements"]
+        if requirements["passed"] is True:
+            return fail("doctor reported passed for an unsupported device")
+        if "descriptor-indexing" not in requirements["failed"]:
+            return fail("doctor did not report descriptor-indexing in requirements.failed")
+
     vulkan_available = (
         vulkan["loader"]
         and vulkan["instanceCreated"]
