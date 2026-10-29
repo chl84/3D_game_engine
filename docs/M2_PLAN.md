@@ -2,7 +2,7 @@
 
 **Status:** Approved by the owner on 2026-10-29. M2.1–M2.8 are approved.
 M2.9 adds the windowed fly-camera run command and presentation-only input; it
-awaits reviewer approval and the owner's manual Hyprland test before merge.
+is reviewer-approved and awaits the owner's manual Hyprland test before merge.
 ADR-0011 was approved with the change that descriptor indexing is a minimum
 requirement and there is no fallback.
 

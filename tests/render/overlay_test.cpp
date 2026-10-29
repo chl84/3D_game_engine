@@ -219,6 +219,13 @@ int main() {
         return fail("the overlay did not return after being shown again");
     }
 
+    engine::render::CameraPose presentation_pose;
+    presentation_pose.position = {10.0, 20.0, 30.0};
+    auto posed = renderer->draw_frame(scene_view, presentation_pose);
+    if (!posed || !*posed) {
+        return fail("could not draw with a presentation camera pose");
+    }
+
     if (scene->revision() != revision_before || scene->size() != entity_count_before) {
         return fail("the overlay mutated the scene");
     }
