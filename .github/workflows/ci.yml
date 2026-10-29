@@ -67,7 +67,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers glslc \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
 
@@ -84,6 +84,12 @@ jobs:
             archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
             curl -fsSL -o "$archive" \
               "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
             mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
             tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
           fi
@@ -408,7 +414,7 @@ jobs:
       - name: Install clang tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format-18 clang-tidy-18 glslc
+          sudo apt-get install -y clang-format-18 clang-tidy-18
 
       - name: Restore pinned Vulkan SDK cache
         uses: actions/cache@v6
@@ -423,6 +429,12 @@ jobs:
             archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
             curl -fsSL -o "$archive" \
               "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
             mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
             tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
           fi
@@ -521,7 +533,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers glslc \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
             g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
 
@@ -538,6 +550,12 @@ jobs:
             archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
             curl -fsSL -o "$archive" \
               "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
             mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
             tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
           fi
