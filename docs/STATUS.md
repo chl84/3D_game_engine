@@ -57,9 +57,9 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40794292610](https://github.com/chl84/3D_game_engine/actions/runs/40794292610) → configure, build and `ctest` all succeeded with MSVC and vcpkg; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932) → Linux GCC, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Run [40794292610](https://github.com/chl84/3D_game_engine/actions/runs/40794292610) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
@@ -103,6 +103,10 @@ The Windows job caught two real portability issues before the milestone closed:
 - Run [40793839932](https://github.com/chl84/3D_game_engine/actions/runs/40793839932):
   all five jobs green — Linux GCC, Linux Clang, Windows MSVC, Quality and
   Linux ASan/UBSan. Linux detected lavapipe and the missing-ICD path exited 8.
+- Run [40794292610](https://github.com/chl84/3D_game_engine/actions/runs/40794292610):
+  the same five jobs green after pinning GCC 14 (`ci-linux-gcc14`) and using
+  `g++-14` for ASan/UBSan. Lavapipe detection and missing-ICD exit 8 passed
+  again.
 
 ## Known issues and gaps
 
@@ -120,16 +124,9 @@ The Windows job caught two real portability issues before the milestone closed:
 - `engine doctor` reports the current working directory as the project root
   until the project format and project-root discovery land in M1.
 
-## Planned for M0.5
-
-- clang-format and clang-tidy checks in CI, so they are automatically tested
-  instead of manually verified.
-- An ASan/UBSan Linux CI job.
-- Linux CI matrix, caching, branch protection and artifacts.
-- The Windows job from M0.2 stays green.
-
 ## Next step
 
-M0.5: CI hardening — clang-format and clang-tidy jobs, an ASan/UBSan Linux
-job, Linux CI matrix and caching, branch protection/rulesets on `main`, and
-build artifacts. The Windows job from M0.2 stays green.
+M0.6: complete the English `VISION.md` translation, finalize `ARCHITECTURE.md`,
+`BUILD.md`, `TESTING.md`, `DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update
+the ADR set. Branch protection remains blocked until the owner enables GitHub
+Pro or makes the repository public.
