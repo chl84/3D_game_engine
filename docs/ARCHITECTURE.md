@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M2.3. This document describes the approved module boundaries and
+**Status:** M2.4. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -116,9 +116,19 @@ animation mutate the runtime state directly during a fixed tick.
   outlive the submission fence.
 - GLSL shaders are compiled to SPIR-V by `glslc` at build time and embedded in
   `engine_render` as C++ word arrays. The shaderc library is not linked.
-- The M2.3 pipeline uses one vertex buffer, a push-constant view-projection
-  matrix and dynamic viewport/scissor. The `Camera` type owns the GLM
-  projection with Vulkan clip-space Y and depth range [0, 1].
+- The M2.4 pipeline uses indexed built-in meshes, a push-constant
+  view-projection and model matrix, a D32 depth buffer and dynamic
+  viewport/scissor. The `Camera` type owns the GLM projection with Vulkan
+  clip-space Y and depth range [0, 1].
+- Scene world transforms are composed in double precision. The renderer
+  subtracts the camera position in double, then converts the result to
+  camera-relative floats for model matrices; the camera view is rotation-only.
+- `SceneView` is the read-only boundary between `scene` and `render`. It
+  exposes mesh IDs, cameras and world transforms but no mutation methods.
+- A scene `Mesh` component stores only `meshId`: a future asset UUID or a fixed
+  built-in ID. Mesh vertex data never enters a scene file.
+- The renderer culls mesh instances by bounding sphere against the six frustum
+  planes before issuing indexed draws.
 - Resize, minimization and out-of-date swapchains are handled in `draw_frame`.
   A changed window size triggers a swapchain recreation after
   `vkDeviceWaitIdle`; a minimized window reports no frame instead of
@@ -191,7 +201,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M2.3 contains:
+M2.4 contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -209,14 +219,17 @@ M2.3 contains:
   in-memory command log with sequence numbers, undo/redo stacks, redo
   invalidation and transactions that commit or roll back as one undo step
 - `engine/scene` also provides a fixed-tick simulation that advances `Motion`
-  velocities into `Transform` positions and emits a deterministic state dump
+  velocities into `Transform` positions and emits a deterministic state dump,
+  double-precision world transforms, the read-only `SceneView`, and scene
+  format v2 with `engine.scene.Mesh` references
 - `engine/render`: Vulkan 1.3 instance and device creation through volk,
   physical-device and queue selection, Synchronization2 and Dynamic Rendering,
   a VMA allocator, an optional validation-layer debug messenger with error
   counting, a headless device mode, a windowed surface mode, a swapchain
   renderer that clears, presents and recreates on resize, minimize and
   out-of-date events, and a glslc-built triangle pipeline with a vertex
-  buffer, push-constant camera matrix and Vulkan-style projection
+  buffer, push-constant camera/model matrices, Vulkan-style projection, D32
+  depth, indexed built-in meshes and frustum culling
 - EnTT 4.0.0, json-schema-validator 2.4.0, SDL3 3.4.18, VMA 3.5.0 and GLM
   1.0.3 are active
 - `tools/engine`: the CLI11-based `engine` CLI with `--version`, `doctor`, and

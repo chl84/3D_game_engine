@@ -1,9 +1,9 @@
 # Testing
 
-**Status:** M2.3. Eleven CTest tests exist on Linux; Windows registers nine
+**Status:** M2.4. Eleven CTest tests exist on Linux; Windows registers nine
 because the window and swapchain tests are not registered there. `engine_core_tests`
-contains 56 test cases and 417 assertions; `engine_render_tests` contains 6
-test cases and 37 assertions. CI also runs clang-format,
+contains 59 test cases and 457 assertions; `engine_render_tests` contains 9
+test cases and 62 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
 pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -36,18 +36,20 @@ link errors fail on both Linux and Windows.
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
 asserts that the debug messenger counts zero errors, checks the single-device
 guard, and creates devices sequentially to prove that volk can be initialized
-and finalized repeatedly. The same executable tests the camera: the triangle
-vertices map into Vulkan clip space and a zero aspect is guarded. The shaders
-are compiled by `glslc` at build time and embedded as SPIR-V; CMake fails with a
+and finalized repeatedly. The same executable tests the camera and scene
+transform: clip-space mapping, a zero aspect guard, 8 km camera-relative model
+matrices, the rotation-only camera view and frustum culling. The shaders are
+compiled by `glslc` at build time and embedded as SPIR-V; CMake fails with a
 clear error when `glslc` is missing. If the Vulkan loader or a usable Vulkan 1.3 device is missing, the
 device cases are reported as skipped while the camera cases still run. `engine_window_smoke` creates an SDL3 window, checks the
 surface extension, creates a surface and checks the present queue. It exits
 with code 77 when no display server or Vulkan loader is available; CTest
 reports that as skipped. `engine_swapchain_test` creates a hidden window,
 presents frames, resizes the hidden window, shows it, minimizes and restores
-it, and asserts that the swapchain follows the window and that the validation
-layers report no errors. Minimization is asserted only when SDL reports the
-window as minimized; the Linux CI job additionally runs the test under Xvfb
+it, renders an 8 km scene with a depth buffer and verifies that the far cube
+and ground are visible while an entity behind the camera is culled, and asserts
+that the swapchain follows the window and that the validation layers report no
+errors. Minimization is asserted only when SDL reports the window as minimized; the Linux CI job additionally runs the test under Xvfb
 with openbox and `--require-minimize`, so a window manager that ignores
 minimize fails that step. It also exits with code 77 when the environment is
 unavailable. The window and swapchain tests are not registered on Windows
@@ -83,6 +85,10 @@ lavapipe golden-image work starts in M2.5.
   create, component set, scene create and batch
 - generated API reference parity with the command registry and reflection
   schemas
+- scene format v1 loading and v2 upgrade, `engine.scene.Mesh` round-trip,
+  rejection of Mesh in v1 and scene version 3
+- double-precision world transforms at 8 km with a 1 mm child offset
+- `SceneView` mesh and camera access without mutation
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is
 validated against `tests/fixtures/log-record.jsonl` by the contract test.

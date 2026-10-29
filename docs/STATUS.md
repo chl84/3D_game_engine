@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
-**Current substep:** M2.3 implemented — GLSL compiled to SPIR-V with glslc, graphics pipeline, vertex buffer, camera and triangle rendering are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
+**Current substep:** M2.4 implemented — scene format v2 with mesh references, double-precision world transforms, camera-relative rendering, depth buffer and scene meshes are on `m2/vulkan-renderer`. Reviewer and owner approval are pending.
 
 ## Substeps
 
@@ -38,8 +38,8 @@
 |---|---|---|
 | M2.1 | Render module, SDL3 window, Vulkan 1.3 device, queues, Synchronization2, Dynamic Rendering, VMA, validation messenger, headless mode and smoke tests | Done — reviewer GODKJENT |
 | M2.2 | Swapchain, frame loop, Dynamic Rendering clear, present, resize/minimize handling and integration test | Done — reviewer GODKJENT |
-| M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Implemented — review pending |
-| M2.4 | Scene rendering | Planned |
+| M2.3 | glslc build step, graphics pipeline, vertex buffer, camera and first triangle | Done — reviewer GODKJENT |
+| M2.4 | Scene format v2 mesh references, SceneView, double world transforms, camera-relative rendering, depth buffer and frustum culling | Implemented — review pending |
 | M2.5 | Offscreen rendering and screenshots | Planned |
 | M2.6 | ImGui debug overlay | Planned |
 | M2.7 | Descriptor strategy and validation hardening | Planned |
@@ -77,8 +77,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 8/8 passed; `engine_core_tests` → 56 cases / 417 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 8/8 passed; `engine_core_tests` → 56 cases / 417 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 11/11 passed; `engine_core_tests` → 59 cases / 457 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 11/11 passed; `engine_core_tests` → 59 cases / 457 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -106,7 +106,7 @@
 | Command bus | Automatically tested | `command_test.cpp` covers schema validation, successful and failed handlers, unknown commands, duplicate/malformed registration, sorted schemas, command-log entries, undo/redo, redo invalidation, transactions and rollback |
 | Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
 | Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
-| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 56 core cases / 417 assertions |
+| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 59 core cases / 457 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
 | `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
@@ -129,7 +129,12 @@
 | M2.3 triangle pipeline | Automatically tested | `engine_swapchain_test` records the graphics pipeline and three-vertex draw with `Required` validation and zero errors; the Xvfb CI run presents six frames |
 | M2.3 CI | Automatically tested | Manual dispatch [40900651135](https://github.com/chl84/3D_game_engine/actions/runs/40900651135) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with `engine_render_tests` passing the camera cases and skipping the device cases; Quality green |
 | M2.3 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `32341c7`, built with glslc, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
-| M2.3 camera | Automatically tested | `engine_render_tests` includes two camera cases: the triangle vertices map into Vulkan clip space and a zero aspect is guarded; 37 assertions in 6 test cases |
+| M2.3 camera | Automatically tested | `engine_render_tests` includes camera cases for Vulkan clip space and a zero aspect guard |
+| M2.4 scene format v2 | Automatically tested | `project_test` loads a v1 scene, upgrades it to v2 on save, round-trips `engine.scene.Mesh`, and rejects Mesh in v1 and scene version 3 |
+| M2.4 mesh references | Automatically tested | Scenes store only `meshId`; `engine.builtin.cube` and `engine.builtin.plane` resolve in the renderer without mesh data in the scene file |
+| M2.4 double world transform | Automatically tested | `scene_test` composes a parent at 8 km with a 1 mm child offset in double precision and checks the camera-relative float offset |
+| M2.4 camera-relative rendering | Automatically tested | `scene_transform_test` builds the 8 km model matrix from the double offset, checks finite values, and verifies the rotation-only camera view |
+| M2.4 depth and culling | Automatically tested | `engine_swapchain_test` renders a 8 km scene with a depth buffer and checks that the far cube and ground are visible while an entity behind the camera is culled |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
