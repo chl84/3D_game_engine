@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -9,7 +10,7 @@
 
 namespace engine::core {
 
-enum class LogLevel { Trace, Debug, Info, Warn, Error, Critical };
+enum class LogLevel : std::uint8_t { Trace, Debug, Info, Warn, Error, Critical };
 
 struct LogOptions {
     LogLevel level{LogLevel::Info};
