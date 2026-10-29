@@ -207,10 +207,12 @@ The Windows job caught two real portability issues before the milestone closed:
   a Node 20 warning. The actions are CI tooling, not runtime dependencies.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
-- `docs/API_REFERENCE.md` and the command schemas are generated in M1.
-  `docs/PROJECT_FORMAT.md` describes the planned M1 format.
+- `docs/API_REFERENCE.md` is handwritten. Generated command schemas and
+  `--dry-run` for state-changing commands are deferred to M1.10/M2 and tracked
+  in `ROADMAP.md`.
+- `docs/PROJECT_FORMAT.md` describes the implemented M1 format.
 - `engine doctor` reports the current working directory as the project root
-  until the project format and project-root discovery land in M1.
+  until project-root discovery is added.
 - The English `VISION.md` translation is complete; the Norwegian master prompt
   remains the source of truth outside the repository.
 - **Git history:** rewritten on 2026-10-29 to remove a local absolute path

@@ -47,9 +47,12 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 
 ### M1 follow-ups
 
+- Add `--dry-run` to state-changing CLI commands. This is required by the
+  vision but was deferred from M1.9; target M1.10 or M2.
+- Generate `docs/API_REFERENCE.md` and the command schemas from the command
+  registry and reflection metadata. Target M1.10 or M2.
 - Extract and run the code examples in the documentation as part of CI, so the
-  examples cannot drift from the implemented commands. This lands together
-  with API generation in M1.
+  examples cannot drift from the implemented commands. Target M1.10 or M2.
 
 ## M1 substeps
 
