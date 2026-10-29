@@ -2,7 +2,8 @@
 
 An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
-The project is in the M0 foundation phase. The engine is not usable for games yet.
+The project is in the M0 foundation phase. The engine is not usable for games
+yet; the first playable milestone is M2.
 
 ## Requirements
 
@@ -33,12 +34,15 @@ See `docs/BUILD.md` for platform notes, and `docs/STATUS.md` for the current sta
 
 ## Documentation
 
-- `docs/VISION.md` — vision and architecture
-- `docs/ROADMAP.md` — milestones
-- `docs/ARCHITECTURE.md` — module boundaries (planned)
+- `docs/VISION.md` — vision, technology stack and milestones
+- `docs/ARCHITECTURE.md` — modules, dependency rules and data flow
+- `docs/ROADMAP.md` — milestone status
+- `docs/PROJECT_FORMAT.md` — planned project and scene format
 - `docs/decisions/README.md` — architecture decision records index
-- `docs/AI_AGENT_GUIDE.md` — CLI and live API usage (planned)
+- `docs/AI_AGENT_GUIDE.md` — CLI and live API usage
+- `docs/TESTING.md` — test types and commands
+- `docs/BUILD.md` — environment and build details
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.
