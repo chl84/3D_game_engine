@@ -25,6 +25,7 @@ All offline commands return a document that validates against
 | Component | Fields |
 |---|---|
 | `engine.scene.Camera` | `enabled`: boolean, `far`: number, `fovYRadians`: number, `near`: number |
+| `engine.scene.Mesh` | `meshId`: string |
 | `engine.scene.Motion` | `linearVelocity`: array[number][3] |
 | `engine.scene.Transform` | `position`: array[number][3], `rotation`: array[number][4], `scale`: array[number][3] |
 

@@ -44,6 +44,14 @@ struct Transform {
     core::Vec3 scale{1.0F, 1.0F, 1.0F};
 };
 
+// World-space transform composed in double precision. The renderer subtracts
+// the camera position in double before converting to camera-relative floats.
+struct WorldTransform {
+    core::Vec3d position;
+    core::Quatd rotation;
+    core::Vec3d scale{1.0, 1.0, 1.0};
+};
+
 struct Camera {
     float fovYRadians{1.0471975511965976F};
     float near{0.1F};
@@ -53,6 +61,13 @@ struct Camera {
 
 struct Motion {
     core::Vec3 linearVelocity;
+};
+
+inline constexpr std::string_view kBuiltinCubeMesh = "engine.builtin.cube";
+inline constexpr std::string_view kBuiltinPlaneMesh = "engine.builtin.plane";
+
+struct Mesh {
+    std::string mesh_id{std::string(kBuiltinCubeMesh)};
 };
 
 struct EntityMetadata {
@@ -93,7 +108,7 @@ public:
 
     [[nodiscard]] Transform& transform(Entity entity);
     [[nodiscard]] const Transform& transform(Entity entity) const;
-    [[nodiscard]] Transform world_transform(Entity entity) const;
+    [[nodiscard]] WorldTransform world_transform(Entity entity) const;
 
     template <typename T> [[nodiscard]] bool has(Entity entity) const noexcept {
         return contains(entity) && registry_.all_of<T>(entity);

@@ -1,6 +1,7 @@
 add_library(engine_scene STATIC
     src/project.cpp
     src/scene.cpp
+    src/scene_view.cpp
     src/simulation.cpp
 )
 

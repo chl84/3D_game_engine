@@ -1,14 +1,17 @@
 #include <engine/scene/scene.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <ranges>
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 using engine::core::Quat;
 using engine::core::ReflectionRegistry;
 using engine::core::Uuid;
 using engine::core::Vec3;
+using engine::core::Vec3d;
 using engine::scene::Entity;
 using engine::scene::register_scene_components;
 using engine::scene::Scene;
@@ -82,14 +85,35 @@ TEST_CASE("scene computes world transforms through the hierarchy", "[scene]") {
     REQUIRE(scene.set_parent(child, parent).has_value());
 
     const auto world = scene.world_transform(child);
-    REQUIRE(world.position == Vec3{12.0F, 10.0F, 0.0F});
-    REQUIRE(world.scale == Vec3{2.0F, 2.0F, 2.0F});
+    REQUIRE(world.position == Vec3d{12.0, 10.0, 0.0});
+    REQUIRE(world.scale == Vec3d{2.0, 2.0, 2.0});
 
     scene.transform(parent).rotation = Quat{0.0F, 1.0F, 0.0F, 0.0F};
     const auto rotated = scene.world_transform(child);
-    REQUIRE(rotated.position.x == 8.0F);
-    REQUIRE(rotated.position.y == 10.0F);
-    REQUIRE(rotated.position.z == 0.0F);
+    REQUIRE(rotated.position.x == 8.0);
+    REQUIRE(rotated.position.y == 10.0);
+    REQUIRE(rotated.position.z == 0.0);
+}
+
+TEST_CASE("scene composes 8 km transforms in double precision", "[scene]") {
+    Scene scene = Scene::with_seed(5);
+    const Entity parent = require_entity(scene.create_entity("FarParent"));
+    const Entity child = require_entity(scene.create_entity("FarChild"));
+
+    scene.transform(parent).position = {8000.0F, 0.0F, 8000.0F};
+    scene.transform(child).position = {0.001F, 0.0F, -5.001F};
+    REQUIRE(scene.set_parent(child, parent).has_value());
+
+    const auto world = scene.world_transform(child);
+    CHECK(world.position.x == Catch::Approx(8000.001).margin(1e-9));
+    CHECK(world.position.z == Catch::Approx(7994.999).margin(1e-9));
+
+    const Vec3d camera_position{8000.0, 0.0, 8000.0};
+    const Vec3d camera_relative = world.position - camera_position;
+    const auto relative_x = static_cast<float>(camera_relative.x);
+    const auto relative_z = static_cast<float>(camera_relative.z);
+    CHECK(std::abs(relative_x - 0.001F) < 1e-6F);
+    CHECK(std::abs(relative_z - (-5.001F)) < 1e-5F);
 }
 
 TEST_CASE("scene rejects hierarchy cycles", "[scene]") {

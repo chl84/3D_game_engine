@@ -174,7 +174,12 @@ def main() -> int:
         components = schema_document["data"].get("components")
         if not isinstance(components, dict):
             return fail("schema output has no components object")
-        for name in ("engine.scene.Transform", "engine.scene.Camera", "engine.scene.Motion"):
+        for name in (
+            "engine.scene.Transform",
+            "engine.scene.Camera",
+            "engine.scene.Motion",
+            "engine.scene.Mesh",
+        ):
             if name not in components:
                 return fail(f"schema output is missing {name}")
         commands = schema_document["data"].get("commands")
