@@ -4,8 +4,11 @@ if ("docking-experimental" IN_LIST FEATURES)
     vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO ocornut/imgui
-        REF "v${VERSION}-docking"
-        SHA512 00ade7a3e2c2e34465f1bb9fafd78733d3e659617b0857cf1b3c7f04cfc1d8566d1fd6a8697946f0de7c808cce1c4d0a4b2195c7bc20144cfd8b1e9b1cfba621
+        # Exact commit for the annotated v1.93.0-docking tag (the tag object is
+        # 4e02e84cbb85d48881388e7090c2dfa1708c02a1). The SHA512 pins the
+        # archive bytes, so a moved tag or rewritten commit fails the build.
+        REF b916186e66aa3c02b72c6ca17455516512ed8049
+        SHA512 eb166f3262a6268a931584863243426f14250f155e063ccf42f6a52f23c3fa65b12089ff5c953d8425aa1d9ef6540721492fff690a21c88082f931fa45ea02e3
         HEAD_REF docking
     )
 else()
