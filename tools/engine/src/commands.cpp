@@ -3,6 +3,7 @@
 #include <engine/command/command.hpp>
 #include <engine/scene/project.hpp>
 #include <engine/scene/scene.hpp>
+#include <engine/scene/simulation.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -28,6 +29,7 @@ using core::Result;
 using core::Uuid;
 using scene::Camera;
 using scene::Entity;
+using scene::Motion;
 using scene::Project;
 using scene::Scene;
 using scene::Transform;
@@ -120,6 +122,63 @@ void print_result(const CommandResult& result, bool json) {
     return *entity;
 }
 
+[[nodiscard]] Result<void*> mutable_component(Scene& scene, Entity entity,
+                                              const std::string& component_name,
+                                              bool& was_present) {
+    was_present = true;
+    if (component_name == "engine.scene.Transform") {
+        return static_cast<void*>(&scene.transform(entity));
+    }
+    if (component_name == "engine.scene.Camera") {
+        was_present = scene.has<Camera>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<Camera>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<Camera>(entity));
+    }
+    if (component_name == "engine.scene.Motion") {
+        was_present = scene.has<Motion>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<Motion>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<Motion>(entity));
+    }
+    return core::make_failure<void*>(core::make_error(ErrorCode::NotFound, "unsupported component",
+                                                      {}, {{"component", component_name}}));
+}
+
+[[nodiscard]] bool has_component_by_name(const Scene& scene, Entity entity,
+                                         const std::string& component_name) {
+    if (component_name == "engine.scene.Transform") {
+        return true;
+    }
+    if (component_name == "engine.scene.Camera") {
+        return scene.has<Camera>(entity);
+    }
+    if (component_name == "engine.scene.Motion") {
+        return scene.has<Motion>(entity);
+    }
+    return false;
+}
+
+[[nodiscard]] Result<void> remove_component_by_name(Scene& scene, Entity entity,
+                                                    const std::string& component_name) {
+    if (component_name == "engine.scene.Camera") {
+        return scene.remove_component<Camera>(entity);
+    }
+    if (component_name == "engine.scene.Motion") {
+        return scene.remove_component<Motion>(entity);
+    }
+    return core::make_failure<void>(core::make_error(
+        ErrorCode::Validation, "component cannot be removed", {}, {{"component", component_name}}));
+}
+
 [[nodiscard]] nlohmann::json entity_snapshot(const Scene& scene, const ReflectionRegistry& registry,
                                              Entity entity) {
     const auto* transform = registry.find("engine.scene.Transform");
@@ -145,6 +204,11 @@ void print_result(const CommandResult& result, bool json) {
     if (camera != nullptr && scene.has<Camera>(entity)) {
         snapshot["components"]["engine.scene.Camera"] =
             camera->to_json(&scene.component<Camera>(entity));
+    }
+    if (const auto* motion = registry.find("engine.scene.Motion");
+        motion != nullptr && scene.has<Motion>(entity)) {
+        snapshot["components"]["engine.scene.Motion"] =
+            motion->to_json(&scene.component<Motion>(entity));
     }
     return snapshot;
 }
@@ -182,6 +246,22 @@ void print_result(const CommandResult& result, bool json) {
             return core::make_failure<Entity>(added.error());
         }
         auto parsed = camera->from_json(&scene.component<Camera>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
+    if (const auto iterator = components.find("engine.scene.Motion");
+        iterator != components.end()) {
+        const auto* motion = registry.find("engine.scene.Motion");
+        if (motion == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "motion descriptor missing"));
+        }
+        auto added = scene.add_component<Motion>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = motion->from_json(&scene.component<Motion>(entity), *iterator);
         if (!parsed) {
             return core::make_failure<Entity>(parsed.error());
         }
@@ -453,30 +533,17 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                     ErrorCode::NotFound, "unknown component", {}, {{"component", component_name}}));
             }
 
-            void* component = nullptr;
             bool was_present = true;
-            if (component_name == "engine.scene.Transform") {
-                component = &scene.transform(*entity);
-            } else if (component_name == "engine.scene.Camera") {
-                was_present = scene.has<Camera>(*entity);
-                if (!was_present) {
-                    auto added = scene.add_component<Camera>(*entity);
-                    if (!added) {
-                        return core::make_failure<CommandOutput>(added.error());
-                    }
-                }
-                component = &scene.component<Camera>(*entity);
-            } else {
-                return core::make_failure<CommandOutput>(
-                    core::make_error(ErrorCode::NotFound, "unsupported component", {},
-                                     {{"component", component_name}}));
+            auto component = mutable_component(scene, *entity, component_name, was_present);
+            if (!component) {
+                return core::make_failure<CommandOutput>(component.error());
             }
 
-            const nlohmann::json old_value = descriptor->to_json(component);
-            auto parsed = descriptor->from_json(component, arguments.at("value"));
+            const nlohmann::json old_value = descriptor->to_json(*component);
+            auto parsed = descriptor->from_json(*component, arguments.at("value"));
             if (!parsed) {
-                if (!was_present && component_name == "engine.scene.Camera") {
-                    (void)scene.remove_component<Camera>(*entity);
+                if (!was_present) {
+                    (void)remove_component_by_name(scene, *entity, component_name);
                 }
                 return core::make_failure<CommandOutput>(parsed.error());
             }
@@ -491,18 +558,20 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "entity does not exist"));
                 }
+                if (!was_present) {
+                    return remove_component_by_name(scene, *current, component_name);
+                }
                 const auto* desc = registry.find(component_name);
                 if (desc == nullptr) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "component descriptor missing"));
                 }
-                if (!was_present && component_name == "engine.scene.Camera") {
-                    return scene.remove_component<Camera>(*current);
+                bool present = true;
+                auto target = mutable_component(scene, *current, component_name, present);
+                if (!target) {
+                    return core::make_failure<void>(target.error());
                 }
-                void* target = component_name == "engine.scene.Transform"
-                                   ? static_cast<void*>(&scene.transform(*current))
-                                   : static_cast<void*>(&scene.component<Camera>(*current));
-                return desc->from_json(target, old_value);
+                return desc->from_json(*target, old_value);
             };
             auto redo = [&scene, &registry, entity_id, component_name, new_value,
                          was_present]() -> Result<void> {
@@ -516,16 +585,12 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "component descriptor missing"));
                 }
-                if (!was_present && component_name == "engine.scene.Camera") {
-                    auto added = scene.add_component<Camera>(*current);
-                    if (!added) {
-                        return added;
-                    }
+                bool present = was_present;
+                auto target = mutable_component(scene, *current, component_name, present);
+                if (!target) {
+                    return core::make_failure<void>(target.error());
                 }
-                void* target = component_name == "engine.scene.Transform"
-                                   ? static_cast<void*>(&scene.transform(*current))
-                                   : static_cast<void*>(&scene.component<Camera>(*current));
-                return desc->from_json(target, new_value);
+                return desc->from_json(*target, new_value);
             };
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
@@ -550,31 +615,42 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                 return core::make_failure<CommandOutput>(entity.error());
             }
             const std::string component_name = arguments.at("component").get<std::string>();
-            if (component_name != "engine.scene.Camera") {
+            if (component_name == "engine.scene.Transform") {
                 return core::make_failure<CommandOutput>(
-                    core::make_error(ErrorCode::Validation, "only engine.scene.Camera can be added",
-                                     {}, {{"component", component_name}}));
+                    core::make_error(ErrorCode::Validation, "Transform is always present", {},
+                                     {{"component", component_name}}));
             }
-            auto added = scene.add_component<Camera>(*entity);
-            if (!added) {
-                return core::make_failure<CommandOutput>(added.error());
+            bool was_present = true;
+            auto component = mutable_component(scene, *entity, component_name, was_present);
+            if (!component) {
+                return core::make_failure<CommandOutput>(component.error());
+            }
+            if (was_present) {
+                return core::make_failure<CommandOutput>(
+                    core::make_error(ErrorCode::Conflict, "component already exists", {},
+                                     {{"component", component_name}}));
             }
             const Uuid entity_id = *scene.uuid(*entity);
-            auto undo = [&scene, entity_id]() -> Result<void> {
+            auto undo = [&scene, entity_id, component_name]() -> Result<void> {
                 const auto current = scene.find(entity_id);
                 if (!current.has_value()) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "entity does not exist"));
                 }
-                return scene.remove_component<Camera>(*current);
+                return remove_component_by_name(scene, *current, component_name);
             };
-            auto redo = [&scene, entity_id]() -> Result<void> {
+            auto redo = [&scene, entity_id, component_name]() -> Result<void> {
                 const auto current = scene.find(entity_id);
                 if (!current.has_value()) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "entity does not exist"));
                 }
-                return scene.add_component<Camera>(*current);
+                bool present = false;
+                auto target = mutable_component(scene, *current, component_name, present);
+                if (!target) {
+                    return core::make_failure<void>(target.error());
+                }
+                return {};
             };
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
@@ -599,50 +675,58 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                 return core::make_failure<CommandOutput>(entity.error());
             }
             const std::string component_name = arguments.at("component").get<std::string>();
-            if (component_name != "engine.scene.Camera") {
-                return core::make_failure<CommandOutput>(core::make_error(
-                    ErrorCode::Validation, "only engine.scene.Camera can be removed", {},
-                    {{"component", component_name}}));
+            if (component_name == "engine.scene.Transform") {
+                return core::make_failure<CommandOutput>(
+                    core::make_error(ErrorCode::Validation, "Transform cannot be removed", {},
+                                     {{"component", component_name}}));
+            }
+            if (!has_component_by_name(scene, *entity, component_name)) {
+                return core::make_failure<CommandOutput>(
+                    core::make_error(ErrorCode::NotFound, "component does not exist", {},
+                                     {{"component", component_name}}));
             }
             const auto* descriptor = registry.find(component_name);
             if (descriptor == nullptr) {
                 return core::make_failure<CommandOutput>(
                     core::make_error(ErrorCode::NotFound, "component descriptor missing"));
             }
-            if (!scene.has<Camera>(*entity)) {
-                return core::make_failure<CommandOutput>(
-                    core::make_error(ErrorCode::NotFound, "component does not exist"));
+            bool present = true;
+            auto component = mutable_component(scene, *entity, component_name, present);
+            if (!component) {
+                return core::make_failure<CommandOutput>(component.error());
             }
-            const nlohmann::json old_value = descriptor->to_json(&scene.component<Camera>(*entity));
-            auto removed = scene.remove_component<Camera>(*entity);
+            const nlohmann::json old_value = descriptor->to_json(*component);
+            auto removed = remove_component_by_name(scene, *entity, component_name);
             if (!removed) {
                 return core::make_failure<CommandOutput>(removed.error());
             }
             const Uuid entity_id = *scene.uuid(*entity);
-            auto undo = [&scene, &registry, entity_id, old_value]() -> Result<void> {
+            auto undo = [&scene, &registry, entity_id, component_name,
+                         old_value]() -> Result<void> {
                 const auto current = scene.find(entity_id);
                 if (!current.has_value()) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "entity does not exist"));
                 }
-                const auto* desc = registry.find("engine.scene.Camera");
+                const auto* desc = registry.find(component_name);
                 if (desc == nullptr) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "component descriptor missing"));
                 }
-                auto added = scene.add_component<Camera>(*current);
-                if (!added) {
-                    return added;
+                bool present = false;
+                auto target = mutable_component(scene, *current, component_name, present);
+                if (!target) {
+                    return core::make_failure<void>(target.error());
                 }
-                return desc->from_json(&scene.component<Camera>(*current), old_value);
+                return desc->from_json(*target, old_value);
             };
-            auto redo = [&scene, entity_id]() -> Result<void> {
+            auto redo = [&scene, entity_id, component_name]() -> Result<void> {
                 const auto current = scene.find(entity_id);
                 if (!current.has_value()) {
                     return core::make_failure<void>(
                         core::make_error(ErrorCode::NotFound, "entity does not exist"));
                 }
-                return scene.remove_component<Camera>(*current);
+                return remove_component_by_name(scene, *current, component_name);
             };
             return CommandOutput{nlohmann::json::object(), {}, std::move(undo), std::move(redo)};
         });
@@ -923,13 +1007,23 @@ int component_remove(const std::string& project_root, const std::string& scene_p
 }
 
 int simulate(const std::string& project_root, const std::string& scene_path, int ticks, bool json) {
-    (void)project_root;
-    (void)scene_path;
-    (void)ticks;
+    auto project = Project::load(project_root);
+    if (!project) {
+        const CommandResult result = failure(project.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    ReflectionRegistry registry = make_registry();
+    auto scene = project->load_scene(scene_path, registry);
+    if (!scene) {
+        const CommandResult result = failure(scene.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
     const CommandResult result =
-        failure(core::make_error(ErrorCode::Unsupported, "simulation arrives in M1.7"));
+        success(scene::simulate(*scene, ticks, project->settings().tickRate));
     print_result(result, json);
-    return exit_code_for(result);
+    return 0;
 }
 
 int batch(const std::string& project_root, const std::string& scene_path, const std::string& file,

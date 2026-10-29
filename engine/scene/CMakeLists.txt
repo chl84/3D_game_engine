@@ -1,6 +1,7 @@
 add_library(engine_scene STATIC
     src/project.cpp
     src/scene.cpp
+    src/simulation.cpp
 )
 
 add_library(engine::scene ALIAS engine_scene)

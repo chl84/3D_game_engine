@@ -15,6 +15,7 @@ add_executable(engine_core_tests
     unit/project_test.cpp
     unit/reflect_test.cpp
     unit/scene_test.cpp
+    unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
 )

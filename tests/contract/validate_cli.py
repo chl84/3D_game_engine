@@ -213,6 +213,41 @@ def main() -> int:
                 "component set",
             )
 
+            run_command(
+                [
+                    "component",
+                    "add",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Motion",
+                ],
+                "component add motion",
+            )
+            run_command(
+                [
+                    "component",
+                    "set",
+                    str(project_dir),
+                    "--id",
+                    child_id,
+                    "--component",
+                    "engine.scene.Motion",
+                    "--value",
+                    json.dumps({"linearVelocity": [1.0, 0.0, 0.0]}),
+                ],
+                "component set motion",
+            )
+            simulation_one = run_command(
+                ["simulate", str(project_dir), "--ticks", "60"], "simulate first"
+            )
+            simulation_two = run_command(
+                ["simulate", str(project_dir), "--ticks", "60"], "simulate second"
+            )
+            if simulation_one["data"] != simulation_two["data"]:
+                return fail("two identical simulations produced different state dumps")
+
             inspected = run_command(
                 ["scene", "inspect", str(project_dir)], "scene inspect after changes"
             )

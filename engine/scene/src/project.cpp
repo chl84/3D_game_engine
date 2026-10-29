@@ -349,7 +349,8 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
                                            const core::ReflectionRegistry& registry) const {
     const auto* transform = registry.find("engine.scene.Transform");
     const auto* camera = registry.find("engine.scene.Camera");
-    if (transform == nullptr || camera == nullptr) {
+    const auto* motion = registry.find("engine.scene.Motion");
+    if (transform == nullptr || camera == nullptr || motion == nullptr) {
         return core::make_failure<nlohmann::json>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -365,6 +366,9 @@ Result<nlohmann::json> Project::scene_json(const Scene& scene,
         components["engine.scene.Transform"] = transform->to_json(&scene.transform(entity));
         if (scene.has<Camera>(entity)) {
             components["engine.scene.Camera"] = camera->to_json(&scene.component<Camera>(entity));
+        }
+        if (scene.has<Motion>(entity)) {
+            components["engine.scene.Motion"] = motion->to_json(&scene.component<Motion>(entity));
         }
 
         nlohmann::json parent_id = nullptr;
@@ -459,7 +463,8 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
 
     const auto* transform = registry.find("engine.scene.Transform");
     const auto* camera = registry.find("engine.scene.Camera");
-    if (transform == nullptr || camera == nullptr) {
+    const auto* motion = registry.find("engine.scene.Motion");
+    if (transform == nullptr || camera == nullptr || motion == nullptr) {
         return core::make_failure<Scene>(core::make_error(
             core::ErrorCode::NotFound, "scene component descriptors are not registered"));
     }
@@ -546,6 +551,16 @@ Result<Scene> Project::load_scene(const std::string& relative_path,
                 }
                 auto parsed =
                     camera->from_json(&scene.component<Camera>(*entity), *component_iterator);
+                if (!parsed) {
+                    return core::make_failure<Scene>(parsed.error());
+                }
+            } else if (component_iterator.key() == "engine.scene.Motion") {
+                auto added = scene.add_component<Motion>(*entity);
+                if (!added) {
+                    return core::make_failure<Scene>(added.error());
+                }
+                auto parsed =
+                    motion->from_json(&scene.component<Motion>(*entity), *component_iterator);
                 if (!parsed) {
                     return core::make_failure<Scene>(parsed.error());
                 }

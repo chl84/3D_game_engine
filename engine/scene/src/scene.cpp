@@ -283,6 +283,10 @@ void register_scene_components(core::ReflectionRegistry& registry) {
         .field("far", &Camera::far, "Far plane")
         .field("enabled", &Camera::enabled, "Whether the camera is active")
         .build();
+
+    registry.component<Motion>("engine.scene.Motion")
+        .field("linearVelocity", &Motion::linearVelocity, "Linear velocity in metres per second")
+        .build();
 }
 
 } // namespace engine::scene

@@ -51,6 +51,10 @@ struct Camera {
     bool enabled{true};
 };
 
+struct Motion {
+    core::Vec3 linearVelocity;
+};
+
 struct EntityMetadata {
     nlohmann::json value = nlohmann::json::object();
 };
