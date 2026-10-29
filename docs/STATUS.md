@@ -47,8 +47,8 @@
 | CLI contract test | Automatically tested | `engine_cli_contract` validates version and doctor output against published schemas and checks `--require unknown` exits 2 |
 | clang-format | Automatically tested | `Quality` job runs clang-format 18 with `--dry-run --Werror`; local clang-format 23 is also clean |
 | clang-tidy | Automatically tested | `Quality` job runs clang-tidy 18 with `--warnings-as-errors='*'`. `HeaderFilterRegex` is `.*/(engine|tools|tests)/.*`, so project headers are analysed; the corrected filter found `performance-enum-size` in `log.hpp`, fixed by making `LogLevel` a `std::uint8_t` enum |
-| clang-tidy header coverage | Locally verified | Before the filter fix, `performance-enum-size` in `log.hpp` was suppressed; after the fix, `clang-tidy -p build/ci-linux-clang` reports it and exits 0 once fixed. CI confirms the same with clang-tidy 18 |
-| Pinned CMake and Ninja | Automatically tested | CI installs CMake 4.4.5 and Ninja 1.13.2 from official release archives and fails unless `cmake --version` and `ninja --version` match. A local clean build with the same binaries passed 4/4 CTest |
+| clang-tidy header coverage | Locally verified | Before the filter fix, `performance-enum-size` in `log.hpp` was suppressed; after the fix, `clang-tidy -p build/ci-linux-clang` reported it, and it is fixed in code. CI runs clang-tidy 18 with the corrected filter and exits 0; CI has not re-run the old header against the old filter |
+| Pinned CMake and Ninja | Automatically tested in CI; locally verified | CI installs CMake 4.4.5 and Ninja 1.13.2 from official release archives and fails unless `cmake --version` and `ninja --version` match. A local clean build in `/tmp/opencode/cmake445-build` with the same binaries passed 4/4 CTest |
 | Windows `doctor` command | Automatically tested | `engine_cli_contract` runs `engine doctor --json` and validates `doctor@1` on Windows; when no Vulkan device exists it accepts exit 8 for `--require vulkan` instead of claiming Vulkan support |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
@@ -60,14 +60,14 @@
 | Lavapipe | Manually verified | `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json vulkaninfo --summary` → llvmpipe, API 1.4.354 |
 | Validation layer | Manually verified | `vulkaninfo --summary` lists `VK_LAYER_KHRONOS_validation` 1.4.363; layer-enabled run exits 0 |
 | vcpkg | Manually verified | `vcpkg version` → 2026-09-26; HEAD `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` |
-| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40796650668](https://github.com/chl84/3D_game_engine/actions/runs/40796650668) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 4/4 tests passed |
+| Windows build | Automatically tested | `ci-windows` in GitHub Actions run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796) → configure, build and `ctest` all succeeded with MSVC, vcpkg, CMake 4.4.5 and Ninja 1.13.2; 4/4 tests passed |
 | Windows graphics | Not verified | Out of scope for M2/M3 approval |
-| GitHub Actions | Automatically tested | Run [40796650668](https://github.com/chl84/3D_game_engine/actions/runs/40796650668) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
+| GitHub Actions | Automatically tested | Run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
 | ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
-| Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → loader 1.4.363, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0 |
-| Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `requirements.failed = ["vulkan"]` |
+| Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → CI loader 1.3.275, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0. The local loader is 1.4.363 |
+| Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `vulkan` is present in `requirements.failed`. The test asserts membership, not exact array equality; a local run produced exactly `["vulkan"]` |
 | Failure artifacts | Implemented | CTest `Testing/` and doctor JSON are uploaded on failed Linux/Windows/ASan jobs |
 | Branch protection | Blocked | GitHub API returns HTTP 403: private repository requires GitHub Pro or public visibility; [setup script](../scripts/setup_branch_protection.sh) is ready |
 
@@ -116,6 +116,9 @@ The Windows job caught two real portability issues before the milestone closed:
   header filter and exits 0; the Vulkan detection step captures exit 0;
   missing ICD exits 8; ASan/UBSan detects `llvmpipe` under the sanitizers;
   Windows passes 4/4 CTest with 21/21 test cases.
+- Run [40797389796](https://github.com/chl84/3D_game_engine/actions/runs/40797389796):
+  all five jobs green on the final documentation commit (`3381761`), with the
+  same tool versions and Vulkan checks.
 
 ## Known issues and gaps
 
@@ -128,6 +131,11 @@ The Windows job caught two real portability issues before the milestone closed:
 - The development machine has CMake 4.4.4 while CI pins 4.4.5. A clean local
   build with 4.4.5 passed, so this is a documented version difference, not an
   unverified CI path.
+- CI actions were upgraded from `actions/checkout@v4`, `actions/cache@v4` and
+  `actions/upload-artifact@v4` to `@v7`, `@v6` and `@v7`. This removes the
+  Node 20 deprecation from those actions, but `ilammy/msvc-dev-cmd@v1` still
+  emits a Node 20 warning. The major upgrades are tooling changes and await the
+  owner's A.6 approval.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
