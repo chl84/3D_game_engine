@@ -8,6 +8,7 @@
 #include <vector>
 
 struct SDL_Window;
+union SDL_Event;
 
 namespace engine::platform {
 
@@ -35,6 +36,8 @@ public:
     [[nodiscard]] bool active() const noexcept;
 
     void pump_events() noexcept;
+    // Polls one SDL event. Returns false when the queue is empty.
+    [[nodiscard]] bool poll_event(SDL_Event& event) noexcept;
 
 private:
     SdlContext() = default;

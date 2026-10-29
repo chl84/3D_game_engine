@@ -51,6 +51,10 @@ void SdlContext::pump_events() noexcept {
     SDL_PumpEvents();
 }
 
+bool SdlContext::poll_event(SDL_Event& event) noexcept {
+    return SDL_PollEvent(&event) == 1;
+}
+
 core::Result<Window> Window::create(const SdlContext& context, const WindowOptions& options) {
     if (!context.active()) {
         return core::make_failure<Window>(core::make_error(core::ErrorCode::Precondition,
