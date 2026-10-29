@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.7 in progress — clean clone, sanitizers, format/tidy and CI are green; tag `v0.1.0` and the final acceptance report are pending.
+**Current substep:** M0.7 deliverables complete — clean clone, sanitizers, format/tidy, Windows headless CI and tag `v0.1.0` are in place. Awaiting reviewer approval before merge to `main`.
 
 ## Substeps
 
@@ -15,7 +15,7 @@
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
 | M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Reviewer verdict: GODKJENT |
-| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, tag `v0.1.0` and the M0 acceptance report. In progress |
+| M0.7 | Clean-clone acceptance script, ASan/UBSan, TSan, format/tidy, Windows headless CI, tag `v0.1.0` and the M0 acceptance report. Deliverables complete; awaiting reviewer approval |
 
 ## Repository state
 
@@ -63,6 +63,11 @@
 | Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.4) | Automatically tested | Clone of `dd3d127`, venv from `requirements-dev.txt`, `cmake --preset ci-linux-gcc`, build, `ctest` → 4/4 passed; `doctor --require vulkan` exit 0 |
 | Clean clone on Linux (M0.7) | Automatically tested | `scripts/acceptance_m0.sh` cloned `m0/foundation`, built `linux-debug`, ran 5/5 CTest, and validated `version@1` and `doctor@1`; output ended with `M0 clean-clone acceptance passed` |
+| ASan/UBSan (M0.7) | Automatically tested | `linux-asan` → 5/5 CTest locally; CI `Linux ASan/UBSan` → 5/5 |
+| TSan (M0.7) | Locally automatically tested | `linux-tsan` → 5/5 CTest |
+| Format and tidy (M0.7) | Automatically tested | `clang-format --dry-run --Werror` over all C++ files → clean; `clang-tidy -p build/ci-linux-clang --warnings-as-errors='*'` → exit 0 |
+| Windows headless (M0.7) | Automatically tested | CI `Windows (MSVC)` → 5/5 CTest, no GPU; graphics remains not verified |
+| Release tag | Created locally | Annotated tag `v0.1.0` on the M0.7 commit; pushed after reviewer approval |
 | Norwegian prompt files excluded | Automatically checked | Clean clone contained no `AGENT_RULES.md`, `FIRST_TASK.md`, `MASTERPROMPT_v0.2.md` or root `VISION.md` |
 | Exit code for unknown argument | Manually verified | `engine --bogus` → exit code 2 and usage on stderr |
 | Vulkan loader and GPU | Manually verified | `vulkaninfo --summary` → Intel Iris Xe, API 1.4.354, Mesa 26.2.5 |
@@ -161,5 +166,6 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M0.7: clean-clone script, ASan/UBSan, TSan smoke test, format/tidy, Windows
-compile + headless, tag `v0.1.0` and the M0 acceptance report.
+Reviewer approval of M0.7. After approval, the owner decides whether to merge
+`m0/foundation` into `main` and publish tag `v0.1.0` as the M0 release. The
+agent does not merge to `main` without explicit owner approval.

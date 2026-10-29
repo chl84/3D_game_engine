@@ -6,7 +6,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.6 done) |
+| M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | In progress (M0.0–M0.7 deliverables done; owner approval pending) |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Planned |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Planned |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API | Planned |
@@ -27,7 +27,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0.4 | CLI skeleton and `engine doctor --json` | Done |
 | M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe/Vulkan detection tests, Linux CI matrix, caching, artifacts and branch protection on `main` | Done |
 | M0.6 | Full documentation, ADRs and VISION translation | Done |
-| M0.7 | Hardening and M0 acceptance | In progress |
+| M0.7 | Hardening and M0 acceptance | Complete — awaiting review |
 
 ### M0.5 follow-ups (non-blocking)
 
