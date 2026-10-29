@@ -50,12 +50,61 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     tl::expected
     EnTT::EnTT
     nlohmann_json_schema_validator::validator
+    SDL3::SDL3
+    glm::glm
+    GPUOpen::VulkanMemoryAllocator
+    volk::volk_headers
+    volk::volk
+)
+
+target_compile_definitions(engine_dependencies_smoke PRIVATE
+    VMA_STATIC_VULKAN_FUNCTIONS=0
+    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
 )
 
 engine_set_warnings(engine_dependencies_smoke)
 
 add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
+
+add_executable(engine_render_tests
+    render/device_test.cpp
+)
+
+target_link_libraries(engine_render_tests PRIVATE
+    engine::render
+    Catch2::Catch2WithMain
+)
+
+engine_set_warnings(engine_render_tests)
+
+add_test(NAME engine_render_tests COMMAND engine_render_tests)
+set_tests_properties(engine_render_tests PROPERTIES
+    LABELS "unit;render"
+    SKIP_REGULAR_EXPRESSION "[Ss][Kk][Ii][Pp][Pp][Ee][Dd]"
+)
+
+add_executable(engine_window_smoke
+    render/window_smoke.cpp
+)
+
+target_link_libraries(engine_window_smoke PRIVATE
+    engine::platform
+    engine::render
+)
+
+engine_set_warnings(engine_window_smoke)
+
+# The window smoke test needs a display server. It reports exit code 77 when no
+# display is available, which CTest renders as skipped. Windows graphics is not
+# verified, so the test is not registered there.
+if(NOT WIN32)
+    add_test(NAME engine_window_smoke COMMAND engine_window_smoke)
+    set_tests_properties(engine_window_smoke PROPERTIES
+        LABELS "unit;render"
+        SKIP_RETURN_CODE 77
+    )
+endif()
 
 add_test(
     NAME engine_version_json

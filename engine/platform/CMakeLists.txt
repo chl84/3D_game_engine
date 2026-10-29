@@ -1,5 +1,6 @@
 add_library(engine_platform STATIC
     src/atomic_file.cpp
+    src/window.cpp
 )
 
 add_library(engine::platform ALIAS engine_platform)
@@ -14,7 +15,12 @@ target_include_directories(engine_platform
 
 target_compile_features(engine_platform PUBLIC cxx_std_20)
 
+target_compile_definitions(engine_platform PRIVATE SDL_MAIN_HANDLED)
+
 target_link_libraries(engine_platform
     PUBLIC
         engine::core
+        volk::volk_headers
+    PRIVATE
+        SDL3::SDL3
 )
