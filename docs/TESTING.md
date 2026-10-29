@@ -90,8 +90,8 @@ are visible instead of being reported as ordinary passes.
 
 | Job | Purpose |
 |---|---|
-| `Linux (ci-linux-gcc14)` | GCC 14 build, CTest, lavapipe detection and missing-ICD exit-code test |
-| `Linux (ci-linux-clang)` | Clang 18 build, CTest, lavapipe detection and missing-ICD exit-code test |
+| `Linux (ci-linux-gcc14)` | GCC 14 build, CTest, Xvfb/openbox swapchain test, lavapipe detection and missing-ICD exit-code test |
+| `Linux (ci-linux-clang)` | Clang 18 build, CTest, Xvfb/openbox swapchain test, lavapipe detection and missing-ICD exit-code test |
 | `Windows (MSVC)` | MSVC build and headless tests; no GPU |
 | `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors; project headers are analysed |
 | `Linux ASan/UBSan` | ASan + UBSan build, CTest and Vulkan detection under the sanitizers |

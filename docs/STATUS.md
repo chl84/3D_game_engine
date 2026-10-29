@@ -123,7 +123,8 @@
 | M2.2 swapchain and frame loop | Automatically tested locally | `engine_swapchain_test` presents frames, follows a hidden-window resize, follows the mapped window and reports zero validation errors |
 | M2.2 minimize/restore | Automatically tested where the WM supports it | The test asserts that no frame is presented while SDL reports the window as minimized; a CI step under Xvfb + openbox runs it with `--require-minimize` |
 | M2.2 frame synchronization | Automatically tested | The swapchain test runs 16+ frames with per-frame image-available semaphores and per-swapchain-image render-finished semaphores; the validation layers report no semaphore-reuse errors |
-| M2.2 CI | Automatically tested | Manual dispatch [40887468113](https://github.com/chl84/3D_game_engine/actions/runs/40887468113) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11 with the window and swapchain tests skipped headless; Windows MSVC 9/9 with the headless render test skipped; Quality green |
+| M2.2 CI | Automatically tested | Manual dispatch [40889609029](https://github.com/chl84/3D_game_engine/actions/runs/40889609029) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11 with the window and swapchain tests skipped headless; Windows MSVC 9/9 with the headless render test skipped; Quality green |
+| M2.2 minimize under Xvfb | Automatically tested | The Linux CI jobs run `engine_swapchain_test --require-minimize` under Xvfb + openbox; both report `minimize: renderer reported no frames` and present afterward |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `733f14e`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
