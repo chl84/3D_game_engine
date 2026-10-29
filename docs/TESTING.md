@@ -2,7 +2,7 @@
 
 **Status:** M2.4. Eleven CTest tests exist on Linux; Windows registers nine
 because the window and swapchain tests are not registered there. `engine_core_tests`
-contains 59 test cases and 457 assertions; `engine_render_tests` contains 9
+contains 60 test cases and 463 assertions; `engine_render_tests` contains 9
 test cases and 62 assertions. CI also runs clang-format,
 clang-tidy with project headers included, ASan/UBSan, and Vulkan detection with
 pinned CMake 4.4.5 and Ninja 1.13.2.
@@ -87,7 +87,8 @@ lavapipe golden-image work starts in M2.5.
   schemas
 - scene format v1 loading and v2 upgrade, `engine.scene.Mesh` round-trip,
   rejection of Mesh in v1 and scene version 3
-- double-precision world transforms at 8 km with a 1 mm child offset
+- double-precision world transforms for root entities directly at 8 km and
+  16 km, plus an 8 km hierarchy with a 1 mm child offset
 - `SceneView` mesh and camera access without mutation
 
 The `log-record@1` schema is in `schemas/log-record@1.schema.json` and is

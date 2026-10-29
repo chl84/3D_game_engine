@@ -41,11 +41,12 @@ format change, on 2026-10-29.
 - The renderer and future asset pipeline share one component contract; no mesh
   vertex data is duplicated in scene files.
 - M3 adds asset-ID resolution behind the same `meshId` field.
-- Local `Transform` values remain floats. A root entity placed directly at
-  8 km has about 0.5 mm position resolution; M2.4 handles the tested case with a
-  double-composed hierarchy and camera-relative rendering. M5's large-world
-  work must add double-precision local state or chunk-relative transforms for
-  entities whose roots live far from the origin.
+- Local `Transform` positions are stored as double. Rotation and scale remain
+  float. A root entity placed directly at 8 km or 16 km therefore keeps
+  sub-millimetre position precision, and world composition and camera-relative
+  conversion stay in double until the final float model matrix. M5's
+  large-world work can add chunk-relative transforms on top without changing
+  the v2 field types.
 
 ## Alternatives considered
 

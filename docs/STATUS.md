@@ -77,8 +77,8 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 11/11 passed; `engine_core_tests` → 59 cases / 457 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 11/11 passed; `engine_core_tests` → 59 cases / 457 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 11/11 passed; `engine_core_tests` → 60 cases / 463 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 11/11 passed; `engine_core_tests` → 60 cases / 463 assertions |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 6/6 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 6/6 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
@@ -106,7 +106,7 @@
 | Command bus | Automatically tested | `command_test.cpp` covers schema validation, successful and failed handlers, unknown commands, duplicate/malformed registration, sorted schemas, command-log entries, undo/redo, redo invalidation, transactions and rollback |
 | Project and scene format | Automatically tested | `project_test.cpp` covers project create/load, canonical byte-identical round-trip, entity hierarchy and components, unknown fields, newer format versions, path traversal and exclusive locks |
 | Offline CLI | Automatically tested | `validate_cli.py` creates a project, creates a parent/child hierarchy, sets Camera and Motion components, inspects and validates the scene, runs a batch with undo, and validates every response against `command-result@1` |
-| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 59 core cases / 457 assertions |
+| Fixed-tick simulation | Automatically tested | `simulation_test.cpp` runs 60/120 ticks at 60 Hz, checks motion, unchanged entities and byte-identical dumps from two identical runs; `validate_cli.py` compares two CLI simulation dumps; 60 core cases / 463 assertions |
 | Component schemas | Automatically tested | `engine schema --json` returns draft-07 schemas for `Transform`, `Camera` and `Motion`; `validate_cli.py` validates the envelope |
 | M1 CLI acceptance | Automatically tested | `engine_acceptance_m1` runs project create, hierarchy, components, batch undo, byte-identical save/load/save and two identical simulations; 8/8 CTest |
 | `--dry-run` | Automatically tested | `validate_cli.py` checks project create, scene create, entity create/delete/reparent, component set/add/remove and batch dry-runs; `project unlock --dry-run` remains manually inspected |
@@ -132,7 +132,7 @@
 | M2.3 camera | Automatically tested | `engine_render_tests` includes camera cases for Vulkan clip space and a zero aspect guard |
 | M2.4 scene format v2 | Automatically tested | `project_test` loads a v1 scene, upgrades it to v2 on save, round-trips `engine.scene.Mesh`, and rejects Mesh in v1 and scene version 3 |
 | M2.4 mesh references | Automatically tested | Scenes store only `meshId`; `engine.builtin.cube` and `engine.builtin.plane` resolve in the renderer without mesh data in the scene file |
-| M2.4 double world transform | Automatically tested | `scene_test` composes a parent at 8 km with a 1 mm child offset in double precision and checks the camera-relative float offset |
+| M2.4 double world transform | Automatically tested | `scene_test` stores root entities directly at 8 km and 16 km with 1 mm offsets, checks the double positions, and composes an 8 km hierarchy with a 1 mm child offset; `project_test` round-trips a 16 km position through the scene file |
 | M2.4 camera-relative rendering | Automatically tested | `scene_transform_test` builds the 8 km model matrix from the double offset, checks finite values, and verifies the rotation-only camera view |
 | M2.4 depth and culling | Automatically tested | `engine_swapchain_test` renders a 8 km scene with a depth buffer and checks that the far cube and ground are visible while an entity behind the camera is culled |
 | M2.4 CI | Automatically tested | Manual dispatch [40908218354](https://github.com/chl84/3D_game_engine/actions/runs/40908218354) → Linux GCC 14, Linux Clang and Linux ASan/UBSan 11/11; Windows MSVC 9/9 with camera/transform cases passing and device cases skipped; Quality green |

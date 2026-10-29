@@ -29,8 +29,9 @@ completed in M1.8.
 | Up | +Y |
 | Forward | −Z |
 | Length | Metres |
-| Rotation | Radians in the API; quaternion `(x, y, z, w)` in files |
-| Scale | Unitless |
+| Position | Double-precision metres in files and in `Transform` |
+| Rotation | Radians in the API; quaternion `(x, y, z, w)` in files, float |
+| Scale | Unitless, float |
 | Projection | Vulkan clip space applies a Y flip in the projection matrix, not in the data |
 
 This matches glTF, which simplifies asset import.
@@ -138,6 +139,9 @@ This matches glTF, which simplifies asset import.
 - `engine.scene.Motion` has a `linearVelocity` Vec3 and is read by the
   fixed-tick simulation. Simulation mutates runtime transforms without saving
   the scene; `engine simulate` returns a state dump instead.
+- `engine.scene.Transform.position` is stored with double precision. Rotation
+  and scale are float. World composition and camera-relative conversion happen
+  in double until the renderer creates its float matrices.
 - `engine.scene.Mesh` stores only a `meshId` string. The value is an asset UUID
   (resolved by the asset pipeline from M3) or a fixed built-in ID:
   `engine.builtin.cube` or `engine.builtin.plane`. Mesh vertices and indices

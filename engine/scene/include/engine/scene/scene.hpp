@@ -39,7 +39,7 @@ struct Children {
 };
 
 struct Transform {
-    core::Vec3 position;
+    core::Vec3d position;
     core::Quat rotation;
     core::Vec3 scale{1.0F, 1.0F, 1.0F};
 };

@@ -90,7 +90,7 @@ create_renderer(const engine::render::Device& device, const engine::platform::Wi
         return std::nullopt;
     }
 
-    scene.transform(*camera).position = {8000.0F, 2.0F, 8000.0F};
+    scene.transform(*camera).position = {8000.0, 2.0, 8000.0};
     auto camera_added = scene.add_component<Camera>(*camera);
     if (!camera_added) {
         return std::nullopt;
@@ -99,8 +99,8 @@ create_renderer(const engine::render::Device& device, const engine::platform::Wi
     scene.component<Camera>(*camera).near = 0.1F;
     scene.component<Camera>(*camera).far = 20000.0F;
 
-    scene.transform(*parent).position = {8000.0F, 0.0F, 8000.0F};
-    scene.transform(*child).position = {0.001F, 0.0F, -5.001F};
+    scene.transform(*parent).position = {8000.0, 0.0, 8000.0};
+    scene.transform(*child).position = {0.001, 0.0, -5.001};
     if (!add_mesh(*child, engine::scene::kBuiltinCubeMesh)) {
         return std::nullopt;
     }
@@ -109,12 +109,12 @@ create_renderer(const engine::render::Device& device, const engine::platform::Wi
         return std::nullopt;
     }
 
-    scene.transform(*ground).position = {8000.0F, -0.5F, 8000.0F};
+    scene.transform(*ground).position = {8000.0, -0.5, 8000.0};
     if (!add_mesh(*ground, engine::scene::kBuiltinPlaneMesh)) {
         return std::nullopt;
     }
 
-    scene.transform(*behind).position = {8000.0F, 0.0F, 8020.0F};
+    scene.transform(*behind).position = {8000.0, 0.0, 8020.0};
     if (!add_mesh(*behind, engine::scene::kBuiltinCubeMesh)) {
         return std::nullopt;
     }

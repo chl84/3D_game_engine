@@ -27,7 +27,7 @@ TEST_CASE("scene view exposes meshes and cameras without mutation", "[scene][vie
     REQUIRE(scene.add_component<Mesh>(mesh_entity).has_value());
     scene.component<Mesh>(mesh_entity).mesh_id = std::string(engine::scene::kBuiltinPlaneMesh);
     REQUIRE(scene.add_component<Camera>(camera_entity).has_value());
-    scene.transform(camera_entity).position = {8000.0F, 2.0F, 8000.0F};
+    scene.transform(camera_entity).position = {8000.0, 2.0, 8000.0};
 
     const SceneView view(scene);
     CHECK(view.contains(mesh_entity));

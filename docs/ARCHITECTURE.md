@@ -121,11 +121,12 @@ animation mutate the runtime state directly during a fixed tick.
   viewport/scissor. The `Camera` type owns the GLM projection with Vulkan
   clip-space Y and depth range [0, 1].
 - Scene world transforms are composed in double precision. Local `Transform`
-  values remain floats; a root entity placed directly at 8 km has about 0.5 mm
-  position resolution. The renderer subtracts the camera position in double,
-  then converts the result to camera-relative floats for model matrices; the
-  camera view is rotation-only. M5's large-world work must extend the local
-  representation for roots far from the origin.
+  positions are stored as double; rotation and scale remain float. A root
+  entity at 8 km or 16 km therefore keeps sub-millimetre position precision.
+  The renderer subtracts the camera position in double, then converts the
+  result to camera-relative floats for model matrices; the camera view is
+  rotation-only. M5's large-world work can add chunk-relative transforms on top
+  without changing the v2 field types.
 - `SceneView` is the read-only boundary between `scene` and `render`. It
   exposes mesh IDs, cameras and world transforms but no mutation methods.
 - A scene `Mesh` component stores only `meshId`: a future asset UUID or a fixed

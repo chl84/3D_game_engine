@@ -17,6 +17,7 @@ namespace {
     case FieldType::String:
         return {{"type", "string"}};
     case FieldType::Vec3:
+    case FieldType::Vec3d:
         return {
             {"type", "array"},
             {"items", {{"type", "number"}}},

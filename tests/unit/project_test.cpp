@@ -10,7 +10,7 @@
 #include "temp_dir.hpp"
 
 using engine::core::ReflectionRegistry;
-using engine::core::Vec3;
+using engine::core::Vec3d;
 using engine::scene::Camera;
 using engine::scene::Entity;
 using engine::scene::Mesh;
@@ -62,8 +62,8 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     scene.set_scene_name("main");
     const Entity root = require_entity(scene.create_entity("Root"));
     const Entity child = require_entity(scene.create_entity("Child"));
-    scene.transform(root).position = {1.0F, 2.0F, 3.0F};
-    scene.transform(child).position = {0.0F, 5.0F, 0.0F};
+    scene.transform(root).position = {1.0, 2.0, 3.0};
+    scene.transform(child).position = {0.0, 5.0, 0.0};
     REQUIRE(scene.set_parent(child, root).has_value());
     REQUIRE(scene.add_component<Camera>(child).has_value());
     scene.component<Camera>(child).fovYRadians = 0.75F;
@@ -87,7 +87,7 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     REQUIRE(loaded_root.has_value());
     REQUIRE(loaded_child.has_value());
     REQUIRE(loaded->parent(loaded_child.value_or(entt::null)) == loaded_root.value_or(entt::null));
-    REQUIRE(loaded->transform(loaded_root.value_or(entt::null)).position == Vec3{1.0F, 2.0F, 3.0F});
+    REQUIRE(loaded->transform(loaded_root.value_or(entt::null)).position == Vec3d{1.0, 2.0, 3.0});
     REQUIRE(loaded->has<Camera>(loaded_child.value_or(entt::null)));
     REQUIRE(loaded->component<Camera>(loaded_child.value_or(entt::null)).fovYRadians == 0.75F);
     REQUIRE(loaded->has<Mesh>(loaded_child.value_or(entt::null)));
@@ -156,6 +156,7 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     REQUIRE(upgraded["formatVersion"] == 2);
 
     const Entity entity = require_entity(loaded->create_entity("Mesh"));
+    loaded->transform(entity).position = {16000.001, 0.0, 8000.0};
     REQUIRE(loaded->add_component<Mesh>(entity).has_value());
     REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
     auto mesh_document = nlohmann::json::parse(read_file(scene_file));

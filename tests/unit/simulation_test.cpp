@@ -65,7 +65,7 @@ TEST_CASE("two identical simulation runs produce identical dumps", "[simulation]
 TEST_CASE("entities without Motion stay still", "[simulation]") {
     Scene scene = Scene::with_seed(7);
     const Entity entity = require_entity(scene.create_entity("Static"));
-    scene.transform(entity).position = {3.0F, 4.0F, 5.0F};
+    scene.transform(entity).position = {3.0, 4.0, 5.0};
 
     const auto dump = engine::scene::simulate(scene, 10, 60);
     REQUIRE(dump.at("entities").at(0).at("transform").at("position") ==
