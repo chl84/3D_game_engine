@@ -1,8 +1,10 @@
 # Build
 
-**Status:** M0.4. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M0.5. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library, `engine --version --json`, `engine doctor --json`
-with volk-based Vulkan detection, Catch2 tests and Python contract tests.
+with volk-based Vulkan detection, Catch2 tests and Python contract tests. CI
+pins CMake 4.4.5 and Ninja 1.13.2 and runs clang-format, clang-tidy and
+ASan/UBSan.
 
 ## Local development environment
 
@@ -183,10 +185,14 @@ The CI workflow sets up MSVC with `ilammy/msvc-dev-cmd` and uses the
 
 ## Toolchain versions
 
-CI uses the Ubuntu 24.04 runner's CMake 3.28+ and Ninja. Pinning CMake 4.4.5
-and Ninja 1.13.2 remains a known gap and is deferred beyond M0.5. The
-development machine has CMake 4.4.4 and Ninja 1.13.2; the difference is
-recorded here and CI remains the source of truth.
+CI pins CMake 4.4.5 and Ninja 1.13.2. Every job downloads the official
+Kitware and Ninja release archives, prepends them to `PATH`, and fails if
+`cmake --version` or `ninja --version` does not match the pinned values.
+
+The development machine has CMake 4.4.4 and Ninja 1.13.2. A clean local build
+with CMake 4.4.5 and Ninja 1.13.2 passed all four CTest tests, so the local
+4.4.4 difference does not hide an unverified CI path. CI remains the source of
+truth for reproducible builds.
 
 ## Memory
 
@@ -221,13 +227,17 @@ The Linux CI jobs install:
 sudo apt-get install -y libvulkan1 mesa-vulkan-drivers vulkan-tools
 ```
 
-They then verify that `engine doctor --require vulkan --json` exits 0 and
-reports an `llvmpipe` device, and that a run with a missing ICD exits 8. This
-also provides lavapipe for the M2 golden image tests.
+They then run `engine doctor --require vulkan --json`, capture the exit code
+explicitly before parsing the JSON, and require exit 0 plus an `llvmpipe`
+device. A second run with `VK_ICD_FILENAMES` and `VK_DRIVER_FILES` pointing to
+a missing file must exit 8. The ASan/UBSan job runs the same successful
+detection under the sanitizers. This also provides lavapipe for the M2 golden
+image tests.
 
 ## Branch protection
 
 `main` is the default branch. Run `scripts/setup_branch_protection.sh` after
 enabling GitHub Pro or making the repository public; GitHub returns HTTP 403
 for branch protection and rulesets on a private repository on the Free plan.
-The script requires the five CI jobs as status checks.
+The script requires the five CI jobs as status checks. M0.5 stays in progress
+until this is decided.

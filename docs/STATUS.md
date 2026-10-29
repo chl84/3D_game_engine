@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.5 complete except branch protection; M0.6 is next
+**Current substep:** M0.5 in progress — CI work is green, branch protection is blocked by the GitHub plan and needs an owner decision. M0.6 has not started.
 
 ## Completed
 
@@ -11,9 +11,9 @@
 | M0.0 | Vulkan development packages installed by the owner; vcpkg bootstrapped at the pinned commit; git identity configured; `vulkaninfo` and lavapipe verified |
 | M0.1 | Repository initialized; MIT license; CMake skeleton with presets; `engine --version --json`; `engine_version_json` smoke test; ADR-0001–0003; initial documentation skeleton |
 | M0.2 | vcpkg manifest with nlohmann/json, spdlog, CLI11, `tl::expected` and Catch2; warning flags with `-Werror` in CI presets; clang-format and clang-tidy configuration; ASan/UBSan and TSan presets; Catch2 unit and dependency smoke tests; Windows MSVC + vcpkg CI job moved from M0.5 and green |
-| M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases; Linux and Windows CI green |
+| M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases at M0.3 (21 after M0.4); Linux and Windows CI green |
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
-| M0.5 | clang-format and clang-tidy in CI, an ASan/UBSan Linux job, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and a branch-protection setup script; all five CI jobs green |
+| M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and a branch-protection setup script; all five CI jobs green. **Not complete:** branch protection is blocked by the GitHub plan and awaits the owner's decision |
 
 ## Repository state
 
@@ -31,8 +31,8 @@
 |---|---|---|
 | GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
 | Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 4/4 passed |
-| TSan | Automatically tested | `cmake --preset linux-tsan`, build, `ctest` → 4/4 passed |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 4/4 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 4/4 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -43,10 +43,13 @@
 | Dependency compile/link | Automatically tested | `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11, `tl::expected`, Catch2 and volk |
 | `engine --version --json` | Automatically tested | `tests/smoke/version_json.py` and `engine_cli_contract` validate the JSON and `version@1` schema |
 | `engine doctor --json` | Automatically tested | `engine_cli_contract` validates against `doctor@1`; local run reports Intel Iris Xe, llvmpipe, loader 1.4.363 and `VK_LAYER_KHRONOS_validation` |
-| `--require vulkan` | Manually verified | Local GPU/loader → exit 0; forced no-ICD run (`VK_ICD_FILENAMES` pointing to a missing file) → exit 8 |
+| `--require vulkan` | Automatically tested | CI `Vulkan doctor detection` captures the exit code explicitly and asserts 0; `Vulkan doctor missing ICD` asserts 8. The contract test also checks `--require unknown` → 2 |
 | CLI contract test | Automatically tested | `engine_cli_contract` validates version and doctor output against published schemas and checks `--require unknown` exits 2 |
-| clang-format | Manually verified | `clang-format --dry-run --Werror` on all C++ files → no changes |
-| clang-tidy | Manually verified | `clang-tidy -p build/ci-linux-clang` on the C++ sources → exit 0; all warnings were in non-user code |
+| clang-format | Automatically tested | `Quality` job runs clang-format 18 with `--dry-run --Werror`; local clang-format 23 is also clean |
+| clang-tidy | Automatically tested | `Quality` job runs clang-tidy 18 with `--warnings-as-errors='*'`. `HeaderFilterRegex` is `.*/(engine|tools|tests)/.*`, so project headers are analysed; the corrected filter found `performance-enum-size` in `log.hpp`, fixed by making `LogLevel` a `std::uint8_t` enum |
+| clang-tidy header coverage | Locally verified | Before the filter fix, `performance-enum-size` in `log.hpp` was suppressed; after the fix, `clang-tidy -p build/ci-linux-clang` reports it and exits 0 once fixed. CI confirms the same with clang-tidy 18 |
+| Pinned CMake and Ninja | Automatically tested | CI installs CMake 4.4.5 and Ninja 1.13.2 from official release archives and fails unless `cmake --version` and `ninja --version` match. A local clean build with the same binaries passed 4/4 CTest |
+| Windows `doctor` command | Automatically tested | `engine_cli_contract` runs `engine doctor --json` and validates `doctor@1` on Windows; when no Vulkan device exists it accepts exit 8 for `--require vulkan` instead of claiming Vulkan support |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
@@ -110,11 +113,15 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Known issues and gaps
 
-- CI uses the Ubuntu 24.04 runner's CMake 3.28+; pinning CMake 4.4.5 remains a
-  known gap and is deferred beyond M0.5.
-- Branch protection/rulesets are blocked by the GitHub plan: the private
-  repository needs GitHub Pro or public visibility. The ready-to-run script is
-  `scripts/setup_branch_protection.sh`.
+- **M0.5 is not formally complete.** Branch protection/rulesets are blocked by
+  the GitHub plan: the private repository needs GitHub Pro or public
+  visibility. The ready-to-run script is
+  `scripts/setup_branch_protection.sh`. The owner must choose GitHub Pro, a
+  public repository, or accept that branch protection is not enforced. M0.5
+  stays **in progress** until that decision is recorded.
+- The development machine has CMake 4.4.4 while CI pins 4.4.5. A clean local
+  build with 4.4.5 passed, so this is a documented version difference, not an
+  unverified CI path.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
 - `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
@@ -126,7 +133,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M0.6: complete the English `VISION.md` translation, finalize `ARCHITECTURE.md`,
-`BUILD.md`, `TESTING.md`, `DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update
-the ADR set. Branch protection remains blocked until the owner enables GitHub
-Pro or makes the repository public.
+Owner decision on branch protection. M0.5 remains in progress until then and
+M0.6 has not started. After the decision, M0.6 will complete the English
+`VISION.md` translation, finalize `ARCHITECTURE.md`, `BUILD.md`, `TESTING.md`,
+`DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update the ADR set.

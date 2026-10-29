@@ -1,7 +1,9 @@
 # Testing
 
 **Status:** M0.5. Four CTest tests exist; `engine_core_tests` contains 21 test
-cases and 132 assertions. CI also runs clang-format, clang-tidy and ASan/UBSan.
+cases and 132 assertions. CI also runs clang-format, clang-tidy with project
+headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
+Ninja 1.13.2.
 
 ## Current tests
 
@@ -43,14 +45,24 @@ are visible instead of being reported as ordinary passes.
 | `Linux (ci-linux-gcc14)` | GCC 14 build, CTest, lavapipe detection and missing-ICD exit-code test |
 | `Linux (ci-linux-clang)` | Clang 18 build, CTest, lavapipe detection and missing-ICD exit-code test |
 | `Windows (MSVC)` | MSVC build and headless tests; no GPU |
-| `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors |
-| `Linux ASan/UBSan` | ASan + UBSan build and CTest |
+| `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors; project headers are analysed |
+| `Linux ASan/UBSan` | ASan + UBSan build, CTest and Vulkan detection under the sanitizers |
 
-The Linux jobs install `mesa-vulkan-drivers` and `libvulkan1`, verify that
-`engine doctor --require vulkan --json` reports `llvmpipe` and exits 0, and
-verify that a run with `VK_ICD_FILENAMES`/`VK_DRIVER_FILES` pointing to a
-missing file exits 8. This also makes lavapipe available for the M2 golden
-image tests.
+Every job installs CMake 4.4.5 and Ninja 1.13.2 from the official release
+archives and fails if the reported versions differ. The Linux jobs install
+`mesa-vulkan-drivers` and `libvulkan1`, capture the exit code from
+`engine doctor --require vulkan --json` explicitly, require exit 0 and an
+`llvmpipe` device, and require exit 8 when `VK_ICD_FILENAMES` and
+`VK_DRIVER_FILES` point to a missing file. This also makes lavapipe available
+for the M2 golden image tests.
+
+clang-tidy uses `HeaderFilterRegex: '.*/(engine|tools|tests)/.*'`. The paths in
+`compile_commands.json` are absolute, so a regex without the leading `.*/`
+silently classifies every project header as non-user code. The corrected filter
+found `performance-enum-size` in `engine/core/include/engine/core/log.hpp`;
+`LogLevel` now uses `std::uint8_t` as its underlying type. A local clang-tidy
+run with the corrected filter exits 0, and CI verifies the same with
+clang-tidy 18.
 
 ## How to run
 

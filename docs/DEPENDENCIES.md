@@ -1,6 +1,6 @@
 # Dependencies
 
-**Status:** M0.4. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M0.5. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1 and volk
 1.4.363.0. The core library uses nlohmann/json, spdlog and `tl::expected`; the
 CLI uses CLI11 and volk; Catch2 is test-only. Python `jsonschema` is a
@@ -57,8 +57,8 @@ them.
 |---|---|---|---|
 | vcpkg | baseline `0e5eb43501dab17aa055dd54bd7a8c018f330fe2` | MIT | Dependency management |
 | LunarG Vulkan SDK | 1.4.363.0 | Apache-2.0 / MIT components | Vulkan headers, loader, validation layers, `glslc`, `vulkaninfo` |
-| CMake | 4.4.5 target; CI currently uses runner CMake 3.28+ (pinning is a known gap) | BSD-3-Clause | Build system |
-| Ninja | 1.13.2 | Apache-2.0 | Build tool |
+| CMake | 4.4.5 pinned in CI; 4.4.4 on the development machine | BSD-3-Clause | Build system |
+| Ninja | 1.13.2 pinned in CI and on the development machine | Apache-2.0 | Build tool |
 | GCC | 14 in CI (`g++-14`); local 16.2.1 | GPL-3.0 with GCC Runtime Library Exception | Linux compiler |
 | Clang | 18 in CI | Apache-2.0 with LLVM exceptions | Linux compiler |
 | MSVC | Visual Studio 2022 17.14 | Proprietary | Windows compiler |
