@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-29
 **Current milestone:** M0 — project foundation
-**Current substep:** M0.5 complete. M0.6 is next.
+**Current substep:** M0.6 in progress — documentation deliverables are complete and awaiting review. M0.7 is next.
 
 ## Substeps
 
@@ -14,6 +14,7 @@
 | M0.3 | Core foundations: `Result<T>`/`Error` with stable codes, UUID v4 and seeded `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL sinks, `log-record@1` schema, and 20 core test cases at M0.3 (21 after M0.4); Linux and Windows CI green |
 | M0.4 | CLI11 command dispatch, `engine --version --json`, `engine doctor --json` with volk-based Vulkan detection, `version@1` and `doctor@1` schemas, Python contract tests with `jsonschema`, timestamp boundary tests, and Catch2 `SKIP` with a CI test summary that shows skipped cases; Linux and Windows CI green |
 | M0.5 | clang-format and clang-tidy in CI (including project headers), an ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe installation and Vulkan detection tests in Linux CI, failure artifacts, and branch protection on `main` with the five CI jobs as required checks; all five CI jobs green |
+| M0.6 | Complete English `VISION.md` translation B.3–B.13; expanded `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `AI_AGENT_GUIDE.md` and `API_REFERENCE.md`; ADR-0004–0006; `THIRD_PARTY_NOTICES.md`; and the `engine_docs_links` test. Awaiting review |
 
 ## Repository state
 
@@ -29,10 +30,10 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 4/4 passed; `engine_core_tests` → 21 cases / 132 assertions |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 4/4 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
-| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 4/4 passed |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 5/5 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 5/5 passed; `engine_core_tests` → 21 cases / 132 assertions |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 5/5 passed locally; the CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest` → 5/5 passed |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
 | Config loading and merge | Automatically tested | `config_test.cpp` → nested values, type errors, missing keys, invalid JSON, recursive merge |
@@ -48,8 +49,14 @@
 | clang-format | Automatically tested | `Quality` job runs clang-format 18 with `--dry-run --Werror`; local clang-format 23 is also clean |
 | clang-tidy | Automatically tested | `Quality` job runs clang-tidy 18 with `--warnings-as-errors='*'`. `HeaderFilterRegex` is `.*/(engine|tools|tests)/.*`, so project headers are analysed; the corrected filter found `performance-enum-size` in `log.hpp`, fixed by making `LogLevel` a `std::uint8_t` enum |
 | clang-tidy header coverage | Locally verified | Before the filter fix, `performance-enum-size` in `log.hpp` was suppressed; after the fix, `clang-tidy -p build/ci-linux-clang` reported it, and it is fixed in code. CI runs clang-tidy 18 with the corrected filter and exits 0; CI has not re-run the old header against the old filter |
-| Pinned CMake and Ninja | Automatically tested in CI; locally verified | CI installs CMake 4.4.5 and Ninja 1.13.2 from official release archives and fails unless `cmake --version` and `ninja --version` match. A local clean build in `/tmp/opencode/cmake445-build` with the same binaries passed 4/4 CTest |
+| Pinned CMake and Ninja | Automatically tested in CI; locally verified | CI installs CMake 4.4.5 and Ninja 1.13.2 from official release archives and fails unless `cmake --version` and `ninja --version` match. A local clean build in `/tmp/opencode/cmake445-build` with the same binaries passed the suite at the time (4/4); the current suite has 5 tests |
 | Windows `doctor` command | Automatically tested | `engine_cli_contract` runs `engine doctor --json` and validates `doctor@1` on Windows; when no Vulkan device exists it accepts exit 8 for `--require vulkan` instead of claiming Vulkan support |
+| English VISION translation | Complete | `docs/VISION.md` contains B.1–B.13, including the B.2 wording from ADR-0002; no pending sections |
+| Documentation files | Automatically tested | `engine_docs_links` checks local Markdown links and the B.10 file list; 19 Markdown files passed |
+| External documentation links | Manually verified | 11 unique external URLs in the documentation returned HTTP 200 on 2026-10-29 |
+| ADR set | Complete | `docs/decisions/` contains ADR-0001–0006 and an index; each records status, date, context, decision, consequences and alternatives |
+| Third-party notices | Complete | `THIRD_PARTY_NOTICES.md` lists runtime, test and build dependencies with licenses and includes the MIT, BSD-3-Clause and BSL-1.0 texts |
+| Commands in documentation | Automatically tested | `engine_version_json` and `engine_cli_contract` run the documented `--version` and `doctor` commands; CTest commands run in CI |
 | vcpkg manifest install | Manually verified | First configure installed the pinned dependencies in 51 s |
 | Clean clone on Linux (M0.2) | Automatically tested | Clone of `a28b51c`, `cmake --preset linux-debug`, build, `ctest` → 3/3 passed; `engine --version --json` returned valid JSON |
 | Clean clone on Linux (M0.3) | Automatically tested | Clone of `c94b617`, `cmake --preset ci-linux-gcc`, build, `ctest` → 3/3 passed; 20 test cases / 126 assertions; `engine --version --json` returned valid JSON |
@@ -65,7 +72,7 @@
 | GitHub Actions | Automatically tested | Run [40798154876](https://github.com/chl84/3D_game_engine/actions/runs/40798154876) → Linux GCC 14, Linux Clang, Windows MSVC, Quality and Linux ASan/UBSan all succeeded |
 | clang-format in CI | Automatically tested | `Quality` job, clang-format 18 → no changes |
 | clang-tidy in CI | Automatically tested | `Quality` job, clang-tidy 18 with `--warnings-as-errors='*'` → success |
-| ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 4/4 CTest passed |
+| ASan/UBSan in CI | Automatically tested | `Linux ASan/UBSan` job → 5/5 CTest passed |
 | Lavapipe in Linux CI | Automatically tested | `Vulkan doctor detection` step → CI loader 1.3.275, lavapipe true, device `llvmpipe (LLVM 20.1.2, 256 bits)`, `--require vulkan` exit 0. The local loader is 1.4.363 |
 | Missing ICD in Linux CI | Automatically tested | `Vulkan doctor missing ICD` step → exit 8 and `vulkan` is present in `requirements.failed`. The test asserts membership, not exact array equality; a local run produced exactly `["vulkan"]` |
 | Failure artifacts | Implemented | CTest `Testing/` and doctor JSON are uploaded on failed Linux/Windows/ASan jobs |
@@ -135,15 +142,15 @@ The Windows job caught two real portability issues before the milestone closed:
   a Node 20 warning. The actions are CI tooling, not runtime dependencies.
 - The console log sink is implemented with spdlog but is not automatically
   tested; the JSONL sink is.
-- `docs/VISION.md` is a partial translation; B.1 and B.2 are present, B.3–B.13
-  are planned for M0.6.
-- `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DEPENDENCIES.md`,
-  `docs/AI_AGENT_GUIDE.md` and `docs/PROJECT_FORMAT.md` are skeletons or drafts.
+- `docs/API_REFERENCE.md` and the command schemas are generated in M1.
+  `docs/PROJECT_FORMAT.md` describes the planned M1 format.
 - `engine doctor` reports the current working directory as the project root
   until the project format and project-root discovery land in M1.
+- The English `VISION.md` translation is complete; the Norwegian master prompt
+  remains the source of truth outside the repository.
 
 ## Next step
 
-M0.6: complete the English `VISION.md` translation, finalize `ARCHITECTURE.md`,
-`BUILD.md`, `TESTING.md`, `DEPENDENCIES.md` and `AI_AGENT_GUIDE.md`, and update
-the ADR set.
+M0.7 after M0.6 is reviewed: clean-clone script, ASan/UBSan, TSan smoke test,
+format/tidy, Windows compile + headless, tag `v0.1.0` and the M0 acceptance
+report.

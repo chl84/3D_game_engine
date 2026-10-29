@@ -1,6 +1,6 @@
 # Dependencies
 
-**Status:** M0.5. The vcpkg manifest is active for nlohmann/json 3.12.0,
+**Status:** M0.6. The vcpkg manifest is active for nlohmann/json 3.12.0,
 spdlog 1.17.0, CLI11 2.7.2, `tl::expected` 1.3.1, Catch2 3.16.1 and volk
 1.4.363.0. The core library uses nlohmann/json, spdlog and `tl::expected`; the
 CLI uses CLI11 and volk; Catch2 is test-only. Python `jsonschema` is a
@@ -67,7 +67,8 @@ them.
 
 Compiler runtime exceptions and the Python license are compatible with
 distributing an MIT-licensed engine. Compilers and SDKs are build tools, not
-linked engine dependencies.
+linked engine dependencies. `THIRD_PARTY_NOTICES.md` contains the notice table
+and the license texts used for redistribution.
 
 ## Notes
 

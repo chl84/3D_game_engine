@@ -1,10 +1,10 @@
 # Build
 
-**Status:** M0.5. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M0.6. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library, `engine --version --json`, `engine doctor --json`
 with volk-based Vulkan detection, Catch2 tests and Python contract tests. CI
 pins CMake 4.4.5 and Ninja 1.13.2 and runs clang-format, clang-tidy and
-ASan/UBSan.
+ASan/UBSan. Documentation links are checked by `engine_docs_links`.
 
 ## Local development environment
 

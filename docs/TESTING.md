@@ -1,6 +1,6 @@
 # Testing
 
-**Status:** M0.5. Four CTest tests exist; `engine_core_tests` contains 21 test
+**Status:** M0.6. Five CTest tests exist; `engine_core_tests` contains 21 test
 cases and 132 assertions. CI also runs clang-format, clang-tidy with project
 headers included, ASan/UBSan, and Vulkan detection with pinned CMake 4.4.5 and
 Ninja 1.13.2.
@@ -13,6 +13,7 @@ Ninja 1.13.2.
 | `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0 dependencies | `unit`, `dependencies` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
+| `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -99,6 +100,12 @@ cmake --build --preset linux-tsan
 ctest --preset linux-tsan --output-on-failure
 ```
 
+Documentation links:
+
+```bash
+python3 tests/docs/check_links.py
+```
+
 Windows MSVC + vcpkg:
 
 ```powershell
@@ -132,6 +139,7 @@ CTest labels are used to select subsets:
 - `integration`
 - `cli`
 - `contract`
+- `docs`
 - `roundtrip`
 - `determinism`
 - `render`
