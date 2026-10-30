@@ -72,6 +72,24 @@ engine_set_warnings(engine_dependencies_smoke)
 add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
 
+add_executable(engine_asset_tests
+    unit/asset_import_test.cpp
+)
+
+target_link_libraries(engine_asset_tests PRIVATE
+    engine::asset
+    Catch2::Catch2WithMain
+)
+
+target_compile_definitions(engine_asset_tests PRIVATE
+    ENGINE_ASSET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/m3"
+)
+
+engine_set_warnings(engine_asset_tests)
+
+add_test(NAME engine_asset_tests COMMAND engine_asset_tests)
+set_tests_properties(engine_asset_tests PROPERTIES LABELS "unit;asset")
+
 add_executable(engine_render_tests
     render/camera_test.cpp
     render/descriptor_requirements_test.cpp
