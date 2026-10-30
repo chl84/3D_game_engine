@@ -2,6 +2,7 @@
 
 #include <engine/core/error.hpp>
 #include <engine/core/math.hpp>
+#include <engine/core/uuid.hpp>
 
 #include <array>
 #include <cstddef>
@@ -40,6 +41,7 @@ struct Bounds {
 };
 
 struct Primitive {
+    core::Uuid id;
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;
     std::optional<std::size_t> material;
@@ -47,6 +49,7 @@ struct Primitive {
 };
 
 struct Mesh {
+    core::Uuid id;
     std::string name;
     std::vector<Primitive> primitives;
 };
@@ -77,6 +80,7 @@ struct TextureReference {
 };
 
 struct Material {
+    core::Uuid id;
     std::string name;
     std::array<float, 4> base_color_factor{1.0F, 1.0F, 1.0F, 1.0F};
     float metallic_factor{1.0F};
@@ -99,6 +103,11 @@ enum class ImageMimeType : std::uint8_t {
     Jpeg,
 };
 
+enum class TextureColorSpace : std::uint8_t {
+    Srgb,
+    Linear,
+};
+
 struct Image {
     std::string name;
     ImageMimeType mime_type{ImageMimeType::Png};
@@ -114,12 +123,15 @@ struct Sampler {
 };
 
 struct Texture {
+    core::Uuid id;
     std::string name;
+    TextureColorSpace color_space{TextureColorSpace::Linear};
     std::optional<std::size_t> image;
     std::optional<std::size_t> sampler;
 };
 
 struct Node {
+    core::Uuid id;
     std::string name;
     // Stable reimport key derived from the node path; source_index is the
     // fallback when names change or collide.

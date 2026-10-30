@@ -17,6 +17,7 @@ add_executable(engine_core_tests
     unit/reflect_test.cpp
     unit/scene_test.cpp
     unit/scene_view_test.cpp
+    unit/sha256_test.cpp
     unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
@@ -74,15 +75,24 @@ set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependenc
 
 add_executable(engine_asset_tests
     unit/asset_import_test.cpp
+    unit/asset_library_test.cpp
+    unit/image_decode_test.cpp
+)
+
+target_include_directories(engine_asset_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit
 )
 
 target_link_libraries(engine_asset_tests PRIVATE
     engine::asset
+    engine::scene
     Catch2::Catch2WithMain
+    nlohmann_json_schema_validator::validator
 )
 
 target_compile_definitions(engine_asset_tests PRIVATE
     ENGINE_ASSET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/m3"
+    ENGINE_SCHEMA_DIR="${CMAKE_SOURCE_DIR}/schemas"
 )
 
 engine_set_warnings(engine_asset_tests)
@@ -288,3 +298,27 @@ add_test(
 set_tests_properties(engine_api_reference PROPERTIES
     LABELS "docs;contract"
 )
+
+add_library(engine_fuzz_harness STATIC
+    fuzz/gltf_import_fuzz.cpp
+    fuzz/image_decode_fuzz.cpp
+)
+target_link_libraries(engine_fuzz_harness PRIVATE engine::asset)
+engine_set_warnings(engine_fuzz_harness)
+
+if(ENGINE_BUILD_FUZZERS)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "ENGINE_BUILD_FUZZERS requires Clang")
+    endif()
+    add_executable(engine_gltf_fuzz fuzz/gltf_import_fuzz.cpp)
+    target_link_libraries(engine_gltf_fuzz PRIVATE engine::asset)
+    target_compile_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_gltf_fuzz)
+
+    add_executable(engine_image_fuzz fuzz/image_decode_fuzz.cpp)
+    target_link_libraries(engine_image_fuzz PRIVATE engine::asset)
+    target_compile_options(engine_image_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_image_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_image_fuzz)
+endif()

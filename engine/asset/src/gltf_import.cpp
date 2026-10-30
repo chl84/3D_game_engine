@@ -960,8 +960,11 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
                                   "/textures/" + std::to_string(index),
                                   {{"texture", index}, {"sampler", *source.samplerIndex}}));
         }
-        asset.textures.push_back(
-            Texture{std::string(source.name), *source.imageIndex, source.samplerIndex});
+        Texture texture;
+        texture.name = std::string(source.name);
+        texture.image = *source.imageIndex;
+        texture.sampler = source.samplerIndex;
+        asset.textures.push_back(std::move(texture));
     }
 
     for (std::size_t index = 0; index < gltf.materials.size(); ++index) {
