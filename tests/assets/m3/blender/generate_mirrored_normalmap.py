@@ -191,6 +191,8 @@ def main() -> None:
     # Packed image and relative path keep the source portable. The save location
     # is deliberately neutral rather than a developer's personal home directory.
     image.filepath_raw = "//blender_mirrored_normal.png"
+    for packed in image.packed_files:
+        packed.filepath = "//blender_mirrored_normal.png"
     # Factory workspaces can retain a file-browser directory pointing to the
     # current user's home, even when no external data is used. Clear it before
     # saving a binary fixture intended for the public repository.
@@ -198,7 +200,7 @@ def main() -> None:
         for area in screen.areas:
             for space in area.spaces:
                 if space.type == "FILE_BROWSER" and space.params is not None:
-                    space.params.directory = str(out).encode()
+                    space.params.directory = b""
     bpy.ops.wm.save_as_mainfile(filepath=str(out / "blender_mirrored_normalmap.blend"), compress=False, relative_remap=True)
     print("FIXTURE " + json.dumps({
         "blender": bpy.app.version_string, "meshObjects": len(fixture_meshes),

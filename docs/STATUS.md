@@ -76,6 +76,10 @@ checks found no home-directory/user markers; GLB inspection verifies actual
 mirrored UVs, embedded images, and TANGENT absence/presence in the paired
 exports. The new CPU regression compares regenerated tangents against Blender's
 reference on the normal-mapped primitive, including both handedness signs.
+The full asset suite passes ASan/UBSan: 16 cases / 22,677 assertions. The fixture
+was reviewer-approved. Small follow-ups remove absolute packed-image metadata
+and add `blender/verify_mirrored_normalmap.py`, which verifies the repository
+files directly. The .blend reopens after relocation without an external PNG.
 The M3.5 renderer and normal-map golden image test remain planned.
 
 ## Repository state

@@ -67,10 +67,21 @@ blender -b --factory-startup -noaudio -t 2 \
   -- --output-dir /tmp/engine-m3-mirrored-model
 ```
 
-The generator clears saved file-browser home directories and packs the image
-with a relative path. The fixture is reopenable after relocation. The source
+The generator empties saved file-browser directories and uses relative paths
+for both the image and its packed-file metadata. The fixture is reopenable after relocation. The source
 material `Coupon_Bake_Source` preserves the procedural bake recipe; the model
 uses `Coupon_Baked_Normal` for the baked result. The inspection lights/camera
 are for Blender convenience, not the engine golden's authored lighting.
 The future M3.5 image test must render this model on Linux/Windows lavapipe;
 creating this fixture does not itself satisfy that image criterion.
+
+Verify the delivered repository files without Blender or third-party packages:
+
+```bash
+python3 tests/assets/m3/blender/verify_mirrored_normalmap.py
+```
+
+This checks the actual GLBs and PNG in this directory: mirror orientation,
+non-overlap, tangent flags/signs, embedded-image byte identity, and absence of
+personal home-path markers across all four assets. The editable .blend has also
+been reopened successfully after relocation with no external PNG present.
