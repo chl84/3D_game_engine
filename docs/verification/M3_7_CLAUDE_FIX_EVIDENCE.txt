@@ -315,3 +315,27 @@ Total Test time (real) =  40.28 sec
 
 ASan/UBSan: detect_leaks=1:abort_on_error=1, halt_on_error=1, no LSAN_OPTIONS or suppression. Local Mesa retention policy unchanged.
 clang-format18 --dry-run --Werror passes modified/new C/C++ files.
+
+Public clean-clone acceptance — exact sourced0797e1b361f4f4379b69d33ebc523ab88e93035
+COMMAND: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=<lavapipe ICD> scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+10/26 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+11/26 Test #11: engine_screenshot_cli ............   Passed    0.19 sec
+12/26 Test #12: engine_version_json ..............   Passed    0.02 sec
+13/26 Test #13: engine_cli_contract ..............   Passed    0.36 sec
+14/26 Test #14: engine_docs_links ................   Passed    0.03 sec
+15/26 Test #15: engine_sensitive_scan ............   Passed    0.50 sec
+16/26 Test #16: engine_acceptance_m1 .............   Passed    0.18 sec
+17/26 Test #17: engine_api_reference .............   Passed    0.08 sec
+18/26 Test #18: engine_asset_cli .................   Passed    0.55 sec
+19/26 Test #19: engine_pbr_golden ................   Passed    0.30 sec
+20/26 Test #20: engine_pbr_color_golden ..........   Passed    0.11 sec
+21/26 Test #21: engine_pbr_window ................   Passed    0.18 sec
+22/26 Test #22: engine_asset_placement ...........   Passed    1.15 sec
+23/26 Test #23: engine_live_api ..................   Passed    4.99 sec
+24/26 Test #24: engine_local_socket_deadline .....   Passed    1.24 sec
+25/26 Test #25: engine_live_journal ..............   Passed    0.19 sec
+26/26 Test #26: engine_live_journal_fault ........   Passed    0.10 sec
+100% tests passed out of 26
+M1 acceptance passed
+M1 clean-clone acceptance passed
+Claude re-review round2 and final exact-source CI remain pending; no approval claimed.

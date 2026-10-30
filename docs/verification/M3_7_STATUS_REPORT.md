@@ -1,137 +1,112 @@
 # Status report — 2026-10-30 — M3.7
 
-Previous verification below applies to7c24116 only. The latest owner clarification
-requires independent Claude Opus re-review of all three fixes, especially queued
-deadlines, plus durable live JSONL. M3.7 is not approved. New journal changes are
-being verified and will be included in that re-review before a new owner report.
+**Current gate:** Claude Opus5.5 high technically approves the corrected source
+with no blocking or required findings. Five reference jobs are confirmed green;
+Quality is still running at the latest snapshot. Do not deliver the owner A.5
+report until that final gate is green. M3.7 is not yet owner-approved.
 
-**Delivered:** A local JSON-RPC server and CLI client for persistent in-memory
-scene authoring, inspection and screenshots. Live and offline authoring use the
-same CommandBus and handler registration. The current owner-selected reviewer is Claude Opus5.5 high, documented in
-AI_AGENT_GUIDE.md. The earlier Astra review remains historical evidence.
-M3.6 is owner-approved; M3.8, merge and tag remain unauthorized.
+**Delivered:** Local JSON-RPC server/client using the same authoring CommandBus
+and handlers as offline CLI, bounded authenticated loopback transport, sandboxed
+paths, exclusive project locking and durable per-session JSONL command history.
+The latest owner decision restores Claude Opus as reviewer. Reviewer selection
+belongs to the owner; historical Astra attribution is preserved.
 
-**Verification source:** `7c241168583e5cd1b37c6b14aa60fd959819753d`.
-The source consists of the M3.7 implementation, the reviewed corrections, and
-a Windows-only ACL probe environment correction. Final documentation may have
-a later commit; the tested source SHA is recorded separately.
+**Verified source:** `d0797e1b361f4f4379b69d33ebc523ab88e93035`.
+[Reference CI41108912088](https://github.com/chl84/3D_game_engine/actions/runs/41108912088).
+Any subsequent documentation commit is separate from this tested code SHA.
 
 | Function | Status | Evidence |
 |---|---|---|
-| Shared CLI/live command implementation | Automatically tested | Shared register_project_commands and CommandBus; live/CLI schema equality and actual command-log entries checked by engine_live_api |
-| Loopback-only listener and authentication | Automatically tested | Alternate 127.0.0.2 destination rejected; missing, wrong-length and wrong same-length credentials give exact generic Unauthorized, id:null and no request details |
-| Parser validation and bounds | Automatically tested | 64 KiB payload, depth 32, strict UTF-8, duplicate members, malformed JSON, protocol/version/params/ID cases; unit and integration tests |
-| Connection cap, deadlines and disconnects | Automatically tested | Eight accepted clients; absolute receive/send deadlines; idle fairness, trickled input, incomplete EOF and complete-request RST; server remains responsive |
-| Deadline after a blocking handler | Automatically tested | engine_local_socket_deadline: a pending frame completed after expiry never dispatches; an already accepted handler may finish; removing the new checks fails the test |
-| Private discovery and token rotation | Automatically tested | CSPRNG 32 bytes; owner-only file from creation, permission/owner readback before writing; restart rotates the credential; shutdown removes discovery and lock |
-| Client path sandbox | Automatically tested | Import/save/load/screenshot relative, absolute and NUL escapes rejected; symlink escapes checked where available; canonical internal-path aliases rejected; live reimport cannot read an external original |
-| Exclusive project writer lock | Automatically tested | Offline entity/import/screenshot, second live instance and active force-unlock return E_CONFLICT; offline writes resume after shutdown |
-| Live-only asset workflow | Automatically tested | Import/list/inspect/validate/place/save/load/reimport/screenshot through RPC, schema-validated responses, stable IDs and exact optional PNG output |
-| Shared screenshot and history | Automatically tested | Existing offline limits/error contract preserved; scene load clears stale undo/redo; delete/undo restores assets and both light components |
-| Bounded command log | Automatically tested | Separate 4,096-entry and 16 MiB admission tests; last completed entry retained; paged log, ping and shutdown still available |
-| Local Clang and ASan/UBSan | Automatically tested | Corrected source: 24/24 for each; leak detection enabled, documented local Mesa retention only, no LSAN_OPTIONS or suppression file |
-| Physical Iris Xe live flow | Manually verified | Full live integration script passed; see captured local evidence |
-| Public clean-clone acceptance | Automatically tested | Exact 7c24116 clone: 24/24, M1 acceptance passed and M1 clean-clone acceptance passed |
-| Reference-major static tools | Automatically tested | clang-format18 passes all tracked first-party C++; clang-tidy18 passes all 17 changed C++ translation units with compatible Ubuntu GCC14 headers; incompatible native-header attempt is recorded separately |
-| Rendering regression and color golden | Automatically tested | Linux and Windows lavapipe: fixed PBR/color PNGs passed, Blender tangent image difference 0, emissive patch 117 as sRGB |
-| Three permanent fuzz targets | Automatically tested in reference CI | Same existing job: GLB 5,553, image 7,794 and RPC 64,402 executions, 31s each; no sanitizer findings |
-| Reference cross-platform CI | Automatically tested | [41093710140](https://github.com/chl84/3D_game_engine/actions/runs/41093710140), exact 7c24116: Linux GCC/Clang/ASan 24/24 and Windows 18/18; Fuzz and Quality passed; all six jobs completed/success |
-| Independent review and corrections | Manually verified | GPT-6 Astra high reviewed 6e3fb73; MSVC iterator, formatter18 and queued-deadline findings corrected; [review/closure record](M3_7_REVIEW_ROUND1.md) |
+| Shared CLI/live authoring | Automatically tested | Same register_project_commands and CommandBus; schema equality, actual log entries and live-only import/place/save/load/reimport workflow |
+| Loopback/token | Automatically tested |127.0.0.1 only; wrong/missing/wrong same-length tokens return generic Unauthorized without request/project details; token rotation tested |
+| Message/parser/connection limits | Automatically tested |64KiB request,4MiB reply, JSON depth32,8clients, absolute receive/send deadlines; malformed/truncated/oversized frames and disconnects rejected |
+| Queued deadlines after a slow handler | Automatically tested and independently reviewed | Production transport fixture, expired queued frame never dispatches; removing both backstop checks fails; Claude confirms steady_clock/order |
+| Client paths and writer lock | Automatically tested | PathSandbox rejects relative/absolute/NUL/symlink escapes; offline entity/import/screenshot/second live/active unlock conflict; writes resume after session |
+| Private token/journal files | Automatically tested | Owner-only creation and native readback; POSIX uid/mode0600, Windows protected owner-only DACL; link/type rejection |
+| Continuous durable CommandBus JSONL | Automatically tested | Intent synced before execution; actual successful/failed command results synced before acknowledgement; hard kill/restart preserves old journal |
+| Result serialization failure | Automatically tested | Invalid UTF-8 filesystem target through UTF-8 alias returns E_IO, emits constant diagnostic, exits6; no later dispatch |
+| Permission guard | Automatically tested | Owner-writable0644 file rejected; removing0600 guard fails the unit test |
+| Real synchronization faults | Automatically tested on Linux non-sanitized builds | engine_live_journal_fault: started/completed fsync EIO, notification failure and no-fault control; mutations and no-op preload rejected |
+| Error observability | Automatically tested | Journal errors and notifications exit6 with one credential-free stderr line; normal shutdown exits0 |
+| PBR/color regressions | Automatically tested | Linux/Windows lavapipe golden tests pass, Blender tangent difference0, emissive sRGB patch117 |
+| Linux GCC/Clang reference | Automatically tested |26/26 in each job, including real syscall fault test |
+| Linux ASan/UBSan reference | Automatically tested |25/25, detect_leaks=1:abort_on_error=1, halt_on_error=1; no sanitizer/runtime errors |
+| Windows MSVC reference | Automatically tested |19/19, including live/DACL/journal/deadline and offscreen golden tests |
+| Three permanent fuzz targets | Automatically tested | GLB2,560, image3,708 and RPC47,289 runs,31s each, same existing job |
+| Exact-source public clean clone | Automatically tested |26/26, M1 acceptance and M1 clean-clone acceptance passed |
+| Physical Iris Xe live flow | Manually verified earlier | Initial full live integration passed; no new physical GPU run is claimed for the journal corrections |
+| Quality | Pending final job | Required reference formatter18/tidy18; parent local formatter18 and changed-unit tidy23 passed |
+| Independent Claude re-review | Manually verified | Round1 confirms all three original fixes; round2 approves F1–F4 and corrected journaling, with nine independently rejected mutations |
 
-[CI evidence](M3_7_CI_EVIDENCE.txt) and
-[local evidence](M3_7_LOCAL_EVIDENCE.txt) contain commands, captured results,
-negative controls and clean-clone proof. Wire contracts are
-[request](../../schemas/jsonrpc-request@1.schema.json) and
-[response](../../schemas/jsonrpc-response@1.schema.json); method results use
-the existing command-result@1 envelope. ADR-0013 documents the complete profile.
+Permanent evidence:
 
-## Bounds and behavior
+- [Final-source CI excerpts](M3_7_CLAUDE_CI_EVIDENCE.txt).
+- [Claude re-review round1](M3_7_CLAUDE_REVIEW_ROUND1.md) and
+  [round2 technical approval](M3_7_CLAUDE_REVIEW_ROUND2.md).
+- [Corrections, mutations and exact-source clean clone](M3_7_CLAUDE_FIX_EVIDENCE.txt).
+- [Initial durable-journal diagnostics](M3_7_JOURNAL_EVIDENCE.txt) and
+  [initial live implementation evidence](M3_7_LOCAL_EVIDENCE.txt).
 
-- One LF-delimited UTF-8 JSON object per connection; maximum 64 KiB request,
-  JSON depth 32 and 4 MiB reply. Eight accepted connections and bounded backlog.
-- Receive deadline is absolute from accept and is not extended by fragments.
-  Send deadline starts after dispatch. Default 2,000 ms; configurable 50..30,000 ms.
-  Deadlines are rechecked after a preceding synchronous handler and immediately
-  before a pending frame dispatches.
-- Live screenshots are capped at 512×512 and 16 frames. The existing offline
-  limits remain 8,192 pixels per dimension and 1,000 frames.
-- Every request needs the session credential. Invalid credentials reveal no
-  method, protocol, project or request details. Startup stdout contains no token.
-- The project writer lock covers the entire session and discovery cleanup.
-  Accepted commands are not canceled or rolled back on disconnect/client timeout.
-- Scene.save/load and history operations are shared commands. Save/load use
-  sandboxed canonical .scene.json targets outside control/asset directories;
-  load clears stale history. No parallel implementation of authoring commands.
-- Session admission stops authoring after 4,096 logged entries or16MiB serialized
-  arguments/results, checked before the next dispatch. The last completed record
-  is preserved. Log inspection is paged up to 64 entries and does not log itself.
+Earlier7c24116/76ecc7d CI is historical only. The original Astra verdict is in
+[the original review record](M3_7_REVIEW_ROUND1.md), with the superseding owner
+instruction preserved. Parent-only closure was not accepted as independent
+approval; the required Claude re-reviews have now been performed.
 
-**Not verified / limitations:** Physical Windows presentation is not verified.
-No new threads were introduced; TSan was not rerun. Deadlines bound I/O rather than asynchronous CPU/GPU command
-cancellation. JSON-RPC batch arrays and positional params are outside the M3
-profile. The in-memory log is bounded and durable JSONL is now written continuously;
-new verification/re-review is pending. Scene persistence still requires explicit save. Abrupt server
-termination can leave a stale lock/discovery requiring the existing recovery
-path. Local Mesa retention does not test unload/reload behavior.
+## Journal contract and bounds
 
-**Known defects:** No unresolved confirmed M3.7 source defect after the three
-review corrections. The diagnosed local Mesa RTASM unload metadata leak and its opt-in retention policy are unchanged;
-ordinary local unload is not claimed clean. No suppression has been reintroduced.
+The ready message identifies commandLogFile under
+.engine/live-commands-<session UUID>.jsonl. Files are private from creation,
+resolved through PathSandbox and retained across shutdown/crash/restart. Tokens
+and raw RPC envelopes are not journal fields. Every CommandBus dispatch gets a
+journalVersion1 started record synchronized before execution, followed by the
+actual sequence/name/arguments/result as completed, synchronized before reply.
+POSIX uses fsync; Windows uses FlushFileBuffers. In-memory admission stops after
+4,096entries or16MiB serialized arguments/results, checked before the next
+command; prior records remain intact. Inspect log remains paged and available.
 
-**Deviations from plan:** No new third-party dependency or breaking public
-format/API. Platform uses native sockets/private-file permissions/CSPRNG/process
-status and Windows system ws2_32/advapi32/bcrypt libraries. Live runs in the
-foreground and renders the in-memory scene headlessly through the shared renderer.
-Related fixes reject force-unlock of a running owner, lock offline screenshot
-writers, reject NUL paths centrally and restore shared light snapshots on undo.
-Existing tests and sanitizer/quality policies were not weakened. Windows ACL
-assertions are unchanged; only the child PowerShell module environment is reset.
+All dispatch/accounting/serialization/reply exceptions take the terminal journal
+path. A failed intent sync prevents execution. A failed completion sync can occur
+after a side effect: return E_IO, never success; stop, drain, print a constant
+stderr line and exit6. The fault tests verify both orderings and notifications.
+Started without completed is uncertain; do not automatically replay. A partial
+last JSONL line is incomplete; keep preceding complete records. New sessions do
+not append to old damaged files. Journal persistence is not automatic scene
+saving: scene.save@1 remains explicit.
 
-**Decisions requiring approval:** Owner assessment of M3.7. No additional A.6
-exception is requested. Merge, tag and M3.8 remain separate owner decisions.
+Deadlines default to2s, configurable50..30,000ms, and bound receive/send I/O.
+Accepted CPU/GPU commands are not canceled or rolled back by disconnect/timeout.
+Live screenshots remain bounded at512×512/16frames; existing offline limits are
+unchanged. JSON-RPC batches/positional params are outside the documented profile.
 
-**Next step:** Complete journal verification and mandatory Claude Opus re-review,
-handle findings and only then deliver the updated consolidated A.5 report.
-No merge, tag or M3.8 is authorized.
+**Not verified / limitations:** Physical Windows presentation; power-loss or
+storage-controller durability; cross-file atomicity between scene/asset writes
+and journal completion. No new threads were added and TSan was not rerun.
+The Linux syscall interposer is intentionally not registered in sanitizer or
+Windows builds; none of their existing tests is skipped or disabled. Total
+archival/retention across session journal files is not automatic. Screenshot is
+not a CommandBus command and is not journaled. Oversized replies may be dropped
+after the completion is already journaled. Windows readers denying write sharing
+can terminate the session fail-closed. Failed startup can leave an empty journal.
 
-## Durable JSONL addition and mandatory re-review (pending)
+**Known defects:** No unresolved required M3.7 finding after Claude round2.
+A pre-existing asset.import case with a non-UTF-8 filesystem source can leave an
+asset directory while returning a validation error; the journal records that
+failure. It is not introduced or fixed by this change and is recorded for owner
+assessment during hardening. Local plain ASan GPU runs still show the diagnosed
+Mesa unload leak; the documented local retention preset and unsuppressed
+reference ASan are green. No suppression has been reintroduced. No leak-clean
+claim is made for ordinary local Mesa unload or the fuzz job's existing policy.
 
-The owner requested live persistence under .engine/ and restored Claude Opus
-as reviewer. The parent implements this in M3.7 before combined re-review of
-all three prior fixes plus journaling. New contract: journalVersion1 JSONL,
-private per-session file, synchronized started intent before dispatch, actual
-completed CommandLog results before acknowledgement. Both successful and failed
-commands are preserved. Journal failure stops dispatch; failure after execution
-returns E_IO with an uncertain-outcome hint, never a success acknowledgement.
+**Deviations from plan:** No new external dependency, breaking project/scene/asset
+format or command schema. Native system libraries only. Related fixes reject
+active force-unlock, lock offline screenshot writers, reject NUL paths centrally
+and restore shared light snapshots on undo. Durable JSONL was implemented in
+M3.7 at the owner's request. The syscall interposer is test-only. Existing tests
+and sanitizer/quality policies were not weakened.
 
-New engine_live_journal covers hard termination without destructors/shutdown,
-complete acknowledged JSONL before the crash, restart retention, failed commands,
-credential exclusion and append-failure prevention of a subsequent mutation.
-Platform unit tests cover synchronized append, missing/directory/symlink/hardlink
-targets and POSIX mode rejection. Local Clang and final-source ASan/UBSan both pass25/25. Expected reference totals are Linux25/25 and
-Windows19/19. New Windows/private journal runtime verification and Claude
-re-review remain pending. [Journal evidence](M3_7_JOURNAL_EVIDENCE.txt) also records
-a manual post-execution fsync fault: the actual scene write occurs, the RPC
-returns E_IO and the session stops. No success or atomic rollback is claimed.
+**Decisions requiring approval:** Owner assessment of M3.7 after final Quality.
+Reviewer changes remain exclusively the owner's decision. No new A.6 exception
+is proposed. Merge, tag and M3.8 require their separate owner authorization.
 
-This supersedes the old in-memory-only limitation; scene state is still saved
-explicitly. Started without completed is uncertain; retain complete earlier
-JSONL lines and treat an incomplete final line as incomplete. Do not auto-replay
-an uncertain command. Files are retained per session, without automatic total
-disk retention/archival. This is process-crash durability, not a power-loss
-guarantee or an atomic transaction with scene/asset writes.
-
-## Claude review findings and follow-up (pending)
-
-Claude independently verified all three original corrections and the journal
-design, but requires F1 serialization fail-closed correction. F2–F4 strengthen
-the mode probe, automate native fsync faults and expose terminal failure on
-stderr/exit6, including notifications. The parent addresses all four together;
-new-source CI and another Claude check are required before final reporting.
-[Claude findings](M3_7_CLAUDE_REVIEW_ROUND1.md). New expected totals are Linux
-GCC/Clang26/26, ASan25/25 and Windows19/19; the additional real fsync fault
-interposer runs only in Linux non-sanitized builds.
-
-[Follow-up local evidence](M3_7_CLAUDE_FIX_EVIDENCE.txt) records the new tests
-and discriminating source mutations. Independent Claude re-check and new
-reference CI remain required before final reporting.
+**Next step:** Confirm final Quality success, record permanent proof, deliver the
+consolidated A.5 report and await the owner's next-step decision.

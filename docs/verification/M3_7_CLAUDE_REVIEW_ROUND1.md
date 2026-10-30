@@ -61,3 +61,9 @@ constant credential-free line and the process exits6.
 The F1 correction and associated fixes require another Claude Opus re-review
 and fresh exact-source CI before final reporting/owner assessment. M3.7 is
 not approved; merge/tag/M3.8 remain unauthorized.
+
+## Independent follow-up
+
+Claude round2 independently approves the corrections atd0797e1 without required
+findings. See M3_7_CLAUDE_REVIEW_ROUND2.md. Final reference Quality and owner
+approval remain separate gates.

@@ -5,8 +5,9 @@ M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
 on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
 ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
-M3.6 is owner-approved. M3.7 is not approved; durable JSONL and mandatory
-Claude Opus re-review are in progress. Its authorized scope includes explicit auth, resource,
+M3.6 is owner-approved. M3.7 durable JSONL and all required corrections are
+technically approved by Claude Opus5.5 high on d0797e1. Final reference Quality
+and owner assessment remain pending. Its authorized scope includes explicit auth, resource,
 sandbox, lock, fuzz and negative-test requirements. The latest owner clarification restores Claude Opus5.5 high and requires
 re-review of the three M3.7 fixes plus durable JSONL before approval. The owner corrected emissive to sRGB.
 
