@@ -285,6 +285,9 @@ engine run demo scenes/main.scene.json --frames 3 --hidden --json
 A scene needs an enabled camera viewing the model. Placement uses the shared
 `asset.place@1` handler and returns `data.result.id` plus assetId/name/position.
 Its default name is the imported asset name and default position is [0,0,0].
+The CLI treats an explicitly empty --name as omitted; direct asset.place@1 JSON
+requires minLength1 if name is supplied. UUID lookup/deduplication uses canonical
+identity, including uppercase references supplied through component updates.
 `--dry-run` validates against the project and scene without saving; preview
 entity IDs are disposable. Placement holds the project lock, supports scene
 batch undo/rollback, and stores one AssetInstance rather than expanding GLB nodes.

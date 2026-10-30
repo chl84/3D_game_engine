@@ -23,12 +23,12 @@ template <class Renderer>
             continue;
         }
         const auto& reference = view.scene().component<scene::AssetInstance>(entity).asset_id;
-        if (!uploaded.insert(reference).second) {
-            continue;
-        }
         const auto id = core::Uuid::parse(reference);
         if (!id) {
             return core::make_failure<void>(id.error());
+        }
+        if (!uploaded.insert(id->to_string()).second) {
+            continue;
         }
         auto loaded = asset::load_asset(root, *id);
         if (!loaded) {

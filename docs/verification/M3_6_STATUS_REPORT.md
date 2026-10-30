@@ -20,8 +20,8 @@ or M3.7 work is included.
 | Windowed CLI with project assets | Automatically tested on local Linux lavapipe | Three hidden-window frames with two instances; no scene writes |
 | Local Clang and ASan/UBSan | Automatically tested | Full 22/22 results and commands in M3_6_LOCAL_EVIDENCE.txt; sanitizers use retention only, no suppression file |
 | Physical Iris Xe | Automatically tested locally | Complete public placement acceptance, including three hidden-window frames, passes with Intel ICD |
-| Windows MSVC and lavapipe | Not verified for M3.6 yet | Previous M3.5 Windows success is not substituted for this change; new exact-SHA CI required |
-| Independent reviewer | Pending | M3.6 review requested after local verification; no approval claimed |
+| Windows MSVC and lavapipe | Compiled and automatically tested on4ce8cac | 16/16 including placement and corrected emissive PNG; initial CI41073848866 all6success |
+| Independent reviewer | Manually verified | Claude Opus5.5 high GODKJENT on4ce8cac; one low UUID identity finding corrected locally; no fresh delegate needed for this small correction |
 
 [Permanent local evidence](M3_6_LOCAL_EVIDENCE.txt).
 
@@ -38,7 +38,7 @@ Placement uses the scene's UUID generator so seeded command replay remains
 reproducible; redo restores the same instance UUID. The asset module uses its
 already-approved scene dependency; no module boundary or new library is added.
 
-**Not verified / test limitations:** New Windows CI, Windows swapchain
+**Not verified / test limitations:** Post-correction CI (until recorded below), Windows swapchain
 presentation, reference-scene FPS/whole-process RAM, live synchronization and
 streaming. The acceptance test requires a Vulkan device/lavapipe and a Linux
 display (CI uses Xvfb); it has no device-unavailable skip. Retention does not
@@ -52,8 +52,29 @@ unload behavior is not claimed clean. Reference Ubuntu CI remains unsuppressed.
 from M3.1; M3.6 reuses them. The new work is the undoable placement command and
 project resolution/acceptance. No breaking schema/API or new dependency.
 
-**Decisions requiring approval:** None newly proposed. Independent review and
-exact-SHA CI remain acceptance gates; merge/tag still require the owner.
+**Decisions requiring approval:** None newly proposed. Technical review approved
+M3.6; post-correction exact-SHA CI remains the final verification gate. Merge/tag
+and starting M3.7 still require the owner.
 
 **Next step:** Finish independent review and all six CI jobs, address findings,
 and report the exact source/results to the owner. Do not start M3.7 here.
+
+## Independent review and small follow-up
+
+The reviewer approved4ce8cac with no blocking findings and independently
+reproduced Linux22/22, local ASan/UBSan22/22 without a suppression file, all8
+negative mutations and a fatal77-byte injected application leak. Initial
+CI41073848866 completed/success with all6jobs (Linux22/22, Windows16/16).
+See [committed CI excerpts](M3_6_CI_EVIDENCE.txt).
+
+L1 is corrected: project upload deduplicates parsed UUIDs in canonical form,
+and PBR uses the same normalized identity for scene lookups. Uppercase-only
+and mixed-case instances now render identically without rewriting the scene;
+invalid UUIDs return validation errors with assetId. The public acceptance
+checks both cases and restores the original canonical references afterwards.
+I1 is documented (empty CLI name uses the default); I2 historical suppression
+prose is changed to past tense while captured command evidence is retained;
+I3 required no change because both emissive-only and shared-use tests discriminate.
+
+The owner reporting rule is persisted in the agent guide and STATUS. No
+intermediate A.5 report is sent while final verification is pending.

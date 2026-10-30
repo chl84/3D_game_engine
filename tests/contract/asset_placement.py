@@ -132,11 +132,21 @@ def main():
 
         single = shot("single.png")
         assert halves(single)[0] > 50 and halves(single)[1] == 0, halves(single)
+        # Scene component updates accept uppercase UUIDs. Resolution is by UUID
+        # identity without rewriting the scene, including mixed-case duplicates.
+        run("component", "set", project, "--id", left["id"],
+            "--component", "engine.scene.AssetInstance",
+            "--value", json.dumps({"assetId": asset_id.upper()}))
+        assert shot("uppercase.png") == single
         right = run(*place, "--name", "Right", "--position", 1.5, 0, 0)["result"]
         assert right["id"] != left["id"]
         two = shot("two.png")
         assert all(count > 50 for count in halves(two)), halves(two)
         assert two == shot("reload.png"), "fresh process/load changed rendering"
+        run("component", "set", project, "--id", left["id"],
+            "--component", "engine.scene.AssetInstance",
+            "--value", json.dumps({"assetId": asset_id}))
+        assert shot("canonical.png") == two
         document = json.loads(scene_path.read_text())
         assert document["formatVersion"] == 3
         assert len(document["entities"]) == 3, "asset hierarchy expanded into scene entities"

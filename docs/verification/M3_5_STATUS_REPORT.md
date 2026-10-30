@@ -113,10 +113,11 @@ source functions. Exact DWARF was unavailable; recovered names are explicitly
 identified as instruction/source correlation, not invented debug symbols.
 
 The supported loader-retention switch preserves process-lifetime globals.
-The file only names rtasm_exec_malloc; unknown modules/calloc/engine code are
-not excluded. This rule is inactive and unverified on the available stripped
-binaries; a matching external debug file would be needed to make it usable. On this stripped build retention alone makes the arena
-reachable, so zero suppression patterns are consumed. An intentional 73-byte
+The former file only named rtasm_exec_malloc; it did not exclude unknown
+modules/calloc/engine code. The rule was inactive and unverified on the available
+stripped binaries and was subsequently removed at the owner's request. On this
+stripped build retention alone made the arena reachable, consuming zero
+suppression patterns. An intentional 73-byte
 application leak remains fatal with that policy. Reviewer also injected 91
 bytes into engine_pbr_test itself; LSan reported them and exited 134. This
 control does not establish that every possible allocation referenced only

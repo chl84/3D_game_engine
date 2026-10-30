@@ -3,7 +3,8 @@
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.6 — asset instances and scene placement implemented;
-local verification complete, exact-SHA CI and independent review pending.
+reviewer GODKJENT on4ce8cac; low UUID identity finding corrected locally,
+with final correction CI pending.
 M3.4 and M3.5 were approved by the owner on 2026-10-30. All six reporting
 follow-up CI jobs passed on `59c2e97` (Ubuntu21/21, Windows15/15).
 The owner corrected emissiveTexture to sRGB, formally approved the pinned
@@ -61,7 +62,7 @@ requested removal of the inactive LSan rule. No M3 merge or tag is authorized.
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
-| M3.6 | `AssetInstance` placement and scene v3 save/load | In progress — owner authorized |
+| M3.6 | `AssetInstance` placement and scene v3 save/load | Reviewer GODKJENT on4ce8cac; low finding corrected, final CI pending |
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
 
@@ -611,3 +612,20 @@ No merge or tag is authorized or performed.
 - [Full A.5 report](verification/M3_6_STATUS_REPORT.md). Exact-SHA CI and
   independent Claude Opus5.5 high review are the next acceptance gates.
   No M3.7 work, merge or tag has started.
+
+## M3.6 review handled — post-review CI pending
+
+Claude Opus5.5 high approved4ce8cac with no blocking findings. Initial
+CI41073848866 completed/success: all6jobs, Linux22/22 and Windows16/16, including
+placement and emissive117. The exact clean public clone also passed22/22 and
+M1 acceptance. Permanent [CI excerpts](verification/M3_6_CI_EVIDENCE.txt) and
+[local/clean-clone output](verification/M3_6_LOCAL_EVIDENCE.txt) are committed.
+
+L1 is corrected: upload deduplication and PBR lookup both use canonical UUID
+identity, without rewriting scene references. Uppercase-only and mixed-case
+regressions pass; each inverse mutation fails with the expected original error.
+Clang and local-policy ASan/UBSan both pass22/22; local clang-tidy23 passes.
+I1 empty CLI name behavior is documented; I2 historical suppression prose is
+clarified; I3 required no code change. This small low-severity correction is
+handled directly, with no new delegated review. New exact-SHA CI is required
+before the consolidated owner report. M3.7 remains unstarted; no merge/tag.

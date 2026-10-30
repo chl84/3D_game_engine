@@ -1,3 +1,7 @@
+Historical manual diagnostic: the inactive suppression file shown in this
+captured command was removed in850a9e1. This is evidence of the original
+control, not a current reproduction command or active suppression policy.
+
 Independent reviewer manual application-leak control.
 Repository path normalized to <repo>; command/output otherwise retained.
 

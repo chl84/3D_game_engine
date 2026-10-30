@@ -201,3 +201,200 @@ Command: clang-tidy -p build/ci-linux-clang --warnings-as-errors='*' engine/asse
 27625 warnings generated.
 Suppressed 27656 warnings (27625 in non-user code, 31 NOLINT).
 Use -header-filter=.* or leave it as default to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+
+Exact initial clean-public-clone acceptance
+Command: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+4ce8cac22aee59c7718aac91b451176f327981b3
+100% tests passed out of 22
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Post-review L1 Clang22/22
+Command: cmake --build build/ci-linux-clang -j2; VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --test-dir build/ci-linux-clang --output-on-failure
+Test project <repo>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/22 Test  #1: engine_core_tests ................   Passed    0.07 sec
+      Start  2: engine_dependencies_smoke
+ 2/22 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/22 Test  #3: engine_asset_tests ...............   Passed    0.26 sec
+      Start  4: engine_render_tests
+ 4/22 Test  #4: engine_render_tests ..............   Passed    0.10 sec
+      Start  5: engine_window_smoke
+ 5/22 Test  #5: engine_window_smoke ..............   Passed    0.04 sec
+      Start  6: engine_swapchain_test
+ 6/22 Test  #6: engine_swapchain_test ............   Passed    0.11 sec
+      Start  7: engine_overlay_test
+ 7/22 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+      Start  8: engine_run_smoke
+ 8/22 Test  #8: engine_run_smoke .................   Passed    0.31 sec
+      Start  9: engine_point_light_warning
+ 9/22 Test  #9: engine_point_light_warning .......   Passed    0.32 sec
+      Start 10: engine_screenshot_golden
+10/22 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+      Start 11: engine_screenshot_cli
+11/22 Test #11: engine_screenshot_cli ............   Passed    0.24 sec
+      Start 12: engine_version_json
+12/22 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/22 Test #13: engine_cli_contract ..............   Passed    0.33 sec
+      Start 14: engine_docs_links
+14/22 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/22 Test #15: engine_sensitive_scan ............   Passed    0.69 sec
+      Start 16: engine_acceptance_m1
+16/22 Test #16: engine_acceptance_m1 .............   Passed    0.21 sec
+      Start 17: engine_api_reference
+17/22 Test #17: engine_api_reference .............   Passed    0.13 sec
+      Start 18: engine_asset_cli
+18/22 Test #18: engine_asset_cli .................   Passed    0.82 sec
+      Start 19: engine_pbr_golden
+19/22 Test #19: engine_pbr_golden ................   Passed    0.37 sec
+      Start 20: engine_pbr_color_golden
+20/22 Test #20: engine_pbr_color_golden ..........   Passed    0.12 sec
+      Start 21: engine_pbr_window
+21/22 Test #21: engine_pbr_window ................   Passed    0.21 sec
+      Start 22: engine_asset_placement
+22/22 Test #22: engine_asset_placement ...........   Passed    1.42 sec
+
+100% tests passed out of 22
+
+Label Time Summary:
+acceptance      =   2.15 sec*proc (5 tests)
+asset           =   3.20 sec*proc (6 tests)
+cli             =   3.46 sec*proc (7 tests)
+contract        =   3.77 sec*proc (8 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.84 sec*proc (3 tests)
+render          =   3.38 sec*proc (12 tests)
+security        =   0.69 sec*proc (1 test)
+unit            =   0.76 sec*proc (9 tests)
+
+Total Test time (real) =   5.95 sec
+
+Post-review L1 ASan/UBSan22/22 (retention, no suppressions)
+Command: cmake --build build/linux-asan -j2; VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+Test project <repo>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/22 Test  #1: engine_core_tests ................   Passed    0.17 sec
+      Start  2: engine_dependencies_smoke
+ 2/22 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/22 Test  #3: engine_asset_tests ...............   Passed    0.89 sec
+      Start  4: engine_render_tests
+ 4/22 Test  #4: engine_render_tests ..............   Passed    0.28 sec
+      Start  5: engine_window_smoke
+ 5/22 Test  #5: engine_window_smoke ..............   Passed    0.09 sec
+      Start  6: engine_swapchain_test
+ 6/22 Test  #6: engine_swapchain_test ............   Passed    0.21 sec
+      Start  7: engine_overlay_test
+ 7/22 Test  #7: engine_overlay_test ..............   Passed    0.22 sec
+      Start  8: engine_run_smoke
+ 8/22 Test  #8: engine_run_smoke .................   Passed    0.68 sec
+      Start  9: engine_point_light_warning
+ 9/22 Test  #9: engine_point_light_warning .......   Passed    0.90 sec
+      Start 10: engine_screenshot_golden
+10/22 Test #10: engine_screenshot_golden .........   Passed    0.11 sec
+      Start 11: engine_screenshot_cli
+11/22 Test #11: engine_screenshot_cli ............   Passed    0.82 sec
+      Start 12: engine_version_json
+12/22 Test #12: engine_version_json ..............   Passed    0.07 sec
+      Start 13: engine_cli_contract
+13/22 Test #13: engine_cli_contract ..............   Passed    2.76 sec
+      Start 14: engine_docs_links
+14/22 Test #14: engine_docs_links ................   Passed    0.02 sec
+      Start 15: engine_sensitive_scan
+15/22 Test #15: engine_sensitive_scan ............   Passed    0.43 sec
+      Start 16: engine_acceptance_m1
+16/22 Test #16: engine_acceptance_m1 .............   Passed    1.05 sec
+      Start 17: engine_api_reference
+17/22 Test #17: engine_api_reference .............   Passed    0.13 sec
+      Start 18: engine_asset_cli
+18/22 Test #18: engine_asset_cli .................   Passed    4.39 sec
+      Start 19: engine_pbr_golden
+19/22 Test #19: engine_pbr_golden ................   Passed    0.88 sec
+      Start 20: engine_pbr_color_golden
+20/22 Test #20: engine_pbr_color_golden ..........   Passed    0.42 sec
+      Start 21: engine_pbr_window
+21/22 Test #21: engine_pbr_window ................   Passed    0.51 sec
+      Start 22: engine_asset_placement
+22/22 Test #22: engine_asset_placement ...........   Passed    4.26 sec
+
+100% tests passed out of 22
+
+Label Time Summary:
+acceptance      =   6.73 sec*proc (5 tests)
+asset           =  11.35 sec*proc (6 tests)
+cli             =  13.88 sec*proc (7 tests)
+contract        =  15.00 sec*proc (8 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   0.59 sec*proc (3 tests)
+render          =   9.38 sec*proc (12 tests)
+security        =   0.43 sec*proc (1 test)
+unit            =   2.07 sec*proc (9 tests)
+
+Total Test time (real) =  19.34 sec
+
+Post-review L1 manual mutations; sources restored and positive acceptance passed
+Command: Mutate PBR lookup and upload deduplication separately, build engine, run tests/contract/asset_placement.py --window; restore and rebuild after each
+[1/3] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/pbr_renderer.cpp.o
+[2/3] Linking CXX static library engine/render/libengine_render.a
+[3/3] Linking CXX executable tools/engine/engine
+
+MUTATION: raw PBR UUID lookup
+Traceback (most recent call last):
+  File "<repo>/tests/contract/asset_placement.py", line 209, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<repo>/tests/contract/asset_placement.py", line 140, in main
+    assert shot("uppercase.png") == single
+           ~~~~^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/contract/asset_placement.py", line 129, in shot
+    run("screenshot", project, SCENE, "--out", name, "--width", 128, "--height", 96)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/contract/asset_placement.py", line 89, in run
+    assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (('screenshot', PosixPath('/tmp/engine-asset-placement-vu_2wgw6/project'), 'scenes/main.scene.json', '--out', 'uppercase.png', '--width', 128, '--height', 96), 4, '{\n  "data": {},\n  "error": {\n    "code": "E_NOT_FOUND",\n    "details": {\n      "assetId": "B26F52F5-F426-405F-9B62-D8683ACD0936"\n    },\n    "message": "scene asset has not been uploaded"\n  },\n  "status": "error",\n  "warnings": []\n}\n', '')
+
+exit 1
+[1/3] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/pbr_renderer.cpp.o
+[2/3] Linking CXX static library engine/render/libengine_render.a
+[3/3] Linking CXX executable tools/engine/engine
+[1/3] Building CXX object tools/engine/CMakeFiles/engine.dir/src/run.cpp.o
+[2/3] Building CXX object tools/engine/CMakeFiles/engine.dir/src/commands.cpp.o
+[3/3] Linking CXX executable tools/engine/engine
+
+MUTATION: raw upload deduplication
+Traceback (most recent call last):
+  File "<repo>/tests/contract/asset_placement.py", line 209, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<repo>/tests/contract/asset_placement.py", line 143, in main
+    two = shot("two.png")
+  File "<repo>/tests/contract/asset_placement.py", line 129, in shot
+    run("screenshot", project, SCENE, "--out", name, "--width", 128, "--height", 96)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/contract/asset_placement.py", line 89, in run
+    assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (('screenshot', PosixPath('/tmp/engine-asset-placement-gn7w445i/project'), 'scenes/main.scene.json', '--out', 'two.png', '--width', 128, '--height', 96), 5, '{\n  "data": {},\n  "error": {\n    "code": "E_CONFLICT",\n    "details": {},\n    "message": "PBR asset already uploaded"\n  },\n  "status": "error",\n  "warnings": []\n}\n', '')
+
+exit 1
+[1/3] Building CXX object tools/engine/CMakeFiles/engine.dir/src/run.cpp.o
+[2/3] Building CXX object tools/engine/CMakeFiles/engine.dir/src/commands.cpp.o
+[3/3] Linking CXX executable tools/engine/engine
+
+RESTORED: M3.6 import/place/two instances/render/save/load/reimport, undo and read-only resolution passed
+exit 0
+
+Post-review L1 clang-tidy23
+Command: clang-tidy -p build/ci-linux-clang --warnings-as-errors='*' engine/render/src/pbr_renderer.cpp tools/engine/src/commands.cpp tools/engine/src/run.cpp
+[1/3] Processing file <repo>/engine/render/src/pbr_renderer.cpp.
+14927 warnings generated.
+[2/3] Processing file <repo>/tools/engine/src/commands.cpp.
+29964 warnings generated.
+[3/3] Processing file <repo>/tools/engine/src/run.cpp.
+46231 warnings generated.
+Suppressed 46249 warnings (46231 in non-user code, 18 NOLINT).
+Use -header-filter=.* or leave it as default to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.

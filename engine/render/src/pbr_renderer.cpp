@@ -987,7 +987,13 @@ Result<void> PbrRenderer::prepare(const scene::SceneView& view, const scene::Wor
             continue;
         }
         const auto& id = view.scene().component<scene::AssetInstance>(entity).asset_id;
-        auto found = p.assets.find(id);
+        const auto parsed_id = core::Uuid::parse(id);
+        if (!parsed_id) {
+            auto error = parsed_id.error();
+            error.details["assetId"] = id;
+            return core::make_failure<void>(std::move(error));
+        }
+        auto found = p.assets.find(parsed_id->to_string());
         if (found == p.assets.end()) {
             return core::make_failure<void>(core::make_error(core::ErrorCode::NotFound,
                                                              "scene asset has not been uploaded",
