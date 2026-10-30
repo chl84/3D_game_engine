@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.2 implemented — GLB import core with Blender fixtures, hierarchy composition and explicit rejection of unsupported features. Reviewer approval is pending before M3.3.
+**Current substep:** M3.2 implemented and fixed after review round 3 — GLB import core with Blender fixtures, hierarchy composition and explicit rejection of unsupported features. The review loop has reached its three-round limit, so the owner decides whether to accept M3.2 or authorize another review before M3.3.
 
 ## Substeps
 
@@ -51,7 +51,7 @@
 | Substep | Scope | Status |
 |---|---|---|
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
-| M3.2 | GLB import core; animation channels reported only | Implemented — reviewer pending |
+| M3.2 | GLB import core; animation channels reported only | Implemented — owner decision after review round 3 |
 | M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
 | M3.4 | Asset CLI | Planned |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
@@ -199,8 +199,8 @@
 | M3.2 GLB import core | Automatically tested | `engine_asset_tests` imports the Blender 5.2.2 fixtures, checks hierarchy, stable paths, materials, embedded PNG, samplers and animation-channel counts, and composes world transforms in double precision |
 | M3.2 malformed input | Automatically tested | Mutated GLBs prove `E_VALIDATION`/`E_UNSUPPORTED` with JSON pointers for truncated containers, invalid JSON, required/optional extensions, external buffers/images, multiple scenes, non-triangle primitives, blended materials, missing attributes, unsupported attributes, cycles and out-of-range indices |
 | M3.2 fixture provenance | Documented | `tests/assets/m3/PROVENANCE.md` records the Blender 5.2.2 generator, MIT license and that no third-party model or texture is included |
-| M3.2 CI | Automatically tested | Manual dispatch [40986196440](https://github.com/chl84/3D_game_engine/actions/runs/40986196440) on `52c2d5e` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
-| M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `52c2d5e` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.2 CI | Automatically tested | Manual dispatch [40991876702](https://github.com/chl84/3D_game_engine/actions/runs/40991876702) on `c097786` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
+| M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `c097786` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
