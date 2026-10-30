@@ -61,6 +61,23 @@ M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
 
+## M3.5 fixture preparation (owner requested)
+
+A locally authored Blender calibration coupon is saved under `tests/assets/m3`:
+`blender_mirrored_normalmap.blend`, `blender_mirrored_no_tangents.glb`,
+`blender_mirrored_tangents.glb` and `blender_mirrored_normal.png`.
+The editable source packs its texture and retains the procedural bake recipe.
+Its curved top has 1024 triangles and two non-overlapping UV islands with
+opposite orientations (512 triangles each). Provenance and regeneration are
+recorded in `tests/assets/m3/PROVENANCE.md`.
+
+The fixture was generated and reopened with local Blender 5.2.2 LTS. Binary
+checks found no home-directory/user markers; GLB inspection verifies actual
+mirrored UVs, embedded images, and TANGENT absence/presence in the paired
+exports. The new CPU regression compares regenerated tangents against Blender's
+reference on the normal-mapped primitive, including both handedness signs.
+The M3.5 renderer and normal-map golden image test remain planned.
+
 ## Repository state
 
 - `main`: the M2 release `bb8514c`, merged from `m2/vulkan-renderer` on

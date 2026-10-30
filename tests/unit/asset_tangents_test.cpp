@@ -119,3 +119,47 @@ TEST_CASE("MikkTSpace handles collapsed position bounds without casting NaN", "[
         }
     }
 }
+
+TEST_CASE("Blender mirrored UV fixture matches generated tangents on both islands",
+          "[asset][tangents][mirrored-fixture]") {
+    const auto fixtures = std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR);
+    auto generated = engine::asset::import_glb_file(fixtures / "blender_mirrored_no_tangents.glb");
+    auto reference = engine::asset::import_glb_file(fixtures / "blender_mirrored_tangents.glb");
+    REQUIRE(generated);
+    REQUIRE(reference);
+    REQUIRE(engine::asset::generate_missing_tangents(*generated));
+    REQUIRE(generated->meshes.size() == reference->meshes.size());
+    std::size_t normal_mapped_primitives = 0;
+    bool positive_sign = false;
+    bool negative_sign = false;
+    for (std::size_t mesh = 0; mesh < generated->meshes.size(); ++mesh) {
+        const auto& actual_mesh = generated->meshes[mesh];
+        const auto& expected_mesh = reference->meshes[mesh];
+        REQUIRE(actual_mesh.primitives.size() == expected_mesh.primitives.size());
+        for (std::size_t prim = 0; prim < actual_mesh.primitives.size(); ++prim) {
+            const auto& actual = actual_mesh.primitives[prim];
+            if (!actual.material.has_value() ||
+                !generated->materials[*actual.material].normal_texture.has_value()) {
+                continue;
+            }
+            ++normal_mapped_primitives;
+            const auto& expected = expected_mesh.primitives[prim];
+            REQUIRE(actual.indices.size() == 3072U);
+            REQUIRE(actual.indices.size() == expected.indices.size());
+            for (std::size_t corner = 0; corner < actual.indices.size(); ++corner) {
+                const auto& a = actual.vertices[actual.indices[corner]];
+                const auto& b = expected.vertices[expected.indices[corner]];
+                CHECK(a.position == b.position);
+                CHECK(a.uv0 == b.uv0);
+                for (std::size_t axis = 0; axis < 4; ++axis) {
+                    CHECK(std::abs(a.tangent[axis] - b.tangent[axis]) < 0.0002F);
+                }
+                positive_sign = positive_sign || a.tangent[3] == 1.0F;
+                negative_sign = negative_sign || a.tangent[3] == -1.0F;
+            }
+        }
+    }
+    CHECK(normal_mapped_primitives == 1U);
+    CHECK(positive_sign);
+    CHECK(negative_sign);
+}

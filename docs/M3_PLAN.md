@@ -281,11 +281,12 @@ engine asset list <project> [--json]
 ### M3.5 PBR renderer, bindless assets and the M3 light
 
 - Required normal-map golden: the original baked Blender fixture
-  `blender_normal_no_tangents.glb`, exported without TANGENT, must match a
-  fixed golden and the paired Blender-TANGENT export on Linux and Windows
-  lavapipe. The current sphere covers seams; extend the authored Blender model
-  with actually mirrored UV islands before recording the M3.5 golden. Synthetic
-  mirrored-UV unit tests alone do not fulfill this image criterion. Cover
+  `blender_mirrored_no_tangents.glb`, exported without TANGENT, must match a
+  fixed golden and `blender_mirrored_tangents.glb` on Linux and Windows
+  lavapipe. The locally authored Blender source `blender_mirrored_normalmap.blend`
+  includes a baked normal map and two actual mirrored UV islands (512 triangles
+  per orientation). The earlier sphere remains a CPU regression fixture.
+  Synthetic tests alone do not fulfill this image criterion. Cover
   seams/mirrored UVs, preserve the bake provenance and ensure
   the test fails when tangent handling or normal mapping is broken. CPU
   tangent comparisons in M3.4 do not replace this image test.

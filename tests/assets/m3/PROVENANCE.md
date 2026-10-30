@@ -34,3 +34,43 @@ tests read the checked-in files and do not require Blender.
   for this project with no external model or texture inputs. Both exports use
   the same triangulated mesh and baked image; only TANGENT export differs.
   Used for CPU tangent comparison now and M3.5 normal-map golden testing.
+
+## Mirrored-UV calibration coupon
+
+Original model authored locally with Blender 5.2.2 LTS on 2026-10-30 for this
+project; license MIT, author the project authors. No external geometry,
+textures, fonts or add-ons are used.
+
+- `blender_mirrored_normalmap.blend`: editable curved coupon and beveled metal
+  base, packed baked normal map, retained procedural bake-source material,
+  inspection camera and two area lights. Camera/lights are not exported.
+- `blender_mirrored_no_tangents.glb`: the primary M3.5 golden-test input;
+  self-contained, indexed GLB with an embedded PNG and no TANGENT attributes.
+- `blender_mirrored_tangents.glb`: the same geometry/UVs/materials/image with
+  Blender-exported MikkTSpace tangents, for reference comparison.
+- `blender_mirrored_normal.png`: 256×256, baked by Cycles on CPU from diagonal
+  procedural ridges and noise into tangent-space normals. Uses Non-Color data.
+- Generator: `blender/generate_mirrored_normalmap.py`.
+
+The curved top has 1024 triangles. Its two distinct, non-overlapping UV islands
+have opposite orientations: 512 positive and 512 negative triangles. Both
+handedness signs occur in the exported tangents. The normal image varies in
+both red and green inside each island; it is not a flat normal placeholder.
+The second mesh is a simple metallic base without a normal texture.
+
+Regenerate into a neutral temporary directory to avoid embedding personal
+paths in the binary source, then copy the four output assets into this folder:
+
+```bash
+blender -b --factory-startup -noaudio -t 2 \
+  --python tests/assets/m3/blender/generate_mirrored_normalmap.py \
+  -- --output-dir /tmp/engine-m3-mirrored-model
+```
+
+The generator clears saved file-browser home directories and packs the image
+with a relative path. The fixture is reopenable after relocation. The source
+material `Coupon_Bake_Source` preserves the procedural bake recipe; the model
+uses `Coupon_Baked_Normal` for the baked result. The inspection lights/camera
+are for Blender convenience, not the engine golden's authored lighting.
+The future M3.5 image test must render this model on Linux/Windows lavapipe;
+creating this fixture does not itself satisfy that image criterion.
