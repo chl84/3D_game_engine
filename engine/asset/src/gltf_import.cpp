@@ -180,6 +180,75 @@ texture_reference(const std::optional<T>& info, const fastgltf::Asset& gltf, std
     return texture_reference(&*info, gltf, std::move(pointer));
 }
 
+// fastgltf's optional validate() walks animation and accessor indices without
+// bounds checks in 0.9.1. The importer validates every index it uses itself and
+// deliberately does not call validate(); animation data is not read at all, but
+// its references are still checked so a malformed file fails cleanly.
+[[nodiscard]] Result<void> validate_animation_references(const fastgltf::Asset& gltf) {
+    for (std::size_t animation_index = 0; animation_index < gltf.animations.size();
+         ++animation_index) {
+        const auto& animation = gltf.animations[animation_index];
+        for (std::size_t channel_index = 0; channel_index < animation.channels.size();
+             ++channel_index) {
+            const auto& channel = animation.channels[channel_index];
+            if (channel.samplerIndex >= animation.samplers.size()) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "animation channel sampler is out of range",
+                    "/animations/" + std::to_string(animation_index) + "/channels/" +
+                        std::to_string(channel_index) + "/sampler",
+                    {
+                        {"animation", animation_index},
+                        {"channel", channel_index},
+                        {"sampler", channel.samplerIndex},
+                    }));
+            }
+            if (channel.nodeIndex.has_value() && *channel.nodeIndex >= gltf.nodes.size()) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "animation channel node is out of range",
+                    "/animations/" + std::to_string(animation_index) + "/channels/" +
+                        std::to_string(channel_index) + "/target/node",
+                    {
+                        {"animation", animation_index},
+                        {"channel", channel_index},
+                        {"node", *channel.nodeIndex},
+                    }));
+            }
+        }
+        for (std::size_t sampler_index = 0; sampler_index < animation.samplers.size();
+             ++sampler_index) {
+            const auto& sampler = animation.samplers[sampler_index];
+            for (const auto& [accessor, name] : {
+                     std::pair{sampler.inputAccessor, "input"},
+                     std::pair{sampler.outputAccessor, "output"},
+                 }) {
+                if (accessor >= gltf.accessors.size()) {
+                    return core::make_failure<void>(make_import_error(
+                        ErrorCode::Validation, "animation sampler accessor is out of range",
+                        "/animations/" + std::to_string(animation_index) + "/samplers/" +
+                            std::to_string(sampler_index) + "/" + name,
+                        {
+                            {"animation", animation_index},
+                            {"sampler", sampler_index},
+                            {"accessor", accessor},
+                        }));
+                }
+                const auto& animation_accessor = gltf.accessors[accessor];
+                if (animation_accessor.bufferViewIndex.has_value() &&
+                    *animation_accessor.bufferViewIndex >= gltf.bufferViews.size()) {
+                    return core::make_failure<void>(make_import_error(
+                        ErrorCode::Validation, "animation accessor buffer view is out of range",
+                        "/accessors/" + std::to_string(accessor) + "/bufferView",
+                        {
+                            {"accessor", accessor},
+                            {"bufferView", *animation_accessor.bufferViewIndex},
+                        }));
+                }
+            }
+        }
+    }
+    return {};
+}
+
 [[nodiscard]] Result<void> validate_buffer_layout(const fastgltf::Asset& gltf) {
     std::vector<std::span<const std::byte>> buffers;
     buffers.reserve(gltf.buffers.size());
@@ -576,6 +645,16 @@ read_indices(const fastgltf::Asset& gltf, const fastgltf::Primitive& primitive,
         source.alphaMode == fastgltf::AlphaMode::Mask ? AlphaMode::Mask : AlphaMode::Opaque;
     material.alpha_cutoff = source.alphaCutoff;
     material.double_sided = source.doubleSided;
+    const auto in_unit = [](float value) { return value >= 0.0F && value <= 1.0F; };
+    const bool factors_valid =
+        std::ranges::all_of(material.base_color_factor, in_unit) &&
+        in_unit(material.metallic_factor) && in_unit(material.roughness_factor) &&
+        std::ranges::all_of(material.emissive_factor, in_unit) && in_unit(material.alpha_cutoff);
+    if (!factors_valid) {
+        return core::make_failure<Material>(make_import_error(
+            ErrorCode::Validation, "material factors are outside the glTF 0..1 range",
+            "/materials/" + std::to_string(material_index), {{"material", material_index}}));
+    }
     material.normal_scale = source.normalTexture.has_value() ? source.normalTexture->scale : 1.0F;
     material.occlusion_strength =
         source.occlusionTexture.has_value() ? source.occlusionTexture->strength : 1.0F;
@@ -750,8 +829,8 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         return core::make_failure<ImportedAsset>(from_fastgltf(parsed.error(), source_name));
     }
     const fastgltf::Asset& gltf = parsed.get();
-    if (const auto validation = fastgltf::validate(gltf); validation != fastgltf::Error::None) {
-        return core::make_failure<ImportedAsset>(from_fastgltf(validation, source_name));
+    if (auto animations = validate_animation_references(gltf); !animations) {
+        return core::make_failure<ImportedAsset>(animations.error());
     }
 
     if (!gltf.extensionsRequired.empty()) {
@@ -816,7 +895,8 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         }
         if (bytes_value->size() > kMaxImageBytes) {
             return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Validation, "image exceeds the encoded-size limit", "/images",
+                ErrorCode::Validation, "image exceeds the encoded-size limit",
+                "/images/" + std::to_string(index),
                 {{"image", index}, {"bytes", bytes_value->size()}, {"limit", kMaxImageBytes}}));
         }
         fastgltf::MimeType mime = fastgltf::MimeType::None;
@@ -834,7 +914,8 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         const auto converted = image_mime_type(mime);
         if (!converted.has_value()) {
             return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Unsupported, "only PNG and JPEG images are supported in M3", "/images",
+                ErrorCode::Unsupported, "only PNG and JPEG images are supported in M3",
+                "/images/" + std::to_string(index),
                 {{"image", index}, {"mimeType", static_cast<int>(mime)}}));
         }
         asset.images.push_back(
@@ -859,17 +940,19 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         if (!source.imageIndex.has_value()) {
             return core::make_failure<ImportedAsset>(
                 make_import_error(ErrorCode::Unsupported, "texture has no core image source",
-                                  "/textures", {{"texture", index}}));
+                                  "/textures/" + std::to_string(index), {{"texture", index}}));
         }
         if (*source.imageIndex >= gltf.images.size()) {
-            return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Validation, "texture image index is out of range", "/textures",
-                {{"texture", index}, {"image", *source.imageIndex}}));
+            return core::make_failure<ImportedAsset>(
+                make_import_error(ErrorCode::Validation, "texture image index is out of range",
+                                  "/textures/" + std::to_string(index),
+                                  {{"texture", index}, {"image", *source.imageIndex}}));
         }
         if (source.samplerIndex.has_value() && *source.samplerIndex >= gltf.samplers.size()) {
-            return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Validation, "texture sampler index is out of range", "/textures",
-                {{"texture", index}, {"sampler", *source.samplerIndex}}));
+            return core::make_failure<ImportedAsset>(
+                make_import_error(ErrorCode::Validation, "texture sampler index is out of range",
+                                  "/textures/" + std::to_string(index),
+                                  {{"texture", index}, {"sampler", *source.samplerIndex}}));
         }
         asset.textures.push_back(
             Texture{std::string(source.name), *source.imageIndex, source.samplerIndex});
@@ -894,15 +977,23 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         for (std::size_t primitive_index = 0; primitive_index < source.primitives.size();
              ++primitive_index) {
             const auto& source_primitive = source.primitives[primitive_index];
+            const std::string primitive_pointer = "/meshes/" + std::to_string(mesh_index) +
+                                                  "/primitives/" + std::to_string(primitive_index);
             if (source_primitive.type != fastgltf::PrimitiveType::Triangles) {
                 return core::make_failure<ImportedAsset>(make_import_error(
-                    ErrorCode::Unsupported, "only triangle primitives are supported", "/meshes",
-                    {{"mesh", mesh_index}, {"primitive", primitive_index}}));
+                    ErrorCode::Unsupported, "only triangle primitives are supported",
+                    primitive_pointer, {{"mesh", mesh_index}, {"primitive", primitive_index}}));
             }
             if (!source_primitive.targets.empty()) {
                 return core::make_failure<ImportedAsset>(make_import_error(
-                    ErrorCode::Unsupported, "morph targets are not supported in M3", "/meshes",
+                    ErrorCode::Unsupported, "morph targets are not supported in M3",
+                    primitive_pointer + "/targets",
                     {{"mesh", mesh_index}, {"primitive", primitive_index}}));
+            }
+            if (!source_primitive.mappings.empty()) {
+                return core::make_failure<ImportedAsset>(make_import_error(
+                    ErrorCode::Unsupported, "material variants are not supported in M3",
+                    primitive_pointer, {{"mesh", mesh_index}, {"primitive", primitive_index}}));
             }
             if (source_primitive.dracoCompression != nullptr) {
                 return core::make_failure<ImportedAsset>(make_import_error(
@@ -947,14 +1038,14 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
     for (std::size_t index = 0; index < gltf.nodes.size(); ++index) {
         for (const std::size_t child : gltf.nodes[index].children) {
             if (child >= gltf.nodes.size()) {
-                return core::make_failure<ImportedAsset>(
-                    make_import_error(ErrorCode::Validation, "node child index is out of range",
-                                      "/nodes", {{"node", index}, {"child", child}}));
+                return core::make_failure<ImportedAsset>(make_import_error(
+                    ErrorCode::Validation, "node child index is out of range",
+                    "/nodes/" + std::to_string(index), {{"node", index}, {"child", child}}));
             }
             if (parents[child].has_value()) {
-                return core::make_failure<ImportedAsset>(
-                    make_import_error(ErrorCode::Validation, "node has more than one parent",
-                                      "/nodes", {{"node", child}, {"parent", index}}));
+                return core::make_failure<ImportedAsset>(make_import_error(
+                    ErrorCode::Validation, "node has more than one parent",
+                    "/nodes/" + std::to_string(child), {{"node", child}, {"parent", index}}));
             }
             parents[child] = index;
         }
@@ -962,14 +1053,14 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
     std::vector<std::uint8_t> state(gltf.nodes.size(), 0);
     const auto visit = [&](const auto& self, std::size_t index, std::size_t depth) -> Result<void> {
         if (depth > kMaxNodeDepth) {
-            return core::make_failure<void>(
-                make_import_error(ErrorCode::Validation, "node hierarchy exceeds the depth limit",
-                                  "/nodes", {{"node", index}, {"limit", kMaxNodeDepth}}));
+            return core::make_failure<void>(make_import_error(
+                ErrorCode::Validation, "node hierarchy exceeds the depth limit",
+                "/nodes/" + std::to_string(index), {{"node", index}, {"limit", kMaxNodeDepth}}));
         }
         if (state[index] == 1) {
-            return core::make_failure<void>(make_import_error(ErrorCode::Validation,
-                                                              "node hierarchy contains a cycle",
-                                                              "/nodes", {{"node", index}}));
+            return core::make_failure<void>(
+                make_import_error(ErrorCode::Validation, "node hierarchy contains a cycle",
+                                  "/nodes/" + std::to_string(index), {{"node", index}}));
         }
         if (state[index] == 2) {
             return {};
@@ -1026,18 +1117,47 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         const auto* trs = std::get_if<fastgltf::TRS>(&source.transform);
         if (trs == nullptr) {
             return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Unsupported, "node matrix could not be decomposed to TRS", "/nodes",
-                {{"node", index}}));
+                ErrorCode::Unsupported, "node matrix could not be decomposed to TRS",
+                "/nodes/" + std::to_string(index), {{"node", index}}));
         }
         if (source.meshIndex.has_value() && *source.meshIndex >= gltf.meshes.size()) {
-            return core::make_failure<ImportedAsset>(
-                make_import_error(ErrorCode::Validation, "node mesh index is out of range",
-                                  "/nodes", {{"node", index}, {"mesh", *source.meshIndex}}));
+            return core::make_failure<ImportedAsset>(make_import_error(
+                ErrorCode::Validation, "node mesh index is out of range",
+                "/nodes/" + std::to_string(index), {{"node", index}, {"mesh", *source.meshIndex}}));
         }
         if (source.skinIndex.has_value()) {
             return core::make_failure<ImportedAsset>(
                 make_import_error(ErrorCode::Unsupported, "skinned nodes are not supported in M3",
-                                  "/nodes", {{"node", index}}));
+                                  "/nodes/" + std::to_string(index), {{"node", index}}));
+        }
+        if (source.cameraIndex.has_value()) {
+            return core::make_failure<ImportedAsset>(make_import_error(
+                ErrorCode::Unsupported, "cameras are not imported from assets in M3",
+                "/nodes/" + std::to_string(index) + "/camera", {{"node", index}}));
+        }
+        if (!source.weights.empty()) {
+            return core::make_failure<ImportedAsset>(make_import_error(
+                ErrorCode::Unsupported, "morph target weights are not supported in M3",
+                "/nodes/" + std::to_string(index) + "/weights", {{"node", index}}));
+        }
+        if (!source.instancingAttributes.empty()) {
+            return core::make_failure<ImportedAsset>(make_import_error(
+                ErrorCode::Unsupported, "GPU instancing is not supported in M3",
+                "/nodes/" + std::to_string(index) + "/extensions", {{"node", index}}));
+        }
+        const auto finite = [](float value) { return std::isfinite(value); };
+        const float rotation_length = std::sqrt(
+            (trs->rotation[0] * trs->rotation[0]) + (trs->rotation[1] * trs->rotation[1]) +
+            (trs->rotation[2] * trs->rotation[2]) + (trs->rotation[3] * trs->rotation[3]));
+        if (!finite(trs->translation[0]) || !finite(trs->translation[1]) ||
+            !finite(trs->translation[2]) || !finite(trs->rotation[0]) ||
+            !finite(trs->rotation[1]) || !finite(trs->rotation[2]) || !finite(trs->rotation[3]) ||
+            !finite(trs->scale[0]) || !finite(trs->scale[1]) || !finite(trs->scale[2]) ||
+            std::abs(rotation_length - 1.0F) > 1.0e-3F) {
+            return core::make_failure<ImportedAsset>(
+                make_import_error(ErrorCode::Validation,
+                                  "node transform is not finite or rotation is not unit length",
+                                  "/nodes/" + std::to_string(index), {{"node", index}}));
         }
         Node node;
         node.source_index = index;

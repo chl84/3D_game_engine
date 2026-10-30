@@ -393,6 +393,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "lines.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
     }
 
     SECTION("skinned mesh") {
@@ -404,6 +405,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "skin.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/skins");
     }
 
     SECTION("camera") {
@@ -418,6 +420,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "camera.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/cameras");
     }
 
     SECTION("punctual light extension") {
@@ -427,6 +430,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "lights.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/extensionsUsed");
     }
 
     SECTION("morph targets") {
@@ -441,6 +445,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "morph.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0/targets");
     }
 
     SECTION("non-float vertex data") {
@@ -453,9 +458,22 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         });
         const auto result = engine::asset::import_glb(as_span(bytes), "quantized.glb");
         REQUIRE_FALSE(result.has_value());
-        // fastgltf validates the accessor before the importer sees it; either
-        // way the non-float POSITION is rejected instead of being read.
-        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
+    SECTION("non-float texture coordinates") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            auto& accessor =
+                document["accessors"][primitive["attributes"]["TEXCOORD_0"].get<std::size_t>()];
+            accessor["componentType"] = 5121;
+            accessor["normalized"] = true;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "quantized-uv.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
     }
 
     SECTION("compressed texture image") {
@@ -465,6 +483,39 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "texture.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+    }
+
+    SECTION("animation sampler index") {
+        const auto animated = read_bytes(fixture("blender_animated.glb"));
+        const auto bytes = mutate_json(animated, [](nlohmann::json& document) {
+            document["animations"][0]["channels"][0]["sampler"] = 99;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "animation.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/animations/0/channels/0/sampler");
+    }
+
+    SECTION("animation output accessor") {
+        const auto animated = read_bytes(fixture("blender_animated.glb"));
+        const auto bytes = mutate_json(animated, [](nlohmann::json& document) {
+            document["animations"][0]["samplers"][0]["output"] = 999;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "animation.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/animations/0/samplers/0/output");
+    }
+
+    SECTION("animation target node") {
+        const auto animated = read_bytes(fixture("blender_animated.glb"));
+        const auto bytes = mutate_json(animated, [](nlohmann::json& document) {
+            document["animations"][0]["channels"][0]["target"]["node"] = 99;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "animation.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/animations/0/channels/0/target/node");
     }
 
     SECTION("external image") {

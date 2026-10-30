@@ -61,7 +61,11 @@ is hashed for the cache key. Every buffer, buffer view and accessor is checked
 against the bytes actually present before any accessor is read, so a truncated
 BIN chunk fails with `E_VALIDATION` instead of reading past the allocation.
 Nodes outside the one imported scene remain in the node table for stable-ID
-mapping in M3.3 but are not scene roots.
+mapping in M3.3 but are not scene roots. The importer does not call
+`fastgltf::validate()`: in fastgltf 0.9.1 it dereferences animation, accessor and
+buffer-view indices without bounds checks. The importer checks every reference
+it consumes, including animation channel and sampler indices, before reading
+any data.
 
 Source size is limited to 512 MiB, each encoded image to 64 MiB, primitives to
 4M vertices and 16M indices, and hierarchy depth to 1024 nodes. Animation
