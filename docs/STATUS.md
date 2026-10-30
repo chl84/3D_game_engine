@@ -3,8 +3,9 @@
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.6 — asset instances and scene placement implemented;
-reviewer GODKJENT on4ce8cac; low UUID identity finding corrected locally,
-with final correction CI pending.
+reviewer GODKJENT on `4ce8cac`; low UUID identity finding corrected in `ef6775a`.
+Final CI 41076353145 completed/success on `ef6775a`: all six jobs, Linux 22/22 and
+Windows 16/16. Awaiting owner assessment; M3.7 has not started.
 M3.4 and M3.5 were approved by the owner on 2026-10-30. All six reporting
 follow-up CI jobs passed on `59c2e97` (Ubuntu21/21, Windows15/15).
 The owner corrected emissiveTexture to sRGB, formally approved the pinned
@@ -62,7 +63,7 @@ requested removal of the inactive LSan rule. No M3 merge or tag is authorized.
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
-| M3.6 | `AssetInstance` placement and scene v3 save/load | Reviewer GODKJENT on4ce8cac; low finding corrected, final CI pending |
+| M3.6 | `AssetInstance` placement and scene v3 save/load | Reviewer GODKJENT; low finding corrected in `ef6775a`; final CI 6/6 success; awaiting owner assessment |
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
 
@@ -469,9 +470,11 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.5 is complete and reviewer-approved on `eceb5f9`. Next is M3.6: CLI asset
-placement, automatic project-asset resolution and scene-instance save/load
-acceptance. The optional nightly ten-minute fuzz/cached-corpus proposal remains
+M3.4/M3.5 are owner-approved. M3.6 implements CLI asset placement, automatic
+project-asset resolution and scene-instance save/load acceptance; technical
+review approved `4ce8cac` and the low UUID finding is corrected in `ef6775a`.
+Final CI 41076353145 is 6/6 success. Owner assessment of M3.6 is next; M3.7 needs
+owner authorization. The optional nightly ten-minute fuzz/cached-corpus proposal remains
 recorded for M3.8. M3 merges only after explicit owner approval.
 
 ## M3.5 implementation and verification
@@ -580,8 +583,8 @@ No merge or tag is authorized or performed.
 - Emissive textures now cook as sRGB, matching baseColor and glTF 2.0. Factors
   and normal/MR/AO inputs remain linear. Importer@4 invalidates old cooked caches
   while preserving stable IDs and v1 source/cache schemas.
-- The fixed color PNG is regenerated: emissive117, with a deliberately linear
-  control156. Import/cooked metadata tests also cover shared base/emissive
+- The fixed color PNG is regenerated: emissive 117, with a deliberately linear
+  control 156. Import/cooked metadata tests also cover shared base/emissive
   textures and rejection of mixed sRGB/data uses.
 - The inactive suppression file is removed, together with the preset's
   LSAN_OPTIONS reference. The local preset retains only the documented loader
@@ -610,14 +613,14 @@ No merge or tag is authorized or performed.
   from earlier M3.5 CI. Local static-analysis/docs checks are recorded in
   [M3.6 evidence](verification/M3_6_LOCAL_EVIDENCE.txt).
 - [Full A.5 report](verification/M3_6_STATUS_REPORT.md). Exact-SHA CI and
-  independent Claude Opus5.5 high review are the next acceptance gates.
+  independent Claude Opus 5.5 high review are the next acceptance gates.
   No M3.7 work, merge or tag has started.
 
-## M3.6 review handled — post-review CI pending
+## M3.6 review handled — verification complete
 
-Claude Opus5.5 high approved4ce8cac with no blocking findings. Initial
-CI41073848866 completed/success: all6jobs, Linux22/22 and Windows16/16, including
-placement and emissive117. The exact clean public clone also passed22/22 and
+Claude Opus 5.5 high approved `4ce8cac` with no blocking findings. Initial
+CI 41073848866 completed/success: all six jobs, Linux 22/22 and Windows 16/16, including
+placement and emissive 117. The exact clean public clone also passed 22/22 and
 M1 acceptance. Permanent [CI excerpts](verification/M3_6_CI_EVIDENCE.txt) and
 [local/clean-clone output](verification/M3_6_LOCAL_EVIDENCE.txt) are committed.
 
@@ -627,5 +630,10 @@ regressions pass; each inverse mutation fails with the expected original error.
 Clang and local-policy ASan/UBSan both pass22/22; local clang-tidy23 passes.
 I1 empty CLI name behavior is documented; I2 historical suppression prose is
 clarified; I3 required no code change. This small low-severity correction is
-handled directly, with no new delegated review. New exact-SHA CI is required
-before the consolidated owner report. M3.7 remains unstarted; no merge/tag.
+handled directly, with no new delegated review. Final exact-SHA CI 41076353145 on `ef6775a` completed/success: all six jobs,
+LinuxClang/GCC14/ASan22/22 and WindowsMSVC16/16, no unexplained skips.
+Both lavapipe platforms passed emissive 117 and Blender difference 0. Quality
+clang-format18/clang-tidy18 and Fuzz passed. The final corrected clean public
+clone passed 22/22 plus M1 acceptance; explicit Iris Xe acceptance also passed.
+The consolidated owner report can now be delivered. M3.7 remains unstarted;
+no merge/tag.

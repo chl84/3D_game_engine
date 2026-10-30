@@ -398,3 +398,14 @@ Command: clang-tidy -p build/ci-linux-clang --warnings-as-errors='*' engine/rend
 46231 warnings generated.
 Suppressed 46249 warnings (46231 in non-user code, 18 NOLINT).
 Use -header-filter=.* or leave it as default to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+
+Final corrected source clean public clone
+Command: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+ef6775a9bb49e1330cac11d6f4bb2931a0cb2cb4
+100% tests passed out of 22
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Final corrected source on physical Iris Xe
+Command: VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/intel_icd.json .venv/bin/python tests/contract/asset_placement.py build/ci-linux-clang/tools/engine/engine --window
+M3.6 import/place/two instances/render/save/load/reimport, undo and read-only resolution passed

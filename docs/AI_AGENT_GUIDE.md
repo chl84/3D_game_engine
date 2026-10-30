@@ -1,8 +1,9 @@
 # AI Agent Guide
 
-**Status:** M2.5. Version, doctor, the offline project/scene/entity/component
-CLI, fixed-tick simulation, the Vulkan renderer and offscreen screenshots exist. The live API is
-planned for M3.
+**Status:** M3.6 implementation. The offline project/scene/entity/component CLI,
+asset cooking/reimport/placement, shared PBR rendering, fixed-tick simulation and
+offscreen screenshots exist. The local live API remains planned for M3.7.
+Current review and exact-source verification results are in STATUS.md.
 
 ## Status reports and independent review
 

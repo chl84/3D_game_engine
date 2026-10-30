@@ -3,8 +3,9 @@
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 and
 M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
-on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is implemented locally
-and awaiting verification/review. The owner corrected emissive to sRGB.
+on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
+ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
+M3.6 awaits owner assessment. The owner corrected emissive to sRGB.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -257,9 +258,9 @@ runtime.
 
 ### M3.4 Asset CLI
 
-**Status:** Implemented — reviewer pending. The owner approved M3.3 and started
-M3.4 on 2026-10-30. The same approval adds the official pinned MikkTSpace
-dependency in place of custom tangent accumulation; see ADR-0012. Preview
+**Status:** Owner-approved after independent review and successful CI. The
+owner formally approved official pinned MikkTSpace, its zlib license and the
+marked UB-corrected build copy; see ADR-0012. Preview
 validates cooking without persisting files. Asset file imports are explicitly
 non-transactional; scene transactions reject them before filesystem mutation.
 
