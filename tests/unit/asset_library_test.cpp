@@ -237,8 +237,11 @@ TEST_CASE("cooking generates tangents for normal-mapped meshes", "[asset][librar
         const float length_squared = (vertex.tangent[0] * vertex.tangent[0]) +
                                      (vertex.tangent[1] * vertex.tangent[1]) +
                                      (vertex.tangent[2] * vertex.tangent[2]);
-        CHECK(length_squared > 0.5F);
-        CHECK(std::abs(vertex.tangent[3]) == 1.0F);
+        CHECK(std::abs(length_squared - 1.0F) < 1.0e-4F);
+        CHECK(vertex.tangent[3] == 1.0F);
+        CHECK(std::abs(vertex.tangent[0]) > 0.99F);
+        CHECK(std::abs(vertex.tangent[1]) < 1.0e-4F);
+        CHECK(std::abs(vertex.tangent[2]) < 1.0e-4F);
     }
 }
 
@@ -280,9 +283,24 @@ TEST_CASE("asset library rejects missing projects and stale caches", "[asset][li
     CHECK_FALSE(std::filesystem::exists(temp.path() / "escape.glb"));
 
     sidecar_document = nlohmann::json::parse(read_text(sidecar));
+    sidecar_document["sourceCopy"] = (temp.path() / "absolute.glb").generic_string();
+    write_text(sidecar, sidecar_document.dump(2));
+    const auto absolute_source = reimport_asset(project->root(), imported->record.asset_id);
+    REQUIRE_FALSE(absolute_source.has_value());
+    CHECK(absolute_source.error().code == ErrorCode::Validation);
+    CHECK_FALSE(std::filesystem::exists(temp.path() / "absolute.glb"));
+
+    sidecar_document = nlohmann::json::parse(read_text(sidecar));
     sidecar_document["cooked"]["path"] = "../../escape-cache";
     write_text(sidecar, sidecar_document.dump(2));
     const auto escaped_load = load_asset(project->root(), imported->record.asset_id);
     REQUIRE_FALSE(escaped_load.has_value());
     CHECK(escaped_load.error().code == ErrorCode::Validation);
+
+    sidecar_document = nlohmann::json::parse(read_text(sidecar));
+    sidecar_document["cooked"]["path"] = (temp.path() / "absolute-cache").generic_string();
+    write_text(sidecar, sidecar_document.dump(2));
+    const auto absolute_load = load_asset(project->root(), imported->record.asset_id);
+    REQUIRE_FALSE(absolute_load.has_value());
+    CHECK(absolute_load.error().code == ErrorCode::Validation);
 }

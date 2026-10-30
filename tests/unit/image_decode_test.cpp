@@ -72,6 +72,13 @@ TEST_CASE("invalid and oversized images fail before allocation", "[asset][image]
         CHECK(result.error().code == ErrorCode::Validation);
     }
 
+    SECTION("MIME mismatch") {
+        const auto jpeg = read_bytes(fixture("texture.jpg"));
+        const auto result = decode_image(as_span(jpeg), ImageMimeType::Png);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
     SECTION("oversized") {
         const auto oversized = read_bytes(fixture("oversized.png"));
         const auto result = decode_image(as_span(oversized), ImageMimeType::Png);

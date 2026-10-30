@@ -6,7 +6,7 @@ while the offscreen golden and screenshot tests are registered on both
 platforms.
 `engine_core_tests` contains 65 test cases and 507 assertions on Linux;
 Windows reports 63 cases / 495 assertions because two POSIX-only tests are
-compiled out. `engine_asset_tests` contains 10 test cases and 622 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
+compiled out. `engine_asset_tests` contains 10 test cases and 653 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 

@@ -25,6 +25,26 @@ core::Result<DecodedImage> decode_image(std::span<const std::byte> encoded,
     if (encoded.empty()) {
         return core::make_failure<DecodedImage>(decode_error("image is empty"));
     }
+    const auto starts_with = [encoded](std::initializer_list<std::uint8_t> prefix) {
+        if (encoded.size() < prefix.size()) {
+            return false;
+        }
+        std::size_t index = 0;
+        for (const std::uint8_t value : prefix) {
+            if (std::to_integer<std::uint8_t>(encoded[index]) != value) {
+                return false;
+            }
+            ++index;
+        }
+        return true;
+    };
+    const bool is_png = starts_with({0x89U, 0x50U, 0x4EU, 0x47U});
+    const bool is_jpeg = starts_with({0xFFU, 0xD8U, 0xFFU});
+    if ((mime_type == ImageMimeType::Png && !is_png) ||
+        (mime_type == ImageMimeType::Jpeg && !is_jpeg)) {
+        return core::make_failure<DecodedImage>(
+            decode_error("image data does not match the declared MIME type"));
+    }
     int width = 0;
     int height = 0;
     int channels = 0;
