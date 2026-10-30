@@ -199,8 +199,8 @@
 | M3.2 GLB import core | Automatically tested | `engine_asset_tests` imports the Blender 5.2.2 fixtures, checks hierarchy, stable paths, materials, embedded PNG, samplers and animation-channel counts, and composes world transforms in double precision |
 | M3.2 malformed input | Automatically tested | Mutated GLBs prove `E_VALIDATION`/`E_UNSUPPORTED` with JSON pointers for truncated containers, invalid JSON, required/optional extensions, external buffers/images, multiple scenes, non-triangle primitives, blended materials, missing attributes, unsupported attributes, cycles and out-of-range indices |
 | M3.2 fixture provenance | Documented | `tests/assets/m3/PROVENANCE.md` records the Blender 5.2.2 generator, MIT license and that no third-party model or texture is included |
-| M3.2 CI | Automatically tested | Manual dispatch [40978367689](https://github.com/chl84/3D_game_engine/actions/runs/40978367689) on `e5f1587` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
-| M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `e5f1587` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.2 CI | Automatically tested | Manual dispatch [40983279938](https://github.com/chl84/3D_game_engine/actions/runs/40983279938) on `5051276` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
+| M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `5051276` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
