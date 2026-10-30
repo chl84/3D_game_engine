@@ -285,7 +285,8 @@ engine asset list <project> [--json]
   fixed golden and the paired Blender-TANGENT export on Linux and Windows
   lavapipe. The current sphere covers seams; extend the authored Blender model
   with actually mirrored UV islands before recording the M3.5 golden. Synthetic
-  mirrored-UV unit tests alone do not fulfill this image criterion. Cover seams/mirrored UVs, preserve the bake provenance and ensure
+  mirrored-UV unit tests alone do not fulfill this image criterion. Cover
+  seams/mirrored UVs, preserve the bake provenance and ensure
   the test fails when tangent handling or normal mapping is broken. CPU
   tangent comparisons in M3.4 do not replace this image test.
 

@@ -2,9 +2,9 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.4 implemented, verification/reviewer pending — asset CLI
-and shared command handlers; owner-approved MikkTSpace replaces custom tangent
-generation. M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
+**Current substep:** M3.4 reviewer GODKJENT (round 3) — asset CLI and approved
+MikkTSpace cooking. All six CI jobs on `7cfad7a` passed. M3.5 is next.
+M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 
 ## Substeps
 
@@ -55,7 +55,7 @@ generation. M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authori
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
-| M3.4 | Asset CLI | Implemented — reviewer pending |
+| M3.4 | Asset CLI and approved MikkTSpace cooking | Done — reviewer GODKJENT (round 3); all CI green |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
 | M3.7 | Local JSON-RPC live API | Planned |
@@ -97,17 +97,24 @@ generation. M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authori
 - ASan/UBSan: core, asset and asset CLI tests passed (3/3). Full local suite
   passed 12/18; six graphics-related tests failed, including 112-byte
   LeakSanitizer reports without engine symbols. No sanitizer was disabled;
-  Ubuntu CI is required to check the complete sanitized suite.
+  Ubuntu CI on `7cfad7a` passed the complete sanitized suite (18/18).
 - Permanent Clang fuzz targets with UBSan halt-on-error: GLB 20,055 runs and
   image 87,754 runs, 30-second budgets each, no final-run sanitizer findings.
   Initial fuzzing found a MikkTSpace NaN-to-int UB; the documented build-copy
   correction and collapsed-position regression were added before the final run.
 - clang-format 18 passed; local clang-tidy 23 passed for modified C++ units.
-- Sensitive scan passed for 202 staged/tracked files; documentation links passed.
-- Review round 1: RETT FØRST. CI on `0e2c766` failed Windows MSVC because
-  JSON-versus-string_view comparisons were ambiguous. Those comparisons now
-  extract explicit strings. New CI and re-review are pending; the failed
-  Windows build did not prove the expected 13-test Windows execution.
+- Sensitive scan passed for 203 tracked files; documentation links passed.
+- Review round 1: RETT FØRST for MSVC JSON/string_view ambiguity; fixed in
+  `7cfad7a`. Review round 2 found no remaining code defect and awaited Quality.
+- CI [41041374885](https://github.com/chl84/3D_game_engine/actions/runs/41041374885)
+  on `7cfad7a`: all six jobs passed. Linux GCC/Clang and ASan/UBSan ran 18/18;
+  Windows MSVC ran 13/13 with lavapipe offscreen golden/screenshot. Quality and
+  Fuzz passed. The original Windows build failure is retained in the review
+  history; the new successful Windows run supplies the missing evidence.
+- A clean public clone of `7cfad7a` built and passed 18/18 without skips,
+  followed by `M1 acceptance passed` and `M1 clean-clone acceptance passed`.
+- Final reviewer verdict: GODKJENT (round 3). The reviewer independently
+  verified the exact CI SHA and logs. No merge or tag has been performed.
 - Normal-mapped Blender GLBs with and without exported tangents are checked
   in and compared per corner by the CPU tests. The PBR image test remains an
   explicit M3.5 requirement; it has not run or been claimed complete.
@@ -425,8 +432,8 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Complete M3.4 verification and independent Claude Opus 5.5 high review before
-M3.5. M3.5 must add the normal-map Blender golden image comparison on Linux and
+M3.4 is complete and reviewer-approved. Next is M3.5: PBR, bindless assets and
+DirectionalLight rendering. M3.5 must add the normal-map Blender golden image comparison on Linux and
 Windows lavapipe; the current per-corner CPU comparison is not that image test.
 The optional nightly ten-minute fuzz/cached-corpus proposal is recorded for
 M3.8. M3 merges as a complete milestone only after explicit owner approval.
