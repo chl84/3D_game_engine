@@ -67,6 +67,13 @@ native/descriptor reservations are conservative accounting estimates, not a
 measurement of opaque driver memory. Whole-process/reference-scene measurement
 remains M5/M8 as agreed with the owner.
 
+Window scene validation, camera/legacy draw preparation, PBR uniform writes and
+overlay budget checks run after the frame-slot fence wait and before swapchain
+image acquisition. The fence is reset only immediately before queue submission.
+Data errors therefore leave both the acquire semaphore and fence reusable. A
+Vulkan command-recording/reset/submission failure after acquisition marks the
+renderer terminal; repeated calls return that error and require recreation.
+
 ### Material and lighting equations
 
 Metallic-roughness uses GGX distribution, correlated Smith visibility and
@@ -75,6 +82,12 @@ clamped to 0.045. Tangents are transformed with the linear model matrix and
 orthogonalized against the inverse-transpose normal. Handedness accounts for
 negative determinant transforms. Back-face handling respects double-sided
 materials; the complete mapped normal is reversed for back-face lighting.
+Collapsed or relatively near-singular node transforms are skipped rather than
+failing the frame: the determinant is measured after dividing by the largest
+linear-matrix component, with a relative threshold of 1e-12. Linear matrices
+below the Float32 normal range are skipped. Uniform tiny scales remain valid;
+the shader removes uniform scale before computing its inverse/determinant to
+avoid absolute-size underflow. Non-finite/out-of-range transforms still fail.
 Alpha OPAQUE and MASK are supported, without blended transparency.
 
 The first enabled DirectionalLight supplies linear radiance; more than one
@@ -108,8 +121,16 @@ The Blender mirrored-UV model without tangents is compared with a fixed golden
 and the Blender-tangent export. Negative controls remove normal mapping and flip
 tangent signs. Numerical probes cover sRGB versus linear textures, the MR blue
 channel, occlusion, emissive/tone mapping, alpha modes, SRGB mip blits and the last
-slot of full 4096-image/material tables. Window tests exercise two-frame
-retirement/collection/reuse. Validation is Required for the PBR tests.
+slot of full 4096-image/material tables. Blender comparisons use the fixed
+image tolerance (maximum byte delta8, delta>3 on fewer than0.1% of bytes), and
+removing the normal map must fail that comparison. An independently calculated
+reflected-normal quad expects about137 in the red channel; removing determinant
+handedness produces75 and fails. Sampler probes cover both wrap axes, negative
+UVs, nearest/linear magnification and every min/mip filter at known fractional
+LODs. Tiny uniform and collapsed-node probes cover the transform policy.
+Window tests exercise validation-error recovery, missing-camera recovery and
+two-frame retirement/collection/reuse, with a30-second timeout. Validation is
+Required for the PBR tests.
 
 ## References
 

@@ -348,7 +348,9 @@ symbols are unique for each pair. No new build/runtime dependency is added.
 `tests/fixtures/golden/m3_pbr_256.png` and the locally baked mirrored-UV Blender
 model without exported tangents. It also compares Blender's exported tangents,
 checks sensitivity to disabled normals/flipped handedness, reflection and 16 km,
-and runs numerical color-space/mip/alpha and full descriptor-boundary probes.
+and runs numerical color-space/mip/alpha, wrap/filter, reflected-normal and full
+descriptor-boundary probes. Blender reference/golden checks share strict byte
+tolerances; the analytical reflection probe rejects a missing handedness sign.
 Vulkan validation is Required; initialization errors fail the test. A different
 GPU skips only this lavapipe-specific CTest (77), not the window lifetime test.
 
@@ -359,6 +361,7 @@ VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/intel_icd.json build/ci-linux-clang/tes
 ```
 
 `engine_pbr_window` checks two-frame descriptor/resource retirement and reuse on
-Linux with a display (CI uses Xvfb). Windows runs the offscreen golden/probes;
+Linux with a display (CI uses Xvfb). It also verifies that invalid scene data can
+be corrected and rendering resumes without a fence/semaphore hang. Windows runs the offscreen golden/probes;
 Windows presentation remains unverified. Use the existing sanitizer preset
 `linux-asan`. Whole-process/reference-scene performance remains M5/M8.

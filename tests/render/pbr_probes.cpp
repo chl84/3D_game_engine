@@ -1,6 +1,8 @@
 #include "pbr_probes.hpp"
+#include <cmath>
 #include <engine/render/offscreen_renderer.hpp>
 #include <iostream>
+#include <numbers>
 #include <stdexcept>
 
 namespace engine::test {
@@ -92,6 +94,120 @@ void near(int actual, int expected, const char* message) {
         throw std::runtime_error(message);
     }
 }
+// Known normal (approximately 0,0.6,0.8) and L=(0,1,1)/sqrt(2).
+// Reflection in X preserves its positive Y component only when tangent.w
+// changes sign. GGX at roughness=1 gives about 137, versus 74 with wrong w.
+void reflected_normal(render::OffscreenRenderer& renderer) {
+    auto a = quad();
+    add_texture(a, asset::TextureColorSpace::Linear, {128, 204, 230, 255});
+    a.asset.materials[0].normal_texture = asset::TextureReference{};
+    good(renderer.upload_asset(a));
+    auto s = make_scene(a.record.asset_id.to_string());
+    for (auto e : s.entities()) {
+        if (s.has<scene::AssetInstance>(e)) {
+            s.transform(e).scale.x = -1;
+        }
+    }
+    auto sun = take(s.create_entity("Analytical sun"));
+    good(s.add_component<scene::DirectionalLight>(sun));
+    s.component<scene::DirectionalLight>(sun).direction = {0, -1, -1};
+    s.component<scene::DirectionalLight>(sun).intensity = 1;
+    auto pixels = take(renderer.render(scene::SceneView(s), 1));
+    const auto actual = pixels[((std::size_t{32} * 64U) + 32U) * 4U];
+    near(actual, 137, "reflected analytical normal has wrong bitangent handedness");
+    std::cout << "Analytical reflected normal: red=" << static_cast<int>(actual)
+              << " expected=137\n";
+    good(renderer.retire_asset(a.record.asset_id.to_string()));
+    good(renderer.collect_assets());
+}
+int encoded(float linear) {
+    const float mapped = linear / (1 + linear);
+    const float value =
+        mapped <= 0.0031308F ? mapped * 12.92F : (1.055F * std::pow(mapped, 1.0F / 2.4F)) - 0.055F;
+    return static_cast<int>(std::lround(255 * value));
+}
+asset::LoadedAsset sampling_quad(bool vertical = false) {
+    auto a = quad();
+    add_texture(a, asset::TextureColorSpace::Linear, {0, 0, 0, 255});
+    auto& material = a.asset.materials[0];
+    material.base_color_factor = {0, 0, 0, 1};
+    material.emissive_factor = {1, 1, 1};
+    material.emissive_texture = asset::TextureReference{};
+    auto& t = a.textures[0];
+    t.width = 2;
+    t.height = 2;
+    t.rgba8.clear();
+    for (std::size_t y = 0; y < 2; ++y) {
+        for (std::size_t x = 0; x < 2; ++x) {
+            const std::uint8_t v = (vertical ? y : x) == 0 ? 0 : 255;
+            t.rgba8.insert(t.rgba8.end(), {v, v, v, 255});
+        }
+    }
+    t.sampler.mag_filter = asset::Filter::Nearest;
+    return a;
+}
+void sampler_probes(render::OffscreenRenderer& renderer) {
+    for (bool vertical : {false, true}) {
+        for (auto mode :
+             {asset::Wrap::Repeat, asset::Wrap::ClampToEdge, asset::Wrap::MirroredRepeat}) {
+            for (float uv : {1.25F, -0.25F}) {
+                auto a = sampling_quad(vertical);
+                a.textures[0].sampler.wrap_s = mode;
+                a.textures[0].sampler.wrap_t = mode;
+                for (auto& v : a.asset.meshes[0].primitives[0].vertices) {
+                    v.uv0 =
+                        vertical ? std::array<float, 2>{0.5F, uv} : std::array<float, 2>{uv, 0.5F};
+                }
+                const bool white = mode == asset::Wrap::Repeat ? uv < 0 : uv > 1;
+                near(red(renderer, a), white ? 188 : 0, "sampler wrap mode failed");
+            }
+        }
+    }
+    for (auto filter : {asset::Filter::Nearest, asset::Filter::Linear}) {
+        auto a = sampling_quad();
+        a.textures[0].sampler.mag_filter = filter;
+        for (auto& v : a.asset.meshes[0].primitives[0].vertices) {
+            v.uv0 = {0.3125F, 0.5F};
+        }
+        near(red(renderer, a), filter == asset::Filter::Nearest ? 0 : encoded(0.125F),
+             "sampler magnification filter failed");
+    }
+    for (float lod : {0.25F, 0.75F}) {
+        for (auto filter : {
+                 asset::Filter::Nearest,
+                 asset::Filter::Linear,
+                 asset::Filter::NearestMipmapNearest,
+                 asset::Filter::LinearMipmapNearest,
+                 asset::Filter::NearestMipmapLinear,
+                 asset::Filter::LinearMipmapLinear,
+             }) {
+            auto a = sampling_quad();
+            a.textures[0].sampler.min_filter = filter;
+            // At the center pixel u=0.3125 and du/dx=2^lod/width.
+            // Its level-0 nearest/linear samples are 0 and 0.125; mip1=128/255.
+            const float projection = 1 / std::tan(std::numbers::pi_v<float> / 6);
+            for (auto& v : a.asset.meshes[0].primitives[0].vertices) {
+                v.uv0 = {
+                    0.3125F +
+                        ((std::exp2(lod) / 2) * ((v.position[0] * projection * 32 / 3) - 0.5F)),
+                    0.5F,
+                };
+            }
+            const bool linear = filter == asset::Filter::Linear ||
+                                filter == asset::Filter::LinearMipmapNearest ||
+                                filter == asset::Filter::LinearMipmapLinear;
+            float expected = linear ? 0.125F : 0;
+            if (filter == asset::Filter::NearestMipmapLinear ||
+                filter == asset::Filter::LinearMipmapLinear) {
+                expected = (expected * (1 - lod)) + ((128.0F / 255) * lod);
+            } else if (filter != asset::Filter::Nearest && filter != asset::Filter::Linear &&
+                       lod > 0.5F) {
+                expected = 128.0F / 255;
+            }
+            near(red(renderer, a), encoded(expected), "sampler minification/mip filter failed");
+        }
+    }
+}
 } // namespace
 void verify_pbr_probes(const render::Device& device) {
     auto renderer = take(render::OffscreenRenderer::create(device, {64, 64}));
@@ -149,6 +265,22 @@ void verify_pbr_probes(const render::Device& device) {
         v.uv0[1] *= 128;
     }
     near(red(renderer, mip), 33, "sRGB mip generation or LOD sampling failed");
+    reflected_normal(renderer);
+    sampler_probes(renderer);
+    auto tiny = quad();
+    tiny.asset.nodes[0].scale = {1e-6F, 1e-6F, 1e-6F};
+    for (auto& v : tiny.asset.meshes[0].primitives[0].vertices) {
+        for (auto& position : v.position) {
+            position *= 1e6F;
+        }
+    }
+    near(red(renderer, tiny), 48, "tiny uniform node scale rejected");
+    auto collapsed = quad();
+    auto node = collapsed.asset.nodes[0];
+    node.scale = {0, 0, 0};
+    collapsed.asset.nodes.push_back(node);
+    collapsed.asset.scene_roots.push_back(1);
+    near(red(renderer, collapsed), 48, "collapsed node prevented other geometry rendering");
     // Fill both hard caps. Identical images share backing memory, but every
     // image descriptor is initialized and the draw accesses the very last slot.
     auto full = quad();
@@ -186,6 +318,7 @@ void verify_pbr_probes(const render::Device& device) {
     good(renderer.collect_assets());
     require(renderer.pbr_stats().textures == 0 && renderer.pbr_stats().materials == 0,
             "bindless slots leaked");
-    std::cout << "PBR color-space, alpha, mip and full 4096-slot probes passed\n";
+    std::cout << "PBR color-space, alpha, sampler, reflected-normal, node-scale and full 4096-slot "
+                 "probes passed\n";
 }
 } // namespace engine::test

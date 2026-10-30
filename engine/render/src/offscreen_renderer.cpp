@@ -664,7 +664,13 @@ core::Result<std::vector<std::uint8_t>> OffscreenRenderer::Impl::draw(const scen
             for (auto entity : view.entities()) {
                 if (view.scene().has<scene::AssetInstance>(entity)) {
                     return core::make_failure<std::vector<std::uint8_t>>(core::make_error(
-                        core::ErrorCode::NotFound, "scene asset has not been uploaded"));
+                        core::ErrorCode::NotFound, "scene asset has not been uploaded", {},
+                        {
+                            {
+                                "assetId",
+                                view.scene().component<scene::AssetInstance>(entity).asset_id,
+                            },
+                        }));
                 }
             }
         }

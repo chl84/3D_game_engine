@@ -70,6 +70,21 @@ std::uint64_t difference(const std::vector<std::uint8_t>& a, const std::vector<s
     }
     return sum;
 }
+bool images_match(const std::vector<std::uint8_t>& a, const std::vector<std::uint8_t>& b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    std::uint64_t changed = 0;
+    int maximum = 0;
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        const auto delta = std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
+        maximum = std::max(maximum, delta);
+        if (delta > 3) {
+            ++changed;
+        }
+    }
+    return maximum <= 8 && changed < a.size() / 1000U;
+}
 asset::LoadedAsset load(const std::filesystem::path& root, const std::string& file) {
     auto imported =
         take(asset::import_asset(root, std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR) / file));
@@ -119,17 +134,38 @@ int main(int argc, char** argv) {
             render::SwapchainOptions swap;
             swap.debug_overlay = false;
             auto renderer = take(render::Renderer::create(device, *window, swap));
+            auto missing = renderer.draw_frame(scene::SceneView(scene));
+            require(!missing && missing.error().code == core::ErrorCode::NotFound &&
+                        missing.error().details.at("assetId") ==
+                            generated.record.asset_id.to_string(),
+                    "missing upload did not report the scene asset ID");
             good(renderer.upload_asset(generated));
             good(renderer.upload_asset(exported));
             for (int frame = 0; frame < 2; ++frame) {
                 require(take(renderer.draw_frame(scene::SceneView(scene))),
                         "window PBR did not present");
             }
+            // Recoverable data errors must leave the current frame slot usable.
+            auto extra_light = take(scene.create_entity("Extra sun"));
+            good(scene.add_component<scene::DirectionalLight>(extra_light));
+            auto denied_light = renderer.draw_frame(scene::SceneView(scene));
+            require(!denied_light && denied_light.error().code == core::ErrorCode::Validation,
+                    "multiple lights were accepted");
+            good(scene.destroy_entity(extra_light));
+            require(take(renderer.draw_frame(scene::SceneView(scene))),
+                    "valid frame after light validation error did not present");
+            scene::Scene no_camera;
+            require(!renderer.draw_frame(scene::SceneView(no_camera)), "missing camera accepted");
+            require(take(renderer.draw_frame(scene::SceneView(scene))),
+                    "valid frame after missing camera did not present");
             auto before = renderer.pbr_stats();
             good(renderer.retire_asset(generated.record.asset_id.to_string()));
             require(renderer.pbr_stats().textures == before.textures &&
                         renderer.pbr_stats().retired_assets == 1,
                     "retired descriptor slots reused early");
+            auto denied_asset = renderer.draw_frame(scene::SceneView(scene));
+            require(!denied_asset && denied_asset.error().code == core::ErrorCode::NotFound,
+                    "retired scene asset was accepted");
             set_asset(scene, exported.record.asset_id.to_string());
             for (int frame = 0; frame < 2; ++frame) {
                 require(take(renderer.draw_frame(scene::SceneView(scene))),
@@ -141,7 +177,7 @@ int main(int argc, char** argv) {
             good(renderer.upload_asset(generated));
             good(renderer.wait_idle());
             validation(device);
-            std::cout << "PBR two-frame retirement and reuse passed\n";
+            std::cout << "PBR error recovery, two-frame retirement and reuse passed\n";
             return 0;
         }
         require(argc > 1, "golden PNG path required");
@@ -157,8 +193,9 @@ int main(int argc, char** argv) {
         auto actual = take(renderer.render(scene::SceneView(scene), 2));
         set_asset(scene, exported.record.asset_id.to_string());
         auto reference = take(renderer.render(scene::SceneView(scene), 1));
-        require(difference(actual, reference) < actual.size() / 4U,
+        require(images_match(actual, reference),
                 "generated tangents disagree with Blender reference image");
+        std::cout << "Blender tangent image difference: " << difference(actual, reference) << '\n';
         // The fixture must be sensitive to both omitted normal maps and wrong handedness.
         auto flat = generated;
         flat.record.asset_id = core::Uuid::generate();
@@ -171,6 +208,8 @@ int main(int argc, char** argv) {
         std::cerr << "normal difference: " << difference(actual, flat_pixels)
                   << " roots: " << generated.asset.scene_roots.size()
                   << " meshes: " << generated.asset.meshes.size() << '\n';
+        require(!images_match(flat_pixels, reference),
+                "Blender-reference tolerance accepts a missing normal map");
         require(difference(actual, flat_pixels) > 20000U,
                 "normal map has no measurable image effect");
         auto flipped = generated;
@@ -204,7 +243,7 @@ int main(int argc, char** argv) {
         auto reflected = take(renderer.render(scene::SceneView(scene), 1));
         set_asset(scene, exported.record.asset_id.to_string());
         auto reflected_reference = take(renderer.render(scene::SceneView(scene), 1));
-        require(difference(reflected, reflected_reference) < actual.size() / 4U,
+        require(images_match(reflected, reflected_reference),
                 "reflected tangents disagree with Blender reference image");
         require(difference(reflected, actual) > 10000U, "reflection probe did not change image");
         require(scene.revision() == original_revision, "rendering mutated scene revision");
@@ -216,7 +255,7 @@ int main(int argc, char** argv) {
         oversized.record.asset_id = core::Uuid::generate();
         oversized.asset.materials.resize(4097);
         require(!renderer.upload_asset(oversized), "material slot overflow accepted");
-        oversized = generated;
+        oversized = std::move(generated);
         oversized.record.asset_id = core::Uuid::generate();
         oversized.textures.resize(4097);
         require(!renderer.upload_asset(oversized), "texture slot overflow accepted");
@@ -234,17 +273,7 @@ int main(int argc, char** argv) {
                 image + (static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4U));
             stbi_image_free(image);
             require(width == 256 && height == 192, "wrong golden size");
-            std::uint64_t changed = 0;
-            int maximum = 0;
-            for (std::size_t i = 0; i < actual.size(); ++i) {
-                const auto delta =
-                    std::abs(static_cast<int>(actual[i]) - static_cast<int>(golden[i]));
-                maximum = std::max(maximum, delta);
-                if (delta > 3) {
-                    ++changed;
-                }
-            }
-            require(maximum <= 8 && changed < actual.size() / 1000U, "PBR golden mismatch");
+            require(images_match(actual, golden), "PBR golden mismatch");
         }
         test::verify_pbr_probes(device);
         validation(device);

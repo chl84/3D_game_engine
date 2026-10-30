@@ -21,6 +21,9 @@ void main() {
     vec4 p=vec4(position,1);
     worldPosition=vec3(dot(push.row0,p),dot(push.row1,p),dot(push.row2,p));
     mat3 linear=transpose(mat3(push.row0.xyz,push.row1.xyz,push.row2.xyz));
+    // Remove uniform scale before inverse/determinant to preserve tiny objects.
+    vec3 maximum=max(max(abs(linear[0]),abs(linear[1])),abs(linear[2]));
+    linear/=max(max(maximum.x,maximum.y),maximum.z);
     windingSign=sign(determinant(linear));
     worldNormal=normalize(transpose(inverse(linear))*normal);
     worldTangent=vec4(normalize(linear*tangent.xyz),tangent.w*sign(determinant(linear)));

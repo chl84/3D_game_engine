@@ -453,9 +453,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.4 is complete and reviewer-approved. Next is M3.5: PBR, bindless assets and
-DirectionalLight rendering. M3.5 must add the normal-map Blender golden image comparison on Linux and
-Windows lavapipe; the current per-corner CPU comparison is not that image test.
+M3.5 is implemented; review round1 requested frame-error recovery and stronger
+reflection/Blender-reference tests. Those fixes are being verified before a
+new CI run and re-review. M3.6 remains next after M3.5 approval.
 The optional nightly ten-minute fuzz/cached-corpus proposal is recorded for
 M3.8. M3 merges as a complete milestone only after explicit owner approval.
 
@@ -496,3 +496,27 @@ Cooked scene-root membership is restored from existing sidecar metadata;
   yet verified. Windows presentation remains unverified. CLI placement and
   automatic project-asset resolution remain M3.6; live control remains M3.7.
 - No new dependency, merge, tag or milestone closure is included.
+
+## M3.5 review round1 and corrections
+
+Review of `47569ea` returned RETT FØRST: resetting a frame fence before PBR
+validation could hang the next draw after a data error. Window preparation now
+finishes before acquire, and fence reset happens immediately before submit.
+The new regression renders after multiple-light, retired-asset and missing-camera
+errors. Fatal Vulkan errors after acquire return a stored terminal error.
+Blender-reference tolerances now match the strict fixed-golden tolerance; an
+analytical reflected-normal probe independently checks determinant handedness.
+Sampler wrap/filter and tiny/collapsed-node probes address the remaining low
+findings. Required validation remains unchanged. Final local Clang20/20 passes
+(`/tmp/m35-r2-full-clang.log`); Iris Xe controls/window recovery pass. Both PBR
+shaders pass spirv-val; changed C++ passes clang-tidy warnings-as-errors and
+clang-format18. Mutations prove the analytical normal fails at75 instead of137,
+and late preparation/reset recreates the hang; correct artifacts are restored.
+ASan remains12/20 locally with the same112-byte graphics leaks
+(`/tmp/m35-r2-full-asan.log`). New CI and re-review are pending.
+
+All six jobs of the original implementation's CI41051934696 ultimately passed:
+Clang/GCC14/ASan20/20, Windows14/14 including PBR golden on lavapipe, Fuzz and
+Quality success. This evidence is for `47569ea`, not the uncommitted review fixes.
+Windows presentation and unresolved local112-byte sanitizer leaks remain as
+reported above. No merge/tag is authorized.

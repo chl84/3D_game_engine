@@ -340,5 +340,5 @@ add_test(NAME engine_pbr_golden COMMAND engine_pbr_test "${CMAKE_CURRENT_SOURCE_
 set_tests_properties(engine_pbr_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
 if(NOT WIN32)
     add_test(NAME engine_pbr_window COMMAND engine_pbr_test --window)
-    set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77)
+    set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77 TIMEOUT 30)
 endif()

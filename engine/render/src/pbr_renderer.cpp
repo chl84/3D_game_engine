@@ -1011,9 +1011,16 @@ Result<void> PbrRenderer::prepare(const scene::SceneView& view, const scene::Wor
                     }
                 }
             }
-            if (!std::isfinite(glm::determinant(glm::dmat3{world})) ||
-                std::abs(glm::determinant(glm::dmat3{world})) < 1e-16) {
-                return invalid<void>("PBR transform must be finite and invertible");
+            // Test shape rather than absolute size: tiny uniform scales are valid.
+            double largest = 0;
+            for (int column = 0; column < 3; ++column) {
+                for (int row = 0; row < 3; ++row) {
+                    largest = std::max(largest, std::abs(world[column][row]));
+                }
+            }
+            if (largest < static_cast<double>(std::numeric_limits<float>::min()) ||
+                std::abs(glm::determinant(glm::dmat3{world} / largest)) < 1e-12) {
+                continue; // Collapsed/near-singular nodes cannot define a tangent frame.
             }
             for (const auto& mesh : found->second->meshes[node.mesh]) {
                 Push push;
@@ -1183,8 +1190,8 @@ core::Result<void> PbrRenderer::set_format(VkFormat color, VkFormat depth) {
     vkDestroyShaderModule(device->device(), *vertex_module, nullptr);
     vkDestroyShaderModule(device->device(), *fragment_module, nullptr);
     if (result != VK_SUCCESS) {
-        return core::make_failure<void>(detail::vulkan_error(
-            "could not create the offscreen graphics pipeline", "offscreen", result));
+        return core::make_failure<void>(
+            detail::vulkan_error("could not create the PBR graphics pipeline", "pbr", result));
     }
     pipeline = new_pipeline;
     impl_->color = color;
