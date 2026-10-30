@@ -440,7 +440,6 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
             primitive["targets"] = nlohmann::json::array({
                 {{"POSITION", position}},
             });
-            document["meshes"][0]["weights"] = nlohmann::json::array({0.0});
         });
         const auto result = engine::asset::import_glb(as_span(bytes), "morph.glb");
         REQUIRE_FALSE(result.has_value());
@@ -460,6 +459,16 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
         CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
+    SECTION("mesh morph weights without targets") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["meshes"][0]["weights"] = nlohmann::json::array({0.0});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "mesh-weights.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/weights");
     }
 
     SECTION("non-float texture coordinates") {

@@ -970,6 +970,11 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
     std::size_t total_primitives = 0;
     for (std::size_t mesh_index = 0; mesh_index < gltf.meshes.size(); ++mesh_index) {
         const auto& source = gltf.meshes[mesh_index];
+        if (!source.weights.empty()) {
+            return core::make_failure<ImportedAsset>(make_import_error(
+                ErrorCode::Unsupported, "morph target weights are not supported in M3",
+                "/meshes/" + std::to_string(mesh_index) + "/weights", {{"mesh", mesh_index}}));
+        }
         Mesh mesh;
         mesh.name =
             source.name.empty() ? "mesh_" + std::to_string(mesh_index) : std::string(source.name);
