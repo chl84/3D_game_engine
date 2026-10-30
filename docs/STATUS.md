@@ -2,7 +2,8 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.6 — asset instances and scene placement (authorized).
+**Current substep:** M3.6 — asset instances and scene placement implemented;
+local verification complete, exact-SHA CI and independent review pending.
 M3.4 and M3.5 were approved by the owner on 2026-10-30. All six reporting
 follow-up CI jobs passed on `59c2e97` (Ubuntu21/21, Windows15/15).
 The owner corrected emissiveTexture to sRGB, formally approved the pinned
@@ -531,7 +532,8 @@ No new dependency, merge, tag or milestone closure is included.
 
 ## Owner-requested M3.4/M3.5 reporting follow-up
 
-M3.6 is explicitly stopped and has not started. Full reports are available:
+At the reporting audit, M3.6 was stopped pending owner assessment (since
+approved below). Full retrospective reports are available:
 [M3.4](verification/M3_4_STATUS_REPORT.md) and
 [M3.5](verification/M3_5_STATUS_REPORT.md).
 
@@ -541,7 +543,7 @@ Build-ID-guarded C probe reproduces it after freeing all requested code; an
 intentional 73-byte application leak still fails. Exact normalized stack/source
 correlation and captured evidence are in the [diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md).
 The opt-in local sanitizer preset uses the supported loader-retention switch
-and documented LSan file; all 21 tests pass with leak detection active. The
+and the former documented LSan file; all 21 tests passed with leak detection active. The
 function rule is inactive/unverified on available stripped binaries. No
 patterns are consumed: retention preserves the arena root. The ordinary preset and reference Ubuntu CI remain unsuppressed.
 
@@ -557,8 +559,9 @@ policy; required report corrections are applied. Permanent
 [CI](verification/M3_CI_EVIDENCE.txt),
 [local acceptance](verification/M3_ACCEPTANCE_EVIDENCE.txt) and
 [native diagnostic](verification/M3_SANITIZER_EVIDENCE.txt) evidence is committed.
-Existing rendering/import runtime and Blender golden are unchanged. M3.6 stays
-stopped. No merge or tag is authorized or performed.
+At that reporting SHA, rendering/import runtime and Blender golden were
+unchanged. The subsequent owner approval authorizes M3.6, recorded below.
+No merge or tag is authorized or performed.
 
 ## Owner correction before M3.6 — 2026-10-30
 
@@ -576,3 +579,24 @@ stopped. No merge or tag is authorized or performed.
   copy are formally owner-approved.
 - Local Clang asset/PBR verification and subsequent M3.6 results are recorded
   below as they complete. No merge/tag has been performed.
+
+## M3.6 implementation and local verification
+
+- Shared asset.place@1 creates one Transform/AssetInstance entity after validating
+  the referenced cache. CLI supports name, double position and dry-run; placement
+  uses project locking and the same command bus as scene batches.
+- Undo/redo preserves instance UUID; seeded placement is deterministic. Failed
+  transactions roll back. Delete/undo now restores the asset component as well.
+- Screenshot/run resolve only referenced assets and upload each UUID once.
+  Existing PBR traverses cooked node hierarchies without modifying the scene;
+  instances share GPU resources. Missing/stale cache requires explicit reimport.
+- The public acceptance runs import/place/two visible instances/render/save/load/
+  changed-source reimport, unchanged scene bytes, missing-cache recovery and
+  Linux hidden-window frames. Existing v1/v2 migration tests remain unchanged.
+- Full local Clang and ASan/UBSan:22/22 on lavapipe. Leak detection remains on,
+  local retention has no suppression file. New Windows results are not claimed
+  from earlier M3.5 CI. Local static-analysis/docs checks are recorded in
+  [M3.6 evidence](verification/M3_6_LOCAL_EVIDENCE.txt).
+- [Full A.5 report](verification/M3_6_STATUS_REPORT.md). Exact-SHA CI and
+  independent Claude Opus5.5 high review are the next acceptance gates.
+  No M3.7 work, merge or tag has started.

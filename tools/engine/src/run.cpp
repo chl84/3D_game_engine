@@ -1,4 +1,5 @@
 #include "commands.hpp"
+#include "scene_assets.hpp"
 #include "scene_warnings.hpp"
 
 #include <engine/command/command.hpp>
@@ -164,6 +165,13 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
     auto renderer = render::Renderer::create(*device, *window, swapchain_options);
     if (!renderer) {
         const CommandResult result = failure(renderer.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    const auto uploaded = upload_scene_assets(*renderer, project->root(), view);
+    if (!uploaded) {
+        const auto result = failure(uploaded.error());
         print_result(result, json);
         return exit_code_for(result);
     }

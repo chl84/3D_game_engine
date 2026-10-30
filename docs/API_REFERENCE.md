@@ -15,6 +15,7 @@
 | `engine entity create|delete|reparent --json` | Entity lifecycle |
 | `engine component set|add|remove --json` | Component changes |
 | `engine asset import|inspect|validate|reimport|list --json` | Asset lifecycle and cooked-cache inspection |
+| `engine asset place <project> <scene> --asset UUID [--position X Y Z] --json` | Place a shared asset instance |
 | `engine simulate --ticks N --json` | Fixed-tick state dump |
 | `engine batch --file FILE --undo N --json` | Transactional command batch |
 | `engine screenshot <project> <scene> --frames N --out FILE --json` | Offscreen PNG screenshot |
@@ -93,6 +94,39 @@ Required arguments: none
   "additionalProperties": false,
   "properties": {},
   "required": [],
+  "type": "object"
+}
+```
+
+### `asset.place@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "position": {
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
   "type": "object"
 }
 ```

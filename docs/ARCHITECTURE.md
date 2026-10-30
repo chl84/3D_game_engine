@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M3.4. This document describes the approved module boundaries and
+**Status:** M3.6. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -286,11 +286,12 @@ The current implementation contains:
 - `engine/render` also provides shared `PbrRenderer` resources for window and
   offscreen rendering. Explicit `LoadedAsset` uploads supply node hierarchies,
   meshes and textures to `AssetInstance` references through read-only SceneView.
-  One bindless set holds 4096 images and 4096 materials. GPU mips, sRGB baseColor,
+  One bindless set holds 4096 images and 4096 materials. GPU mips, sRGB baseColor/emissive,
   linear data inputs, metallic-roughness/normal/AO/emissive shading, OPAQUE/MASK
   and an authored DirectionalLight use one shared shader pair (ADR-0014).
   Retired assets retain descriptor leases until idle collection. Resource
   budgets count VMA blocks plus documented native-resource reservations.
 
-Instance placement and automatic project-asset resolution (M3.6) and live
-control (M3.7) remain. Physics, scripting, streaming and editor remain planned.
+Instance placement and automatic project-asset resolution are implemented in
+M3.6 through shared undoable asset commands and CLI composition-root uploads.
+Live control (M3.7) remains. Physics, scripting, streaming and editor remain planned.

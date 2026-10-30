@@ -249,3 +249,14 @@ M1 must demonstrate that a CLI-only script can create a project, build a
 scene with an entity hierarchy, change components, undo, save and load again.
 Saving again must produce byte-identical files, and all CLI responses must
 validate against their schemas.
+
+### M3.6 placement and emissive correction
+
+`asset.place@1` stores one Transform/AssetInstance entity in scene format3;
+its assetId references the project asset library. Instances share cooked
+hierarchies/materials and do not serialize copies of imported GLB nodes.
+Render commands load referenced caches read-only, once per asset UUID.
+No project/scene/sidecar/cooked schema version changes in this substep.
+Importer `gltf-import@4` changes derived texture metadata: baseColor and emissive
+are sRGB, while normal/MR/AO remain linear. Reimport rebuilds old caches while
+preserving asset and internal stable IDs.

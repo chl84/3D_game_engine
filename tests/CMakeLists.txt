@@ -344,3 +344,13 @@ if(NOT WIN32)
     add_test(NAME engine_pbr_window COMMAND engine_pbr_test --window)
     set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77 TIMEOUT 30)
 endif()
+
+set(asset_placement_window)
+if(NOT WIN32)
+    set(asset_placement_window --window)
+endif()
+add_test(NAME engine_asset_placement
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/asset_placement.py"
+            "$<TARGET_FILE:engine>" ${asset_placement_window}
+)
+set_tests_properties(engine_asset_placement PROPERTIES LABELS "contract;cli;asset;render;acceptance" TIMEOUT 120)

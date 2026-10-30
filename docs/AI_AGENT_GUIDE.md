@@ -231,7 +231,7 @@ source for reimport and falls back to its project copy if the source disappears.
 Successful CLI data exposes project-relative copy/cache/dependency paths rather
 than the original machine-specific source path. Results use `command-result@1`;
 asset data validates against `asset-result-data@1.schema.json`. Input schemas
-for the five `asset.*@1` commands are included in `engine schema --json` and the
+for the asset lifecycle and placement commands are included in `engine schema --json` and the
 generated API reference. CLI and future live control use the same handlers.
 
 `inspect` reports stable node/mesh/material/texture IDs, per-primitive bounds,
@@ -249,15 +249,39 @@ it cannot promise that a later filesystem write will succeed. Imports acquire
 the normal project lock before writing. Asset imports/reimports are not undoable
 filesystem transactions; registering them in a shared bus does not make them
 eligible for a scene batch transaction. Such use fails with `E_UNSUPPORTED`
-before mutation. Scene placement/undo is added in M3.6.
+before mutation. Scene placement/undo is implemented in M3.6.
 
 The official MikkTSpace implementation generates missing normal-map tangents
 during cooking and splits vertices at tangent discontinuities. Source tangents
-are preserved. `gltf-import@3` rejects old cache; use reimport to regenerate it.
+are preserved. `gltf-import@4` rejects old cache; use reimport to regenerate it.
 The checked-in Blender fixtures verify tangent compatibility on the CPU.
 The M3.5 golden compares the mirrored-UV Blender model without tangents with
 a fixed lavapipe image and its Blender-tangent export. Renderer C++ APIs expose
 explicit `upload_asset`, `retire_asset` and `collect_assets`; scenes reference
 the uploaded ID through `AssetInstance`. CLI placement and automatic project
-asset resolution are M3.6 work. Reimport also rebuilds corrupt derived buffers
+asset resolution are implemented in M3.6. Reimport also rebuilds corrupt derived buffers
 when their stored cache key still matches.
+
+## Place and render asset instances (M3.6)
+
+```sh
+engine asset import demo models/cube.glb --json
+engine asset place demo scenes/main.scene.json --asset <assetId> --name Left --position -1.5 0 0 --json
+engine asset place demo scenes/main.scene.json --asset <assetId> --name Right --position 1.5 0 0 --json
+engine screenshot demo scenes/main.scene.json --out screenshots/instances.png --width 256 --height 192 --json
+engine run demo scenes/main.scene.json --frames 3 --hidden --json
+```
+
+A scene needs an enabled camera viewing the model. Placement uses the shared
+`asset.place@1` handler and returns `data.result.id` plus assetId/name/position.
+Its default name is the imported asset name and default position is [0,0,0].
+`--dry-run` validates against the project and scene without saving; preview
+entity IDs are disposable. Placement holds the project lock, supports scene
+batch undo/rollback, and stores one AssetInstance rather than expanding GLB nodes.
+Two instances share their asset UUID, meshes, materials and image descriptors.
+Window and screenshot commands resolve each referenced asset once. Rendering
+is read-only: repair a missing/stale cache with `engine asset reimport` explicitly.
+Reimport keeps the asset UUID, so saved instance references continue to work.
+
+BaseColor and emissive textures use sRGB; normal/MR/AO are linear. Importer@4
+invalidates the former emissive-linear caches. Material factors remain linear.

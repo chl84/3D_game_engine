@@ -223,3 +223,19 @@ negative control must remain distinguishable.
 The owner formally approved official mmikk/MikkTSpace, the pinned commit and
 zlib license, including the separately marked build copy with its documented
 UB corrections. M3.4 and M3.5 are owner-approved.
+
+## M3.6 instance resolution
+
+`asset.place@1` validates the referenced cooked asset and creates one scene
+entity with Transform and AssetInstance. Its UUID is new per placement; the
+asset UUID is shared. Undo/redo retains the instance UUID, and scene batch
+transactions can roll back placement. Scene save/load already implements v3
+and v1/v2 migration; M3.6 does not add another format version.
+
+The CLI composition root resolves referenced project assets before rendering,
+loading/uploading each unique asset UUID once for both window and offscreen.
+PbrRenderer traverses the cooked node hierarchy read-only for every instance.
+Rendering never reimports, recooks or expands asset nodes into scene entities.
+Missing/stale caches return an error with assetId; explicit reimport repairs
+them. GPU resources are shared across instances and released with the renderer.
+Live synchronization/hot reload remains M3.7 and later streaming work.

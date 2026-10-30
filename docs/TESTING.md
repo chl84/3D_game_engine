@@ -387,3 +387,28 @@ These are CPU tests, not the deferred M3.5 image test. Both run under ASan/UBSan
 The permanent GLB fuzz target also runs tangent generation after valid import;
 its C implementation is instrumented with Clang sanitizer/coverage flags in
 the `linux-fuzz` preset.
+
+## M3.6 asset instance acceptance
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang -R 'engine_asset_(tests|placement)' -V
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+```
+
+`engine_asset_placement` runs the public import/place/screenshot/reimport commands
+in fresh processes. It decodes PNGs with the Python standard library and checks
+visible geometry in both image halves, identical reload output and changed
+output after source modification/reimport. It also checks dry-run, locking,
+sandbox errors, placement undo/rollback, deletion undo, unchanged scene bytes
+while rendering/reimporting, and read-only failure/recovery for a missing cache.
+A duplicate GPU upload would fail, so successful two-instance rendering also
+checks per-UUID resource sharing. Linux additionally renders three hidden-window
+frames; Windows runs the complete offscreen scenario. No Vulkan-unavailable skip
+is used by this acceptance test: its environment must provide lavapipe/device.
+Existing CPU v1/v2 migration and v3 component serialization tests remain required.
+
+The corrected color chart expects sRGB emissive red117. A deliberately linear
+emissive control produces156 and must remain distinct; imported/cooked metadata
+also requires sRGB and permits shared baseColor/emissive use. The inactive native
+suppression rule is removed. Local driver retention remains opt-in; reference
+CI uses the ordinary sanitizer configuration without retention or suppressions.

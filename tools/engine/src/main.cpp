@@ -231,6 +231,17 @@ int main(int argc, char** argv) {
     for (auto* command : {asset_inspect, asset_validate, asset_reimport}) {
         command->add_option("assetId", asset_id, "Asset UUID.")->required();
     }
+    auto* asset_place =
+        asset_command->add_subcommand("place", "Place an asset instance in a scene.");
+    std::string asset_scene;
+    std::vector<double> asset_position;
+    asset_place->add_option("project", asset_project, "Project directory.")->required();
+    asset_place->add_option("scene", asset_scene, "Scene path inside the project.")->required();
+    asset_place->add_option("--asset", asset_id, "Asset UUID.")->required();
+    asset_place->add_option("--name", asset_name, "Instance name (default: asset name).");
+    asset_place->add_option("--position", asset_position, "Instance position X Y Z.")->expected(3);
+    asset_place->add_flag("--json", json, "Emit a machine-readable JSON document.");
+    asset_place->add_flag("--dry-run", dry_run, "Validate placement without saving the scene.");
     asset_command->require_subcommand(1);
 
     auto* schema_command = app.add_subcommand("schema", "Print component schemas.");
@@ -367,6 +378,10 @@ int main(int argc, char** argv) {
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
     }
 
+    if (*asset_place) {
+        return engine::cli::asset_place(asset_project, asset_scene, asset_id, asset_name,
+                                        asset_position, json, dry_run);
+    }
     if (*asset_command) {
         std::string operation;
         if (*asset_import) {

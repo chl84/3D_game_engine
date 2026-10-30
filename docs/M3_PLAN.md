@@ -3,7 +3,8 @@
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 and
 M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
-on `eceb5f9`. M3.6 is next.
+on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is implemented locally
+and awaiting verification/review. The owner corrected emissive to sRGB.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -303,6 +304,12 @@ engine asset list <project> [--json]
   data textures.
 
 ### M3.6 Asset instances and scene placement
+
+Implementation: AssetInstance/v3 migration already existed from M3.1. M3.6 adds
+shared undoable asset.place@1, the CLI command and read-only unique-UUID uploads
+for screenshot/run. The public CLI acceptance covers two visible instances,
+fresh-process reload and changed-source reimport without changing scene bytes.
+Verification/reviewer status is recorded in STATUS.md.
 
 - Add `engine.scene.AssetInstance` and scene format 3 with v1/v2 migrations.
 - Add `engine asset place <project> <scene> --asset <assetId> [--name NAME]

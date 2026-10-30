@@ -3,10 +3,13 @@
 #include <engine/asset/asset_library.hpp>
 #include <engine/core/path_sandbox.hpp>
 #include <engine/core/sha256.hpp>
+#include <engine/scene/scene.hpp>
 
 #include <array>
+#include <cmath>
 #include <fstream>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -119,6 +122,28 @@ json asset_command_schemas() {
             {"required", std::move(required)},
         };
     }
+    schemas["asset.place@1"] = {
+        {"$schema", "http://json-schema.org/draft-07/schema#"},
+        {"type", "object"},
+        {"additionalProperties", false},
+        {"required", {"assetId"}},
+        {
+            "properties",
+            {
+                {"assetId", uuid},
+                {"name", {{"type", "string"}, {"minLength", 1}}},
+                {
+                    "position",
+                    {
+                        {"type", "array"},
+                        {"minItems", 3},
+                        {"maxItems", 3},
+                        {"items", {{"type", "number"}}},
+                    },
+                },
+            },
+        },
+    };
     return schemas;
 }
 
@@ -126,6 +151,9 @@ Result<void> register_asset_commands(command::CommandBus& bus, const std::filesy
                                      bool dry_run) {
     const auto schemas = asset_command_schemas();
     for (const auto& [name, schema] : schemas.items()) {
+        if (name == "asset.place@1") {
+            continue; // Requires a scene; registered separately below.
+        }
         auto added = bus.add(
             name, schema, [root, dry_run, name, &bus](const json& args) -> Result<CommandOutput> {
                 try {
@@ -182,6 +210,79 @@ Result<void> register_asset_commands(command::CommandBus& bus, const std::filesy
         }
     }
     return {};
+}
+
+Result<void> register_asset_scene_commands(command::CommandBus& bus,
+                                           const std::filesystem::path& root, scene::Scene& scene) {
+    return bus.add(
+        "asset.place@1", asset_command_schemas().at("asset.place@1"),
+        [root, &scene](const json& args) -> Result<CommandOutput> {
+            const auto asset_id = core::Uuid::parse(args.at("assetId").get<std::string>());
+            if (!asset_id) {
+                return core::make_failure<CommandOutput>(asset_id.error());
+            }
+            const auto coordinates = args.value("position", std::array<double, 3>{});
+            for (double coordinate : coordinates) {
+                if (!std::isfinite(coordinate)) {
+                    return core::make_failure<CommandOutput>(core::make_error(
+                        core::ErrorCode::Validation, "asset position must be finite"));
+                }
+            }
+            auto loaded = load_asset(root, *asset_id);
+            if (!loaded) {
+                return core::make_failure<CommandOutput>(loaded.error());
+            }
+            const auto name = args.value("name", loaded->record.name);
+            const auto asset_string = asset_id->to_string();
+            const auto create = [&scene, asset_string, name,
+                                 coordinates](std::optional<core::Uuid> id) -> Result<core::Uuid> {
+                auto entity = scene.create_entity(name, id);
+                if (!entity) {
+                    return core::make_failure<core::Uuid>(entity.error());
+                }
+                auto added = scene.add_component<scene::AssetInstance>(*entity);
+                if (!added) {
+                    (void)scene.destroy_entity(*entity);
+                    return core::make_failure<core::Uuid>(added.error());
+                }
+                scene.component<scene::AssetInstance>(*entity).asset_id = asset_string;
+                scene.transform(*entity).position = {
+                    coordinates[0],
+                    coordinates[1],
+                    coordinates[2],
+                };
+                return scene.uuid(*entity).value_or(core::Uuid{});
+            };
+            auto created = create(std::nullopt);
+            if (!created) {
+                return core::make_failure<CommandOutput>(created.error());
+            }
+            const auto id = *created;
+            auto undo = [&scene, id]() -> Result<void> {
+                const auto entity = scene.find(id);
+                if (!entity) {
+                    return core::make_failure<void>(core::make_error(
+                        core::ErrorCode::NotFound, "placed asset entity no longer exists"));
+                }
+                return scene.destroy_entity(*entity);
+            };
+            auto redo = [create, id]() -> Result<void> {
+                auto restored = create(id);
+                if (!restored) {
+                    return core::make_failure<void>(restored.error());
+                }
+                return {};
+            };
+            return CommandOutput{json{
+                                     {"id", id.to_string()},
+                                     {"assetId", asset_string},
+                                     {"name", name},
+                                     {"position", coordinates},
+                                 },
+                                 {},
+                                 std::move(undo),
+                                 std::move(redo)};
+        });
 }
 
 } // namespace engine::asset

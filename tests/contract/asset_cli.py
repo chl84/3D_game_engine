@@ -94,6 +94,14 @@ def main():
         assert emissive_info["textures"][0]["colorSpace"] == "srgb"
         emissive_cooked = json.loads((project / emissive["cachePath"] / "cooked.json").read_text())
         assert emissive_cooked["textures"][0]["colorSpace"] == "srgb"
+        # Emissive alone must select sRGB, independently of baseColor usage.
+        del color_doc["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"]
+        write_color_source()
+        emissive = run("asset", "reimport", project, emissive["assetId"])["data"]
+        emissive_info = run("asset", "inspect", project, emissive["assetId"])["data"]
+        assert emissive_info["textures"][0]["colorSpace"] == "srgb"
+        emissive_cooked = json.loads((project / emissive["cachePath"] / "cooked.json").read_text())
+        assert emissive_cooked["textures"][0]["colorSpace"] == "srgb"
         color_doc["materials"][0]["occlusionTexture"] = {"index": 0}
         write_color_source()
         before = snapshot(project)

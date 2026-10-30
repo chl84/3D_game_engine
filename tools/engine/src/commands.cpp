@@ -1,4 +1,5 @@
 #include "commands.hpp"
+#include "scene_assets.hpp"
 #include "scene_warnings.hpp"
 
 #include <engine/asset/commands.hpp>
@@ -386,6 +387,22 @@ void print_result(const CommandResult& result, bool json) {
             return core::make_failure<Entity>(parsed.error());
         }
     }
+    if (const auto iterator = components.find("engine.scene.AssetInstance");
+        iterator != components.end()) {
+        const auto* asset = registry.find("engine.scene.AssetInstance");
+        if (asset == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "asset instance descriptor missing"));
+        }
+        auto added = scene.add_component<AssetInstance>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = asset->from_json(&scene.component<AssetInstance>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
     if (const auto iterator = snapshot.find("metadata"); iterator != snapshot.end()) {
         auto metadata = scene.set_metadata(entity, *iterator);
         if (!metadata) {
@@ -497,7 +514,10 @@ void print_result(const CommandResult& result, bool json) {
 
 void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                              const ReflectionRegistry& registry) {
-    (void)project;
+    const auto assets = asset::register_asset_scene_commands(bus, project.root(), scene);
+    if (!assets) {
+        throw std::runtime_error("failed to register asset placement: " + assets.error().message);
+    }
     const auto add = [&bus](std::string name, nlohmann::json schema,
                             command::CommandRegistry::Handler handler) {
         const auto result = bus.add(std::move(name), std::move(schema), std::move(handler));
@@ -1328,6 +1348,22 @@ int asset_execute(const std::string& operation, const std::string& project_root,
     return exit_code_for(result);
 }
 
+int asset_place(const std::string& project_root, const std::string& scene_path,
+                const std::string& asset_id, const std::string& name,
+                const std::vector<double>& position, bool json, bool dry_run) {
+    nlohmann::json args = {{"assetId", asset_id}};
+    if (!name.empty()) {
+        args["name"] = name;
+    }
+    if (!position.empty()) {
+        args["position"] = position;
+    }
+    const auto result = execute_scene_command(project_root, scene_path,
+                                              {"asset.place@1", std::move(args)}, 0, dry_run);
+    print_result(result, json);
+    return exit_code_for(result);
+}
+
 int schema(bool json) {
     const ReflectionRegistry registry = make_registry();
     auto commands = scene_command_schemas();
@@ -1530,6 +1566,12 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
     }
 
     const scene::SceneView view(*loaded_scene);
+    const auto uploaded = upload_scene_assets(*renderer, project->root(), view);
+    if (!uploaded) {
+        const auto result = failure(uploaded.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
     const auto warnings = point_light_warnings(*loaded_scene, scene_path);
     auto pixels = renderer->render(view, frames);
     if (!pixels) {

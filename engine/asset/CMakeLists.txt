@@ -90,6 +90,7 @@ target_link_libraries(engine_asset
         engine::core
         engine::command
     PRIVATE
+        engine::scene
         engine::platform
         fastgltf::fastgltf
         nlohmann_json_schema_validator::validator
