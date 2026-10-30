@@ -455,9 +455,10 @@ The Windows job caught two real portability issues before the milestone closed:
 - The device-rejection path is tested through the pure descriptor requirement
   evaluator and error builder. There is no fake-Vulkan end-to-end test that
   drives `select_physical_device` with a synthetic unsupported device.
-- TSan covers the CPU-side tests only. The window, swapchain and overlay tests
-  are excluded because the Khronos validation layer reports a lock-order
-  inversion inside the uninstrumented layer; GPU drivers are not instrumented.
+- TSan covers the 13 documented CPU, protocol and basic headless-device tests,
+  including live journals and production socket deadlines. Rendering/window,
+  screenshot and PBR golden tests run separately under ASan/UBSan and ordinary
+  lavapipe suites; their uninstrumented drivers/layers are outside TSan scope.
 - `engine screenshot --out` is confined to the project sandbox, and width,
   height and frame count have upper bounds.
 - The renderer requires Vulkan 1.3 with Synchronization2 and Dynamic
@@ -800,17 +801,39 @@ does not permit merge/tag or M4 work.
 
 ### M3.8 Claude round 1 and corrections
 
-Claude reviewed014ba20 againstafea88a and requested one required Medium
+Claude reviewed `014ba20` against `afea88a` and requested one required Medium
 correction: the nine-test TSan selection omitted four viable contracts/device
-tests from the intended scope. It must include13tests and build all targets.
+tests from the intended scope. It must include 13 tests and build all targets.
 The initial nine-test evidence is retained as historical and superseded.
 [Review record](verification/M3_8_REVIEW_ROUND1.md).
 
-The correction also retains20minutes for ordinary fuzz CI (55for extended),
+The correction also retains 20 minutes for ordinary fuzz CI (55 for extended),
 documents measured corpus storage without claiming minimization, and makes the
 clean-clone script report/reject skipped CTest tests or an empty report.
-All TSan targets now build and the corrected scope passes13/13 on lavapipe,
+All TSan targets now build and the corrected scope passes 13/13 on lavapipe,
 including all internal headless-device cases. Skip/empty-report negative
 controls pass. [Correction evidence](verification/M3_8_REVIEW_CORRECTION_EVIDENCE.txt).
-Independent re-review is pending; this is not final technical/owner approval.
-Source remains unpublished.
+Claude independently approved `341dc3c` with no required findings; the final
+source/CI gate was then reopened by the extended-run timeout below. This is
+not owner approval. Source remains unpublished.
+
+### Extended-run timeout found before publication
+
+The initial 600-second-per-target run hit the 10-second GLB input limit while
+welding collapsed positions in MikkTSpace. The helper preserved its artifact
+and continued to image/RPC. This run is not green. The exact own-fixture
+mutation is now a permanent unit/fuzz seed with provenance and SHA-256.
+
+A small adapter change uses validated non-owning buffer views in synchronous
+callbacks, reducing debug/sanitizer lookup overhead. Official MikkTSpace,
+its approved marked build copy, tangent results, compiler/sanitizer flags and
+all existing time/memory limits remain unchanged. New full local Clang/GCC
+suites pass 27/27, ASan/UBSan 26/26 and the corrected TSan scope 13/13; the
+reproducer also replays successfully. A new long GLB run is underway.
+Independent review of this source delta remains required before publication.
+Minor previous-review notes also align TSan wording, improve text spacing and
+reject DISABLED/notrun clean-clone cases (real CTest controls verified).
+
+[Callback/timeout evidence](verification/M3_8_FUZZ_TIMEOUT_EVIDENCE.txt) and
+[prior technical approval](verification/M3_8_REVIEW_ROUND2.md) distinguish
+completed checks from remaining long-run/reference-CI/review gates.

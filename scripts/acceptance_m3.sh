@@ -38,10 +38,11 @@ import xml.etree.ElementTree as ET
 cases = list(ET.parse(sys.argv[1]).getroot().iter("testcase"))
 if not cases:
     raise SystemExit("error: clean-clone CTest report contains no tests")
-skipped = [case.get("name", "unknown") for case in cases if case.find("skipped") is not None]
-print(f"M3 clean-clone CTest: {len(cases)} tests, {len(skipped)} skipped")
-if skipped:
-    raise SystemExit("error: incomplete clean-clone acceptance; skipped: " + ", ".join(skipped))
+not_run = [case.get("name", "unknown") for case in cases
+           if case.find("skipped") is not None or case.get("status") in ("disabled", "notrun")]
+print(f"M3 clean-clone CTest: {len(cases)} tests, {len(not_run)} skipped/disabled/not run")
+if not_run:
+    raise SystemExit("error: incomplete clean-clone acceptance; not run: " + ", ".join(not_run))
 PY
 .venv/bin/python scripts/acceptance_m1.py ./build/linux-debug/tools/engine/engine
 .venv/bin/python scripts/acceptance_m3.py ./build/linux-debug/tools/engine/engine

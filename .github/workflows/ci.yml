@@ -789,9 +789,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/corpus
-          key: fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'vcpkg.json', 'vcpkg-configuration.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'tests/assets/m3/*.glb', 'tests/assets/m3/*.png', 'tests/assets/m3/*.jpg', 'vcpkg.json', 'vcpkg-configuration.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'vcpkg.json', 'vcpkg-configuration.json') }}-
+            fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'tests/assets/m3/*.glb', 'tests/assets/m3/*.png', 'tests/assets/m3/*.jpg', 'vcpkg.json', 'vcpkg-configuration.json') }}-
 
       - name: Run fuzz targets
         env:

@@ -3,6 +3,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 
@@ -118,6 +120,26 @@ TEST_CASE("MikkTSpace handles collapsed position bounds without casting NaN", "[
             CHECK(std::isfinite(value));
         }
     }
+}
+
+TEST_CASE("fuzzed absent position view retains MikkTSpace degenerate results",
+          "[asset][tangents][fuzz-regression]") {
+    auto asset = engine::asset::import_glb_file(std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR) /
+                                                "fuzz_collapsed_position_view.glb");
+    REQUIRE(asset);
+    REQUIRE(asset->meshes.size() == 2U);
+    REQUIRE(asset->meshes[1].primitives.size() == 1U);
+    const auto& primitive = asset->meshes[1].primitives[0];
+    REQUIRE(primitive.indices.size() == 3072U);
+    REQUIRE(std::ranges::all_of(primitive.vertices, [](const auto& v) {
+        return v.position == std::array<float, 3>{0, 0, 0};
+    }));
+    REQUIRE(engine::asset::generate_missing_tangents(*asset));
+    CHECK(primitive.indices.size() == 3072U);
+    CHECK(std::ranges::all_of(primitive.vertices, [](const auto& v) {
+        return v.position == std::array<float, 3>{0, 0, 0} &&
+               std::ranges::all_of(v.tangent, [](float x) { return std::isfinite(x); });
+    }));
 }
 
 TEST_CASE("Blender mirrored UV fixture matches generated tangents on both islands",

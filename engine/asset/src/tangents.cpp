@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <utility>
@@ -14,7 +15,13 @@ namespace engine::asset {
 namespace {
 
 struct TangentContext {
-    const Primitive& primitive;
+    // Non-owning views remain valid until genTangSpaceDefault returns. All
+    // indices are checked before construction; callbacks never change buffers.
+    // Collapsed-position welding invokes these getters millions of times, so
+    // avoid repeated container access in unoptimized sanitizer/debug builds.
+    const Vertex* vertices;
+    const std::uint32_t* indices;
+    std::size_t corner_count;
     std::vector<std::array<float, 4>> corners;
 };
 
@@ -23,9 +30,9 @@ const TangentContext& context(const SMikkTSpaceContext* ctx) {
 }
 
 const Vertex& vertex(const SMikkTSpaceContext* ctx, int face, int corner) {
-    const auto& primitive = context(ctx).primitive;
-    return primitive.vertices[primitive.indices[(static_cast<std::size_t>(face) * 3U) +
-                                                static_cast<std::size_t>(corner)]];
+    const auto& data = context(ctx);
+    return data.vertices[data.indices[(static_cast<std::size_t>(face) * 3U) +
+                                      static_cast<std::size_t>(corner)]];
 }
 
 core::Result<void> generate(Primitive& primitive) {
@@ -38,20 +45,33 @@ core::Result<void> generate(Primitive& primitive) {
         return core::make_failure<void>(core::make_error(
             core::ErrorCode::Validation, "invalid primitive for tangent generation"));
     }
-    TangentContext data{primitive, std::vector<std::array<float, 4>>(primitive.indices.size())};
+    TangentContext data{
+        primitive.vertices.data(),
+        primitive.indices.data(),
+        primitive.indices.size(),
+        std::vector<std::array<float, 4>>(primitive.indices.size()),
+    };
     SMikkTSpaceInterface callbacks{};
     callbacks.m_getNumFaces = [](const SMikkTSpaceContext* ctx) {
-        return static_cast<int>(context(ctx).primitive.indices.size() / 3U);
+        return static_cast<int>(context(ctx).corner_count / 3U);
     };
     callbacks.m_getNumVerticesOfFace = [](const SMikkTSpaceContext*, int) { return 3; };
     callbacks.m_getPosition = [](const SMikkTSpaceContext* ctx, float out[], int face, int corner) {
-        std::ranges::copy(vertex(ctx, face, corner).position, out);
+        const auto* value = vertex(ctx, face, corner).position.data();
+        out[0] = value[0];
+        out[1] = value[1];
+        out[2] = value[2];
     };
     callbacks.m_getNormal = [](const SMikkTSpaceContext* ctx, float out[], int face, int corner) {
-        std::ranges::copy(vertex(ctx, face, corner).normal, out);
+        const auto* value = vertex(ctx, face, corner).normal.data();
+        out[0] = value[0];
+        out[1] = value[1];
+        out[2] = value[2];
     };
     callbacks.m_getTexCoord = [](const SMikkTSpaceContext* ctx, float out[], int face, int corner) {
-        std::ranges::copy(vertex(ctx, face, corner).uv0, out);
+        const auto* value = vertex(ctx, face, corner).uv0.data();
+        out[0] = value[0];
+        out[1] = value[1];
     };
     callbacks.m_setTSpaceBasic = [](const SMikkTSpaceContext* ctx, const float tangent[],
                                     float sign, int face, int corner) {

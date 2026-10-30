@@ -34,30 +34,30 @@ acceptance; the correction run is captured separately.
 ## Independent verification
 
 - Fresh Clang Werror full suite: **27/27**, no skips; repeated after restoring
-  mutations. Public Blender golden: max channel difference1, changed0.
+  mutations. Public Blender golden: max channel difference 1, changed 0.
 - ASan/UBSan retention preset: **26/26**, `detect_leaks=1`, no `LSAN_OPTIONS`.
-- Original TSan selection9/9 and four omitted tests4/4 separately.
+- Original TSan selection 9/9 and four omitted tests 4/4 separately.
 - Direct invalid filesystem source, invalid supplied asset name and valid
   symlink alias to invalid source: CLI returns E_VALIDATION without changes.
   Live uses the same result and persists a started/completed error pair.
 - Removing the import text preflight fails both unit and CLI regression tests.
 - Reimport mutation assigning fresh IDs fails the new acceptance's stable-ID
   assertion. The existing golden/camera/light/tolerance are reused correctly.
-- Fuzz helper rejects 0,601,0600,-1,1e3,abc,9999 (exit2). Missing binaries do not
-  prevent later targets and yield exit1. An injected image-harness null write
-  produces a crash artifact, preserves logs, lets RPC run and returns exit1.
+- Fuzz helper rejects 0, 601, 0600, -1, 1e3, abc, 9999 (exit 2). Missing binaries do not
+  prevent later targets and yield exit 1. An injected image-harness null write
+  produces a crash artifact, preserves logs, lets RPC run and returns exit 1.
   The harness was restored/rebuilt afterward.
 - Workflow guard/concurrency/key/provenance and clean-clone SHA/cleanup checks
-  hold. Registered counts27/26/20 match the platform/sanitizer conditions.
+  hold. Registered counts 27/26/20 match the platform/sanitizer conditions.
 - Goldens, schemas, renderer, third-party sources and render tests are unchanged.
 
 The reimport text preflight is defense in depth: public sidecar/GLB parsing
-already rejects invalid text. Removing only that guard leaves27/27 passing;
+already rejects invalid text. Removing only that guard leaves 27/27 passing;
 no claim is made that a test specifically exercises it.
 
 ## Remaining gates at handback
 
-F1 correction and re-review, six-job reference CI (including Windows20/20),
+F1 correction and re-review, six-job reference CI (including Windows 20/20),
 manual extended fuzz with actual cache save/restore, and public exact-SHA clean
 clone. The reviewer did not rerun GCC, formatter/tidy18, short/600-second fuzzing
 or GitHub cache operations. Nightly activation awaits default-branch merge;

@@ -1,0 +1,406 @@
+M3.8 EXTENDED-FUZZ TIMEOUT / CALLBACK EVIDENCE — 2026-10-30
+
+This is local candidate evidence after341dc3c, before publication/review of the
+callback delta. Final exact-source CI/Windows and public clone are not claimed.
+
+The first600-second-per-target helper run is NOT GREEN: GLB timed out after12s
+with input timeout10, then the helper continued to image/RPC. This occurred
+while parent/reviewer builds were active. These diagnostic wall times are NOT
+controlled hardware performance measurements, a60FPS claim, or a universal
+worst-case bound. No power/profile conditions are asserted.
+
+Exact artifact retained as tests/assets/m3/fuzz_collapsed_position_view.glb:
+SHA2567d04b891992975e95cd770623d7419b0580811580266490d6ad32c2a0470ab54
+MIT mutation of this repository's original Blender mirrored coupon. Its absent
+POSITION bufferView yields578zero positions and1024degenerate triangles while
+normals/UVs vary; upstream shared-vertex welding repeatedly invokes callbacks.
+
+Original timeout stack excerpt:
+ALARM: working on the last Unit for 12 seconds
+       and the timeout value is 10 (use -timeout=N to change)
+MS: 2 CopyPart-ChangeByte-; base unit: e9ecb3df7fb46d84502b78a50aa2d3960fce7b39
+artifact_prefix='/tmp/m38-fuzz-artifacts-long/gltf/'; Test unit written to /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119
+==17== ERROR: libFuzzer: timeout after 12 seconds
+    #0 0x55f76ae82b26 in __sanitizer_print_stack_trace (<repository>/build/linux-fuzz/tests/engine_gltf_fuzz+0x3a1b26) (BuildId: 8290a17a44575af19368fe7d14b9d4fabb330606)
+    #1 0x55f76ad5e07d in fuzzer::PrintStackTrace() fuzzer.o
+    #2 0x55f76ad3e3ea in fuzzer::Fuzzer::AlarmCallback() fuzzer.o
+    #3 0x7ff7cfa3e6ef  (/usr/lib/libc.so.6+0x3e6ef) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #4 0x55f76b12c29a in engine::asset::(anonymous namespace)::vertex(SMikkTSpaceContext const*, int, int) <repository>/engine/asset/src/tangents.cpp:27:5
+    #5 0x55f76b12d684 in engine::asset::(anonymous namespace)::generate(engine::asset::Primitive&)::$_5::operator()(SMikkTSpaceContext const*, float*, int, int) const <repository>/engine/asset/src/tangents.cpp:51:27
+    #6 0x55f76b12d59b in engine::asset::(anonymous namespace)::generate(engine::asset::Primitive&)::$_5::__invoke(SMikkTSpaceContext const*, float*, int, int) <repository>/engine/asset/src/tangents.cpp:50:29
+    #7 0x55f76b24ef16 in GetNormal <repository>/build/linux-fuzz/engine/asset/generated/mikktspace.c:899:2
+    #8 0x55f76b24ac1d in MergeVertsFast <repository>/build/linux-fuzz/engine/asset/generated/mikktspace.c:628:23
+    #9 0x55f76b227c0a in GenerateSharedVerticesIndexList <repository>/build/linux-fuzz/engine/asset/generated/mikktspace.c:567:4
+    #10 0x55f76b216a83 in genTangSpace <repository>/build/linux-fuzz/engine/asset/generated/mikktspace.c:276:2
+    #11 0x55f76b215370 in genTangSpaceDefault <repository>/build/linux-fuzz/engine/asset/generated/mikktspace.c:227:9
+    #12 0x55f76b11f369 in engine::asset::(anonymous namespace)::generate(engine::asset::Primitive&) <repository>/engine/asset/src/tangents.cpp:65:9
+    #13 0x55f76b11c66b in engine::asset::generate_missing_tangents(engine::asset::ImportedAsset&) <repository>/engine/asset/src/tangents.cpp:115:31
+    #14 0x55f76aebda64 in LLVMFuzzerTestOneInput <repository>/tests/fuzz/gltf_import_fuzz.cpp:13:15
+    #15 0x55f76ad400b5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) fuzzer.o
+    #16 0x55f76ad3f5c9 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool, bool*) fuzzer.o
+    #17 0x55f76ad41745 in fuzzer::Fuzzer::MutateAndTestOne() fuzzer.o
+    #18 0x55f76ad424c5 in fuzzer::Fuzzer::Loop(std::__Fuzzer::vector<fuzzer::SizedFile, std::__Fuzzer::allocator<fuzzer::SizedFile>>&) fuzzer.o
+    #19 0x55f76ad2e88d in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) fuzzer.o
+    #20 0x55f76ad5ec67 in main (<repository>/build/linux-fuzz/tests/engine_gltf_fuzz+0x27dc67) (BuildId: 8290a17a44575af19368fe7d14b9d4fabb330606)
+    #21 0x7ff7cfa27780 in __libc_start_call_main /usr/src/debug/glibc/glibc/csu/../sysdeps/nptl/libc_start_call_main.h:59:16
+    #22 0x7ff7cfa278b8 in __libc_start_main /usr/src/debug/glibc/glibc/csu/../csu/libc-start.c:372:3
+    #23 0x55f76ad20974 in _start (<repository>/build/linux-fuzz/tests/engine_gltf_fuzz+0x23f974) (BuildId: 8290a17a44575af19368fe7d14b9d4fabb330606)
+
+SUMMARY: libFuzzer: timeout
+
+=== Old-adapter fixed-input replay,1run ===
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2544196826
+INFO: Loaded 1 modules   (41913 inline 8-bit counters): 41913 [0x5583a3998c18, 0x5583a39a2fd1),
+INFO: Loaded 1 PC tables (41913 PCs): 41913 [0x5583a39a2fd8,0x5583a3a46b68),
+build/linux-fuzz/tests/engine_gltf_fuzz: Running 1 inputs 1 time(s) each.
+Running: /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119
+Executed /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119 in 5999 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+=== Direct scalar copies only,3runs (no material improvement) ===
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2641390909
+INFO: Loaded 1 modules   (41920 inline 8-bit counters): 41920 [0x55f735f7fcd8, 0x55f735f8a098),
+INFO: Loaded 1 PC tables (41920 PCs): 41920 [0x55f735f8a098,0x55f73602dc98),
+build/linux-fuzz/tests/engine_gltf_fuzz: Running 1 inputs 3 time(s) each.
+Running: /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119
+Executed /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119 in 18230 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+=== Validated raw buffer views + scalar copies,3runs ===
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2745723253
+INFO: Loaded 1 modules   (41914 inline 8-bit counters): 41914 [0x5613bcd25b38, 0x5613bcd2fef2),
+INFO: Loaded 1 PC tables (41914 PCs): 41914 [0x5613bcd2fef8,0x5613bcdd3a98),
+build/linux-fuzz/tests/engine_gltf_fuzz: Running 1 inputs 3 time(s) each.
+Running: /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119
+Executed /tmp/m38-fuzz-artifacts-long/gltf/timeout-dabed6f070e6a08b34c1740087871b38196b0119 in 10805 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+=== Combined callback change,5more replays during concurrent fuzzing ===
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3039516233
+INFO: Loaded 1 modules   (41914 inline 8-bit counters): 41914 [0x55bc6066eb38, 0x55bc60678ef2),
+INFO: Loaded 1 PC tables (41914 PCs): 41914 [0x55bc60678ef8,0x55bc6071ca98),
+build/linux-fuzz/tests/engine_gltf_fuzz: Running 1 inputs 5 time(s) each.
+Running: tests/assets/m3/fuzz_collapsed_position_view.glb
+Executed tests/assets/m3/fuzz_collapsed_position_view.glb in 22351 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+The code change stores non-owning views only after existing index/count
+validation. genTangSpaceDefault is synchronous, and primitive buffers do not
+change until it returns. Getters read the same position/normal/UV components;
+per-corner splitting and sign handling are unchanged. There is no owning raw
+pointer, new allocation, alternative tangent algorithm or third-party patch.
+No compiler/sanitizer flag, timeout, RSS limit or existing test was weakened.
+The first copy-only experiment did not materially reduce the diagnostic cost;
+combined raw views reduced observed replay cost, with variability under load.
+The unit regression verifies finite results/same3072corner count; it is not a
+performance assertion. The exact artifact is automatically included by existing
+GLB seed copying, and the cache key now also hashes actual image/GLB seed files.
+
+Full local validation of this callback logic:
+
+=== Clang Werror ===
+Test project <repository>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.06 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.01 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.42 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.10 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.04 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.11 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.14 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.26 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.26 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.19 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.40 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.04 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    0.54 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.20 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    1.21 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.10 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    0.70 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.33 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.13 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.20 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    1.39 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    6.89 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.26 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.18 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.09 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =  10.19 sec*proc (7 tests)
+asset           =   4.39 sec*proc (7 tests)
+cli             =  10.13 sec*proc (8 tests)
+contract        =  13.14 sec*proc (13 tests)
+dependencies    =   0.01 sec*proc (1 test)
+docs            =   0.67 sec*proc (3 tests)
+live            =   9.64 sec*proc (5 tests)
+render          =  11.29 sec*proc (14 tests)
+security        =   8.96 sec*proc (5 tests)
+unit            =   0.93 sec*proc (9 tests)
+
+Total Test time (real) =  15.32 sec
+
+=== GCC Werror ===
+Test project <repository>/build/ci-linux-gcc
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.13 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.90 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.19 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.08 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.18 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.20 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.51 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.55 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.08 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.43 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.06 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.70 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.05 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    0.93 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.34 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    2.51 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.24 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    1.25 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.63 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.20 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.29 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    2.29 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    8.72 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.25 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.22 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.15 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =  14.77 sec*proc (7 tests)
+asset           =   8.05 sec*proc (7 tests)
+cli             =  14.50 sec*proc (8 tests)
+contract        =  19.15 sec*proc (13 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   1.21 sec*proc (3 tests)
+live            =  12.85 sec*proc (5 tests)
+render          =  16.84 sec*proc (14 tests)
+security        =  11.27 sec*proc (5 tests)
+unit            =   1.83 sec*proc (9 tests)
+
+Total Test time (real) =  23.09 sec
+
+=== ASan/UBSan retention preset,detect_leaks=1,no LSAN_OPTIONS ===
+Test project <repository>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/26 Test  #1: engine_core_tests ................   Passed    0.36 sec
+      Start  2: engine_dependencies_smoke
+ 2/26 Test  #2: engine_dependencies_smoke ........   Passed    0.04 sec
+      Start  3: engine_asset_tests
+ 3/26 Test  #3: engine_asset_tests ...............   Passed    2.33 sec
+      Start  4: engine_render_tests
+ 4/26 Test  #4: engine_render_tests ..............   Passed    0.37 sec
+      Start  5: engine_window_smoke
+ 5/26 Test  #5: engine_window_smoke ..............   Passed    0.15 sec
+      Start  6: engine_swapchain_test
+ 6/26 Test  #6: engine_swapchain_test ............   Passed    0.25 sec
+      Start  7: engine_overlay_test
+ 7/26 Test  #7: engine_overlay_test ..............   Passed    0.28 sec
+      Start  8: engine_run_smoke
+ 8/26 Test  #8: engine_run_smoke .................   Passed    1.19 sec
+      Start  9: engine_point_light_warning
+ 9/26 Test  #9: engine_point_light_warning .......   Passed    1.49 sec
+      Start 10: engine_screenshot_golden
+10/26 Test #10: engine_screenshot_golden .........   Passed    0.19 sec
+      Start 11: engine_screenshot_cli
+11/26 Test #11: engine_screenshot_cli ............   Passed    1.48 sec
+      Start 12: engine_version_json
+12/26 Test #12: engine_version_json ..............   Passed    0.13 sec
+      Start 13: engine_cli_contract
+13/26 Test #13: engine_cli_contract ..............   Passed    4.53 sec
+      Start 14: engine_docs_links
+14/26 Test #14: engine_docs_links ................   Passed    0.04 sec
+      Start 15: engine_sensitive_scan
+15/26 Test #15: engine_sensitive_scan ............   Passed    0.62 sec
+      Start 16: engine_acceptance_m1
+16/26 Test #16: engine_acceptance_m1 .............   Passed    1.53 sec
+      Start 17: engine_acceptance_m3
+17/26 Test #17: engine_acceptance_m3 .............   Passed    5.24 sec
+      Start 18: engine_api_reference
+18/26 Test #18: engine_api_reference .............   Passed    0.20 sec
+      Start 19: engine_asset_cli
+19/26 Test #19: engine_asset_cli .................   Passed    7.57 sec
+      Start 20: engine_pbr_golden
+20/26 Test #20: engine_pbr_golden ................   Passed    1.73 sec
+      Start 21: engine_pbr_color_golden
+21/26 Test #21: engine_pbr_color_golden ..........   Passed    0.69 sec
+      Start 22: engine_pbr_window
+22/26 Test #22: engine_pbr_window ................   Passed    0.89 sec
+      Start 23: engine_asset_placement
+23/26 Test #23: engine_asset_placement ...........   Passed    7.38 sec
+      Start 24: engine_live_api
+24/26 Test #24: engine_live_api ..................   Passed   32.12 sec
+      Start 25: engine_local_socket_deadline
+25/26 Test #25: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 26: engine_live_journal
+26/26 Test #26: engine_live_journal ..............   Passed    0.77 sec
+
+100% tests passed out of 26
+
+Label Time Summary:
+acceptance      =  48.88 sec*proc (7 tests)
+asset           =  25.83 sec*proc (7 tests)
+cli             =  55.89 sec*proc (8 tests)
+contract        =  64.75 sec*proc (12 tests)
+dependencies    =   0.04 sec*proc (1 test)
+docs            =   0.86 sec*proc (3 tests)
+live            =  39.38 sec*proc (4 tests)
+render          =  53.45 sec*proc (14 tests)
+security        =  34.75 sec*proc (4 tests)
+unit            =   4.09 sec*proc (9 tests)
+
+Total Test time (real) =  72.82 sec
+
+=== Full TSan rebuild +13-test scope ===
+Test project <repository>/build/linux-tsan
+      Start  1: engine_core_tests
+ 1/13 Test  #1: engine_core_tests ................   Passed    0.24 sec
+      Start  2: engine_dependencies_smoke
+ 2/13 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/13 Test  #3: engine_asset_tests ...............   Passed    2.82 sec
+      Start  4: engine_render_tests
+ 4/13 Test  #4: engine_render_tests ..............   Passed    0.47 sec
+      Start 12: engine_version_json
+ 5/13 Test #12: engine_version_json ..............   Passed    0.06 sec
+      Start 13: engine_cli_contract
+ 6/13 Test #13: engine_cli_contract ..............   Passed    1.83 sec
+      Start 14: engine_docs_links
+ 7/13 Test #14: engine_docs_links ................   Passed    0.04 sec
+      Start 15: engine_sensitive_scan
+ 8/13 Test #15: engine_sensitive_scan ............   Passed    0.93 sec
+      Start 16: engine_acceptance_m1
+ 9/13 Test #16: engine_acceptance_m1 .............   Passed    0.69 sec
+      Start 18: engine_api_reference
+10/13 Test #18: engine_api_reference .............   Passed    0.13 sec
+      Start 19: engine_asset_cli
+11/13 Test #19: engine_asset_cli .................   Passed    4.00 sec
+      Start 25: engine_local_socket_deadline
+12/13 Test #25: engine_local_socket_deadline .....   Passed    1.26 sec
+      Start 26: engine_live_journal
+13/13 Test #26: engine_live_journal ..............   Passed    0.51 sec
+
+100% tests passed out of 13
+
+Label Time Summary:
+acceptance      =   0.69 sec*proc (1 test)
+asset           =   6.82 sec*proc (2 tests)
+cli             =   5.89 sec*proc (3 tests)
+contract        =   8.42 sec*proc (6 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   1.10 sec*proc (3 tests)
+live            =   1.76 sec*proc (2 tests)
+render          =   0.47 sec*proc (1 test)
+security        =   2.70 sec*proc (3 tests)
+unit            =   3.60 sec*proc (5 tests)
+
+Total Test time (real) =  13.00 sec
+
+Randomness seeded to: 2069551174
+===============================================================================
+All tests passed (22763 assertions in 21 test cases)
+
+
+Golden/probe excerpts:
+17: M3 public CLI Blender golden passed: max=1, changed=0
+17: M3 import/inspect/validate/place/PBR/save/load/live/reimport/stable IDs/JSONL acceptance passed
+20: Blender tangent image difference: 0
+21: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+100% tests passed out of 3
+
+Reference clang-format18.1.8 passes changed C++; local clang-tidy23 changed
+callback/test files passes with warnings-as-errors after fixing one aggregate
+trailing-comma style issue. Reference tidy18 remains pending CI.
+
+Minor N3 clean-clone correction is tested against REAL CTest JUnit reports:
+passed CTest exit 0 checker exit 0 M3 clean-clone CTest: 1 tests, 0 skipped/disabled/not run
+disabled CTest exit 0 checker exit 1 M3 clean-clone CTest: 1 tests, 1 skipped/disabled/not run
+error: incomplete clean-clone acceptance; not run: disabled
+skipped CTest exit 0 checker exit 1 M3 clean-clone CTest: 1 tests, 1 skipped/disabled/not run
+error: incomplete clean-clone acceptance; not run: skipped
+missing CTest exit 0 checker exit 1 error: clean-clone CTest report contains no tests
+Actual CTest pass/disabled/skip/empty controls passed
+
+Prior source341dc3c is technically approved by Claude with no required findings
+(see round2 record), but this new callback/seed delta still needs independent
+review. New600s GLB fuzzing is in progress; no completion/success is claimed.

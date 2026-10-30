@@ -86,3 +86,23 @@ This checks the actual GLBs and PNG in this directory: mirror orientation,
 non-overlap, tangent flags/signs, embedded-image byte identity, and absence of
 personal home-path markers across all four assets. The editable .blend has also
 been reopened successfully after relocation with no external PNG present.
+
+## Collapsed-position fuzz regression
+
+`fuzz_collapsed_position_view.glb` is an exact libFuzzer mutation of this
+repository's original MIT-licensed `blender_mirrored_no_tangents.glb`, captured
+on 2026-10-30 during extended M3.8 fuzzing. No external input was used. SHA-256:
+`7d04b891992975e95cd770623d7419b0580811580266490d6ad32c2a0470ab54`.
+The original artifact name is `timeout-dabed6f070e6a08b34c1740087871b38196b0119`.
+It intentionally preserves all mutated/trailing bytes for exact reproduction.
+
+The normal-mapped primitive's POSITION accessor has no `bufferView`, producing
+578 zero-initialized positions and 1024 degenerate triangles, with distinct
+normals and UVs. This stresses upstream MikkTSpace's shared-vertex welding.
+The initial unoptimized sanitizer run exceeded its 10-second input wall-time
+budget under concurrent build load; a standalone replay completed in about
+6 seconds. The adapter now uses validated non-owning buffer views in its hot
+callbacks; the algorithm, source distribution, build-copy patches and time/
+memory limits are unchanged. The fixture runs both as a permanent unit
+regression and as an automatically seeded GLB fuzzer input. A unit pass checks
+correct finite output; it does not assert a hardware-independent timing bound.

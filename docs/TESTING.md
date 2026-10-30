@@ -489,7 +489,8 @@ with difference above 3). The separately tested analytic color chart remains
 required; the acceptance does not regenerate goldens or relax their checks.
 
 The clean-clone shell entry point writes a CTest JUnit report, prints its test/
-skip counts and refuses a success result if any CTest test was skipped. A
+skip counts and refuses a success result if any CTest test was skipped,
+disabled or not run. A
 complete Linux clone therefore needs both lavapipe and a working display.
 
 The test then opens the saved scene in live mode through the shipped client,
@@ -552,3 +553,25 @@ that mode; it does not prove that a future scheduled event will fire on time.
 References: [libFuzzer](https://llvm.org/docs/LibFuzzer.html),
 [GitHub cache scope and immutable keys](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching),
 [scheduled workflow behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+### Extended-run timeout regression
+
+An initial local extended run on the old adapter hit the unchanged 10-second
+input timeout in MikkTSpace shared-vertex welding under concurrent build load.
+The exact original artifact is retained as
+`tests/assets/m3/fuzz_collapsed_position_view.glb` with its MIT provenance and
+SHA-256. Its missing POSITION buffer view produces a collapsed normal-mapped
+primitive; distinct UVs/normals stress the upstream weld search. This is a
+performance timeout, not an ASan/UBSan memory-error report. The first extended
+run is therefore **not green**.
+
+The adapter now stores validated non-owning buffer views for its synchronous
+callbacks and copies components directly. Primitive buffers remain unchanged
+until genTangSpaceDefault returns; no third-party source, tangent algorithm,
+compiler/sanitizer flag, timeout or memory limit is changed. The permanent unit
+regression checks successful finite results, and the existing fuzzer seed copy
+includes it automatically. Timing is checked by libFuzzer's existing input
+timeout, not a brittle new wall-clock assertion in the unit suite. Diagnostic
+replay timings are not a controlled hardware performance benchmark or a
+universal worst-case bound. A fresh long run and independent source review are
+required after this change.
