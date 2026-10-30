@@ -690,3 +690,95 @@ jobs:
           path: |
             build/linux-asan/Testing
             doctor-asan.json
+
+  fuzz:
+    name: Fuzz (Clang ASan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Install Clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
+      - name: Install pinned CMake and Ninja
+        run: |
+          cmake_archive="/tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          ninja_archive="/tmp/ninja-${NINJA_VERSION}-linux.zip"
+          curl -fsSL -o "$cmake_archive" \
+            "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL -o "$ninja_archive" \
+            "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip"
+          mkdir -p "$HOME/.local/cmake" "$HOME/.local/bin"
+          tar -xzf "$cmake_archive" -C "$HOME/.local/cmake" --strip-components=1
+          unzip -q -o "$ninja_archive" -d "$HOME/.local/bin"
+          echo "$HOME/.local/cmake/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure fuzzers
+        run: cmake --preset linux-fuzz
+
+      - name: Build fuzzers
+        run: cmake --build --preset linux-fuzz --target engine_gltf_fuzz engine_image_fuzz
+
+      - name: Run short fuzz targets
+        env:
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          mkdir -p "$RUNNER_TEMP/corpus/gltf" "$RUNNER_TEMP/corpus/image"
+          cp tests/assets/m3/*.glb "$RUNNER_TEMP/corpus/gltf/"
+          cp tests/assets/m3/*.png tests/assets/m3/*.jpg "$RUNNER_TEMP/corpus/image/"
+          ./build/linux-fuzz/tests/engine_gltf_fuzz "$RUNNER_TEMP/corpus/gltf" \
+            -max_total_time=30 -timeout=10 -rss_limit_mb=2048
+          ./build/linux-fuzz/tests/engine_image_fuzz "$RUNNER_TEMP/corpus/image" \
+            -max_total_time=30 -timeout=10 -rss_limit_mb=2048

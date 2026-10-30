@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 option(ENGINE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(ENGINE_BUILD_FUZZERS "Build libFuzzer targets (Clang only)" OFF)
 
 include(CTest)
 
