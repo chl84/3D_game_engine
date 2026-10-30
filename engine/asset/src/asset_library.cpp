@@ -1231,6 +1231,12 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
 
 core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
                                           const core::Uuid& asset_id, bool dry_run) {
+    return reimport_asset(project_root, asset_id, dry_run, false);
+}
+
+core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
+                                          const core::Uuid& asset_id, bool dry_run,
+                                          bool project_sources_only) {
     if (auto valid = check_project_root(project_root); !valid) {
         return core::make_failure<ImportResult>(valid.error());
     }
@@ -1242,7 +1248,22 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     if (!record) {
         return core::make_failure<ImportResult>(record.error());
     }
-    const auto source = resolve_source(project_root, record->source, record->source_copy);
+    std::filesystem::path source;
+    if (project_sources_only) {
+        auto original = resolve_inside_project(project_root, record->source, "source");
+        std::error_code ec;
+        if (original && std::filesystem::is_regular_file(*original, ec) && !ec) {
+            source = *original;
+        } else {
+            auto copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
+            if (!copy) {
+                return core::make_failure<ImportResult>(copy.error());
+            }
+            source = *copy;
+        }
+    } else {
+        source = resolve_source(project_root, record->source, record->source_copy);
+    }
     if (source.empty()) {
         return core::make_failure<ImportResult>(
             asset_error(ErrorCode::NotFound, "asset source and source copy are both missing",

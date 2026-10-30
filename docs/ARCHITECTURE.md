@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M3.6. This document describes the approved module boundaries and
+**Status:** M3.7 implementation; verification/review is recorded in STATUS.md. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -295,3 +295,15 @@ The current implementation contains:
 Instance placement and automatic project-asset resolution are implemented in
 M3.6 through shared undoable asset commands and CLI composition-root uploads.
 Live control (M3.7) remains. Physics, scripting, streaming and editor remain planned.
+
+## M3.7 live control
+
+The planned control module now supplies a bounded JSON-RPC parser and base64
+encoding, depending only on core. Platform owns nonblocking native loopback
+sockets, CSPRNG token generation, restricted atomic discovery writes and process
+liveness checks. The CLI composition root owns one Project/Scene/CommandBus
+session and registers exactly the same authoring handlers as offline CLI.
+Requests execute sequentially on that owner thread; connection I/O is bounded
+and multiplexed without a thread-per-client implementation. Screenshot rendering
+and PNG encoding are shared with offline CLI. ADR-0013 defines wire, resource,
+authentication, sandbox and lifetime-lock contracts.

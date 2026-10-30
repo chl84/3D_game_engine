@@ -315,6 +315,9 @@ TEST_CASE("project lock is exclusive and can be released", "[project]") {
 
     REQUIRE(project->lock().has_value());
     REQUIRE(project->locked());
+    const auto live_unlock = Project::force_unlock(project->root());
+    REQUIRE_FALSE(live_unlock);
+    CHECK(live_unlock.error().code == engine::core::ErrorCode::Conflict);
 
     auto second = Project::load(project->root());
     REQUIRE(second.has_value());

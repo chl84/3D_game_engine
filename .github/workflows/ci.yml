@@ -768,17 +768,20 @@ jobs:
         run: cmake --preset linux-fuzz
 
       - name: Build fuzzers
-        run: cmake --build --preset linux-fuzz --target engine_gltf_fuzz engine_image_fuzz
+        run: cmake --build --preset linux-fuzz --target engine_gltf_fuzz engine_image_fuzz engine_rpc_fuzz
 
       - name: Run short fuzz targets
         env:
           ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: |
-          mkdir -p "$RUNNER_TEMP/corpus/gltf" "$RUNNER_TEMP/corpus/image"
+          mkdir -p "$RUNNER_TEMP/corpus/gltf" "$RUNNER_TEMP/corpus/image" "$RUNNER_TEMP/corpus/rpc"
           cp tests/assets/m3/*.glb "$RUNNER_TEMP/corpus/gltf/"
           cp tests/assets/m3/*.png tests/assets/m3/*.jpg "$RUNNER_TEMP/corpus/image/"
           ./build/linux-fuzz/tests/engine_gltf_fuzz "$RUNNER_TEMP/corpus/gltf" \
             -max_total_time=30 -timeout=10 -rss_limit_mb=2048
           ./build/linux-fuzz/tests/engine_image_fuzz "$RUNNER_TEMP/corpus/image" \
+            -max_total_time=30 -timeout=10 -rss_limit_mb=2048
+          cp tests/fuzz/corpus/rpc/* "$RUNNER_TEMP/corpus/rpc/"
+          ./build/linux-fuzz/tests/engine_rpc_fuzz "$RUNNER_TEMP/corpus/rpc" \
             -max_total_time=30 -timeout=10 -rss_limit_mb=2048

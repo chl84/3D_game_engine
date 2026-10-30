@@ -78,3 +78,13 @@ TEST_CASE("path sandbox requires an existing directory", "[core][path]") {
     REQUIRE_FALSE(file.has_value());
     REQUIRE(file.error().code == ErrorCode::Validation);
 }
+
+TEST_CASE("sandbox rejects embedded NUL bytes", "[sandbox]") {
+    engine::test::TempDir temp("sandbox-nul");
+    auto sandbox = engine::core::PathSandbox::create(temp.path());
+    REQUIRE(sandbox);
+    const std::string path("safe\0/other", 11);
+    const auto resolved = sandbox->resolve(path);
+    REQUIRE_FALSE(resolved);
+    CHECK(resolved.error().code == engine::core::ErrorCode::Validation);
+}

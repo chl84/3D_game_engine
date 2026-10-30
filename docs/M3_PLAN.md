@@ -5,7 +5,9 @@ M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
 on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
 ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
-M3.6 awaits owner assessment. The owner corrected emissive to sRGB.
+M3.6 is owner-approved. M3.7 is authorized with explicit auth, resource,
+sandbox, lock, fuzz and negative-test requirements. The reviewer is now
+GPT-6 Astra high. The owner corrected emissive to sRGB.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -322,6 +324,13 @@ Verification/reviewer status is recorded in STATUS.md.
   same asset render correctly.
 
 ### M3.7 Live API
+
+Owner requirements: same CLI handlers/CommandBus;127.0.0.1 only; per-request
+credential with generic denial; bounded messages/connections/I/O deadlines;
+PathSandbox for every client path; lifetime project writer lock; permanent
+parser fuzzing in the existing CI job; tests for wrong token, oversized data,
+disconnect, lock exclusion and actual command-log visibility. New reviews use
+GPT-6 Astra with high reasoning effort. Concrete protocol is ADR-0013.
 
 - Implement the loopback JSON-RPC server and the CLI client/launcher.
 - Expose command, inspect, screenshot, ping and shutdown.

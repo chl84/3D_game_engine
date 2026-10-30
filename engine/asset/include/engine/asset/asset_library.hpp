@@ -62,6 +62,10 @@ struct LoadedAsset {
 [[nodiscard]] core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
                                                         const core::Uuid& asset_id,
                                                         bool dry_run = false);
+// Live-session policy overload; the original three-argument API is retained.
+[[nodiscard]] core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
+                                                        const core::Uuid& asset_id, bool dry_run,
+                                                        bool project_sources_only);
 
 [[nodiscard]] core::Result<LoadedAsset> load_asset(const std::filesystem::path& project_root,
                                                    const core::Uuid& asset_id);

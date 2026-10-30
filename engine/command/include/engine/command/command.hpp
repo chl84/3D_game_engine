@@ -107,6 +107,7 @@ public:
     [[nodiscard]] Result<void> rollback_transaction();
     [[nodiscard]] bool in_transaction() const noexcept;
 
+    [[nodiscard]] Result<void> clear_history();
     [[nodiscard]] Result<void> undo();
     [[nodiscard]] Result<void> redo();
     [[nodiscard]] bool can_undo() const noexcept;

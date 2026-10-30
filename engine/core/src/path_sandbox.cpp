@@ -48,10 +48,10 @@ const std::filesystem::path& PathSandbox::root() const noexcept {
 }
 
 Result<std::filesystem::path> PathSandbox::resolve(std::string_view relative) const {
-    if (relative.empty()) {
-        return make_failure<std::filesystem::path>(make_error(ErrorCode::Validation,
-                                                              "Path must not be empty.", {},
-                                                              {{"path", std::string(relative)}}));
+    if (relative.empty() || relative.find('\0') != std::string_view::npos) {
+        return make_failure<std::filesystem::path>(
+            make_error(ErrorCode::Validation, "Path must not be empty or contain NUL bytes.", {},
+                       {{"path", std::string(relative)}}));
     }
 
     std::filesystem::path path;

@@ -254,6 +254,16 @@ bool CommandBus::in_transaction() const noexcept {
     return transaction_active_;
 }
 
+Result<void> CommandBus::clear_history() {
+    if (transaction_active_) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::Conflict, "cannot clear history in a transaction"));
+    }
+    undo_stack_.clear();
+    redo_stack_.clear();
+    return {};
+}
+
 Result<void> CommandBus::undo() {
     if (undo_stack_.empty()) {
         return core::make_failure<void>(

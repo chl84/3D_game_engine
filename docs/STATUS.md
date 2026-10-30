@@ -2,15 +2,16 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.6 — asset instances and scene placement implemented;
-reviewer GODKJENT on `4ce8cac`; low UUID identity finding corrected in `ef6775a`.
-Final CI 41076353145 completed/success on `ef6775a`: all six jobs, Linux 22/22 and
-Windows 16/16. Awaiting owner assessment; M3.7 has not started.
-M3.4 and M3.5 were approved by the owner on 2026-10-30. All six reporting
-follow-up CI jobs passed on `59c2e97` (Ubuntu21/21, Windows15/15).
-The owner corrected emissiveTexture to sRGB, formally approved the pinned
-MikkTSpace implementation including the marked UB-corrected build copy, and
-requested removal of the inactive LSan rule. No M3 merge or tag is authorized.
+**Current substep:** M3.7 — authenticated local live API (owner-authorized).
+M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
+CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
+The owner requires shared CLI handlers/bus, 127.0.0.1 only, per-request token,
+bounded framing/connections/timeouts, sandboxed client paths, exclusive
+project locking, parser fuzzing and explicit negative/security/log tests.
+The independent reviewer is now GPT-6 Astra with high reasoning effort
+(`gpt-6-astra`, `reasoningEffort=high`), replacing Claude Opus5.5 high for new
+reviews. Availability was verified through orchestrator capabilities.
+No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule.
 
 ## Substeps
 
@@ -63,8 +64,8 @@ requested removal of the inactive LSan rule. No M3 merge or tag is authorized.
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
-| M3.6 | `AssetInstance` placement and scene v3 save/load | Reviewer GODKJENT; low finding corrected in `ef6775a`; final CI 6/6 success; awaiting owner assessment |
-| M3.7 | Local JSON-RPC live API | Planned |
+| M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
+| M3.7 | Local JSON-RPC live API | In progress — owner authorized with security/test requirements |
 | M3.8 | M3 hardening and acceptance | Planned |
 
 ## M3.5 fixture preparation (owner requested)
@@ -470,12 +471,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.4/M3.5 are owner-approved. M3.6 implements CLI asset placement, automatic
-project-asset resolution and scene-instance save/load acceptance; technical
-review approved `4ce8cac` and the low UUID finding is corrected in `ef6775a`.
-Final CI 41076353145 is 6/6 success. Owner assessment of M3.6 is next; M3.7 needs
-owner authorization. The optional nightly ten-minute fuzz/cached-corpus proposal remains
-recorded for M3.8. M3 merges only after explicit owner approval.
+M3.7 is implemented locally. Finish exact-source reference CI and independent
+GPT-6 Astra high review, handle all findings and any required re-review, then
+deliver one consolidated A.5 report. M3.8/merge/tag need owner authorization.
 
 ## M3.5 implementation and verification
 
@@ -637,3 +635,26 @@ clang-format18/clang-tidy18 and Fuzz passed. The final corrected clean public
 clone passed 22/22 plus M1 acceptance; explicit Iris Xe acceptance also passed.
 The consolidated owner report can now be delivered. M3.7 remains unstarted;
 no merge/tag.
+
+## M3.7 implementation and verification in progress
+
+- Foreground live serve plus live call client,127.0.0.1 ephemeral TCP, one
+  newline-delimited UTF-8 object/connection. Same shared project command
+  registration and bus as CLI; no duplicate authoring implementation.
+- Per-request CSPRNG credential; private atomic discovery with pre-write
+  permission/owner readback; generic denial before method/protocol details.
+- Bounds:64KiB input,4MiB output, depth32,8accepted clients, absolute receive/
+  send deadlines; incomplete/oversized/aborted connections close safely.
+- Lifetime project writer lock; offline screenshot acquires it, active
+  force-unlock is denied. All client paths use PathSandbox, including confined
+  source reimport; embedded NUL paths are rejected centrally.
+- Live acceptance covers authoring/PNG, auth and private permissions, cap/
+  timeout/disconnect, lock conflicts, symlink/path escapes, actual command log,
+  rotation/shutdown and shared light/asset undo.
+- Permanent engine_rpc_fuzz added to the same CI job as GLB/image fuzzers.
+  Local30s results:4994/8284/66839runs, no sanitizer findings.
+- Local Clang23/23 and local retention ASan/UBSan23/23. New reference Windows
+  compilation/DACL execution and independent Astra review remain pending.
+- [Working verification record](verification/M3_7_STATUS_REPORT.md) and
+  [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt). No owner report is
+  delivered until review and required CI/re-review are complete.

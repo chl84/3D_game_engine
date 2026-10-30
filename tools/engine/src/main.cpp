@@ -300,6 +300,26 @@ int main(int argc, char** argv) {
     screenshot_command->add_option("--height", screenshot_height, "Image height.")
         ->check(CLI::PositiveNumber);
 
+    auto* live = app.add_subcommand("live", "Authenticated local live API.");
+    auto* live_serve = live->add_subcommand("serve", "Run a project session until shutdown.");
+    auto* live_call =
+        live->add_subcommand("call", "Call a project session using its private discovery file.");
+    std::string live_project;
+    std::string live_scene = "scenes/main.scene.json";
+    std::string live_method = "ping";
+    std::string live_params = "{}";
+    int live_timeout = 2000;
+    for (auto* subcommand : {live_serve, live_call}) {
+        subcommand->add_option("project", live_project, "Project directory.")->required();
+        subcommand->add_flag("--json", json, "Emit machine-readable output.");
+    }
+    live_serve->add_option("scene", live_scene, "Initial project scene.");
+    live_serve->add_option("--io-timeout-ms", live_timeout, "Per-connection I/O deadline.")
+        ->check(CLI::Range(50, 30000));
+    live_call->add_option("--method", live_method, "JSON-RPC method.");
+    live_call->add_option("--params", live_params, "Method parameters as a JSON object.");
+    live->require_subcommand(1);
+
     for (CLI::App* command : {
              project_create,
              project_validate,
@@ -378,6 +398,12 @@ int main(int argc, char** argv) {
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
     }
 
+    if (*live_serve) {
+        return engine::cli::live_server(live_project, live_scene, live_timeout, json);
+    }
+    if (*live_call) {
+        return engine::cli::live_call(live_project, live_method, live_params, json);
+    }
     if (*asset_place) {
         return engine::cli::asset_place(asset_project, asset_scene, asset_id, asset_name,
                                         asset_position, json, dry_run);

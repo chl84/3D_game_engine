@@ -12,6 +12,7 @@ add_executable(engine_core_tests
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
+    unit/json_rpc_test.cpp
     unit/path_sandbox_test.cpp
     unit/project_test.cpp
     unit/reflect_test.cpp
@@ -30,6 +31,7 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::control
     engine::platform
     engine::command
     engine::scene
@@ -304,8 +306,9 @@ set_tests_properties(engine_api_reference PROPERTIES
 add_library(engine_fuzz_harness STATIC
     fuzz/gltf_import_fuzz.cpp
     fuzz/image_decode_fuzz.cpp
+    fuzz/json_rpc_fuzz.cpp
 )
-target_link_libraries(engine_fuzz_harness PRIVATE engine::asset)
+target_link_libraries(engine_fuzz_harness PRIVATE engine::asset engine::control)
 engine_set_warnings(engine_fuzz_harness)
 
 if(ENGINE_BUILD_FUZZERS)
@@ -317,6 +320,12 @@ if(ENGINE_BUILD_FUZZERS)
     target_compile_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer-no-link)
     target_link_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer)
     engine_set_warnings(engine_gltf_fuzz)
+
+    add_executable(engine_rpc_fuzz fuzz/json_rpc_fuzz.cpp)
+    target_link_libraries(engine_rpc_fuzz PRIVATE engine::control)
+    target_compile_options(engine_rpc_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_rpc_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_rpc_fuzz)
 
     add_executable(engine_image_fuzz fuzz/image_decode_fuzz.cpp)
     target_link_libraries(engine_image_fuzz PRIVATE engine::asset)
@@ -354,3 +363,8 @@ add_test(NAME engine_asset_placement
             "$<TARGET_FILE:engine>" ${asset_placement_window}
 )
 set_tests_properties(engine_asset_placement PROPERTIES LABELS "contract;cli;asset;render;acceptance" TIMEOUT 120)
+
+add_test(NAME engine_live_api
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_api.py" "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_live_api PROPERTIES LABELS "contract;cli;live;security;render;acceptance" TIMEOUT 120)

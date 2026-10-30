@@ -1,0 +1,244 @@
+M3.7 local verification — 2026-10-30
+Source: the M3.7 implementation commit containing this record; base16c5805.
+Reference CI and independent GPT-6 Astra high review remain pending.
+Logs below are captured excerpts; workspace paths are normalized to <workspace>.
+No real session credentials are recorded.
+
+COMMAND: cmake --build --preset ci-linux-clang; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset ci-linux-clang
+Test project <workspace>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/23 Test  #1: engine_core_tests ................   Passed    0.05 sec
+      Start  2: engine_dependencies_smoke
+ 2/23 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/23 Test  #3: engine_asset_tests ...............   Passed    0.17 sec
+      Start  4: engine_render_tests
+ 4/23 Test  #4: engine_render_tests ..............   Passed    0.10 sec
+      Start  5: engine_window_smoke
+ 5/23 Test  #5: engine_window_smoke ..............   Passed    0.03 sec
+      Start  6: engine_swapchain_test
+ 6/23 Test  #6: engine_swapchain_test ............   Passed    0.09 sec
+      Start  7: engine_overlay_test
+ 7/23 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+      Start  8: engine_run_smoke
+ 8/23 Test  #8: engine_run_smoke .................   Passed    0.22 sec
+      Start  9: engine_point_light_warning
+ 9/23 Test  #9: engine_point_light_warning .......   Passed    0.24 sec
+      Start 10: engine_screenshot_golden
+10/23 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+      Start 11: engine_screenshot_cli
+11/23 Test #11: engine_screenshot_cli ............   Passed    0.18 sec
+      Start 12: engine_version_json
+12/23 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/23 Test #13: engine_cli_contract ..............   Passed    0.37 sec
+      Start 14: engine_docs_links
+14/23 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/23 Test #15: engine_sensitive_scan ............   Passed    0.45 sec
+      Start 16: engine_acceptance_m1
+16/23 Test #16: engine_acceptance_m1 .............   Passed    0.17 sec
+      Start 17: engine_api_reference
+17/23 Test #17: engine_api_reference .............   Passed    0.08 sec
+      Start 18: engine_asset_cli
+18/23 Test #18: engine_asset_cli .................   Passed    0.65 sec
+      Start 19: engine_pbr_golden
+19/23 Test #19: engine_pbr_golden ................   Passed    0.35 sec
+      Start 20: engine_pbr_color_golden
+20/23 Test #20: engine_pbr_color_golden ..........   Passed    0.11 sec
+      Start 21: engine_pbr_window
+21/23 Test #21: engine_pbr_window ................   Passed    0.20 sec
+      Start 22: engine_asset_placement
+22/23 Test #22: engine_asset_placement ...........   Passed    1.26 sec
+      Start 23: engine_live_api
+23/23 Test #23: engine_live_api ..................   Passed    4.87 sec
+
+100% tests passed out of 23
+
+Label Time Summary:
+acceptance      =   6.79 sec*proc (6 tests)
+asset           =   2.73 sec*proc (6 tests)
+cli             =   7.81 sec*proc (8 tests)
+contract        =   8.03 sec*proc (9 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.57 sec*proc (3 tests)
+live            =   4.87 sec*proc (1 test)
+render          =   7.79 sec*proc (13 tests)
+security        =   5.32 sec*proc (2 tests)
+unit            =   0.62 sec*proc (9 tests)
+
+Total Test time (real) =   9.80 sec
+
+COMMAND: cmake --build --preset linux-asan; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset linux-asan-lavapipe
+Test project <workspace>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/23 Test  #1: engine_core_tests ................   Passed    0.16 sec
+      Start  2: engine_dependencies_smoke
+ 2/23 Test  #2: engine_dependencies_smoke ........   Passed    0.01 sec
+      Start  3: engine_asset_tests
+ 3/23 Test  #3: engine_asset_tests ...............   Passed    0.93 sec
+      Start  4: engine_render_tests
+ 4/23 Test  #4: engine_render_tests ..............   Passed    0.34 sec
+      Start  5: engine_window_smoke
+ 5/23 Test  #5: engine_window_smoke ..............   Passed    0.09 sec
+      Start  6: engine_swapchain_test
+ 6/23 Test  #6: engine_swapchain_test ............   Passed    0.21 sec
+      Start  7: engine_overlay_test
+ 7/23 Test  #7: engine_overlay_test ..............   Passed    0.19 sec
+      Start  8: engine_run_smoke
+ 8/23 Test  #8: engine_run_smoke .................   Passed    0.73 sec
+      Start  9: engine_point_light_warning
+ 9/23 Test  #9: engine_point_light_warning .......   Passed    0.96 sec
+      Start 10: engine_screenshot_golden
+10/23 Test #10: engine_screenshot_golden .........   Passed    0.10 sec
+      Start 11: engine_screenshot_cli
+11/23 Test #11: engine_screenshot_cli ............   Passed    0.96 sec
+      Start 12: engine_version_json
+12/23 Test #12: engine_version_json ..............   Passed    0.08 sec
+      Start 13: engine_cli_contract
+13/23 Test #13: engine_cli_contract ..............   Passed    3.17 sec
+      Start 14: engine_docs_links
+14/23 Test #14: engine_docs_links ................   Passed    0.02 sec
+      Start 15: engine_sensitive_scan
+15/23 Test #15: engine_sensitive_scan ............   Passed    0.43 sec
+      Start 16: engine_acceptance_m1
+16/23 Test #16: engine_acceptance_m1 .............   Passed    1.20 sec
+      Start 17: engine_api_reference
+17/23 Test #17: engine_api_reference .............   Passed    0.14 sec
+      Start 18: engine_asset_cli
+18/23 Test #18: engine_asset_cli .................   Passed    4.55 sec
+      Start 19: engine_pbr_golden
+19/23 Test #19: engine_pbr_golden ................   Passed    0.83 sec
+      Start 20: engine_pbr_color_golden
+20/23 Test #20: engine_pbr_color_golden ..........   Passed    0.40 sec
+      Start 21: engine_pbr_window
+21/23 Test #21: engine_pbr_window ................   Passed    0.52 sec
+      Start 22: engine_asset_placement
+22/23 Test #22: engine_asset_placement ...........   Passed    4.50 sec
+      Start 23: engine_live_api
+23/23 Test #23: engine_live_api ..................   Passed   14.23 sec
+
+100% tests passed out of 23
+
+Label Time Summary:
+acceptance      =  21.26 sec*proc (6 tests)
+asset           =  11.73 sec*proc (6 tests)
+cli             =  29.18 sec*proc (8 tests)
+contract        =  30.44 sec*proc (9 tests)
+dependencies    =   0.01 sec*proc (1 test)
+docs            =   0.59 sec*proc (3 tests)
+live            =  14.23 sec*proc (1 test)
+render          =  24.07 sec*proc (13 tests)
+security        =  14.65 sec*proc (2 tests)
+unit            =   2.12 sec*proc (9 tests)
+
+Total Test time (real) =  34.78 sec
+
+ASan/UBSan: detect_leaks=1:abort_on_error=1; halt_on_error=1.
+Only the documented local Mesa dynamic-library retention policy is enabled; no LSAN_OPTIONS or suppression file.
+
+COMMAND: VK_ICD_FILENAMES=<Intel ICD> .venv/bin/python tests/contract/live_api.py build/ci-linux-clang/tools/engine/engine
+Live API auth, bounds, disconnect/timeout/cap, lock exclusion, shared command log, sandbox and live-only asset acceptance passed
+Command-log byte and4096-entry budgets, last record preservation and token rotation passed
+
+COMMAND: build/ci-linux-clang/tests/engine_core_tests
+All tests passed (546 assertions in 68 test cases)
+
+COMMAND: build/ci-linux-clang/tests/engine_asset_tests
+All tests passed (22737 assertions in 19 test cases)
+
+COMMAND: scripts/run_fuzz.sh (three targets,30s each; ASan/UBSan)
+Done 4994 runs in 31 second(s)
+Done 8284 runs in 31 second(s)
+Done 66839 runs in 31 second(s)
+
+Security mutation diagnostics, manually verified (not a separate CTest target):
+Each mutation was applied in isolation, rebuilt, tested, restored and rebuilt.
+
+COMMAND: token comparison bypass -> engine_core_tests [rpc]; connection-cap bypass and live-lock bypass -> live_api.py
+[1/3] Building CXX object engine/control/CMakeFiles/engine_control.dir/src/json_rpc.cpp.o
+[2/3] Linking CXX static library engine/control/libengine_control.a
+[3/3] Linking CXX executable tests/engine_core_tests
+
+MUTATION: token comparison bypass
+Filters: [rpc]
+Randomness seeded to: 2102834617
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+engine_core_tests is a Catch2 v3.16.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+live RPC authenticates before exposing request details
+-------------------------------------------------------------------------------
+<workspace>/tests/unit/json_rpc_test.cpp:5
+...............................................................................
+
+<workspace>/tests/unit/json_rpc_test.cpp:26: FAILED:
+  CHECK( parse_rpc(valid.dump(), credential).error == denied )
+with expansion:
+  {"error":{"code":-32600,"message":"Invalid Request"},"id":null,"jsonrpc":"2.
+  0"}
+  ==
+  {"error":{"code":-32001,"message":"Unauthorized"},"id":null,"jsonrpc":"2.0"}
+
+===============================================================================
+test cases:  2 |  1 passed | 1 failed
+assertions: 34 | 33 passed | 1 failed
+
+
+exit 42
+[1/3] Building CXX object engine/control/CMakeFiles/engine_control.dir/src/json_rpc.cpp.o
+[2/3] Linking CXX static library engine/control/libengine_control.a
+[3/3] Linking CXX executable tests/engine_core_tests
+[1/3] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/local_socket.cpp.o
+[2/3] Linking CXX static library engine/platform/libengine_platform.a
+[3/3] Linking CXX executable tools/engine/engine
+
+MUTATION: connection cap bypass
+Traceback (most recent call last):
+  File "<workspace>/tests/contract/live_api.py", line 333, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<workspace>/tests/contract/live_api.py", line 185, in main
+    assert exchange(json.dumps(dict(notification, id=99)).encode() + b"\n") == b""
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+exit 1
+[1/3] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/local_socket.cpp.o
+[2/3] Linking CXX static library engine/platform/libengine_platform.a
+[3/3] Linking CXX executable tools/engine/engine
+[1/2] Building CXX object tools/engine/CMakeFiles/engine.dir/src/live.cpp.o
+[2/2] Linking CXX executable tools/engine/engine
+
+MUTATION: live writer lock bypass
+Traceback (most recent call last):
+  File "<workspace>/tests/contract/live_api.py", line 333, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<workspace>/tests/contract/live_api.py", line 202, in main
+    result = cli(*args, code=5)
+  File "<workspace>/tests/contract/live_api.py", line 39, in cli
+    assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (('entity', 'create', PosixPath('/tmp/engine-live-q_u7708r/project'), '--name', 'Blocked'), 0, '{\n  "data": {\n    "dryRun": false,\n    "result": {\n      "id": "c6ab0cf2-2ae4-4476-8a2b-aaee56c79d5c"\n    },\n    "undoCount": 0\n  },\n  "status": "ok",\n  "warnings": []\n}\n', '')
+
+exit 1
+[1/2] Building CXX object tools/engine/CMakeFiles/engine.dir/src/live.cpp.o
+[2/2] Linking CXX executable tools/engine/engine
+
+RESTORED: Live API auth, bounds, disconnect/timeout/cap, lock exclusion, shared command log, sandbox and live-only asset acceptance passed
+
+exit 0
+
+After restoration, final full Clang and ASan/UBSan suites above passed.
+The log-byte and4096-entry boundary cases were added after these mutations; both pass in the final suites and Iris Xe run.
+
+Static checks: clang-tidy23 with warnings-as-errors on changed/new .cpp files passed.
+Third-party diagnostics were suppressed by the existing configuration; no new NOLINT or sanitizer suppression.
+CI clang-tidy18 remains the reference gate and is not yet claimed green.
+Commands: clang-tidy -p build/ci-linux-clang <changed .cpp files> --warnings-as-errors="*"
+clang-format --dry-run --Werror <changed C++ files>
+.venv/bin/python scripts/generate_api_reference.py --engine build/ci-linux-clang/tools/engine/engine --check -> API reference is up to date
+.venv/bin/python tests/docs/check_links.py -> docs links OK (35 files)

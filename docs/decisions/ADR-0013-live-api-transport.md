@@ -61,3 +61,81 @@ new dependency is added.
   on loopback.
 - **Named shared memory:** not a good fit for command/result envelopes and
   streaming screenshots.
+
+## M3.7 implementation and owner requirements (2026-10-30)
+
+The owner approved M3.6 and authorized M3.7 with mandatory negative/security
+acceptance tests. No new third-party dependency is introduced. Native TCP and
+process/private-file code lives in platform; the planned control target provides
+only the bounded parser and encoding. Windows links system ws2_32, advapi32 and
+bcrypt. CLI/live command handlers are registered through the same
+register_project_commands function and actual CommandBus; there is no second
+implementation of scene/asset authoring commands.
+
+### Wire profile and bounds
+
+- One UTF-8 JSON object followed by LF per TCP connection; CRLF is accepted.
+  Connections close after the reply. Named object params are supported; JSON-RPC
+  batches are not part of this M3 profile. Valid authenticated notifications
+  execute without a reply. Incomplete EOF, excess bytes/frames, size violations,
+  excess connections and I/O deadlines close without dispatching partial data.
+- Required root fields: jsonrpc="2.0", protocolVersion=1, token, method; params
+  defaults to {}, id is integer/string/null (omitted for notifications).
+- 64 KiB request payload, JSON depth32, duplicate object members rejected,
+  4 MiB reply payload, eight accepted clients and a bounded backlog of eight.
+- Receive deadline is absolute from accept, not refreshed by partial bytes.
+  Send deadline starts after dispatch; both default to2000ms, configurable
+  through --io-timeout-ms in50..30000. Execution is sequential; accepted
+  authoring commands are not canceled or rolled back by client disconnect or
+  client-side timeout. These are I/O deadlines, not unsafe asynchronous
+  cancellation of filesystem/GPU work.
+- Method dispatch/parameter/version details are withheld until authentication.
+  Wrong/missing tokens receive only -32001 Unauthorized, id:null, with no data
+  or echoed request. Syntax errors use -32700 without parser exception text.
+- CSPRNG token:32OS-random bytes encoded as64hex characters. The private file
+  and temporary file are restricted from creation, with permissions/DACL read
+  back before credential bytes are written. Startup fails closed on failure.
+- No token appears in startup stdout, protocol errors or command log.
+
+### Shared authoring and project lifetime
+
+The live session holds Project::lock from startup through connection draining
+and discovery cleanup. Offline screenshot now also takes that writer lock;
+force-unlock rejects a lock whose recorded PID is still running (unknown
+process status fails closed). Stale locks after abrupt termination retain the
+explicit offline recovery path. There is no lock bypass inside the live API.
+
+New shared commands scene.save@1/scene.load@1 require canonical .scene.json
+targets outside reserved control/asset directories (including through symlinks) and
+cannot run in undo transactions. Load validates the replacement before changing
+state and clears stale undo/redo actions while retaining the command log.
+history.undo@1/history.redo@1 use the existing bus history operations.
+Session admission stops authoring after4096logged commands or16MiB of serialized
+arguments/results, checked before the next dispatch; the last completed record
+is preserved. Log inspection is paged (up to64entries) and does not log itself.
+
+All client paths pass through PathSandbox, including source imports and scene
+save/load. Live reimport uses an original only when it resolves inside the
+project; otherwise it uses the sandboxed project source copy. Offline reimport
+retains its approved original-source behavior. Embedded NUL paths are rejected
+centrally. Screenshot rendering/PNG encoding is shared with offline CLI; live
+returns base64 and may also write a sandboxed .png outside reserved .engine,
+assets and scenes directories. Live screenshots are capped at512x512/16frames;
+the existing offline8192/1000limits remain intact.
+
+### Verification and review
+
+A permanent engine_rpc_fuzz target exercises raw and authenticated-envelope
+parser paths in the same Clang ASan/UBSan CI job as GLB/image fuzzing. The public
+live acceptance covers auth, framing/size/depth/duplicate-key errors,
+disconnects, connection cap, idle-client fairness/deadlines, private permissions,
+lock conflicts, sandbox escapes, command-log visibility and live-only asset
+import/place/save/load/reimport/screenshot. Reference Linux/Windows results and
+independent review are recorded in STATUS.md. The owner's new reviewer is
+GPT-6 Astra with high reasoning effort, replacing Claude for future reviews.
+
+Primary references:
+
+- [JSON-RPC2.0 specification](https://www.jsonrpc.org/specification)
+- [Windows GetSecurityInfo/read-control requirements](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo)
+- [Windows system-preferred CSPRNG](https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom)

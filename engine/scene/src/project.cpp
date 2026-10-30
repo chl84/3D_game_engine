@@ -3,11 +3,13 @@
 #include <engine/core/path_sandbox.hpp>
 #include <engine/core/version.hpp>
 #include <engine/platform/atomic_file.hpp>
+#include <engine/platform/process.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <initializer_list>
+#include <limits>
 #include <system_error>
 #include <utility>
 
@@ -711,6 +713,21 @@ Result<void> Project::force_unlock(const std::filesystem::path& root) {
     const std::filesystem::path directory = root / ".engine" / "lock";
     if (!std::filesystem::exists(directory, error)) {
         return {};
+    }
+    if (std::filesystem::exists(directory / "lock.json", error)) {
+        auto owner = read_json(directory / "lock.json");
+        if (!owner) {
+            return core::make_failure<void>(owner.error());
+        }
+        if (owner->contains("pid") && owner->at("pid").is_number_integer()) {
+            const auto pid = owner->at("pid").get<std::int64_t>();
+            if (pid > 0 && pid <= std::numeric_limits<int>::max() &&
+                platform::process_running(static_cast<int>(pid))) {
+                return core::make_failure<void>(
+                    core::make_error(core::ErrorCode::Conflict,
+                                     "cannot remove a project lock held by a running process"));
+            }
+        }
     }
     std::filesystem::remove_all(directory, error);
     if (error) {

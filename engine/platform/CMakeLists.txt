@@ -1,6 +1,8 @@
 add_library(engine_platform STATIC
     src/atomic_file.cpp
     src/window.cpp
+    src/local_socket.cpp
+    src/process.cpp
 )
 
 add_library(engine::platform ALIAS engine_platform)
@@ -24,3 +26,8 @@ target_link_libraries(engine_platform
     PRIVATE
         SDL3::SDL3
 )
+
+if(WIN32)
+    target_compile_definitions(engine_platform PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_link_libraries(engine_platform PRIVATE ws2_32 advapi32 bcrypt)
+endif()

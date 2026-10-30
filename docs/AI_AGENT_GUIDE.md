@@ -1,8 +1,8 @@
 # AI Agent Guide
 
-**Status:** M3.6 implementation. The offline project/scene/entity/component CLI,
-asset cooking/reimport/placement, shared PBR rendering, fixed-tick simulation and
-offscreen screenshots exist. The local live API remains planned for M3.7.
+**Status:** M3.7 implementation and verification. Offline authoring, asset
+cooking/reimport/placement, shared PBR rendering, fixed-tick simulation,
+offscreen screenshots and the authenticated local live API are implemented.
 Current review and exact-source verification results are in STATUS.md.
 
 ## Status reports and independent review
@@ -14,6 +14,13 @@ and CI verification have completed successfully. During ongoing work, provide
 only brief progress updates, necessary questions or genuine blockers. This
 instruction applies across sessions, including when a review runs asynchronously.
 The end-of-session/substep reporting rules do not require a premature report.
+
+## Independent reviewer
+
+Owner instruction, 2026-10-30: new independent reviews use GPT-6 Astra,
+model `gpt-6-astra`, with `reasoningEffort=high`. This replaces Claude Opus5.5
+high for future review rounds; historical verdicts retain their original
+reviewer attribution. Do not silently substitute another model or provider.
 
 ## Principles
 
@@ -299,3 +306,41 @@ Reimport keeps the asset UUID, so saved instance references continue to work.
 
 BaseColor and emissive textures use sRGB; normal/MR/AO are linear. Importer@4
 invalidates the former emissive-linear caches. Material factors remain linear.
+
+## Local live API (M3.7)
+
+Start a foreground project session, then use another terminal/client:
+
+```sh
+engine live serve demo scenes/main.scene.json --json
+engine live call demo --method ping --json
+engine live call demo --method command --params '{"name":"asset.list@1"}' --json
+engine live call demo --method inspect --params '{"target":"log","offset":0,"limit":32}' --json
+engine live call demo --method command --params '{"name":"scene.save@1","arguments":{"path":"scenes/main.scene.json"}}' --json
+engine live call demo --method shutdown --json
+```
+
+The CLI reads .engine/live.json through PathSandbox; credentials are not command
+line arguments or startup output. A Python client reads the private discovery
+file, connects only to127.0.0.1:port and sends one UTF-8 JSON object plus LF:
+jsonrpc2.0, protocolVersion1, token, id, method and named-object params. The
+published wire schemas are jsonrpc-request@1/jsonrpc-response@1. RPC result
+contains the same command-result@1 envelope as offline CLI. Authentication
+errors contain only code/message and never echoed parameters.
+
+Methods: command(name,arguments), inspect(target=scene|asset|project|schema|log),
+screenshot(out optional,width,height,frames), ping and shutdown. Inspect log
+supports offset/limit (1..64) and exposes the actual CommandBus records. Scene
+save/load and history undo/redo are shared commands, also in CLI schema output.
+Live scene changes remain in memory until explicit scene.save@1; shutdown does
+not silently save. Loading clears undo actions from the prior scene.
+
+See ADR-0013 for bounds:64KiB requests,4MiB replies, depth32,8clients, absolute
+receive/send I/O deadlines (default2s), and command-log admission bounds. Clients
+timing out after a complete request must not assume its command was rolled back.
+All paths are project-relative and sandboxed; import sources must be inside the
+project. An offline-imported external original is not read during live reimport;
+the project copy is used instead. Screenshot outputs must be .png and cannot
+replace session/cache/scene files. Offline writers, including screenshot and
+force-unlock of an active process, conflict with the lifetime live project lock.
+After a crash, use project unlock --force only once the owning process is dead.

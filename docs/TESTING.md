@@ -412,3 +412,26 @@ emissive control produces156 and must remain distinct; imported/cooked metadata
 also requires sRGB and permits shared baseColor/emissive use. The inactive native
 suppression rule is removed. Local driver retention remains opt-in; reference
 CI uses the ordinary sanitizer configuration without retention or suppressions.
+
+## M3.7 live API
+
+`engine_live_api` is registered on Linux and Windows and requires lavapipe/device.
+It performs live-only scene/asset authoring and validates wire/result schemas.
+Negative cases include wrong/missing tokens, malformed/deep/duplicate-key JSON,
+oversized/truncated frames, aborted connections, idle fairness, timeout/cap,
+all offline writer lock conflicts (including screenshot and active force-unlock),
+source/output/scene path escapes, protected outputs and external-source reimport
+confinement. It verifies per-user POSIX0600 or a protected Windows DACL with one
+current-user ACE, and checks that mutations enter the real command log without
+authentication credentials. Existing CLI screenshot limits/errors remain tested.
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang -R engine_live_api -V
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+scripts/run_fuzz.sh 30
+```
+
+The third permanent fuzz target engine_rpc_fuzz uses checked-in parser seeds,
+raw bytes and an authenticated wrapper. No fuzz input reaches sockets, disk or
+the command bus. The existing CI fuzz job runs all three targets for30s each
+with ASan and UBSan halt-on-error. Nightly cached-corpus fuzzing remains M3.8.

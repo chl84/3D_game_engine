@@ -1,0 +1,6 @@
+add_library(engine_control STATIC src/json_rpc.cpp)
+add_library(engine::control ALIAS engine_control)
+target_include_directories(engine_control PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_link_libraries(engine_control PUBLIC engine::core)
+target_compile_features(engine_control PUBLIC cxx_std_20)
+engine_set_warnings(engine_control)

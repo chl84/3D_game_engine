@@ -17,6 +17,9 @@ namespace engine::asset {
 [[nodiscard]] core::Result<void> register_asset_commands(command::CommandBus& bus,
                                                          const std::filesystem::path& project_root,
                                                          bool dry_run = false);
+[[nodiscard]] core::Result<void> register_asset_commands(command::CommandBus& bus,
+                                                         const std::filesystem::path& project_root,
+                                                         bool dry_run, bool project_sources_only);
 
 // Registers undoable asset.place@1 against a caller-owned scene. Placement
 // validates the cooked asset, then stores only its stable UUID and transform.

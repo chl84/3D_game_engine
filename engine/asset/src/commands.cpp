@@ -149,13 +149,20 @@ json asset_command_schemas() {
 
 Result<void> register_asset_commands(command::CommandBus& bus, const std::filesystem::path& root,
                                      bool dry_run) {
+    return register_asset_commands(bus, root, dry_run, false);
+}
+
+Result<void> register_asset_commands(command::CommandBus& bus, const std::filesystem::path& root,
+                                     bool dry_run, bool project_sources_only) {
     const auto schemas = asset_command_schemas();
     for (const auto& [name, schema] : schemas.items()) {
         if (name == "asset.place@1") {
             continue; // Requires a scene; registered separately below.
         }
         auto added = bus.add(
-            name, schema, [root, dry_run, name, &bus](const json& args) -> Result<CommandOutput> {
+            name, schema,
+            [root, dry_run, project_sources_only, name,
+             &bus](const json& args) -> Result<CommandOutput> {
                 try {
                     if (name == "asset.import@1" || name == "asset.reimport@1") {
                         if (bus.in_transaction()) {
@@ -163,14 +170,28 @@ Result<void> register_asset_commands(command::CommandBus& bus, const std::filesy
                                 core::ErrorCode::Unsupported,
                                 "asset file imports cannot participate in an undo transaction"));
                         }
+                        std::filesystem::path source;
+                        if (name == "asset.import@1") {
+                            source = args.at("source").get<std::string>();
+                            if (project_sources_only) {
+                                auto sandbox = core::PathSandbox::create(root);
+                                if (!sandbox) {
+                                    return core::make_failure<CommandOutput>(sandbox.error());
+                                }
+                                auto resolved = sandbox->resolve(source.generic_string());
+                                if (!resolved) {
+                                    return core::make_failure<CommandOutput>(resolved.error());
+                                }
+                                source = *resolved;
+                            }
+                        }
                         Result<ImportResult> imported =
                             name == "asset.import@1"
-                                ? import_asset(root, args.at("source").get<std::string>(),
-                                               args.value("name", ""), dry_run)
+                                ? import_asset(root, source, args.value("name", ""), dry_run)
                                 : reimport_asset(
                                       root,
                                       *core::Uuid::parse(args.at("assetId").get<std::string>()),
-                                      dry_run);
+                                      dry_run, project_sources_only);
                         if (!imported) {
                             return core::make_failure<CommandOutput>(imported.error());
                         }

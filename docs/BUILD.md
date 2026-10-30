@@ -383,3 +383,12 @@ VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-
 The explicit `engine_pbr_color_golden` now compares a fixed 192x128 six-patch
 image as well as numerical sRGB/data expectations. It is registered on Linux
 and Windows. This is separate from the Blender normal-map golden.
+
+## M3.7 native local transport
+
+No third-party dependency is added. The planned control target contains the
+bounded JSON parser; platform uses POSIX sockets/process APIs on Linux and
+Windows system ws2_32/advapi32/bcrypt for sockets, DACLs and CSPRNG. Windows
+private discovery permissions are verified before writing credentials and
+checked independently by the cross-platform integration test. The new
+engine_rpc_fuzz target runs alongside the existing GLB/image targets.

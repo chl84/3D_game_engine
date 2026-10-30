@@ -3,8 +3,8 @@
 An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
 M0–M2 are released (`v0.3.0`). M3 is in progress: GLB import, cooked assets,
-reimport and the asset CLI are implemented; PBR rendering and the live API are
-next. The engine is not ready for shipping games.
+reimport, PBR rendering and asset placement are implemented. The authenticated
+local live API is undergoing M3.7 verification and independent review. The engine is not ready for shipping games.
 
 ## Requirements
 

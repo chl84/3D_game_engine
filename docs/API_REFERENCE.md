@@ -16,6 +16,8 @@
 | `engine component set|add|remove --json` | Component changes |
 | `engine asset import|inspect|validate|reimport|list --json` | Asset lifecycle and cooked-cache inspection |
 | `engine asset place <project> <scene> --asset UUID [--position X Y Z] --json` | Place a shared asset instance |
+| `engine live serve <project> [scene] --json` | Authenticated loopback project session |
+| `engine live call <project> --method METHOD --params JSON --json` | Call the live session using private discovery |
 | `engine simulate --ticks N --json` | Fixed-tick state dump |
 | `engine batch --file FILE --undo N --json` | Transactional command batch |
 | `engine screenshot <project> <scene> --frames N --out FILE --json` | Offscreen PNG screenshot |
@@ -169,6 +171,30 @@ Required arguments: `assetId`
   "required": [
     "assetId"
   ],
+  "type": "object"
+}
+```
+
+### `history.redo@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "type": "object"
+}
+```
+
+### `history.undo@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
   "type": "object"
 }
 ```
@@ -333,6 +359,50 @@ Required arguments: none
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "type": "object"
+}
+```
+
+### `scene.load@1`
+
+Required arguments: `path`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "minLength": 1,
+      "pattern": "\\.scene\\.json$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "path"
+  ],
+  "type": "object"
+}
+```
+
+### `scene.save@1`
+
+Required arguments: `path`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "minLength": 1,
+      "pattern": "\\.scene\\.json$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "path"
+  ],
   "type": "object"
 }
 ```
