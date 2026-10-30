@@ -92,7 +92,7 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 17 registered; CI runs 17/17 with lavapipe and Xvfb. Locally `linux-debug` passes 16/17 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 17 registered; CI runs 17/17 with lavapipe and Xvfb. Locally `linux-debug` passes 16/17 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 500 assertions |
 | Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped without lavapipe. CI runs 17/17 with lavapipe and Xvfb |
 | ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test\|engine_run_smoke"` → 11/11 CPU-side tests. The four GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
@@ -187,7 +187,7 @@
 | M2.9 overlay toggle and ImGui input | Automatically tested | `engine_overlay_test` toggles the overlay off and on and checks visibility/draw vertices; `Renderer::process_sdl_event` routes SDL events to ImGui. The owner verifies the interactive fly camera and toggle on Hyprland |
 | M2.9 CI | Automatically tested | Final run [40963990696](https://github.com/chl84/3D_game_engine/actions/runs/40963990696) on `8bb3c82` → all five jobs green. Linux 15/15 including `engine_run_smoke`; Windows 11/11; ASan/UBSan 15/15; Quality green |
 | M2.9 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `8bb3c82`, ran 15 registered tests (14 passed, golden skipped on the local Intel device) and `M1 acceptance passed` |
-| M3.1 scene format v3 | Automatically tested | Scene format 3 adds `AssetInstance`, `DirectionalLight` and reserved `PointLight`; v1/v2 scenes upgrade to v3, v3 components are rejected in v2, and v4 is rejected. `engine_core_tests` is 63 cases / 494 assertions |
+| M3.1 scene format v3 | Automatically tested | Scene format 3 adds `AssetInstance`, `DirectionalLight` and reserved `PointLight`; v1/v2 scenes upgrade to v3, v3 components are rejected in v2, and v4 is rejected. `engine_core_tests` is 63 cases / 500 assertions |
 | M3.1 asset schemas | Documented | `schemas/asset@1.schema.json` and `schemas/asset-cooked@1.schema.json` define the approved asset sidecar and cooked manifest, including stable node IDs, original source path and source copy |
 | M3.1 fastgltf dependency | Automatically tested | fastgltf 0.9.1 and simdjson 5.0.5 are pinned in vcpkg with overrides; `engine_dependencies_smoke` constructs a `fastgltf::Parser` and passes |
 | M3.1 cache and source rules | Documented | `.engine/cache/` is explicitly ignored by git; `asset@1` stores the original reimport source and a project-relative source copy (ADR-0012) |
@@ -199,6 +199,8 @@
 | M3.2 GLB import core | Automatically tested | `engine_asset_tests` imports the Blender 5.2.2 fixtures, checks hierarchy, stable paths, materials, embedded PNG, samplers and animation-channel counts, and composes world transforms in double precision |
 | M3.2 malformed input | Automatically tested | Mutated GLBs prove `E_VALIDATION`/`E_UNSUPPORTED` with JSON pointers for truncated containers, invalid JSON, required/optional extensions, external buffers/images, multiple scenes, non-triangle primitives, blended materials, missing attributes, unsupported attributes, cycles and out-of-range indices |
 | M3.2 fixture provenance | Documented | `tests/assets/m3/PROVENANCE.md` records the Blender 5.2.2 generator, MIT license and that no third-party model or texture is included |
+| M3.2 CI | Automatically tested | Manual dispatch [40978367689](https://github.com/chl84/3D_game_engine/actions/runs/40978367689) on `e5f1587` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
+| M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `e5f1587` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

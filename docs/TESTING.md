@@ -4,8 +4,8 @@
 because the window, swapchain, overlay and `engine run` tests remain Linux-only
 while the offscreen golden and screenshot tests are registered on both
 platforms.
-`engine_core_tests` contains 63 test cases and 494 assertions on Linux;
-Windows reports 61 cases / 482 assertions because two POSIX-only tests are
+`engine_core_tests` contains 63 test cases and 500 assertions on Linux;
+Windows reports 61 cases / 488 assertions because two POSIX-only tests are
 compiled out. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
