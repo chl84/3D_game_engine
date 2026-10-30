@@ -72,3 +72,10 @@ clang-format18 run was claimed by this reviewer.
 
 The final independent verdict is technical approval ofd0797e1 with no required
 changes. Owner approval and final reference CI remain separate gates.
+
+## Final parent verification and owner decision
+
+After the reviewer's snapshot, Quality completed successfully. CI41108912088
+exactlyd0797e1 is completed/success, all six jobs green. Per-job totals and
+reference tool excerpts are preserved in M3_7_CLAUDE_CI_EVIDENCE.txt. The owner
+approved M3.7 on2026-10-30. No merge, tag or M3.8 authorization is inferred.

@@ -2,14 +2,14 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.7 — Claude technically approved; final Quality pending.
+**Current substep:** M3.7 — owner-approved on2026-10-30.
 Verified source d0797e1b361f4f4379b69d33ebc523ab88e93035. Claude Opus5.5 high
-confirmed all three original fixes and now approves the corrected durable
-journal with no blocking/required findings. The owner has not approved M3.7.
-Reference CI41108912088 confirms GCC/Clang26/26, ASan25/25, Windows19/19 and
-Fuzz success; Quality remains open at the latest snapshot. No final A.5 report
-until that gate closes. The latest owner decision restores Claude; future
-reviewer selection remains exclusively the owner's decision. M3.8 is unstarted.
+independently approved all required corrections and durable JSONL with no
+blocking/required findings. Final CI41108912088 completed/success in all six
+jobs: GCC/Clang26/26, ASan25/25, Windows19/19, Fuzz and Quality success.
+[Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
+Reviewer selection remains exclusively the owner's decision; Claude Opus is
+current reviewer. M3.8, merge and tag await separate owner authorization.
 
 M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
 CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
@@ -72,7 +72,7 @@ No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
-| M3.7 | Local JSON-RPC live API | Claude technically approved d0797e1; final Quality and owner assessment pending |
+| M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
 | M3.8 | M3 hardening and acceptance | Planned |
 
 ## M3.5 fixture preparation (owner requested)
@@ -730,17 +730,17 @@ No interim A.5 report, merge/tag or M3.8 is authorized.
 All three original fixes independently hold. Claude requires a new serialization
 fail-closed correction (F1), and recommends mode0644 coverage (F2), registered
 post-execution fsync fault tests (F3), and non-zero/visible terminal journal
-errors (F4). All four are being corrected together, then independently re-reviewed.
+errors (F4). All four were corrected together and independently approved in round2 below.
 [Review record](verification/M3_7_CLAUDE_REVIEW_ROUND1.md). Reference totals for
 new source: Linux GCC/Clang26, ASan25, Windows19 because the new fault interposer
 is Linux non-sanitized only. No existing tests are disabled or weakened.
 
 Follow-up local verification: Clang26/26; ASan/UBSan25/25 with leak checks on.
 All four new defect mutations fail the new tests; restored checks pass. New
-exact-source CI and Claude re-check are still required. Evidence is in
+exact-source CI and Claude re-check were required and are now complete. Evidence is in
 [follow-up](verification/M3_7_CLAUDE_FIX_EVIDENCE.txt).
 
-### Claude round2 technical approval; final Quality pending
+### Historical Claude round2 handback before Quality completed
 
 Claude Opus5.5 high approvesd0797e1 with no required/blocking findings. All three
 original fixes hold; F1–F4 are fixed and nine independent mutations are caught.
@@ -751,6 +751,22 @@ The source tree was restored and clean in the isolated worktree.
 [reference job excerpts](verification/M3_7_CLAUDE_CI_EVIDENCE.txt).
 
 Parent verified GCC/Clang26/26, ASan25/25, Windows19/19 and Fuzz in actual logs;
-Quality still running. Exact-source public clean clone26/26 and both acceptance
-summaries pass. No owner report is delivered until Quality completes green.
-No owner approval, merge/tag or M3.8 work is implied.
+Quality was still running at that snapshot. Exact-source public clean clone26/26
+and both acceptance summaries pass. Reporting was held until Quality completed.
+Final CI closure and the subsequent owner approval are recorded below.
+
+### M3.7 owner approval and final closure —2026-10-30
+
+The owner approved M3.7 after the mandatory Claude Opus re-reviews. All three
+original corrections and the durable-journal F1–F4 follow-ups are independently
+approved atd0797e1. CI41108912088 is completed/success, all six jobs green,
+including Quality. Actual job totals: GCC/Clang26/26, ASan25/25, Windows19/19.
+The new Linux-only non-sanitized fault test explains the count difference; no
+existing test is disabled. Fuzz and exact-source public clean clone pass.
+
+[Final CI proof](verification/M3_7_CLAUDE_CI_EVIDENCE.txt),
+[Claude technical approval](verification/M3_7_CLAUDE_REVIEW_ROUND2.md) and
+[full report](verification/M3_7_STATUS_REPORT.md) are complete. Documentation
+commits afterd0797e1 do not change the tested source. The pre-existing non-UTF-8
+asset-import orphan-directory case remains documented for hardening assessment.
+No new M3.7 blocking/required finding remains. No merge, tag or M3.8 is authorized.

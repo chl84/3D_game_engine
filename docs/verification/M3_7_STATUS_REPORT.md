@@ -1,9 +1,9 @@
 # Status report — 2026-10-30 — M3.7
 
-**Current gate:** Claude Opus5.5 high technically approves the corrected source
-with no blocking or required findings. Five reference jobs are confirmed green;
-Quality is still running at the latest snapshot. Do not deliver the owner A.5
-report until that final gate is green. M3.7 is not yet owner-approved.
+**Final status:** Owner-approved on2026-10-30. Claude Opus5.5 high independently
+approves the corrected source with no blocking or required findings. All six
+reference CI jobs completed/success on the exact reviewed source. The mandatory
+re-review, durable JSONL and follow-up findings are complete. M3.8 is unstarted.
 
 **Delivered:** Local JSON-RPC server/client using the same authoring CommandBus
 and handlers as offline CLI, bounded authenticated loopback transport, sandboxed
@@ -35,7 +35,7 @@ Any subsequent documentation commit is separate from this tested code SHA.
 | Three permanent fuzz targets | Automatically tested | GLB2,560, image3,708 and RPC47,289 runs,31s each, same existing job |
 | Exact-source public clean clone | Automatically tested |26/26, M1 acceptance and M1 clean-clone acceptance passed |
 | Physical Iris Xe live flow | Manually verified earlier | Initial full live integration passed; no new physical GPU run is claimed for the journal corrections |
-| Quality | Pending final job | Required reference formatter18/tidy18; parent local formatter18 and changed-unit tidy23 passed |
+| Quality | Automatically tested | Final reference formatter18/tidy18 with warnings as errors passed; all six CI jobs green |
 | Independent Claude re-review | Manually verified | Round1 confirms all three original fixes; round2 approves F1–F4 and corrected journaling, with nine independently rejected mutations |
 
 Permanent evidence:
@@ -104,9 +104,9 @@ and restore shared light snapshots on undo. Durable JSONL was implemented in
 M3.7 at the owner's request. The syscall interposer is test-only. Existing tests
 and sanitizer/quality policies were not weakened.
 
-**Decisions requiring approval:** Owner assessment of M3.7 after final Quality.
-Reviewer changes remain exclusively the owner's decision. No new A.6 exception
-is proposed. Merge, tag and M3.8 require their separate owner authorization.
+**Decisions requiring approval:** None newly proposed; M3.7 is owner-approved.
+Reviewer changes remain exclusively the owner's decision. Merge, tag and M3.8
+require separate owner authorization.
 
-**Next step:** Confirm final Quality success, record permanent proof, deliver the
-consolidated A.5 report and await the owner's next-step decision.
+**Next step:** Await owner instruction for the next substep. No merge, tag or
+M3.8 work is started by this approval record.
