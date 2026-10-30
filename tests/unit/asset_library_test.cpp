@@ -275,7 +275,7 @@ TEST_CASE("asset library rejects missing projects and stale caches", "[asset][li
     const auto sidecar =
         project->root() / "assets" / imported->record.asset_id.to_string() / "asset.json";
     auto sidecar_document = nlohmann::json::parse(read_text(sidecar));
-    sidecar_document["sourceCopy"] = "../../escape.glb";
+    sidecar_document["sourceCopy"] = "../escape.glb";
     write_text(sidecar, sidecar_document.dump(2));
     const auto escaped = reimport_asset(project->root(), imported->record.asset_id);
     REQUIRE_FALSE(escaped.has_value());

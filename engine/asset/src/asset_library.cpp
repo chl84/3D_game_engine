@@ -1296,6 +1296,10 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
         return core::make_failure<ImportResult>(colors.error());
     }
     generate_missing_tangents(*imported);
+    auto source_copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
+    if (!source_copy) {
+        return core::make_failure<ImportResult>(source_copy.error());
+    }
     ImportResult result;
     result.record = *record;
     result.cache_hit = cache_matches(project_root / record->cache_path, record->cache_key);
@@ -1305,10 +1309,6 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
             return core::make_failure<ImportResult>(cooked.error());
         }
         remove_old_cache_directories(project_root, asset_id, record->cache_path);
-    }
-    auto source_copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
-    if (!source_copy) {
-        return core::make_failure<ImportResult>(source_copy.error());
     }
     if (auto copied = write_bytes(*source_copy, *bytes); !copied) {
         return core::make_failure<ImportResult>(copied.error());
