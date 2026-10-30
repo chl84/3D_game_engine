@@ -653,8 +653,10 @@ no merge/tag.
   rotation/shutdown and shared light/asset undo.
 - Permanent engine_rpc_fuzz added to the same CI job as GLB/image fuzzers.
   Local30s results:4994/8284/66839runs, no sanitizer findings.
-- Local Clang23/23 and local retention ASan/UBSan23/23. New reference Windows
-  compilation/DACL execution and independent Astra review remain pending.
+- Initial local Clang/retention ASan suites passed23/23; review corrections add
+  the queued-deadline regression and pass24/24 locally. Reference CI7c24116 now
+  passes Linux GCC/Clang/ASan24/24 and Windows18/18 (including live ACL checks);
+  Fuzz passed. The overall gate remains open while Quality runs.
 - [Working verification record](verification/M3_7_STATUS_REPORT.md) and
   [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt). No owner report is
   delivered until review and required CI/re-review are complete.
@@ -669,3 +671,18 @@ The initial CI41091300737 failed Windows compilation and Quality formatting;
 those results are not final acceptance evidence. Corrected CI must pass all6jobs
 with Linux24/24 and Windows18/18. Review/closure details are in
 [round1](verification/M3_7_REVIEW_ROUND1.md). No consolidated owner report yet.
+
+### M3.7 final platform evidence; overall Quality gate still open
+
+Verification source7c241168583e5cd1b37c6b14aa60fd959819753d.
+[CI41093710140](https://github.com/chl84/3D_game_engine/actions/runs/41093710140):
+GCC, Clang and ASan24/24; Windows18/18; Fuzz success. Windows live/DACL checks,
+queued-deadline regression and PBR color golden all passed. Quality is still
+in progress at this snapshot, so no final CI success or owner report is claimed.
+Exact-source public clean clone passed24/24 and both acceptance summaries.
+Local clang-tidy18 passed all17changed C++ units with compatible GCC14 headers;
+its incompatible GCC16-header attempt is recorded honestly.
+[CI excerpts](verification/M3_7_CI_EVIDENCE.txt) and
+[local evidence](verification/M3_7_LOCAL_EVIDENCE.txt) preserve the proof.
+The three independent-review findings are corrected and verified by the parent.
+No second independent verdict is claimed. Final reporting awaits Quality.

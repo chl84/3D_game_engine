@@ -1,6 +1,6 @@
 M3.7 local verification — 2026-10-30
 Source: the M3.7 implementation commit containing this record; base16c5805.
-Reference CI and independent GPT-6 Astra high review remain pending.
+Historical initial verification below; independent review is now complete and corrections are recorded later in this file. Final reference CI is tracked separately in the status report.
 Logs below are captured excerpts; workspace paths are normalized to <workspace>.
 No real session credentials are recorded.
 
@@ -478,3 +478,39 @@ M1 clean-clone acceptance passed
 Windows CI41092686164 compiled successfully:17/18 tests passed, including engine_local_socket_deadline and PBR color golden. engine_live_api failed when Windows PowerShell inherited PowerShell7 PSModulePath through Python; Get-Acl could not autoload its module. The test child now removes only inherited PSModulePath, as Microsoft documents for an intermediate process; every owner/DACL assertion remains unchanged. This is a test-harness environment correction, with Windows rerun still required.
 Primary reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_psmodulepath
 Local attempt at clang-tidy18 with the native GCC16 headers failed to parse standard-library builtins (__builtin_popcountg) and produced cascading diagnostics; it is not a passing static check. A compatible-header rerun uses the previously verified Ubuntu GCC14 headers in a temporary tool environment. CI remains the reference gate. No source change or suppression was made for the incompatible-header diagnostics.
+
+Compatible local clang-tidy18.1.8 verification on all17changed C++ translation units passed (exit0).
+COMMAND: /tmp/<tool-env>/bin/clang-tidy -p build/ci-linux-clang <all changed .cpp files> --warnings-as-errors=* --extra-arg=-nostdinc++ --extra-arg=-isystem --extra-arg=<Ubuntu GCC14 include> --extra-arg=-isystem --extra-arg=<Ubuntu GCC14 target include> --extra-arg=-isystem --extra-arg=<Ubuntu GCC14 backward include>
+The temporary header package was previously downloaded from the Ubuntu noble-updates libstdc++-14-dev package and verified against its archive metadata. This substitutes only parser headers, not build sources or compiler/linker flags in the project. The separate native GCC16/header attempt above remains a failed tool-compatibility experiment.
+Captured final diagnostics (paths normalized):
+[15/17] Processing file <workspace>/tools/engine/src/commands.cpp.
+705031 warnings generated.
+[16/17] Processing file <workspace>/tools/engine/src/live.cpp.
+754141 warnings generated.
+[17/17] Processing file <workspace>/tools/engine/src/main.cpp.
+802787 warnings generated.
+Suppressed 803147 warnings (802787 in non-user code, 360 NOLINT).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+
+
+Final exact-SHA public clean-clone acceptance:
+Source7c241168583e5cd1b37c6b14aa60fd959819753d.
+COMMAND: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=<lavapipe ICD> scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+10/24 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+11/24 Test #11: engine_screenshot_cli ............   Passed    0.19 sec
+12/24 Test #12: engine_version_json ..............   Passed    0.02 sec
+13/24 Test #13: engine_cli_contract ..............   Passed    0.38 sec
+14/24 Test #14: engine_docs_links ................   Passed    0.03 sec
+15/24 Test #15: engine_sensitive_scan ............   Passed    0.46 sec
+16/24 Test #16: engine_acceptance_m1 .............   Passed    0.17 sec
+17/24 Test #17: engine_api_reference .............   Passed    0.08 sec
+18/24 Test #18: engine_asset_cli .................   Passed    0.58 sec
+19/24 Test #19: engine_pbr_golden ................   Passed    0.28 sec
+20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.11 sec
+21/24 Test #21: engine_pbr_window ................   Passed    0.19 sec
+22/24 Test #22: engine_asset_placement ...........   Passed    1.23 sec
+23/24 Test #23: engine_live_api ..................   Passed    3.98 sec
+24/24 Test #24: engine_local_socket_deadline .....   Passed    1.23 sec
+100% tests passed out of 24
+M1 acceptance passed
+M1 clean-clone acceptance passed
