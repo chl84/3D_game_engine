@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.5 implemented; final local verification, CI and independent
-review are in progress. M3.4 is reviewer-approved with all six CI jobs green.
+**Current substep:** M3.5 complete — reviewer GODKJENT (round 3).
+All six CI jobs passed on code SHA `eceb5f9`. M3.6 is next.
 M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 
 ## Substeps
@@ -56,7 +56,7 @@ M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Done — reviewer GODKJENT (round 3); all CI green |
-| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Implemented — verification/review in progress |
+| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Done — reviewer GODKJENT (round 3); all CI green |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
@@ -453,11 +453,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.5 is implemented. Review round 2 confirmed the frame-error recovery and
-strict reflection/Blender-reference tests in `b417101`. The final correction adds discriminating mirrored-wrap/axis and shader-underflow
-probes, plus a behavior-preserving clang-tidy 18 compatibility fix.
-New CI and the final review round remain before approval. M3.6 is next after
-M3.5 approval. The optional nightly ten-minute fuzz/cached-corpus proposal is
+M3.5 is complete and reviewer-approved on `eceb5f9`. Next is M3.6: CLI asset
+placement, automatic project-asset resolution and scene-instance save/load
+acceptance. The optional nightly ten-minute fuzz/cached-corpus proposal remains
 recorded for M3.8. M3 merges only after explicit owner approval.
 
 ## M3.5 implementation and verification
@@ -497,9 +495,9 @@ Review corrections:
 | Check | Result / evidence |
 |---|---|
 | Clang warnings-as-errors and full lavapipe CTest | 20/20, no skips; `/tmp/m35-r3-full-clang.log` |
-| Exact clean clone of `b417101` | 20/20 plus M1 and clean-clone acceptance passed; `/tmp/m35-r2-clean-clone.log` |
+| Exact clean clone of `eceb5f9` | 20/20 plus M1 and clean-clone acceptance passed; `/tmp/m35-r3-clean-clone.log` |
 | Iris Xe final offscreen controls | Blender image difference 0, analytical red 137, wrap/underflow probes pass; `/tmp/m35-r3-intel.log` |
-| Iris Xe window recovery/lifetime | Passed with Required validation; `/tmp/m35-r2-intel.log` |
+| Iris Xe window recovery/lifetime | Passed with Required validation; `/tmp/m35-r3-intel.log` |
 | Mutations | Wrap removed, S/T swapped and normalization removed each fail; correct artifacts restored; `/tmp/m35-r3-mutations.log` |
 | Static checks | Changed C++ passes clang-tidy 23 and compatible local clang-tidy 18 with warnings-as-errors; clang-format 18, docs/sensitive scan and both shaders' spirv-val pass |
 | Asset/fuzz | Asset suite 18 cases / 22,693 assertions; 30-second fuzz targets passed (GLB 4335 runs, image 8640); `/tmp/m35-asset-summary.log`, `/tmp/m35-fuzz.log` |
@@ -507,18 +505,21 @@ Review corrections:
 | Local ASan PBR after final test correction | Same two PBR leak failures, no suppression; `/tmp/m35-r3-asan-pbr.log` |
 | Original implementation CI | All six jobs succeeded on `47569ea`, run 41051934696; Ubuntu 20/20 including ASan, Windows 14/14 including PBR lavapipe golden |
 | Correction CI | Run 41055106806 on `b417101`: Ubuntu/Windows/Fuzz passed; Quality failed with six clang-tidy 18 optional-access warnings; `/tmp/m35-r2-ci-quality-failure.log` |
-| Final correction CI/review | Pending |
+| Final correction CI | [Run 41057830415](https://github.com/chl84/3D_game_engine/actions/runs/41057830415) completed/success on `eceb5f9`: all six jobs green; Ubuntu Clang/GCC14/ASan 20/20, Windows MSVC 14/14 including PBR lavapipe golden, Fuzz and Quality success |
+| Independent review | GODKJENT (round 3), including a separate GCC clean clone 20/20, Iris Xe controls/window recovery, wrap/underflow/handedness mutation failures and all six CI job results |
 
 The clang-tidy 18 warnings are corrected by copying the terminal optional to a
 local checked value and returning local errors immediately after storing them.
 This preserves the recovery/terminal behavior; no check is suppressed. Local
-clang-tidy 23 had accepted the former member-access flow. Final CI must verify
-the pinned version 18. Local version 18.1.8 now passes the changed units with
+clang-tidy 23 had accepted the former member-access flow. Final CI verified
+18.1.3 across every C++ source with warnings as errors. Local 18.1.8 also passes
+the changed units with
 checksum-verified Ubuntu GCC 14 headers (`/tmp/m35-r3-tidy18-compatible.log`);
 the system GCC 16 headers are too new for that parser.
 
 The exact owner of the local sanitizer leaks is unproved. The Ubuntu reference
-ASan job must pass without suppression. Windows presentation is unverified.
+ASan job passes all 20 tests with leak detection enabled and no suppression.
+Windows presentation is unverified.
 Initial development exposed an embedded-shader inline-symbol collision and an
 optional SPIR-V discard capability; unique symbols and explicit SPIR-V 1.5 fixed
 both before delivery. No existing tests or validation requirements were weakened.

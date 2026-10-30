@@ -131,7 +131,7 @@ S/T modes, nearest/linear magnification and every min/mip filter at known fracti
 LODs. Tiny uniform and collapsed-node probes cover the transform policy. The
 analytical normal is also tested at node scale 1e-14 (with compensating vertex
 coordinates), which exercises Float32 determinant underflow without shader
-normalization.
+normalization on flush-to-zero devices (verified on llvmpipe and Iris Xe).
 Window tests exercise validation-error recovery, missing-camera recovery and
 two-frame retirement/collection/reuse, with a 30-second timeout. Validation is
 Required for the PBR tests.
