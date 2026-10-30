@@ -36,6 +36,9 @@ int screenshot(const std::string& project_root, const std::string& scene_path,
                const std::string& out_path, int frames, int width, int height, bool json);
 int run_window(const std::string& project_root, const std::string& scene_path, int frames,
                int width, int height, bool hidden, bool json);
+int asset_execute(const std::string& operation, const std::string& project_root,
+                  const std::string& source, const std::string& asset_id, const std::string& name,
+                  bool json, bool dry_run);
 int schema(bool json);
 int batch(const std::string& project_root, const std::string& scene_path, const std::string& file,
           int undo_count, bool json, bool dry_run);

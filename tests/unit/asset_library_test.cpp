@@ -238,7 +238,8 @@ TEST_CASE("cooking generates tangents for normal-mapped meshes", "[asset][librar
                                      (vertex.tangent[1] * vertex.tangent[1]) +
                                      (vertex.tangent[2] * vertex.tangent[2]);
         CHECK(std::abs(length_squared - 1.0F) < 1.0e-4F);
-        CHECK(vertex.tangent[3] == 1.0F);
+        // glTF's sign differs from MikkTSpace's native UV convention.
+        CHECK(vertex.tangent[3] == -1.0F);
         CHECK(std::abs(vertex.tangent[0]) > 0.99F);
         CHECK(std::abs(vertex.tangent[1]) < 1.0e-4F);
         CHECK(std::abs(vertex.tangent[2]) < 1.0e-4F);

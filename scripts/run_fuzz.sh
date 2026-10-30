@@ -2,6 +2,8 @@
 # Build and run the short libFuzzer targets with the checked-in seeds.
 # Usage: scripts/run_fuzz.sh [seconds-per-target]
 set -euo pipefail
+# Undefined behavior must stop a fuzz run, not merely print a recoverable warning.
+export UBSAN_OPTIONS="${UBSAN_OPTIONS:+$UBSAN_OPTIONS:}halt_on_error=1:print_stacktrace=1"
 
 seconds="${1:-30}"
 root="$(cd "$(dirname "$0")/.." && pwd)"

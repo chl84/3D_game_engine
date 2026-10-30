@@ -74,6 +74,8 @@ add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
 
 add_executable(engine_asset_tests
+    unit/asset_tangents_test.cpp
+    unit/asset_commands_test.cpp
     unit/asset_import_test.cpp
     unit/asset_library_test.cpp
     unit/image_decode_test.cpp
@@ -322,3 +324,9 @@ if(ENGINE_BUILD_FUZZERS)
     target_link_options(engine_image_fuzz PRIVATE -fsanitize=fuzzer)
     engine_set_warnings(engine_image_fuzz)
 endif()
+
+add_test(NAME engine_asset_cli
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/asset_cli.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_asset_cli PROPERTIES LABELS "contract;cli;asset")

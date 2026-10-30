@@ -14,6 +14,7 @@
 | `engine scene create|inspect|validate --json` | Scene lifecycle |
 | `engine entity create|delete|reparent --json` | Entity lifecycle |
 | `engine component set|add|remove --json` | Component changes |
+| `engine asset import|inspect|validate|reimport|list --json` | Asset lifecycle and cooked-cache inspection |
 | `engine simulate --ticks N --json` | Fixed-tick state dump |
 | `engine batch --file FILE --undo N --json` | Transactional command batch |
 | `engine screenshot <project> <scene> --frames N --out FILE --json` | Offscreen PNG screenshot |
@@ -35,6 +36,108 @@ All offline commands return a document that validates against
 | `engine.scene.Transform` | `position`: array[number][3], `rotation`: array[number][4], `scale`: array[number][3] |
 
 ## Commands
+
+### `asset.import@1`
+
+Required arguments: `source`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "source"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.inspect@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.list@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {},
+  "required": [],
+  "type": "object"
+}
+```
+
+### `asset.reimport@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.validate@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
 
 ### `scene.component.add@1`
 

@@ -203,6 +203,36 @@ int main(int argc, char** argv) {
     component_remove->add_option("--component", remove_component, "Component name.")->required();
     component_command->require_subcommand(1);
 
+    auto* asset_command =
+        app.add_subcommand("asset", "Import, inspect, validate, reimport or list assets.");
+    std::string asset_project;
+    std::string asset_source;
+    std::string asset_id;
+    std::string asset_name;
+    auto* asset_import = asset_command->add_subcommand("import", "Import and cook a GLB.");
+    auto* asset_inspect =
+        asset_command->add_subcommand("inspect", "Inspect an asset and its cache.");
+    auto* asset_validate =
+        asset_command->add_subcommand("validate", "Validate an asset and cooked data.");
+    auto* asset_reimport =
+        asset_command->add_subcommand("reimport", "Reimport while preserving asset IDs.");
+    auto* asset_list = asset_command->add_subcommand("list", "List project assets.");
+    for (auto* command :
+         {asset_import, asset_inspect, asset_validate, asset_reimport, asset_list}) {
+        command->add_option("project", asset_project, "Project directory.")->required();
+        command->add_flag("--json", json, "Emit a machine-readable JSON document.");
+    }
+    asset_import
+        ->add_option("source", asset_source, "Source GLB (relative to the current directory).")
+        ->required();
+    asset_import->add_option("--name", asset_name, "Asset display name.");
+    asset_import->add_flag("--dry-run", dry_run, "Validate cooking without writing files.");
+    asset_reimport->add_flag("--dry-run", dry_run, "Validate reimport without writing files.");
+    for (auto* command : {asset_inspect, asset_validate, asset_reimport}) {
+        command->add_option("assetId", asset_id, "Asset UUID.")->required();
+    }
+    asset_command->require_subcommand(1);
+
     auto* schema_command = app.add_subcommand("schema", "Print component schemas.");
     schema_command->add_flag("--json", json, "Emit a machine-readable JSON document.");
 
@@ -335,6 +365,27 @@ int main(int argc, char** argv) {
         return result.failed_requirements.empty()
                    ? 0
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
+    }
+
+    if (*asset_command) {
+        std::string operation;
+        if (*asset_import) {
+            operation = "import";
+        }
+        if (*asset_inspect) {
+            operation = "inspect";
+        }
+        if (*asset_validate) {
+            operation = "validate";
+        }
+        if (*asset_reimport) {
+            operation = "reimport";
+        }
+        if (*asset_list) {
+            operation = "list";
+        }
+        return engine::cli::asset_execute(operation, asset_project, asset_source, asset_id,
+                                          asset_name, json, dry_run);
     }
 
     if (*project_command) {

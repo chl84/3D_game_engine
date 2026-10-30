@@ -1,12 +1,12 @@
 # Testing
 
-**Status:** M3.3. Seventeen CTest tests exist on Linux; Windows registers twelve
+**Status:** M3.4. Eighteen CTest tests exist on Linux; Windows registers thirteen
 because the window, swapchain, overlay and `engine run` tests remain Linux-only
 while the offscreen golden and screenshot tests are registered on both
 platforms.
 `engine_core_tests` contains 65 test cases and 507 assertions on Linux;
 Windows reports 63 cases / 495 assertions because two POSIX-only tests are
-compiled out. `engine_asset_tests` contains 10 test cases and 653 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
+compiled out. `engine_asset_tests` contains 14 test cases and 4217 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -16,7 +16,7 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 |---|---|---|
 | `engine_core_tests` | Catch2 unit test | `unit` |
 | `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0/M1 dependencies | `unit`, `dependencies` |
-| `engine_asset_tests` | GLB import, hierarchy composition, image decoding, asset sidecar/cooked cache, reimport and malformed-input rejection | `unit`, `asset` |
+| `engine_asset_tests` | GLB import, hierarchy composition, image decoding, asset sidecar/cooked cache, reimport, MikkTSpace tangents, asset commands and malformed-input rejection | `unit`, `asset` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
@@ -29,6 +29,7 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_overlay_test` | ImGui debug overlay: entity list, CPU/GPU frame statistics, F1-equivalent visibility toggle, no scene mutation and zero validation errors | `unit`, `render` |
 | `engine_run_smoke` | Hidden-window `engine run --frames 2` contract, window creation and clean exit | `contract`, `cli`, `render` |
 | `engine_point_light_warning` | `project validate`, `engine run` and `engine screenshot` warn that PointLight is not rendered until M5 | `contract`, `cli`, `render` |
+| `engine_asset_cli` | `asset import/inspect/validate/reimport/list`, dry-run, sandbox rejection, cache state and stable error codes | `contract`, `cli`, `asset` |
 | `engine_screenshot_golden` | 64×64 offscreen scene compared with the lavapipe golden image | `unit`, `render`, `acceptance` |
 | `engine_screenshot_cli` | `engine screenshot` creates a valid 64×64 PNG and `command-result@1` envelope | `contract`, `cli`, `render` |
 
@@ -62,9 +63,12 @@ source into a project, validate the `asset@1` and `engine.asset.cooked@1`
 documents against their schemas, load the cooked asset, reimport unchanged and
 changed sources, compare byte-stable sidecar/cache files, and prove that the
 asset UUID and stable node/mesh IDs survive reimport. PNG and JPEG decoding is
-tested with valid, truncated, corrupt and oversized images. A normal-mapped
-triangle without TANGENT attributes proves that cooking generates bounds-checked
-tangents before the data is written.
+tested with valid, truncated, corrupt and oversized images. MikkTSpace tangent
+generation is compared against Blender's exported tangents for a baked normal
+map, including mirrored UVs, vertex splitting, degenerate UVs and preservation
+of source tangents. The asset CLI contract test exercises every command,
+dry-run without filesystem writes, schema validation, stable error codes,
+sidecar sandbox escapes and cache-missing behavior.
 
 `engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
@@ -115,11 +119,11 @@ tests, so the render tests and `engine_screenshot_golden` execute on lavapipe
 `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and
 `engine_run_smoke` execute instead of being skipped as headless. A separate step
 runs `engine_swapchain_test --require-minimize` so a window manager that ignores
-minimize still fails. Linux therefore reports 17/17 with lavapipe.
+minimize still fails. Linux therefore reports 18/18 with lavapipe.
 
 The Windows job installs pinned Mesa lavapipe 26.2.6 (`mmozeiko/build-mesa`,
 SHA-256 verified) and registers its ICD, so the offscreen golden and screenshot
-tests and the device render tests run there too. Windows reports 12/12 CTest,
+tests and the device render tests run there too. Windows reports 13/13 CTest,
 and `engine_render_tests` runs 13 cases / 105 assertions with the device cases
 executing. The window, swapchain and overlay tests remain Linux-only because
 Windows presentation is not verified. Without an ICD the offscreen tests report
@@ -365,3 +369,21 @@ labelled `render` or `golden`.
   synthetic device; the evaluator and error builder are unit-tested directly
 - The console log sink; the JSONL sink is automatically tested
 - Branch protection enforcement; the GitHub plan blocks it (see `STATUS.md`)
+
+## M3.4 asset commands and tangents
+
+`engine_asset_cli` exercises the full import/list/inspect/validate/reimport
+workflow without a GPU, validates the result schemas, proves dry-run leaves
+the project unchanged, checks source-copy fallback and changed-source cache
+invalidation, and checks stable errors, project locks and path traversal.
+Symlink checks run where the platform permits creating directory symlinks,
+with an explicit NOTE otherwise; the contract test itself is never skipped.
+
+`engine_asset_tests` adds shared command registration/logging and MikkTSpace
+regressions: opposite UV orientation with vertex splitting, degenerate UVs,
+invalid indices, preservation of source tangents, and per-corner comparison
+against Blender's exported tangents for a model with a baked normal map.
+These are CPU tests, not the deferred M3.5 image test. Both run under ASan/UBSan.
+The permanent GLB fuzz target also runs tangent generation after valid import;
+its C implementation is instrumented with Clang sanitizer/coverage flags in
+the `linux-fuzz` preset.

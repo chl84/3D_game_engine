@@ -1,11 +1,14 @@
 #include <engine/asset/asset_library.hpp>
 
 #include <engine/asset/image_decode.hpp>
+#include <engine/asset/tangents.hpp>
 
 #include <engine/core/path_sandbox.hpp>
 #include <engine/core/sha256.hpp>
 #include <engine/platform/atomic_file.hpp>
 
+#include "asset_schemas.hpp"
+#include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -50,7 +53,8 @@ constexpr std::size_t kTextureHeaderSize = 12U;
     const auto size = std::filesystem::file_size(path, ec);
     if (ec) {
         return core::make_failure<std::vector<std::byte>>(asset_error(
-            ErrorCode::Io, "cannot read '" + path.generic_string() + "'", ec.message()));
+            ec == std::errc::no_such_file_or_directory ? ErrorCode::NotFound : ErrorCode::Io,
+            "cannot read asset file", ec.message()));
     }
     if (size > limit) {
         return core::make_failure<std::vector<std::byte>>(
@@ -153,14 +157,35 @@ resolve_inside_project(const std::filesystem::path& root, std::string_view relat
 
 [[nodiscard]] Result<json> read_sidecar_json(const std::filesystem::path& root,
                                              const Uuid& asset_id) {
-    auto bytes = read_file(sidecar_path(root, asset_id), kMaxSourceBytes);
+    auto path =
+        resolve_inside_project(root, "assets/" + asset_id.to_string() + "/asset.json", "asset");
+    if (!path) {
+        return core::make_failure<json>(path.error());
+    }
+    auto bytes = read_file(*path, std::size_t{16} * 1024U * 1024U);
     if (!bytes) {
         return core::make_failure<json>(bytes.error());
     }
     try {
-        return json::parse(
-            std::string(reinterpret_cast<const char*>(bytes->data()), bytes->size()));
-    } catch (const json::exception& error) {
+        auto document =
+            json::parse(std::string(reinterpret_cast<const char*>(bytes->data()), bytes->size()));
+        nlohmann::json_schema::json_validator validator(json::parse(detail::kAssetSchema));
+        validator.validate(document);
+        if (document.at("assetId") != asset_id.to_string()) {
+            return core::make_failure<json>(asset_error(
+                ErrorCode::Validation, "sidecar asset ID does not match its directory"));
+        }
+        for (const auto* key : {"sourceCopy", "cooked.path"}) {
+            const auto relative = std::string_view(key) == "sourceCopy"
+                                      ? document.at("sourceCopy").get<std::string>()
+                                      : document.at("cooked").at("path").get<std::string>();
+            auto resolved = resolve_inside_project(root, relative, key);
+            if (!resolved) {
+                return core::make_failure<json>(resolved.error());
+            }
+        }
+        return document;
+    } catch (const std::exception& error) {
         return core::make_failure<json>(
             asset_error(ErrorCode::Validation, "asset sidecar is not valid JSON", error.what()));
     }
@@ -234,115 +259,6 @@ resolve_inside_project(const std::filesystem::path& root, std::string_view relat
         {"doubleSided", material.double_sided},
         {"textures", json::object()},
     };
-}
-
-[[nodiscard]] std::array<float, 3> subtract(const std::array<float, 3>& left,
-                                            const std::array<float, 3>& right) {
-    return {left[0] - right[0], left[1] - right[1], left[2] - right[2]};
-}
-
-[[nodiscard]] std::array<float, 3> cross3(const std::array<float, 3>& left,
-                                          const std::array<float, 3>& right) {
-    return {
-        (left[1] * right[2]) - (left[2] * right[1]),
-        (left[2] * right[0]) - (left[0] * right[2]),
-        (left[0] * right[1]) - (left[1] * right[0]),
-    };
-}
-
-[[nodiscard]] float dot3(const std::array<float, 3>& left, const std::array<float, 3>& right) {
-    return (left[0] * right[0]) + (left[1] * right[1]) + (left[2] * right[2]);
-}
-
-[[nodiscard]] std::array<float, 3> normalize3(const std::array<float, 3>& value) {
-    const float length =
-        std::sqrt((value[0] * value[0]) + (value[1] * value[1]) + (value[2] * value[2]));
-    if (length <= 1.0e-8F) {
-        return {0.0F, 0.0F, 0.0F};
-    }
-    return {value[0] / length, value[1] / length, value[2] / length};
-}
-
-void generate_missing_tangents(ImportedAsset& asset) {
-    for (auto& mesh : asset.meshes) {
-        for (auto& primitive : mesh.primitives) {
-            if (!primitive.material.has_value() || *primitive.material >= asset.materials.size() ||
-                !asset.materials[*primitive.material].normal_texture.has_value()) {
-                continue;
-            }
-            const bool has_tangents =
-                std::ranges::any_of(primitive.vertices, [](const Vertex& vertex) {
-                    return (vertex.tangent[0] * vertex.tangent[0]) +
-                               (vertex.tangent[1] * vertex.tangent[1]) +
-                               (vertex.tangent[2] * vertex.tangent[2]) >
-                           1.0e-10F;
-                });
-            if (has_tangents) {
-                continue;
-            }
-            std::vector<std::array<float, 3>> tangent_sum(primitive.vertices.size());
-            std::vector<std::array<float, 3>> bitangent_sum(primitive.vertices.size());
-            for (std::size_t index = 0; index + 2U < primitive.indices.size(); index += 3U) {
-                const auto i0 = primitive.indices[index];
-                const auto i1 = primitive.indices[index + 1U];
-                const auto i2 = primitive.indices[index + 2U];
-                if (i0 >= primitive.vertices.size() || i1 >= primitive.vertices.size() ||
-                    i2 >= primitive.vertices.size()) {
-                    continue;
-                }
-                const auto& v0 = primitive.vertices[i0];
-                const auto& v1 = primitive.vertices[i1];
-                const auto& v2 = primitive.vertices[i2];
-                const auto edge1 = subtract(v1.position, v0.position);
-                const auto edge2 = subtract(v2.position, v0.position);
-                const float duv1x = v1.uv0[0] - v0.uv0[0];
-                const float duv1y = v1.uv0[1] - v0.uv0[1];
-                const float duv2x = v2.uv0[0] - v0.uv0[0];
-                const float duv2y = v2.uv0[1] - v0.uv0[1];
-                const float determinant = (duv1x * duv2y) - (duv1y * duv2x);
-                if (std::abs(determinant) <= 1.0e-12F) {
-                    continue;
-                }
-                const float reciprocal = 1.0F / determinant;
-                const std::array<float, 3> tangent{
-                    ((edge1[0] * duv2y) - (edge2[0] * duv1y)) * reciprocal,
-                    ((edge1[1] * duv2y) - (edge2[1] * duv1y)) * reciprocal,
-                    ((edge1[2] * duv2y) - (edge2[2] * duv1y)) * reciprocal,
-                };
-                const std::array<float, 3> bitangent{
-                    ((edge2[0] * duv1x) - (edge1[0] * duv2x)) * reciprocal,
-                    ((edge2[1] * duv1x) - (edge1[1] * duv2x)) * reciprocal,
-                    ((edge2[2] * duv1x) - (edge1[2] * duv2x)) * reciprocal,
-                };
-                for (const std::uint32_t vertex : {i0, i1, i2}) {
-                    for (std::size_t axis = 0; axis < 3; ++axis) {
-                        tangent_sum[vertex][axis] += tangent[axis];
-                        bitangent_sum[vertex][axis] += bitangent[axis];
-                    }
-                }
-            }
-            for (std::size_t index = 0; index < primitive.vertices.size(); ++index) {
-                auto& vertex = primitive.vertices[index];
-                const auto normal = normalize3(vertex.normal);
-                auto tangent = tangent_sum[index];
-                tangent = subtract(tangent, {
-                                                normal[0] * dot3(normal, tangent),
-                                                normal[1] * dot3(normal, tangent),
-                                                normal[2] * dot3(normal, tangent),
-                                            });
-                tangent = normalize3(tangent);
-                if (tangent[0] == 0.0F && tangent[1] == 0.0F && tangent[2] == 0.0F) {
-                    const std::array<float, 3> axis = std::abs(normal[0]) < 0.9F
-                                                          ? std::array<float, 3>{1.0F, 0.0F, 0.0F}
-                                                          : std::array<float, 3>{0.0F, 1.0F, 0.0F};
-                    tangent = normalize3(cross3(normal, axis));
-                }
-                const float handedness =
-                    dot3(cross3(normal, tangent), bitangent_sum[index]) < 0.0F ? -1.0F : 1.0F;
-                vertex.tangent = {tangent[0], tangent[1], tangent[2], handedness};
-            }
-        }
-    }
 }
 
 void assign_new_ids(ImportedAsset& asset) {
@@ -861,7 +777,8 @@ cooked_document(const AssetRecord& record, const ImportedAsset& asset,
 }
 
 [[nodiscard]] Result<void> write_cooked(const std::filesystem::path& cache_dir,
-                                        const AssetRecord& record, const ImportedAsset& asset) {
+                                        const AssetRecord& record, const ImportedAsset& asset,
+                                        bool dry_run = false) {
     std::vector<std::byte> mesh_bytes;
     auto primitive_offsets = write_mesh_buffers(mesh_bytes, asset);
     if (!primitive_offsets) {
@@ -874,6 +791,9 @@ cooked_document(const AssetRecord& record, const ImportedAsset& asset,
     auto texture_bytes = write_texture_buffers(*textures);
     if (!texture_bytes) {
         return core::make_failure<void>(texture_bytes.error());
+    }
+    if (dry_run) {
+        return {};
     }
     if (auto written = write_bytes(cache_dir / "meshes.bin", mesh_bytes); !written) {
         return written;
@@ -960,15 +880,30 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
     if (!cache_dir) {
         return core::make_failure<LoadedAsset>(cache_dir.error());
     }
-    auto cooked_bytes = read_file(*cache_dir / "cooked.json", std::size_t{16} * 1024U * 1024U);
+    auto cooked_path =
+        resolve_inside_project(root, record.cache_path + "/cooked.json", "cooked.path");
+    if (!cooked_path) {
+        return core::make_failure<LoadedAsset>(cooked_path.error());
+    }
+    auto cooked_bytes = read_file(*cooked_path, std::size_t{16} * 1024U * 1024U);
     if (!cooked_bytes) {
         return core::make_failure<LoadedAsset>(cooked_bytes.error());
     }
-    auto mesh_bytes = read_file(*cache_dir / "meshes.bin", std::size_t{1024} * 1024U * 1024U);
+    auto meshes_path =
+        resolve_inside_project(root, record.cache_path + "/meshes.bin", "cooked.path");
+    if (!meshes_path) {
+        return core::make_failure<LoadedAsset>(meshes_path.error());
+    }
+    auto mesh_bytes = read_file(*meshes_path, std::size_t{1024} * 1024U * 1024U);
     if (!mesh_bytes) {
         return core::make_failure<LoadedAsset>(mesh_bytes.error());
     }
-    auto texture_bytes = read_file(*cache_dir / "textures.bin", std::size_t{1024} * 1024U * 1024U);
+    auto textures_path =
+        resolve_inside_project(root, record.cache_path + "/textures.bin", "cooked.path");
+    if (!textures_path) {
+        return core::make_failure<LoadedAsset>(textures_path.error());
+    }
+    auto texture_bytes = read_file(*textures_path, std::size_t{1024} * 1024U * 1024U);
     if (!texture_bytes) {
         return core::make_failure<LoadedAsset>(texture_bytes.error());
     }
@@ -977,6 +912,14 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
             reinterpret_cast<const char*>(sidecar_bytes->data()), sidecar_bytes->size()));
         const auto cooked = json::parse(
             std::string(reinterpret_cast<const char*>(cooked_bytes->data()), cooked_bytes->size()));
+        nlohmann::json_schema::json_validator validator(json::parse(detail::kCookedSchema));
+        validator.validate(cooked);
+        if (sidecar.at("importerVersion") != kGltfImporterVersion ||
+            cooked.at("importerVersion") != kGltfImporterVersion ||
+            cooked.at("sourceHash") != record.source_hash) {
+            return core::make_failure<LoadedAsset>(asset_error(
+                ErrorCode::Validation, "asset cache requires reimport with the current importer"));
+        }
         if (cooked.value("cacheKey", "") != record.cache_key) {
             return core::make_failure<LoadedAsset>(asset_error(
                 ErrorCode::Validation, "cooked cache key does not match the asset sidecar",
@@ -1201,7 +1144,7 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
             }
         }
         return loaded;
-    } catch (const json::exception& error) {
+    } catch (const std::exception& error) {
         return core::make_failure<LoadedAsset>(
             asset_error(ErrorCode::Validation, "cooked asset metadata is invalid", error.what()));
     }
@@ -1210,7 +1153,8 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
 } // namespace
 
 core::Result<ImportResult> import_asset(const std::filesystem::path& project_root,
-                                        const std::filesystem::path& source, std::string name) {
+                                        const std::filesystem::path& source, std::string name,
+                                        bool dry_run) {
     if (auto valid = check_project_root(project_root); !valid) {
         return core::make_failure<ImportResult>(valid.error());
     }
@@ -1241,14 +1185,26 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
     if (auto colors = assign_texture_color_spaces(*imported); !colors) {
         return core::make_failure<ImportResult>(colors.error());
     }
-    generate_missing_tangents(*imported);
-    if (auto copied = write_bytes(project_root / result.record.source_copy, *bytes); !copied) {
-        return core::make_failure<ImportResult>(copied.error());
+    if (auto tangents = generate_missing_tangents(*imported); !tangents) {
+        return core::make_failure<ImportResult>(tangents.error());
     }
-    if (auto cooked =
-            write_cooked(project_root / result.record.cache_path, result.record, *imported);
-        !cooked) {
+    auto source_copy =
+        resolve_inside_project(project_root, result.record.source_copy, "sourceCopy");
+    auto cache_dir = resolve_inside_project(project_root, result.record.cache_path, "cooked.path");
+    if (!source_copy) {
+        return core::make_failure<ImportResult>(source_copy.error());
+    }
+    if (!cache_dir) {
+        return core::make_failure<ImportResult>(cache_dir.error());
+    }
+    if (auto cooked = write_cooked(*cache_dir, result.record, *imported, dry_run); !cooked) {
         return core::make_failure<ImportResult>(cooked.error());
+    }
+    if (dry_run) {
+        return result;
+    }
+    if (auto copied = write_bytes(*source_copy, *bytes); !copied) {
+        return core::make_failure<ImportResult>(copied.error());
     }
     if (auto written = write_sidecar(project_root, result.record, *imported); !written) {
         return core::make_failure<ImportResult>(written.error());
@@ -1257,7 +1213,7 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
 }
 
 core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
-                                          const core::Uuid& asset_id) {
+                                          const core::Uuid& asset_id, bool dry_run) {
     if (auto valid = check_project_root(project_root); !valid) {
         return core::make_failure<ImportResult>(valid.error());
     }
@@ -1295,7 +1251,9 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     if (auto colors = assign_texture_color_spaces(*imported); !colors) {
         return core::make_failure<ImportResult>(colors.error());
     }
-    generate_missing_tangents(*imported);
+    if (auto tangents = generate_missing_tangents(*imported); !tangents) {
+        return core::make_failure<ImportResult>(tangents.error());
+    }
     auto source_copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
     if (!source_copy) {
         return core::make_failure<ImportResult>(source_copy.error());
@@ -1303,12 +1261,20 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     ImportResult result;
     result.record = *record;
     result.cache_hit = cache_matches(project_root / record->cache_path, record->cache_key);
-    if (!result.cache_hit) {
-        if (auto cooked = write_cooked(project_root / record->cache_path, *record, *imported);
-            !cooked) {
+    auto cache_dir = resolve_inside_project(project_root, record->cache_path, "cooked.path");
+    if (!cache_dir) {
+        return core::make_failure<ImportResult>(cache_dir.error());
+    }
+    if (dry_run || !result.cache_hit) {
+        if (auto cooked = write_cooked(*cache_dir, *record, *imported, dry_run); !cooked) {
             return core::make_failure<ImportResult>(cooked.error());
         }
-        remove_old_cache_directories(project_root, asset_id, record->cache_path);
+        if (!dry_run) {
+            remove_old_cache_directories(project_root, asset_id, record->cache_path);
+        }
+    }
+    if (dry_run) {
+        return result;
     }
     if (auto copied = write_bytes(*source_copy, *bytes); !copied) {
         return core::make_failure<ImportResult>(copied.error());
@@ -1335,6 +1301,14 @@ core::Result<LoadedAsset> load_asset(const std::filesystem::path& project_root,
     return load_from_files(project_root, *record);
 }
 
+core::Result<nlohmann::json> inspect_asset(const std::filesystem::path& project_root,
+                                           const core::Uuid& asset_id) {
+    if (auto valid = check_project_root(project_root); !valid) {
+        return core::make_failure<json>(valid.error());
+    }
+    return read_sidecar_json(project_root, asset_id);
+}
+
 core::Result<AssetRecord> read_asset_record(const std::filesystem::path& project_root,
                                             const core::Uuid& asset_id) {
     if (auto valid = check_project_root(project_root); !valid) {
@@ -1353,7 +1327,11 @@ core::Result<std::vector<AssetRecord>> list_assets(const std::filesystem::path& 
     }
     std::vector<AssetRecord> records;
     std::error_code ec;
-    const auto assets = project_root / "assets";
+    auto resolved = resolve_inside_project(project_root, "assets", "assets");
+    if (!resolved) {
+        return core::make_failure<std::vector<AssetRecord>>(resolved.error());
+    }
+    const auto assets = *resolved;
     if (!std::filesystem::is_directory(assets, ec) || ec) {
         return records;
     }

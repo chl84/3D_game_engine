@@ -171,3 +171,34 @@ unlicensed model is committed.
   cache. Rejected.
 - **Import animations in M3:** expands the asset format and runtime before M4
   playback exists. Deferred.
+
+## M3.4 tangent-generation correction (owner approved 2026-10-30)
+
+The former custom UV-derivative accumulation/orthogonalization code was not
+MikkTSpace and did not guarantee Blender tangent-space compatibility. Use the
+official implementation pinned to commit
+`3e895b49d05ea07e4c2133156cfa94369e19e409` (zlib), stored unmodified under
+`third_party/mikktspace`, with configure-time SHA-256 checks.
+
+Cooking calls `genTangSpaceDefault` for normal-mapped primitives without source
+tangents. Its results are per corner: rebuild indices and split vertices at
+tangent/sign discontinuities instead of averaging into the input index list.
+Retain the existing vertex limit after splitting. Preserve exported tangents.
+The importer version becomes `gltf-import@2`; old caches require reimport.
+The sidecar and cooked formats remain version 1.
+
+CPU regression tests compare generated tangents to Blender-exported tangents
+for an original Blender model with a baked normal map, plus mirrored UVs,
+vertex splitting and degenerate UVs. The matching PBR golden image test is an
+M3.5 requirement, once normal-map rendering exists; it must run on Linux and
+Windows lavapipe and compare the export without tangents to both a fixed
+golden image and the export with Blender tangents. It is not implemented by
+the CPU comparison.
+
+The checked-in upstream sources remain unmodified. The generated build copy
+contains two documented correctness fixes: modulo-32 random-seed rotation and
+a finite, zero-extent-safe vertex-grid cell calculation. These were found by
+UBSan and the permanent GLB fuzzer; the adapter and collapsed-position regression
+run with the sanitizer checks enabled. See the third-party README for details.
+MikkTSpace's returned sign is inverted when stored in glTF tangent.w, matching
+the glTF UV convention and Blender's exported tangent signs.

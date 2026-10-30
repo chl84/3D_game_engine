@@ -17,7 +17,7 @@
 namespace engine::asset {
 
 // Bumped whenever the in-memory interpretation of a source asset changes.
-inline constexpr std::string_view kGltfImporterVersion = "gltf-import@1";
+inline constexpr std::string_view kGltfImporterVersion = "gltf-import@2";
 
 inline constexpr std::size_t kMaxSourceBytes = std::size_t{512} * 1024U * 1024U;
 inline constexpr std::size_t kMaxNodes = 65536U;

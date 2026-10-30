@@ -222,7 +222,7 @@ runtime.
 
 ### M3.2 GLB import core
 
-**Status:** Implemented — reviewer pending.
+**Status:** Reviewer approved.
 
 - Parse GLB with fastgltf, including buffers, accessors, nodes, meshes,
   primitives, hierarchy, materials, textures and samplers. Detect animation
@@ -238,7 +238,7 @@ runtime.
 
 ### M3.3 Cooked asset format, cache and reimport
 
-**Status:** Implemented — reviewer pending.
+**Status:** Reviewer approved.
 
 - Write `asset@1` sidecars and `engine.asset.cooked@1` cache entries.
 - Implement source hashing, dependency tracking, cache invalidation, atomic
@@ -254,6 +254,12 @@ runtime.
   crashes found by fuzzing become regression tests.
 
 ### M3.4 Asset CLI
+
+**Status:** Implemented — reviewer pending. The owner approved M3.3 and started
+M3.4 on 2026-10-30. The same approval adds the official pinned MikkTSpace
+dependency in place of custom tangent accumulation; see ADR-0012. Preview
+validates cooking without persisting files. Asset file imports are explicitly
+non-transactional; scene transactions reject them before filesystem mutation.
 
 Add:
 
@@ -273,6 +279,13 @@ engine asset list <project> [--json]
   project.
 
 ### M3.5 PBR renderer, bindless assets and the M3 light
+
+- Required normal-map golden: the original baked Blender fixture
+  `blender_normal_no_tangents.glb`, exported without TANGENT, must match a
+  fixed golden and the paired Blender-TANGENT export on Linux and Windows
+  lavapipe. Cover seams/mirrored UVs, preserve the bake provenance and ensure
+  the test fails when tangent handling or normal mapping is broken. CPU
+  tangent comparisons in M3.4 do not replace this image test.
 
 - Implement ADR-0011's one bindless descriptor set: texture array and material
   record storage buffer, 4096-image/4096-material budget, no fallback.
@@ -306,6 +319,10 @@ engine asset list <project> [--json]
   validate against the published schemas.
 
 ### M3.8 Hardening and M3 acceptance
+
+- Optional owner suggestion: a nightly fuzz workflow with approximately ten
+  minutes per target and a corpus cached between runs. Evaluate CI cost and
+  seed/corpus provenance then; the existing short fuzz job remains required.
 
 - Run the Blender GLB acceptance script with checked-in models whose provenance
   and license are documented, and the reimport scenario.

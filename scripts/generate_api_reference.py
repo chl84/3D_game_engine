@@ -23,6 +23,7 @@ CLI_COMMANDS = [
     ("engine scene create|inspect|validate --json", "Scene lifecycle"),
     ("engine entity create|delete|reparent --json", "Entity lifecycle"),
     ("engine component set|add|remove --json", "Component changes"),
+    ("engine asset import|inspect|validate|reimport|list --json", "Asset lifecycle and cooked-cache inspection"),
     ("engine simulate --ticks N --json", "Fixed-tick state dump"),
     ("engine batch --file FILE --undo N --json", "Transactional command batch"),
     ("engine screenshot <project> <scene> --frames N --out FILE --json", "Offscreen PNG screenshot"),

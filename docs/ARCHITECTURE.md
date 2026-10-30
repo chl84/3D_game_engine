@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M2.5. This document describes the approved module boundaries and
+**Status:** M3.4. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -233,7 +233,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M2.5 contains:
+The current implementation contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -275,5 +275,13 @@ M2.5 contains:
 - CI: GCC 14, Clang 18, Windows MSVC, clang-format/clang-tidy, ASan/UBSan and
   lavapipe-based Vulkan detection
 
-The remaining modules are planned, not implemented. M2 adds the Vulkan
-renderer; M3 adds assets.
+- `engine/asset`: validated self-contained GLB import, PNG/JPEG cooking,
+  versioned sidecars/cooked buffers, SHA-256 cache keys, stable IDs and reimport,
+  the pinned MikkTSpace adapter and shared versioned asset command handlers
+- `tools/engine`: asset import/inspect/validate/reimport/list, registered through
+  the shared command bus. Mutations hold the project lock. Preview validates
+  source data and cooking without persistent writes. File imports are not
+  undoable and are rejected inside command transactions before any writes.
+
+PBR asset rendering, instance placement and live control are the remaining
+M3 steps. Physics, scripting, world streaming and editor remain planned.

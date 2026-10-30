@@ -214,3 +214,45 @@ the read-only `SceneView`.
 Not implemented. The live API will expose the same commands plus inspection,
 screenshots, statistics and "run N ticks". The MCP adapter will be a thin layer
 over the same command bus.
+
+## Asset CLI (M3.4)
+
+```bash
+engine asset import <project> <source.glb> [--name NAME] [--dry-run] --json
+engine asset inspect <project> <assetId> --json
+engine asset validate <project> <assetId> --json
+engine asset reimport <project> <assetId> [--dry-run] --json
+engine asset list <project> --json
+```
+
+The source argument is relative to the caller's working directory or absolute;
+it may intentionally be outside the project. The sidecar retains that original
+source for reimport and falls back to its project copy if the source disappears.
+Successful CLI data exposes project-relative copy/cache/dependency paths rather
+than the original machine-specific source path. Results use `command-result@1`;
+asset data validates against `asset-result-data@1.schema.json`. Input schemas
+for the five `asset.*@1` commands are included in `engine schema --json` and the
+generated API reference. CLI and future live control use the same handlers.
+
+`inspect` reports stable node/mesh/material/texture IDs, per-primitive bounds,
+dependencies, animation-channel count and cooked-cache state. It still works
+when the derived cache is missing or stale, returning a warning and
+`cache.state = "unavailable"`. `validate` requires a usable current cache and
+checks the portable source copy against its stored SHA-256. `reimport` rebuilds
+missing/stale cache while preserving stable IDs. `list` is sorted by asset UUID.
+Animation data is not imported in M3 and inspect warns when channels are present.
+
+`--dry-run` parses, validates and cooks in memory but writes no files. Generated
+IDs in an import preview are disposable and not reservations. Reimport preview
+preserves the existing asset ID. Preview validates content and sandbox paths;
+it cannot promise that a later filesystem write will succeed. Imports acquire
+the normal project lock before writing. Asset imports/reimports are not undoable
+filesystem transactions; registering them in a shared bus does not make them
+eligible for a scene batch transaction. Such use fails with `E_UNSUPPORTED`
+before mutation. Scene placement/undo is added in M3.6.
+
+The official MikkTSpace implementation generates missing normal-map tangents
+during cooking and splits vertices at tangent discontinuities. Source tangents
+are preserved. `gltf-import@2` rejects old cache; use reimport to regenerate it.
+The checked-in Blender fixtures verify tangent compatibility on the CPU.
+Normal-map PBR golden images are required in M3.5 and are not part of M3.4.

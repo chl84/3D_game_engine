@@ -10,6 +10,7 @@ target_link_libraries(engine PRIVATE
     engine::core
     engine::platform
     engine::command
+    engine::asset
     engine::scene
     engine::render
     CLI11::CLI11

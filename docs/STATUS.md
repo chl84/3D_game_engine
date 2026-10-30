@@ -2,7 +2,9 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.3 reviewer GODKJENT (round 2) — `asset@1` sidecars, cooked cache, stable IDs, reimport, PNG/JPEG decoding, cooking-time tangents and permanent fuzz targets. M3.4 is next.
+**Current substep:** M3.4 implemented, verification/reviewer pending — asset CLI
+and shared command handlers; owner-approved MikkTSpace replaces custom tangent
+generation. M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 
 ## Substeps
 
@@ -53,7 +55,7 @@
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
-| M3.4 | Asset CLI | Planned |
+| M3.4 | Asset CLI | Implemented — reviewer pending |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
 | M3.7 | Local JSON-RPC live API | Planned |
@@ -88,13 +90,35 @@
 - When branch protection blocks a merge, stop and ask the owner; do not use
   `--admin`.
 
-## Verification evidence
+## M3.4 current verification
+
+- Local Clang build with warnings as errors: 18/18 CTest passed on lavapipe,
+  including the existing window/overlay/offscreen tests; no skipped tests.
+- ASan/UBSan: core, asset and asset CLI tests passed (3/3). Full local suite
+  passed 12/18; six graphics-related tests failed, including 112-byte
+  LeakSanitizer reports without engine symbols. No sanitizer was disabled;
+  Ubuntu CI is required to check the complete sanitized suite.
+- Permanent Clang fuzz targets with UBSan halt-on-error: GLB 20,055 runs and
+  image 87,754 runs, 30-second budgets each, no final-run sanitizer findings.
+  Initial fuzzing found a MikkTSpace NaN-to-int UB; the documented build-copy
+  correction and collapsed-position regression were added before the final run.
+- clang-format 18 passed; local clang-tidy 23 passed for modified C++ units.
+- Sensitive scan passed for 202 staged/tracked files; documentation links passed.
+- CI and independent reviewer approval are pending for this change.
+- Normal-mapped Blender GLBs with and without exported tangents are checked
+  in and compared per corner by the CPU tests. The PBR image test remains an
+  explicit M3.5 requirement; it has not run or been claimed complete.
+
+## Historical verification evidence
+
+The table below records earlier substeps; it is not a fresh M3.4 verification
+claim. Current evidence is recorded with the M3.4 report and summary.
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 17 registered; CI runs 17/17 with lavapipe and Xvfb. Locally `linux-debug` passes 16/17 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 500 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped without lavapipe. CI runs 17/17 with lavapipe and Xvfb |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 18 registered; CI runs 18/18 with lavapipe and Xvfb. Locally `linux-debug` passes 17/18 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 500 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 18 registered; locally 17/18 with the golden test skipped without lavapipe. CI runs 18/18 with lavapipe and Xvfb |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 18 registered; locally 17/18 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test\|engine_run_smoke"` → 11/11 CPU-side tests. The four GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
@@ -209,6 +233,9 @@
 | M3.3 fuzz targets | Automatically tested | `engine_gltf_fuzz` and `engine_image_fuzz` build with Clang libFuzzer + ASan/UBSan, run in the CI `Fuzz (Clang ASan)` job and use the checked-in fixtures as seed corpus |
 | M3.3 CI | Automatically tested | Manual dispatch [41033868190](https://github.com/chl84/3D_game_engine/actions/runs/41033868190) on `9077f19` → all six jobs green, including Linux 17/17, Windows 12/12, ASan 17/17 and the 30-second fuzz job |
 | M3.3 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `9077f19` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.4 asset CLI | Automatically tested | `engine_asset_cli` covers `asset import/inspect/validate/reimport/list`, `--dry-run`, schema/error contract, cache state, source-copy fallback and sandbox escape rejection |
+| M3.4 MikkTSpace tangents | Automatically tested | Cooking uses pinned MikkTSpace; generated tangents match Blender's export for a baked normal map, split mirrored UVs, handle degenerate UVs and preserve source tangents |
+| M3.4 API reference | Automatically tested | `engine_api_reference` checks the generated reference includes the five asset commands |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |
@@ -395,7 +422,8 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M2.9 review and the owner's manual `engine run` test on Hyprland. After both,
-merge through a normal pull request without `--admin` and tag `v0.3.0`, subject
-to the owner's explicit approval. If branch protection blocks the merge, stop
-and ask the owner.
+Complete M3.4 verification and independent Claude Opus 5.5 high review before
+M3.5. M3.5 must add the normal-map Blender golden image comparison on Linux and
+Windows lavapipe; the current per-corner CPU comparison is not that image test.
+The optional nightly ten-minute fuzz/cached-corpus proposal is recorded for
+M3.8. M3 merges as a complete milestone only after explicit owner approval.

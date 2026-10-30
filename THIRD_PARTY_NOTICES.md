@@ -161,3 +161,13 @@ SDL3 source distribution and in the vcpkg installed tree.
 A new dependency or a version upgrade updates `docs/DEPENDENCIES.md` and this
 file in the same change. A dependency with a license outside the allowlist
 requires owner approval and an ADR.
+
+## MikkTSpace
+
+- Author: Morten S. Mikkelsen.
+- Source: <https://github.com/mmikk/MikkTSpace>
+- Commit: `3e895b49d05ea07e4c2133156cfa94369e19e409`
+- License: zlib, compatible with this project's MIT license.
+- Distribution: unmodified sources under `third_party/mikktspace`, with the
+  original license notices preserved. See
+  [`LICENSE`](third_party/mikktspace/LICENSE) for the complete notice.

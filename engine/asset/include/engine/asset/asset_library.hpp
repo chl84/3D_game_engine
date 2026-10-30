@@ -4,6 +4,8 @@
 #include <engine/core/error.hpp>
 #include <engine/core/uuid.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -53,15 +55,20 @@ struct LoadedAsset {
 // UUID and stable node/mesh/primitive/material/texture IDs.
 [[nodiscard]] core::Result<ImportResult> import_asset(const std::filesystem::path& project_root,
                                                       const std::filesystem::path& source,
-                                                      std::string name = {});
+                                                      std::string name = {}, bool dry_run = false);
 
 // Reimports from the recorded source (or the project-relative source copy when
 // the original is gone) and preserves the asset UUID and stable IDs.
 [[nodiscard]] core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_root,
-                                                        const core::Uuid& asset_id);
+                                                        const core::Uuid& asset_id,
+                                                        bool dry_run = false);
 
 [[nodiscard]] core::Result<LoadedAsset> load_asset(const std::filesystem::path& project_root,
                                                    const core::Uuid& asset_id);
+
+// Returns a schema-validated sidecar; paths remain project-relative.
+[[nodiscard]] core::Result<nlohmann::json> inspect_asset(const std::filesystem::path& project_root,
+                                                         const core::Uuid& asset_id);
 
 [[nodiscard]] core::Result<AssetRecord> read_asset_record(const std::filesystem::path& project_root,
                                                           const core::Uuid& asset_id);

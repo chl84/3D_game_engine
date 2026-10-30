@@ -8,8 +8,8 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 |---|---|---|
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
-| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | M2.1–M2.9 done; merge and `v0.3.0` tag in progress |
-| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | In progress — M3.2 reviewer-approved; M3.3 next |
+| M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Done — `v0.3.0`, owner approved |
+| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | In progress — M3.3 owner-approved; M3.4 implemented, review pending |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
@@ -47,7 +47,7 @@ authoritative state.
 | M0.4 | CLI skeleton and `engine doctor --json` | Done |
 | M0.5 | clang-format and clang-tidy checks in CI, ASan/UBSan Linux job, pinned CMake 4.4.5 and Ninja 1.13.2, lavapipe/Vulkan detection tests, Linux CI matrix, caching, artifacts and branch protection on `main` | Done |
 | M0.6 | Full documentation, ADRs and VISION translation | Done |
-| M0.7 | Hardening and M0 acceptance | Complete — awaiting review |
+| M0.7 | Hardening and M0 acceptance | Done — owner approved |
 
 ### M0.5 follow-ups (non-blocking)
 
@@ -83,7 +83,7 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 | M1.7 | Fixed tick and determinism | Done |
 | M1.8 | API reference, AI guide and acceptance script | Done |
 | M1.9 | Hardening and M1 acceptance | Done |
-| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, security and review fixes | Done — awaiting owner tag `v0.2.1` |
+| M1.10 | `--dry-run`, generated `API_REFERENCE.md`, security and review fixes | Done — `v0.2.1` |
 
 ## Deferred modules
 
@@ -93,7 +93,7 @@ These are intentionally outside M0/M1 and do not block the foundation:
 |---|---|---|
 | Audio | M4/M5 | Dedicated `audio` module. Start with the SDL3 audio API; add 3D spatialization and mixing on top. Evaluate miniaudio only if SDL3 is insufficient. |
 | Runtime UI | M6/M7 | Separate `ui` module or library choice (for example RmlUi, MIT). Dear ImGui remains editor/debug UI, not the shipping game HUD. |
-| Animation | M3/M4 | Import glTF animations in M3; skeletal animation as a system in `scene`/`render` in M4. A separate `animation` module only if the responsibility grows. |
+| Animation | M3/M4 | Report animation channels in M3; import and skeletal animation as a system in `scene`/`render` in M4. A separate `animation` module only if the responsibility grows. |
 
 ## M2 reference scene budget
 

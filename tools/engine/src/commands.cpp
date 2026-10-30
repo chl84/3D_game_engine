@@ -1,6 +1,7 @@
 #include "commands.hpp"
 #include "scene_warnings.hpp"
 
+#include <engine/asset/commands.hpp>
 #include <engine/command/command.hpp>
 #include <engine/core/path_sandbox.hpp>
 #include <engine/render/device.hpp>
@@ -1276,10 +1277,63 @@ int simulate(const std::string& project_root, const std::string& scene_path, int
     return 0;
 }
 
+int asset_execute(const std::string& operation, const std::string& project_root,
+                  const std::string& source, const std::string& asset_id, const std::string& name,
+                  bool json, bool dry_run) {
+    auto project = Project::load(project_root);
+    if (!project) {
+        auto result = failure(project.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    if (!dry_run && (operation == "import" || operation == "reimport")) {
+        auto sandbox = core::PathSandbox::create(project->root());
+        if (!sandbox) {
+            const auto result = failure(sandbox.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        auto lock_path = sandbox->resolve(".engine/lock");
+        if (!lock_path) {
+            const auto result = failure(lock_path.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        auto locked = project->lock();
+        if (!locked) {
+            auto result = failure(locked.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+    }
+    CommandLog log;
+    CommandBus bus(log);
+    auto registered = asset::register_asset_commands(bus, project->root(), dry_run);
+    if (!registered) {
+        auto result = failure(registered.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    nlohmann::json arguments = nlohmann::json::object();
+    if (operation == "import") {
+        arguments["source"] = source;
+        if (!name.empty()) {
+            arguments["name"] = name;
+        }
+    } else if (operation != "list") {
+        arguments["assetId"] = asset_id;
+    }
+    const auto result = bus.execute({"asset." + operation + "@1", std::move(arguments)});
+    print_result(result, json);
+    return exit_code_for(result);
+}
+
 int schema(bool json) {
     const ReflectionRegistry registry = make_registry();
+    auto commands = scene_command_schemas();
+    commands.update(asset::asset_command_schemas());
     const CommandResult result =
-        success({{"components", registry.schemas()}, {"commands", scene_command_schemas()}});
+        success({{"components", registry.schemas()}, {"commands", std::move(commands)}});
     print_result(result, json);
     return 0;
 }
