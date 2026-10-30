@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.3 in progress — `asset@1` sidecars, cooked cache, stable IDs, reimport, PNG/JPEG decoding and permanent fuzz targets.
+**Current substep:** M3.3 implemented — `asset@1` sidecars, cooked cache, stable IDs, reimport, PNG/JPEG decoding, cooking-time tangents and permanent fuzz targets. Reviewer approval is pending before M3.4.
 
 ## Substeps
 
@@ -52,7 +52,7 @@
 |---|---|---|
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
-| M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | In progress |
+| M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Implemented — reviewer pending |
 | M3.4 | Asset CLI | Planned |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
@@ -201,6 +201,11 @@
 | M3.2 fixture provenance | Documented | `tests/assets/m3/PROVENANCE.md` records the Blender 5.2.2 generator, MIT license and that no third-party model or texture is included |
 | M3.2 CI | Automatically tested | Manual dispatch [41019502955](https://github.com/chl84/3D_game_engine/actions/runs/41019502955) on `a19d077` → all five jobs green. Linux 17/17 including `engine_asset_tests`; Windows 12/12; ASan 17/17; Quality green |
 | M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `a19d077` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.3 sidecar and cooked cache | Automatically tested | Import writes `assets/<id>/asset.json`, `source.glb` and `.engine/cache/<id>/<cacheKey16>/`; sidecar and cooked manifest validate against `asset@1` and `engine.asset.cooked@1` |
+| M3.3 stable IDs and reimport | Automatically tested | Reimport preserves the asset UUID, node/mesh IDs and a scene `AssetInstance` reference; unchanged reimport is byte-stable and reuses the cache, changed source changes the cache key |
+| M3.3 image decoding | Automatically tested | PNG/JPEG decode to RGBA8 with 8192×8192 and 256 MiB pre-allocation limits; truncated, corrupt and oversized inputs fail with `E_VALIDATION` |
+| M3.3 cooking tangents | Automatically tested | A normal-mapped triangle without TANGENT attributes gets cooked tangents with unit length and handedness |
+| M3.3 fuzz targets | Automatically tested | `engine_gltf_fuzz` and `engine_image_fuzz` build with Clang libFuzzer + ASan/UBSan, run in the CI `Fuzz (Clang ASan)` job and use the checked-in fixtures as seed corpus |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

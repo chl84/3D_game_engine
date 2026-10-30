@@ -238,7 +238,7 @@ runtime.
 
 ### M3.3 Cooked asset format, cache and reimport
 
-**Status:** In progress.
+**Status:** Implemented — reviewer pending.
 
 - Write `asset@1` sidecars and `engine.asset.cooked@1` cache entries.
 - Implement source hashing, dependency tracking, cache invalidation, atomic

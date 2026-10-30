@@ -6,7 +6,7 @@ while the offscreen golden and screenshot tests are registered on both
 platforms.
 `engine_core_tests` contains 65 test cases and 507 assertions on Linux;
 Windows reports 63 cases / 495 assertions because two POSIX-only tests are
-compiled out. `engine_asset_tests` contains 9 test cases and 599 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
+compiled out. `engine_asset_tests` contains 10 test cases and 622 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -62,7 +62,9 @@ source into a project, validate the `asset@1` and `engine.asset.cooked@1`
 documents against their schemas, load the cooked asset, reimport unchanged and
 changed sources, compare byte-stable sidecar/cache files, and prove that the
 asset UUID and stable node/mesh IDs survive reimport. PNG and JPEG decoding is
-tested with valid, truncated, corrupt and oversized images.
+tested with valid, truncated, corrupt and oversized images. A normal-mapped
+triangle without TANGENT attributes proves that cooking generates bounds-checked
+tangents before the data is written.
 
 `engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and

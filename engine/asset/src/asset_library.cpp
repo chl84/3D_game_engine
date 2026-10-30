@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -220,6 +221,115 @@ constexpr std::size_t kTextureHeaderSize = 12U;
         {"doubleSided", material.double_sided},
         {"textures", json::object()},
     };
+}
+
+[[nodiscard]] std::array<float, 3> subtract(const std::array<float, 3>& left,
+                                            const std::array<float, 3>& right) {
+    return {left[0] - right[0], left[1] - right[1], left[2] - right[2]};
+}
+
+[[nodiscard]] std::array<float, 3> cross3(const std::array<float, 3>& left,
+                                          const std::array<float, 3>& right) {
+    return {
+        (left[1] * right[2]) - (left[2] * right[1]),
+        (left[2] * right[0]) - (left[0] * right[2]),
+        (left[0] * right[1]) - (left[1] * right[0]),
+    };
+}
+
+[[nodiscard]] float dot3(const std::array<float, 3>& left, const std::array<float, 3>& right) {
+    return (left[0] * right[0]) + (left[1] * right[1]) + (left[2] * right[2]);
+}
+
+[[nodiscard]] std::array<float, 3> normalize3(const std::array<float, 3>& value) {
+    const float length =
+        std::sqrt((value[0] * value[0]) + (value[1] * value[1]) + (value[2] * value[2]));
+    if (length <= 1.0e-8F) {
+        return {0.0F, 0.0F, 0.0F};
+    }
+    return {value[0] / length, value[1] / length, value[2] / length};
+}
+
+void generate_missing_tangents(ImportedAsset& asset) {
+    for (auto& mesh : asset.meshes) {
+        for (auto& primitive : mesh.primitives) {
+            if (!primitive.material.has_value() || *primitive.material >= asset.materials.size() ||
+                !asset.materials[*primitive.material].normal_texture.has_value()) {
+                continue;
+            }
+            const bool has_tangents =
+                std::ranges::any_of(primitive.vertices, [](const Vertex& vertex) {
+                    return (vertex.tangent[0] * vertex.tangent[0]) +
+                               (vertex.tangent[1] * vertex.tangent[1]) +
+                               (vertex.tangent[2] * vertex.tangent[2]) >
+                           1.0e-10F;
+                });
+            if (has_tangents) {
+                continue;
+            }
+            std::vector<std::array<float, 3>> tangent_sum(primitive.vertices.size());
+            std::vector<std::array<float, 3>> bitangent_sum(primitive.vertices.size());
+            for (std::size_t index = 0; index + 2U < primitive.indices.size(); index += 3U) {
+                const auto i0 = primitive.indices[index];
+                const auto i1 = primitive.indices[index + 1U];
+                const auto i2 = primitive.indices[index + 2U];
+                if (i0 >= primitive.vertices.size() || i1 >= primitive.vertices.size() ||
+                    i2 >= primitive.vertices.size()) {
+                    continue;
+                }
+                const auto& v0 = primitive.vertices[i0];
+                const auto& v1 = primitive.vertices[i1];
+                const auto& v2 = primitive.vertices[i2];
+                const auto edge1 = subtract(v1.position, v0.position);
+                const auto edge2 = subtract(v2.position, v0.position);
+                const float duv1x = v1.uv0[0] - v0.uv0[0];
+                const float duv1y = v1.uv0[1] - v0.uv0[1];
+                const float duv2x = v2.uv0[0] - v0.uv0[0];
+                const float duv2y = v2.uv0[1] - v0.uv0[1];
+                const float determinant = (duv1x * duv2y) - (duv1y * duv2x);
+                if (std::abs(determinant) <= 1.0e-12F) {
+                    continue;
+                }
+                const float reciprocal = 1.0F / determinant;
+                const std::array<float, 3> tangent{
+                    ((edge1[0] * duv2y) - (edge2[0] * duv1y)) * reciprocal,
+                    ((edge1[1] * duv2y) - (edge2[1] * duv1y)) * reciprocal,
+                    ((edge1[2] * duv2y) - (edge2[2] * duv1y)) * reciprocal,
+                };
+                const std::array<float, 3> bitangent{
+                    ((edge2[0] * duv1x) - (edge1[0] * duv2x)) * reciprocal,
+                    ((edge2[1] * duv1x) - (edge1[1] * duv2x)) * reciprocal,
+                    ((edge2[2] * duv1x) - (edge1[2] * duv2x)) * reciprocal,
+                };
+                for (const std::uint32_t vertex : {i0, i1, i2}) {
+                    for (std::size_t axis = 0; axis < 3; ++axis) {
+                        tangent_sum[vertex][axis] += tangent[axis];
+                        bitangent_sum[vertex][axis] += bitangent[axis];
+                    }
+                }
+            }
+            for (std::size_t index = 0; index < primitive.vertices.size(); ++index) {
+                auto& vertex = primitive.vertices[index];
+                const auto normal = normalize3(vertex.normal);
+                auto tangent = tangent_sum[index];
+                tangent = subtract(tangent, {
+                                                normal[0] * dot3(normal, tangent),
+                                                normal[1] * dot3(normal, tangent),
+                                                normal[2] * dot3(normal, tangent),
+                                            });
+                tangent = normalize3(tangent);
+                if (tangent[0] == 0.0F && tangent[1] == 0.0F && tangent[2] == 0.0F) {
+                    const std::array<float, 3> axis = std::abs(normal[0]) < 0.9F
+                                                          ? std::array<float, 3>{1.0F, 0.0F, 0.0F}
+                                                          : std::array<float, 3>{0.0F, 1.0F, 0.0F};
+                    tangent = normalize3(cross3(normal, axis));
+                }
+                const float handedness =
+                    dot3(cross3(normal, tangent), bitangent_sum[index]) < 0.0F ? -1.0F : 1.0F;
+                vertex.tangent = {tangent[0], tangent[1], tangent[2], handedness};
+            }
+        }
+    }
 }
 
 void assign_new_ids(ImportedAsset& asset) {
@@ -1117,6 +1227,7 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
     if (auto colors = assign_texture_color_spaces(*imported); !colors) {
         return core::make_failure<ImportResult>(colors.error());
     }
+    generate_missing_tangents(*imported);
     if (auto copied = write_bytes(project_root / result.record.source_copy, *bytes); !copied) {
         return core::make_failure<ImportResult>(copied.error());
     }
@@ -1170,6 +1281,7 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     if (auto colors = assign_texture_color_spaces(*imported); !colors) {
         return core::make_failure<ImportResult>(colors.error());
     }
+    generate_missing_tangents(*imported);
     ImportResult result;
     result.record = *record;
     result.cache_hit = cache_matches(project_root / record->cache_path, record->cache_key);

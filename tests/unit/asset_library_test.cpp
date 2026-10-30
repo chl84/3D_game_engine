@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
@@ -215,6 +216,30 @@ TEST_CASE("reimport preserves asset and stable IDs without changing bytes", "[as
     // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     CHECK(reference_after->component<engine::scene::AssetInstance>(*after_entity).asset_id ==
           imported->record.asset_id.to_string());
+}
+
+TEST_CASE("cooking generates tangents for normal-mapped meshes", "[asset][library]") {
+    engine::test::TempDir temp("asset-library-tangents");
+    auto project = engine::scene::Project::create(temp.path() / "project", "Asset Test");
+    REQUIRE(project.has_value());
+
+    auto imported = import_asset(project->root(), fixture("normalmap.glb"));
+    REQUIRE(imported.has_value());
+    auto loaded = load_asset(project->root(), imported->record.asset_id);
+    REQUIRE(loaded.has_value());
+    REQUIRE(loaded->asset.meshes.size() == 1);
+    REQUIRE(loaded->asset.meshes.front().primitives.size() == 1);
+    const auto& primitive = loaded->asset.meshes.front().primitives.front();
+    REQUIRE(loaded->asset.materials.size() == 1);
+    CHECK(loaded->asset.materials.front().normal_texture.has_value());
+    REQUIRE(primitive.vertices.size() == 3);
+    for (const auto& vertex : primitive.vertices) {
+        const float length_squared = (vertex.tangent[0] * vertex.tangent[0]) +
+                                     (vertex.tangent[1] * vertex.tangent[1]) +
+                                     (vertex.tangent[2] * vertex.tangent[2]);
+        CHECK(length_squared > 0.5F);
+        CHECK(std::abs(vertex.tangent[3]) == 1.0F);
+    }
 }
 
 TEST_CASE("asset library rejects missing projects and stale caches", "[asset][library]") {
