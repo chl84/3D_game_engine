@@ -104,7 +104,10 @@ generation. M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authori
   correction and collapsed-position regression were added before the final run.
 - clang-format 18 passed; local clang-tidy 23 passed for modified C++ units.
 - Sensitive scan passed for 202 staged/tracked files; documentation links passed.
-- CI and independent reviewer approval are pending for this change.
+- Review round 1: RETT FØRST. CI on `0e2c766` failed Windows MSVC because
+  JSON-versus-string_view comparisons were ambiguous. Those comparisons now
+  extract explicit strings. New CI and re-review are pending; the failed
+  Windows build did not prove the expected 13-test Windows execution.
 - Normal-mapped Blender GLBs with and without exported tangents are checked
   in and compared per corner by the CPU tests. The PBR image test remains an
   explicit M3.5 requirement; it has not run or been claimed complete.

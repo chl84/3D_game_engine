@@ -914,9 +914,9 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
             std::string(reinterpret_cast<const char*>(cooked_bytes->data()), cooked_bytes->size()));
         nlohmann::json_schema::json_validator validator(json::parse(detail::kCookedSchema));
         validator.validate(cooked);
-        if (sidecar.at("importerVersion") != kGltfImporterVersion ||
-            cooked.at("importerVersion") != kGltfImporterVersion ||
-            cooked.at("sourceHash") != record.source_hash) {
+        if (sidecar.at("importerVersion").get<std::string>() != std::string(kGltfImporterVersion) ||
+            cooked.at("importerVersion").get<std::string>() != std::string(kGltfImporterVersion) ||
+            cooked.at("sourceHash").get<std::string>() != record.source_hash) {
             return core::make_failure<LoadedAsset>(asset_error(
                 ErrorCode::Validation, "asset cache requires reimport with the current importer"));
         }

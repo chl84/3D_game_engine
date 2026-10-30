@@ -171,3 +171,5 @@ requires owner approval and an ADR.
 - Distribution: unmodified sources under `third_party/mikktspace`, with the
   original license notices preserved. See
   [`LICENSE`](third_party/mikktspace/LICENSE) for the complete notice.
+- The binary uses a generated build copy with documented UB corrections; see
+  [build-copy corrections](third_party/mikktspace/README.md#build-copy-correction).

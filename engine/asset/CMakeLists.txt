@@ -24,6 +24,26 @@ configure_file(src/schemas.hpp.in generated/asset_schemas.hpp @ONLY)
 # Keep the pinned upstream distribution intact. Apply only the documented
 # random-rotation and vertex-grid UB corrections to the build copy.
 file(READ "${PROJECT_SOURCE_DIR}/third_party/mikktspace/mikktspace.c" mikk_source)
+# Fail explicitly if a future upstream repin changes either patch site.
+foreach(needle IN ITEMS
+    "const float fIndex = g_iCells * ((fVal-fMin)/(fMax-fMin));"
+    "t=(uSeed<<t)|(uSeed>>(32-t));"
+)
+    string(REPLACE "${needle}" "" stripped "${mikk_source}")
+    string(LENGTH "${mikk_source}" original_length)
+    string(LENGTH "${stripped}" stripped_length)
+    string(LENGTH "${needle}" needle_length)
+    math(EXPR matches "(${original_length} - ${stripped_length}) / ${needle_length}")
+    if(needle MATCHES "^const")
+        set(expected_matches 1)
+    else()
+        set(expected_matches 2)
+    endif()
+    if(NOT matches EQUAL expected_matches)
+        message(FATAL_ERROR "MikkTSpace build-copy patch no longer matches upstream")
+    endif()
+endforeach()
+
 # A completely collapsed mesh otherwise computes 0/0 and casts NaN to int.
 # Double differences also avoid overflow for finite Float32 coordinates.
 string(REPLACE "const float fIndex = g_iCells * ((fVal-fMin)/(fMax-fMin));"
