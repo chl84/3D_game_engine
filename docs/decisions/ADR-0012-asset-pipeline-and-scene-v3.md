@@ -42,6 +42,25 @@ Version 1 and 2 scenes load and upgrade to v3 on save. Components introduced in
 v3 are rejected when read from a v1 or v2 file. Version 4 and higher fail with
 `E_UNSUPPORTED`, the codebase's error for unsupported versions.
 
+### Import boundary
+
+The M3 importer accepts one self-contained binary glTF (`.glb`) with an
+embedded BIN chunk and embedded PNG/JPEG images. It rejects, with
+`E_VALIDATION` or `E_UNSUPPORTED` and a JSON Pointer, anything it cannot
+represent faithfully:
+
+- external buffers or images, glTF JSON containers, and more than one scene
+- any `extensionsUsed` or `extensionsRequired` entry
+- skins, cameras, punctual lights, morph targets and non-triangle primitives
+- blended transparency, unsupported vertex attributes and non-float vertex data
+- truncated or malformed containers, hierarchy cycles and out-of-range indices
+
+Source size is limited to 512 MiB, each encoded image to 64 MiB, primitives to
+4M vertices and 16M indices, and hierarchy depth to 1024 nodes. Animation
+channels are counted and reported; their data is not imported. Node paths are
+derived from the name hierarchy, with the source index as the reimport
+fallback until M3.3 assigns stable IDs.
+
 ### Asset format and cache
 
 The project asset layout is:

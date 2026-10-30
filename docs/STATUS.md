@@ -1,9 +1,8 @@
 # Status
 
-**Last updated:** 2026-10-29
-**Current milestone:** M2 — Vulkan renderer
+**Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.1 approved by reviewer — decisions, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement, `stb_image` approval and PointLight warnings. M3.2 (GLB import core) is in progress.
+**Current substep:** M3.2 implemented — GLB import core with Blender fixtures, hierarchy composition and explicit rejection of unsupported features. Reviewer approval is pending before M3.3.
 
 ## Substeps
 
@@ -52,7 +51,7 @@
 | Substep | Scope | Status |
 |---|---|---|
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
-| M3.2 | GLB import core; animation channels reported only | Planned |
+| M3.2 | GLB import core; animation channels reported only | Implemented — reviewer pending |
 | M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
 | M3.4 | Asset CLI | Planned |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
@@ -65,7 +64,7 @@
 - `main`: the M2 release `bb8514c`, merged from `m2/vulkan-renderer` on
   2026-10-30 and tagged `v0.3.0`.
 - `m3/plan`: the approved M3 plan, not merged.
-- `m3/asset-pipeline`: the M3.1 implementation branch.
+- `m3/asset-pipeline`: the M3 implementation branch.
 - `m0/foundation`, `m1/headless-core`, `m1.10/maintenance`: merged milestone
   branches, tagged `v0.1.0`, `v0.2.0` and `v0.2.1`.
 - The repository is **public**. The owner made that change; the agent did not
@@ -93,9 +92,9 @@
 
 | Item | Status | Evidence |
 |---|---|---|
-| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 16 registered; CI runs 16/16 with lavapipe and Xvfb. Locally `linux-debug` passes 15/16 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
-| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 16 registered; locally 15/16 with the golden test skipped without lavapipe. CI runs 16/16 with lavapipe and Xvfb |
-| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 16 registered; locally 15/16 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
+| GCC 14 C++20 build | Automatically tested | `cmake --preset ci-linux-gcc14`, build, `ctest` → 17 registered; CI runs 17/17 with lavapipe and Xvfb. Locally `linux-debug` passes 16/17 and skips the golden test without lavapipe; `engine_core_tests` → 63 cases / 494 assertions |
+| Clang C++20 build | Automatically tested | `cmake --preset ci-linux-clang`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped without lavapipe. CI runs 17/17 with lavapipe and Xvfb |
+| ASan + UBSan | Automatically tested | `cmake --preset linux-asan`, build, `ctest` → 17 registered; locally 16/17 with the golden test skipped. The window, swapchain and overlay tests now execute. The CI `Linux ASan/UBSan` job also runs `doctor --require vulkan` under the sanitizers |
 | TSan | Locally automatically tested (not in CI) | `cmake --preset linux-tsan`, build, `ctest -E "engine_window_smoke\|engine_swapchain_test\|engine_overlay_test\|engine_run_smoke"` → 11/11 CPU-side tests. The four GPU/window tests are excluded because the Khronos validation layer reports a lock-order inversion inside the uninstrumented layer |
 | UUID parsing and seeded generation | Automatically tested | `uuid_test.cpp` → round-trip, invalid input, v4 bits, same seed/stream sequence |
 | Path sandbox | Automatically tested | `path_sandbox_test.cpp` → `../`, absolute paths, symlink escapes, missing/non-directory roots |
@@ -197,6 +196,9 @@
 | M3.1 `ilammy` replacement | Automatically tested | The Windows job uses `vswhere` + `vcvarsall.bat x64`; `Verify MSVC` passes `cl.exe`, and the Windows matrix is green |
 | M3.1 CI | Automatically tested | Manual dispatch [40975777615](https://github.com/chl84/3D_game_engine/actions/runs/40975777615) on `5d473e6` → all five jobs green. Linux 16/16 including `engine_point_light_warning`; Windows 11/11 with native MSVC setup, fastgltf and scene v3; ASan 16/16; Quality green |
 | M3.1 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `5d473e6` → 16 registered tests (15 passed, golden skipped on local Intel) and `M1 acceptance passed` |
+| M3.2 GLB import core | Automatically tested | `engine_asset_tests` imports the Blender 5.2.2 fixtures, checks hierarchy, stable paths, materials, embedded PNG, samplers and animation-channel counts, and composes world transforms in double precision |
+| M3.2 malformed input | Automatically tested | Mutated GLBs prove `E_VALIDATION`/`E_UNSUPPORTED` with JSON pointers for truncated containers, invalid JSON, required/optional extensions, external buffers/images, multiple scenes, non-triangle primitives, blended materials, missing attributes, unsupported attributes, cycles and out-of-range indices |
+| M3.2 fixture provenance | Documented | `tests/assets/m3/PROVENANCE.md` records the Blender 5.2.2 generator, MIT license and that no third-party model or texture is included |
 | M2.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` cloned `m2/vulkan-renderer` at `e563c9b`, built `linux-debug`, ran 11/11 CTest including `engine_swapchain_test` and `M1 acceptance passed` |
 | M1 ASan/UBSan | Automatically tested | `linux-asan` → 8/8 CTest locally |
 | M1 TSan | Locally automatically tested | `linux-tsan` → 8/8 CTest |

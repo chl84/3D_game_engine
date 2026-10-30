@@ -1,6 +1,6 @@
 # Testing
 
-**Status:** M3.1. Sixteen CTest tests exist on Linux; Windows registers eleven
+**Status:** M3.2. Seventeen CTest tests exist on Linux; Windows registers twelve
 because the window, swapchain, overlay and `engine run` tests remain Linux-only
 while the offscreen golden and screenshot tests are registered on both
 platforms.
@@ -16,6 +16,7 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 |---|---|---|
 | `engine_core_tests` | Catch2 unit test | `unit` |
 | `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0/M1 dependencies | `unit`, `dependencies` |
+| `engine_asset_tests` | GLB import, hierarchy composition, materials/textures and malformed-input rejection | `unit`, `asset` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
@@ -45,6 +46,18 @@ is used.
 `engine_dependencies_smoke` includes and links nlohmann/json, spdlog, CLI11,
 `tl::expected`, Catch2, volk, SDL3, VMA, GLM, Dear ImGui and fastgltf, so missing
 include paths or link errors fail on both Linux and Windows.
+
+`engine_asset_tests` imports the checked-in Blender 5.2.2 GLB fixtures
+(`tests/assets/m3/`, provenance and MIT license in `PROVENANCE.md`), asserts the
+node hierarchy and stable node paths, material factors, embedded PNG, sampler
+state and animation-channel count, and composes world transforms in double
+precision. It also mutates a valid GLB to prove stable rejection of truncated or
+invalid containers, required/optional extensions, external buffers and images,
+multiple scenes, non-triangle primitives, blended materials, missing attributes,
+unsupported vertex attributes, hierarchy cycles and out-of-range indices. The
+M3.2 importer accepts only self-contained GLB: external buffers/images, skins,
+cameras, punctual lights, morph targets and texture or mesh compression fail
+with an explicit error instead of being ignored.
 
 `engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
@@ -95,11 +108,11 @@ tests, so the render tests and `engine_screenshot_golden` execute on lavapipe
 `engine_window_smoke`, `engine_swapchain_test`, `engine_overlay_test` and
 `engine_run_smoke` execute instead of being skipped as headless. A separate step
 runs `engine_swapchain_test --require-minimize` so a window manager that ignores
-minimize still fails. Linux therefore reports 16/16 with lavapipe.
+minimize still fails. Linux therefore reports 17/17 with lavapipe.
 
 The Windows job installs pinned Mesa lavapipe 26.2.6 (`mmozeiko/build-mesa`,
 SHA-256 verified) and registers its ICD, so the offscreen golden and screenshot
-tests and the device render tests run there too. Windows reports 11/11 CTest,
+tests and the device render tests run there too. Windows reports 12/12 CTest,
 and `engine_render_tests` runs 13 cases / 105 assertions with the device cases
 executing. The window, swapchain and overlay tests remain Linux-only because
 Windows presentation is not verified. Without an ICD the offscreen tests report
@@ -137,7 +150,8 @@ lavapipe cannot satisfy the descriptor requirements.
   `AssetInstance`, `DirectionalLight` and `PointLight` round-trip, rejection of
   v3 components in v2 and scene version 4
 - asset `asset@1`/`engine.asset.cooked@1` schemas and the stable-node/original-
-  source rules (schemas are published; importer tests follow in M3.2/M3.3)
+  source rules (schemas are published; the M3.2 importer tests live in
+  `engine_asset_tests`)
 - double-precision world transforms for root entities directly at 8 km and
   16 km, plus an 8 km hierarchy with a 1 mm child offset
 - `SceneView` mesh and camera access without mutation

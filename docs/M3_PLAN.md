@@ -1,9 +1,9 @@
 # M3 Plan — Asset pipeline and live control
 
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
-implemented: scene v3, asset schemas, fastgltf/simdjson, `ilammy` replacement,
-PointLight warnings and the approved `stb_image` PNG/JPEG requirements are in
-place. M3.1 is CI-green and awaits review; M3.2 starts after reviewer approval.
+reviewer-approved and CI-green. M3.2 (GLB import core) is implemented and awaits
+review: self-contained GLB import, checked-in Blender fixtures, double-precision
+world composition, and explicit rejection of unsupported features.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -219,6 +219,8 @@ runtime.
   new dependency; no asset feature code before approval.
 
 ### M3.2 GLB import core
+
+**Status:** Implemented — reviewer pending.
 
 - Parse GLB with fastgltf, including buffers, accessors, nodes, meshes,
   primitives, hierarchy, materials, textures and samplers. Detect animation
