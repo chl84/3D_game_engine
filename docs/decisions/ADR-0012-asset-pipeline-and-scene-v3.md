@@ -84,7 +84,7 @@ The project asset layout is:
 ```text
 assets/<assetId>/asset.json          # asset@1
 assets/<assetId>/source.glb          # project-relative source copy
-.engine/cache/assets/<assetId>/<cacheKey>/
+.engine/cache/<assetId>/<cacheKey16>/
     cooked.json                      # engine.asset.cooked@1
     meshes.bin
     textures.bin
@@ -95,6 +95,9 @@ assets/<assetId>/source.glb          # project-relative source copy
   settings, stable node/mesh/material/texture IDs, dependencies, cooked-cache
   key and metadata.
 - `.engine/cache/` is ignored by git. Cooked data is derived and regenerable.
+  Cache directories use the first 16 hex characters of the cache key to stay
+  below the Windows path limit; the full SHA-256 key is stored in the sidecar
+  and the cooked manifest.
 - The cache key is the SHA-256 of source bytes, importer version and import
   settings. Writes are atomic and sandboxed.
 - Node IDs are stable across reimport for nodes that still exist. Overrides are

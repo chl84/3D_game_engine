@@ -100,7 +100,7 @@ constexpr std::size_t kTextureHeaderSize = 12U;
 
 [[nodiscard]] std::filesystem::path cache_root(const std::filesystem::path& root,
                                                const Uuid& asset_id) {
-    return root / ".engine" / "cache" / "assets" / asset_id.to_string();
+    return root / ".engine" / "cache" / asset_id.to_string();
 }
 
 [[nodiscard]] std::string stored_source(const std::filesystem::path& root,
@@ -784,7 +784,7 @@ cooked_document(const AssetRecord& record, const ImportedAsset& asset,
 }
 
 void remove_old_cache_directories(const std::filesystem::path& root, const Uuid& asset_id,
-                                  std::string_view keep_key) {
+                                  std::string_view keep_path) {
     std::error_code ec;
     const auto directory = cache_root(root, asset_id);
     if (!std::filesystem::is_directory(directory, ec) || ec) {
@@ -794,7 +794,8 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
         if (ec) {
             break;
         }
-        if (entry.is_directory(ec) && !ec && entry.path().filename().string() != keep_key) {
+        if (entry.is_directory(ec) && !ec &&
+            entry.path() != root / std::filesystem::path(keep_path)) {
             std::filesystem::remove_all(entry.path(), ec);
             ec.clear();
         }
@@ -1106,8 +1107,10 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
     result.record.source_hash = source_hash;
     result.record.cache_key =
         core::sha256_hex(source_hash + "|" + std::string(kGltfImporterVersion) + "|{}");
-    result.record.cache_path = ".engine/cache/assets/" + result.record.asset_id.to_string() + "/" +
-                               result.record.cache_key;
+    // The directory uses a short key prefix to stay below the Windows path
+    // limit; the full SHA-256 key remains in the sidecar and cooked manifest.
+    result.record.cache_path = ".engine/cache/" + result.record.asset_id.to_string() + "/" +
+                               result.record.cache_key.substr(0U, 16U);
     result.record.animation_channel_count = imported->animation_channel_count;
 
     assign_new_ids(*imported);
@@ -1159,7 +1162,8 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     record->source_hash = core::sha256_hex(*bytes);
     record->cache_key =
         core::sha256_hex(record->source_hash + "|" + std::string(kGltfImporterVersion) + "|{}");
-    record->cache_path = ".engine/cache/assets/" + asset_id.to_string() + "/" + record->cache_key;
+    record->cache_path =
+        ".engine/cache/" + asset_id.to_string() + "/" + record->cache_key.substr(0U, 16U);
     record->animation_channel_count = imported->animation_channel_count;
 
     assign_existing_ids(*imported, *sidecar);
@@ -1174,7 +1178,7 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
             !cooked) {
             return core::make_failure<ImportResult>(cooked.error());
         }
-        remove_old_cache_directories(project_root, asset_id, record->cache_key);
+        remove_old_cache_directories(project_root, asset_id, record->cache_path);
     }
     if (auto copied = write_bytes(project_root / record->source_copy, *bytes); !copied) {
         return core::make_failure<ImportResult>(copied.error());

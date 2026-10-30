@@ -104,7 +104,7 @@ Proposed layout:
 ```text
 assets/<assetId>/asset.json          # asset@1 sidecar
 assets/<assetId>/source.glb          # project-relative source copy
-.engine/cache/assets/<assetId>/<cacheKey>/
+.engine/cache/<assetId>/<cacheKey16>/
     cooked.json                      # engine.asset.cooked@1 manifest
     meshes.bin                       # little-endian mesh buffers
     textures.bin                     # RGBA8 texture data and metadata
@@ -117,6 +117,9 @@ assets/<assetId>/source.glb          # project-relative source copy
   `metadata`. The original source path is stored for reimport; the project-
   relative copy is the fallback when the original path is gone.
 - `.engine/cache/` is added to `.gitignore`; cooked data is never committed.
+  Cache directories use the first 16 hex characters of the cache key to stay
+  below the Windows path limit; the full SHA-256 key is stored in the sidecar
+  and the cooked manifest.
 - The first import generates and stores the asset UUID. Reimport reads the
   sidecar and preserves it. Tests must prove that an asset ID and a scene
   `AssetInstance` reference survive a source change.
