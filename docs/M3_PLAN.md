@@ -5,7 +5,8 @@ M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
 on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
 ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
-M3.6 is owner-approved. M3.7 is authorized with explicit auth, resource,
+M3.6 is owner-approved. M3.7 is implemented and verified, awaiting owner
+assessment. Its authorized scope includes explicit auth, resource,
 sandbox, lock, fuzz and negative-test requirements. The reviewer is now
 GPT-6 Astra high. The owner corrected emissive to sRGB.
 

@@ -2,7 +2,10 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.7 — authenticated local live API (owner-authorized).
+**Current substep:** M3.7 — implemented and verified; awaiting owner assessment.
+Final CI41093710140 on7c24116 completed/success: all six jobs, Linux24/24 and
+Windows18/18. GPT-6 Astra high review findings are corrected and verified.
+[Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
 M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
 CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
 The owner requires shared CLI handlers/bus, 127.0.0.1 only, per-request token,
@@ -65,7 +68,7 @@ No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
-| M3.7 | Local JSON-RPC live API | In progress — owner authorized with security/test requirements |
+| M3.7 | Local JSON-RPC live API | Implemented and verified; all six CI jobs green; review findings addressed; awaiting owner assessment |
 | M3.8 | M3 hardening and acceptance | Planned |
 
 ## M3.5 fixture preparation (owner requested)
@@ -633,10 +636,10 @@ LinuxClang/GCC14/ASan22/22 and WindowsMSVC16/16, no unexplained skips.
 Both lavapipe platforms passed emissive 117 and Blender difference 0. Quality
 clang-format18/clang-tidy18 and Fuzz passed. The final corrected clean public
 clone passed 22/22 plus M1 acceptance; explicit Iris Xe acceptance also passed.
-The consolidated owner report can now be delivered. M3.7 remains unstarted;
-no merge/tag.
+At the M3.6 handback its consolidated report was ready and M3.7 was unstarted.
+M3.7 was subsequently authorized; its current status is recorded below.
 
-## M3.7 implementation and verification in progress
+## M3.7 implementation and verification
 
 - Foreground live serve plus live call client,127.0.0.1 ephemeral TCP, one
   newline-delimited UTF-8 object/connection. Same shared project command
@@ -656,33 +659,53 @@ no merge/tag.
 - Initial local Clang/retention ASan suites passed23/23; review corrections add
   the queued-deadline regression and pass24/24 locally. Reference CI7c24116 now
   passes Linux GCC/Clang/ASan24/24 and Windows18/18 (including live ACL checks);
-  Fuzz passed. The overall gate remains open while Quality runs.
-- [Working verification record](verification/M3_7_STATUS_REPORT.md) and
-  [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt). No owner report is
-  delivered until review and required CI/re-review are complete.
+  Fuzz and Quality passed. All six jobs completed/success.
+- [Consolidated report](verification/M3_7_STATUS_REPORT.md) and
+  [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt). Review findings and
+  required CI are handled; M3.7 awaits owner assessment.
 
 ### M3.7 independent review round1
 
 GPT-6 Astra high reviewed6e3fb73 against16c5805: changes required for an MSVC
 checked-iterator declaration, clang-format18 compatibility and a queued-client
-deadline after a blocking handler. Parent corrections are being verified;
+deadline after a blocking handler. Parent corrections are verified;
 engine_local_socket_deadline adds a discriminating cross-platform regression.
 The initial CI41091300737 failed Windows compilation and Quality formatting;
-those results are not final acceptance evidence. Corrected CI must pass all6jobs
-with Linux24/24 and Windows18/18. Review/closure details are in
-[round1](verification/M3_7_REVIEW_ROUND1.md). No consolidated owner report yet.
+those results are not final acceptance evidence. Corrected CI passed all six
+jobs with Linux24/24 and Windows18/18. Review/closure details are in
+[round1](verification/M3_7_REVIEW_ROUND1.md). The consolidated report is complete.
 
-### M3.7 final platform evidence; overall Quality gate still open
+### M3.7 platform evidence snapshot before Quality completed
 
 Verification source7c241168583e5cd1b37c6b14aa60fd959819753d.
 [CI41093710140](https://github.com/chl84/3D_game_engine/actions/runs/41093710140):
 GCC, Clang and ASan24/24; Windows18/18; Fuzz success. Windows live/DACL checks,
-queued-deadline regression and PBR color golden all passed. Quality is still
-in progress at this snapshot, so no final CI success or owner report is claimed.
+queued-deadline regression and PBR color golden all passed. At this historical
+snapshot Quality was still in progress; final success is recorded below.
 Exact-source public clean clone passed24/24 and both acceptance summaries.
 Local clang-tidy18 passed all17changed C++ units with compatible GCC14 headers;
 its incompatible GCC16-header attempt is recorded honestly.
 [CI excerpts](verification/M3_7_CI_EVIDENCE.txt) and
 [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt) preserve the proof.
 The three independent-review findings are corrected and verified by the parent.
-No second independent verdict is claimed. Final reporting awaits Quality.
+No second independent verdict is claimed. Reporting was held until Quality
+completed, as recorded below.
+
+### M3.7 final closure
+
+All six jobs in [CI41093710140](https://github.com/chl84/3D_game_engine/actions/runs/41093710140)
+completed/success on7c241168583e5cd1b37c6b14aa60fd959819753d. Linux GCC, Clang
+and ASan/UBSan passed24/24; Windows MSVC passed18/18, including live authoring,
+ACL checks, queued deadlines and color golden on lavapipe. Quality passed the
+reference clang-format18/clang-tidy18 gates. All three fuzz targets passed.
+Exact-source public clean clone passed24/24 and both acceptance summaries.
+
+The original independent GPT-6 Astra high review requested three changes.
+All are corrected and verified with discriminating tests and reference CI;
+no second independent verdict is claimed. The report and permanent evidence
+are complete. Documentation commits after7c24116 do not change tested code.
+No unresolved confirmed M3.7 source defect is known. Physical Windows
+presentation remains unverified; I/O deadlines do not cancel accepted CPU/GPU
+commands; the log is bounded in memory. See the full report for limitations.
+
+M3.7 now awaits owner assessment. No merge/tag or M3.8 work is authorized.

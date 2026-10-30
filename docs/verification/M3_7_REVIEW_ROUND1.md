@@ -48,7 +48,12 @@ This runs on both Linux and Windows, without process signals or server threads.
 A mutation removing the new deadline checks must fail; restored code must pass.
 Commands and captured results are in M3_7_LOCAL_EVIDENCE.txt.
 
-Final correction CI and parent closure remain pending until recorded in the
-status report. The original verdict is preserved; no second independent verdict
-is claimed. Small findings are corrected by the parent with discriminating tests
-and reference CI, without an unnecessary new delegated review.
+Parent closure is complete: final CI41093710140 at7c24116 succeeded in all six
+jobs (Linux24/24, Windows18/18, Fuzz and Quality). The queued-deadline mutation
+failed as required; restored tests passed, including on Windows. Exact-source
+public clean-clone acceptance passed24/24. The Windows ACL harness required only
+a PowerShell module-environment correction; no assertion was removed.
+
+The original verdict on6e3fb73 is preserved; no second independent verdict is
+claimed. The parent corrected these findings with discriminating tests and
+reference CI. This is not owner approval or permission to merge/tag/start M3.8.
