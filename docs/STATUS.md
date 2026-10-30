@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.2 implemented and fixed after review round 3 — GLB import core with Blender fixtures, hierarchy composition and explicit rejection of unsupported features. The review loop has reached its three-round limit, so the owner decides whether to accept M3.2 or authorize another review before M3.3.
+**Current substep:** M3.2 reviewer GODKJENT (round 4, owner-authorized) — GLB import core with Blender fixtures, hierarchy composition and explicit rejection of unsupported features. M3.3 is next.
 
 ## Substeps
 
@@ -51,7 +51,7 @@
 | Substep | Scope | Status |
 |---|---|---|
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
-| M3.2 | GLB import core; animation channels reported only | Implemented — owner decision after review round 3 |
+| M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
 | M3.4 | Asset CLI | Planned |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |

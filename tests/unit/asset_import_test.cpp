@@ -408,6 +408,18 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
     }
 
+    SECTION("non-indexed primitive with POSITION 999") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            primitive.erase("indices");
+            primitive["attributes"]["POSITION"] = 999;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "position-999.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
     SECTION("non-indexed primitive with huge vertex count") {
         const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
             auto& primitive = document["meshes"][0]["primitives"][0];
@@ -418,6 +430,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "huge-count.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/accessors/0");
     }
 
     SECTION("non-triangle primitive") {

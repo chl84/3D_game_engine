@@ -1,9 +1,10 @@
 # M3 Plan — Asset pipeline and live control
 
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
-reviewer-approved and CI-green. M3.2 (GLB import core) is implemented and awaits
-review: self-contained GLB import, checked-in Blender fixtures, double-precision
-world composition, and explicit rejection of unsupported features.
+reviewer-approved and CI-green. M3.2 (GLB import core) is reviewer-approved
+(round 4): self-contained GLB import, checked-in Blender fixtures,
+double-precision world composition, and explicit rejection of unsupported
+features.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
