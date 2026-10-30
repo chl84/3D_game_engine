@@ -81,8 +81,13 @@ $u=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 if($a.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $u){exit 3}
 $r=@($a.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]))
 if($r.Count -ne 1 -or $r[0].IdentityReference.Value -ne $u -or $r[0].IsInherited -or $r[0].AccessControlType -ne 'Allow'){exit 2}'''
+                # Windows PowerShell launched through Python must reconstruct its
+                # own module path rather than inherit PowerShell7 modules from CI.
+                acl_env = {key: value for key, value in os.environ.items()
+                           if key.upper() != "PSMODULEPATH"}
+                acl_env["ENGINE_TEST_DISCOVERY"] = str(session)
                 subprocess.run(["powershell", "-NoProfile", "-Command", script],
-                               env=dict(os.environ, ENGINE_TEST_DISCOVERY=str(session)), check=True, timeout=15)
+                               env=acl_env, check=True, timeout=15)
 
             def connect():
                 return socket.create_connection(("127.0.0.1", port), timeout=5)

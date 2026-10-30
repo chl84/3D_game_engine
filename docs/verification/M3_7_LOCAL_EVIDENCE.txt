@@ -451,3 +451,30 @@ security    =   1.23 sec*proc (1 test)
 Total Test time (real) =   1.23 sec
 
 Reference formatter18.1.8 installed only in a temporary isolated tool environment. All tracked first-party C++ sources pass --dry-run --Werror with clang-format18. No formatter configuration change.
+
+
+Final correction public clean-clone acceptance:
+Source781324d84e59cfa12c8b0b457222e9224d18a3c9.
+COMMAND: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=<lavapipe ICD> scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+10/24 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+11/24 Test #11: engine_screenshot_cli ............   Passed    0.20 sec
+12/24 Test #12: engine_version_json ..............   Passed    0.03 sec
+13/24 Test #13: engine_cli_contract ..............   Passed    0.36 sec
+14/24 Test #14: engine_docs_links ................   Passed    0.02 sec
+15/24 Test #15: engine_sensitive_scan ............   Passed    0.44 sec
+16/24 Test #16: engine_acceptance_m1 .............   Passed    0.17 sec
+17/24 Test #17: engine_api_reference .............   Passed    0.08 sec
+18/24 Test #18: engine_asset_cli .................   Passed    0.57 sec
+19/24 Test #19: engine_pbr_golden ................   Passed    0.28 sec
+20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.11 sec
+21/24 Test #21: engine_pbr_window ................   Passed    0.18 sec
+22/24 Test #22: engine_asset_placement ...........   Passed    1.14 sec
+23/24 Test #23: engine_live_api ..................   Passed    3.87 sec
+24/24 Test #24: engine_local_socket_deadline .....   Passed    1.24 sec
+100% tests passed out of 24
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Windows CI41092686164 compiled successfully:17/18 tests passed, including engine_local_socket_deadline and PBR color golden. engine_live_api failed when Windows PowerShell inherited PowerShell7 PSModulePath through Python; Get-Acl could not autoload its module. The test child now removes only inherited PSModulePath, as Microsoft documents for an intermediate process; every owner/DACL assertion remains unchanged. This is a test-harness environment correction, with Windows rerun still required.
+Primary reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_psmodulepath
+Local attempt at clang-tidy18 with the native GCC16 headers failed to parse standard-library builtins (__builtin_popcountg) and produced cascading diagnostics; it is not a passing static check. A compatible-header rerun uses the previously verified Ubuntu GCC14 headers in a temporary tool environment. CI remains the reference gate. No source change or suppression was made for the incompatible-header diagnostics.
