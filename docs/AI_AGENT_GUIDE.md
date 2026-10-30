@@ -1,6 +1,6 @@
 # AI Agent Guide
 
-**Status:** M3.7 implementation and verification. Offline authoring, asset
+**Status:** M3.8 hardening and acceptance. Offline authoring, asset
 cooking/reimport/placement, shared PBR rendering, fixed-tick simulation,
 offscreen screenshots and the authenticated local live API are implemented.
 Current review and exact-source verification results are in STATUS.md.
@@ -21,8 +21,9 @@ Owner clarification, 2026-10-30: Claude Opus5.5 high is the reviewer until
 further owner instruction. Reviewer selection and changes belong to the owner.
 The earlier owner message selected GPT-6 Astra high; the latest clarification
 supersedes it. Preserve historical reviewer attribution rather than rewriting it.
-The three M3.7 review corrections require independent re-review, especially the
-queued-deadline correction, before M3.7 can be approved.
+Claude independently re-reviewed the three M3.7 corrections and the durable
+journal; M3.7 is owner-approved. M3.8 follows the same independent-review and
+consolidated-report requirements.
 
 ## Principles
 
@@ -226,13 +227,14 @@ the read-only `SceneView`.
 
 ## Planned commands
 
-- Live API (JSON-RPC 2.0 over a local connection) in M3.
 - MCP adapter in M7.
 
 ## Live API and MCP
 
-Not implemented. The live API will expose the same commands plus inspection,
-screenshots, statistics and "run N ticks". The MCP adapter will be a thin layer
+The live API is implemented: shared commands, inspection, screenshot, ping
+and shutdown, with authentication and a durable journal. See the local live
+API section below. Live statistics and "run N ticks" remain planned; the
+offline simulation CLI exists. The future MCP adapter will be a thin layer
 over the same command bus.
 
 ## Asset CLI (M3.4)
@@ -252,7 +254,7 @@ Successful CLI data exposes project-relative copy/cache/dependency paths rather
 than the original machine-specific source path. Results use `command-result@1`;
 asset data validates against `asset-result-data@1.schema.json`. Input schemas
 for the asset lifecycle and placement commands are included in `engine schema --json` and the
-generated API reference. CLI and future live control use the same handlers.
+generated API reference. CLI and live control use the same handlers.
 
 `inspect` reports stable node/mesh/material/texture IDs, per-primitive bounds,
 dependencies, animation-channel count and cooked-cache state. It still works

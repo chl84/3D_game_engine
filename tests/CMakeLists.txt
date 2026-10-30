@@ -291,6 +291,14 @@ set_tests_properties(engine_acceptance_m1 PROPERTIES
     LABELS "contract;acceptance"
 )
 
+add_test(NAME engine_acceptance_m3
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/scripts/acceptance_m3.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_acceptance_m3 PROPERTIES
+    LABELS "contract;acceptance;asset;live;render" TIMEOUT 180
+)
+
 add_test(
     NAME engine_api_reference
     COMMAND "${Python3_EXECUTABLE}"

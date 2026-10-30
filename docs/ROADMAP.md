@@ -9,7 +9,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Done — `v0.3.0`, owner approved |
-| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | In progress — M3.4/M3.5 owner-approved; M3.6 owner-approved; M3.7 owner-approved with durable JSONL, Claude technical approval and all six CI jobs green; M3.8 unstarted |
+| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | In progress — M3.4/M3.5 owner-approved; M3.6 owner-approved; M3.7 owner-approved with durable JSONL, Claude technical approval and all six CI jobs green; M3.8 hardening and acceptance in progress |
 | M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
@@ -32,9 +32,11 @@ authoritative state.
 - Non-indexed GLB primitives are rejected in M3.3. A later extension can
   generate indices in a separate, bounds-checked importer step after validating
   the POSITION accessor, its count and the vertex limit. It is not part of M3.
-- Permanent libFuzzer targets (`engine_gltf_fuzz`, `engine_image_fuzz`) run in
-  a short CI job with the checked-in fixtures as the seed corpus. Crashes found
-  by fuzzing are added as regression tests.
+- Permanent libFuzzer targets (`engine_gltf_fuzz`, `engine_image_fuzz`,
+  `engine_rpc_fuzz`) run in the required short CI job with checked-in seeds.
+  M3.8 adds extended nightly/manual fuzzing with a retained corpus; scheduled
+  activation awaits merge to the default branch. Crashes become named
+  regression tests after reproduction, not blind corpus promotion.
 
 ## M0 substeps
 

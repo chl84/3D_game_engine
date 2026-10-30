@@ -1,6 +1,6 @@
 # Build
 
-**Status:** M3.5 implementation. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M3.8 hardening and acceptance. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
@@ -214,12 +214,13 @@ The JSON output is validated against `schemas/doctor@1.schema.json`.
 
 ## Windows
 
-Windows is **not verified** yet. The `windows-debug`, `windows-release` and
-`ci-windows` presets use MSVC and vcpkg. The Windows CI job compiles and runs
-headless tests from M0.2 onward; the runner has no GPU, so graphics is not
-tested there. Graphics on Windows is not part of the M2/M3 approval and will be
-reported as **not verified** until the owner tests it manually on a Windows
-machine.
+The `windows-debug`, `windows-release` and `ci-windows` presets use MSVC and
+vcpkg. Windows compilation, headless contracts and offscreen rendering with
+pinned lavapipe are verified by CI (M3.7: 19/19 on d0797e1). This includes
+Blender normal-map and sRGB/linear golden images and live journal/security
+contracts. Physical Windows presentation and hardware-GPU rendering remain
+**not verified** until the owner tests them manually. Current M3.8 results
+are recorded separately in STATUS.md; earlier results do not certify new code.
 
 The CI workflow locates Visual Studio with `vswhere`, imports
 `vcvarsall.bat x64` and verifies `cl.exe` before configuring. It uses the
@@ -392,3 +393,26 @@ Windows system ws2_32/advapi32/bcrypt for sockets, DACLs and CSPRNG. Windows
 private discovery permissions are verified before writing credentials and
 checked independently by the cross-platform integration test. The new
 engine_rpc_fuzz target runs alongside the existing GLB/image targets.
+
+## M3.8 acceptance entry points
+
+The normal build includes `engine_acceptance_m3` on Linux and Windows. It drives
+only the public CLI/live interface with the checked-in mirrored Blender fixture
+and the existing M3.5 golden; no Blender installation is needed to run it.
+The fixture source, generator and MIT provenance remain checked in.
+
+```bash
+cmake --preset ci-linux-clang
+cmake --build --preset ci-linux-clang
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang
+# Clean clone, expected SHA optional as the third argument:
+bash scripts/acceptance_m3.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+```
+
+Select a working lavapipe ICD and a display for the complete Linux window suite;
+CI uses Xvfb/openbox. `KEEP=1` retains the fresh clone for diagnosis. The clean
+clone runs full CTest plus explicit M1 and M3 acceptance. No release version is
+changed before owner approval of merge/tag. The nightly fuzz mode reuses the
+pinned CI toolchain and adds no package; see TESTING.md for limits and cache
+provenance. Hardware performance goals remain M5/M8 and are not inferred from
+software-rendered acceptance timings.

@@ -1,6 +1,7 @@
 name: CI
 
 # CI runs for pull requests to main, pushes to main and manual dispatches.
+# The scheduled/manual long-fuzz mode runs only fuzzers, for 10 minutes each.
 # Feature-branch pushes do not trigger CI; open a pull request or run the
 # workflow manually when a feature branch needs verification.
 on:
@@ -11,12 +12,19 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      long_fuzz:
+        description: Run only extended fuzzing (600 seconds per target, cached corpus)
+        type: boolean
+        default: false
+  schedule:
+    - cron: '23 2 * * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name == 'schedule' || inputs.long_fuzz == true }}
   cancel-in-progress: true
 
 env:
@@ -25,6 +33,7 @@ env:
 
 jobs:
   linux:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Linux (${{ matrix.preset }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -228,6 +237,7 @@ jobs:
             doctor-*.json
 
   windows:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Windows (MSVC)
     runs-on: windows-2022
     timeout-minutes: 30
@@ -428,6 +438,7 @@ jobs:
             doctor-*.json
 
   quality:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -525,6 +536,7 @@ jobs:
             | xargs -0 clang-tidy-18 -p build/ci-linux-clang --warnings-as-errors='*'
 
   linux-asan:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Linux ASan/UBSan
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -694,7 +706,7 @@ jobs:
   fuzz:
     name: Fuzz (Clang ASan)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 55
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
@@ -770,18 +782,30 @@ jobs:
       - name: Build fuzzers
         run: cmake --build --preset linux-fuzz --target engine_gltf_fuzz engine_image_fuzz engine_rpc_fuzz
 
-      - name: Run short fuzz targets
+      # The per-run suffix makes a new immutable cache on each successful run.
+      # Restore this corpus version/seed/harness set; required CI uses fresh seeds.
+      - name: Restore and retain extended fuzz corpus
+        if: github.event_name == 'schedule' || inputs.long_fuzz == true
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/corpus
+          key: fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'vcpkg.json', 'vcpkg-configuration.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'vcpkg.json', 'vcpkg-configuration.json') }}-
+
+      - name: Run fuzz targets
         env:
           ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+          FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || inputs.long_fuzz == true) && '600' || '30' }}
         run: |
-          mkdir -p "$RUNNER_TEMP/corpus/gltf" "$RUNNER_TEMP/corpus/image" "$RUNNER_TEMP/corpus/rpc"
-          cp tests/assets/m3/*.glb "$RUNNER_TEMP/corpus/gltf/"
-          cp tests/assets/m3/*.png tests/assets/m3/*.jpg "$RUNNER_TEMP/corpus/image/"
-          ./build/linux-fuzz/tests/engine_gltf_fuzz "$RUNNER_TEMP/corpus/gltf" \
-            -max_total_time=30 -timeout=10 -rss_limit_mb=2048
-          ./build/linux-fuzz/tests/engine_image_fuzz "$RUNNER_TEMP/corpus/image" \
-            -max_total_time=30 -timeout=10 -rss_limit_mb=2048
-          cp tests/fuzz/corpus/rpc/* "$RUNNER_TEMP/corpus/rpc/"
-          ./build/linux-fuzz/tests/engine_rpc_fuzz "$RUNNER_TEMP/corpus/rpc" \
-            -max_total_time=30 -timeout=10 -rss_limit_mb=2048
+          bash scripts/run_fuzz_targets.sh "$FUZZ_SECONDS" "$RUNNER_TEMP/corpus" "$RUNNER_TEMP/fuzz-artifacts"
+
+      - name: Upload fuzz diagnostics and reproductions
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fuzz-artifacts
+          if-no-files-found: ignore
+          retention-days: 14

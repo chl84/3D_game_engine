@@ -162,6 +162,18 @@ def main():
         assert snapshot(project) == before
         run("asset", "import", project, tmp / "missing.glb", code=4, error="E_NOT_FOUND")
 
+        if sys.platform == "linux":
+            invalid_source = tmp / "model-\udcff.glb"
+            shutil.copyfile(FIXTURES / "blender_cube.glb", invalid_source)
+            alias = tmp / "utf8-alias.glb"
+            alias.symlink_to(invalid_source)
+            # A valid client spelling can resolve to a non-UTF-8 filesystem name.
+            # Reject its unrepresentable sidecar provenance before creating files.
+            before = snapshot(project)
+            for extra in ((), ("--dry-run",)):
+                run("asset", "import", project, alias, *extra, code=3, error="E_VALIDATION")
+                assert snapshot(project) == before
+
         # Missing cache is inspectable, but validate must fail; reimport rebuilds.
         shutil.rmtree(project / updated["cachePath"])
         unavailable = run("asset", "inspect", project, asset_id)

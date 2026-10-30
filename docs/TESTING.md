@@ -1,14 +1,13 @@
 # Testing
 
-**Status:** M3.4. Eighteen CTest tests exist on Linux; Windows registers thirteen
-because the window, swapchain, overlay and `engine run` tests remain Linux-only
-while the offscreen golden and screenshot tests are registered on both
-platforms.
-`engine_core_tests` contains 65 test cases and 507 assertions on Linux;
-Windows reports 63 cases / 495 assertions because two POSIX-only tests are
-compiled out. `engine_asset_tests` contains 14 test cases and 4217 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
-clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
-detection with pinned CMake 4.4.5 and Ninja 1.13.2.
+**Status:** M3.8 hardening. The suite registers 27 tests on Linux without
+sanitizers, 26 with sanitizers and 20 on Windows. Six window/presentation
+contracts are Linux-only; the real fsync fault interposer is Linux-only without
+sanitizers. Offscreen golden images and CLI/live asset acceptance run on both
+platforms. No existing tests were removed or weakened. Exact results for the
+current source are recorded in STATUS.md and committed verification evidence.
+CI also runs clang-format 18, clang-tidy 18 with warnings as errors, ASan/UBSan,
+and Vulkan detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 
 ## Current tests
 
@@ -32,6 +31,15 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 | `engine_asset_cli` | `asset import/inspect/validate/reimport/list`, dry-run, sandbox rejection, cache state and stable error codes | `contract`, `cli`, `asset` |
 | `engine_screenshot_golden` | 64×64 offscreen scene compared with the lavapipe golden image | `unit`, `render`, `acceptance` |
 | `engine_screenshot_cli` | `engine screenshot` creates a valid 64×64 PNG and `command-result@1` envelope | `contract`, `cli`, `render` |
+| `engine_pbr_golden` | Mirrored Blender normal-map golden, Blender tangent reference and discriminating PBR probes | `render`, `asset`, `acceptance` |
+| `engine_pbr_color_golden` | sRGB baseColor/emissive, linear MR/AO/normal and linear-emissive negative control | `render`, `asset`, `acceptance` |
+| `engine_pbr_window` | Frame-error recovery, retirement and descriptor reuse; Linux display required | `render`, `asset` |
+| `engine_asset_placement` | CLI placement, two instances, save/load, reimport, undo and cache repair | `contract`, `cli`, `asset`, `render`, `acceptance` |
+| `engine_live_api` | Shared live commands, authentication, limits, lock conflicts, sandbox and authoring | `contract`, `cli`, `live`, `security`, `render`, `acceptance` |
+| `engine_local_socket_deadline` | Expired queued requests cannot dispatch after a slow earlier handler | `contract`, `live`, `security` |
+| `engine_live_journal` | Crash-surviving JSONL, private files and fail-closed serialization errors | `contract`, `live`, `security` |
+| `engine_live_journal_fault` | Actual started/completed fsync EIO and no-fault control; Linux non-sanitized only | `contract`, `live`, `security` |
+| `engine_acceptance_m3` | Public CLI/live mirrored Blender golden, reimport, stable IDs and durable log | `contract`, `acceptance`, `asset`, `live`, `render` |
 
 `engine_version_json` runs `engine --version --json`, parses stdout as JSON and
 checks the `name`, `version` and `cxxStandard` fields plus the presence of build
@@ -267,14 +275,16 @@ ThreadSanitizer (CPU-side tests only):
 ```bash
 cmake --preset linux-tsan
 cmake --build --preset linux-tsan
-ctest --preset linux-tsan -E "engine_window_smoke|engine_swapchain_test|engine_overlay_test" \
+ctest --preset linux-tsan -R 'engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan)$' \
   --output-on-failure
 ```
 
-The Khronos validation layer reports a lock-order inversion between its own
-locks when the windowed tests run under TSan. This is a false positive in the
-uninstrumented validation layer, not in engine code, so the window and overlay
-tests are excluded from the TSan run. GPU drivers are not instrumented.
+This is the CPU-only scope. The old exclusion list predated PBR/live render
+tests and no longer expressed that scope correctly. GPU drivers and validation
+layers are not instrumented; their behavior is tested separately under
+ASan/UBSan and ordinary lavapipe/window suites. All tests remain registered and
+required in their normal presets. M3 commands and transport execute sequentially;
+job-system race tests are deferred until that system exists in M5.
 
 Documentation links and sensitive-data scan:
 
@@ -434,7 +444,7 @@ scripts/run_fuzz.sh 30
 The third permanent fuzz target engine_rpc_fuzz uses checked-in parser seeds,
 raw bytes and an authenticated wrapper. No fuzz input reaches sockets, disk or
 the command bus. The existing CI fuzz job runs all three targets for30s each
-with ASan and UBSan halt-on-error. Nightly cached-corpus fuzzing remains M3.8.
+with ASan and UBSan halt-on-error. M3.8 adds the scheduled extended mode described below.
 
 The engine_local_socket_deadline test uses the production platform transport
 in a process fixture with stdin gates. It proves an expired queued frame cannot
@@ -455,3 +465,75 @@ of success acknowledgement, verifies notification exit/stderr and has a no-fault
 control. It is not registered on Windows or sanitizer presets; none of their
 existing tests are skipped/disabled. Linux serialization regressions and the
 0644 owner-writable mode test cover the actual fail-closed guards.
+
+## M3.8 complete acceptance
+
+```bash
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
+  .venv/bin/python scripts/acceptance_m3.py build/ci-linux-clang/tools/engine/engine
+# A public fresh clone, optionally asserting the exact reviewed commit:
+CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
+  bash scripts/acceptance_m3.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline <full-source-sha>
+```
+
+`engine_acceptance_m3` runs the Python script in Linux/Windows CI and under
+ASan/UBSan. It imports the original MIT-licensed mirrored Blender coupon
+without TANGENT, inspects/validates it, authors a camera and one DirectionalLight
+through the CLI, places the asset and renders against the unchanged M3.5 golden.
+It uses the same strict image tolerance (maximum 8, fewer than 0.1% of channels
+with difference above 3). The separately tested analytic color chart remains
+required; the acceptance does not regenerate goldens or relax their checks.
+
+The test then opens the saved scene in live mode through the shipped client,
+compares the actual pixels with the CLI image, saves/loads, changes the GLB
+source transform and reimports. It requires a changed image and cache key,
+unchanged asset/node/mesh/material/texture IDs and unchanged scene bytes.
+Reloading and a final offline render must reproduce the changed image. Actual
+JSONL records are schema-validated and matched to the live CommandLog.
+
+The asset suite additionally rejects invalid UTF-8 names and POSIX source paths
+(including valid aliases to invalid filenames) before any project writes.
+Normal and dry-run rejection must preserve both files and directories. This
+closes the asset-import leftover-directory observation from the M3.7 review.
+
+## Extended fuzzing and corpus retention
+
+The existing CI workflow runs only its Fuzz job at 02:23 UTC daily, for 600
+seconds per GLB/image/RPC target. `workflow_dispatch` with `long_fuzz=true`
+exercises the same mode on a selected branch. Ordinary required CI retains all
+six jobs and the original 30 seconds per target with fresh checked-in seeds.
+The two modes have independent concurrency groups. Budget: one Ubuntu job,
+roughly 30 minutes of fuzzing plus setup/build per night, timeout 55 minutes.
+No Windows/GPU build is scheduled in this mode.
+
+Only this repository's MIT fixtures and synthetic RPC seeds plus their fuzzer
+mutations enter the corpus. The cache contains parser input, not executables,
+credentials or project/session logs. Each successful extended run saves a new
+immutable cache keyed by corpus version, OS, seed/harness/dependency hash and
+run/attempt; a stable prefix restores the newest compatible cache on the same
+branch or default branch. A cache miss or eviction starts from original seeds.
+Bump `fuzz-corpus-v1` when its layout/provenance changes. Cache storage and
+inactivity eviction follow GitHub's repository cache policy; it is not archival
+crash storage. The helper continues to the other targets after a target fails,
+then returns failure. Logs and libFuzzer crash/timeout/OOM artifacts are uploaded
+on success/failure for 14 days. A failed corpus is not saved as a successful
+cache. Reproduce a saved artifact with the matching source/binary before turning
+it into a named permanent regression test.
+
+```bash
+bash scripts/run_fuzz.sh 30
+# Reuse built fuzzers and a persistent local corpus:
+ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 \
+  bash scripts/run_fuzz_targets.sh 600 /tmp/engine-fuzz-corpus /tmp/engine-fuzz-artifacts
+```
+
+The scripts enforce 1..600 seconds, a 10-second input timeout and 2048 MiB RSS
+limit per process. UBSan always halts on error. The fuzz job retains its existing
+`detect_leaks=0` policy; leak verification belongs to the full ASan/UBSan suite
+with `detect_leaks=1`. A schedule runs from the default branch only, so nightly
+activation awaits the separately approved merge. A manual extended run proves
+that mode; it does not prove that a future scheduled event will fire on time.
+
+References: [libFuzzer](https://llvm.org/docs/LibFuzzer.html),
+[GitHub cache scope and immutable keys](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching),
+[scheduled workflow behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).

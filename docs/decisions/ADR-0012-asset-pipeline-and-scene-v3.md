@@ -239,3 +239,18 @@ Rendering never reimports, recooks or expands asset nodes into scene entities.
 Missing/stale caches return an error with assetId; explicit reimport repairs
 them. GPU resources are shared across instances and released with the renderer.
 Live synchronization/hot reload remains M3.7 and later streaming work.
+
+## M3.8 metadata hardening and complete acceptance
+
+Validate JSON metadata text before any cooked/source-copy writes. A POSIX source
+path can contain invalid UTF-8 even when the client used a valid symlink alias;
+such provenance cannot be stored faithfully in the existing JSON sidecar.
+Return E_VALIDATION without creating import files/directories. The validation
+also applies to supplied asset names and to reimport before writes. No version,
+importer key, dependency or module boundary changes.
+
+The permanent public CLI/live acceptance renders the original mirrored Blender
+model without tangents against the existing golden, then saves/loads and
+reimports changed geometry with all stable IDs preserved. It also validates the
+actual durable journal. CPU tangent and analytic color probes remain separate
+required tests rather than being replaced by this integration test.

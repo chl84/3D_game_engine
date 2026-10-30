@@ -2,14 +2,16 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.7 — owner-approved on2026-10-30.
+**Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
+
+M3.7 is owner-approved on 2026-10-30.
 Verified source d0797e1b361f4f4379b69d33ebc523ab88e93035. Claude Opus5.5 high
 independently approved all required corrections and durable JSONL with no
 blocking/required findings. Final CI41108912088 completed/success in all six
 jobs: GCC/Clang26/26, ASan25/25, Windows19/19, Fuzz and Quality success.
 [Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
 Reviewer selection remains exclusively the owner's decision; Claude Opus is
-current reviewer. M3.8, merge and tag await separate owner authorization.
+current reviewer. M3.8 is authorized; merge and tag require separate owner approval.
 
 M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
 CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
@@ -18,7 +20,7 @@ bounded framing/connections/timeouts, sandboxed client paths, exclusive
 project locking, parser fuzzing and explicit negative/security/log tests.
 The current independent reviewer is Claude Opus5.5 high. Historical Astra
 review attribution is retained; no substitution is permitted without the owner.
-No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule.
+M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner timing rule.
 
 ## Substeps
 
@@ -73,7 +75,7 @@ No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Planned |
+| M3.8 | M3 hardening and acceptance | Owner-authorized; implementation/local verification in progress; Claude review and reference CI pending |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -770,3 +772,27 @@ existing test is disabled. Fuzz and exact-source public clean clone pass.
 commits afterd0797e1 do not change the tested source. The pre-existing non-UTF-8
 asset-import orphan-directory case remains documented for hardening assessment.
 No new M3.7 blocking/required finding remains. No merge, tag or M3.8 is authorized.
+
+## M3.8 authorized hardening — 2026-10-30
+
+The owner authorized M3.8 after approving M3.7. Local implementation adds:
+
+- One public CLI/live acceptance flow using the original mirrored Blender
+  model without tangents and the unchanged M3.5 PBR golden. It checks
+  save/load, changed-source reimport, all stable IDs, identical CLI/live pixels
+  and actual schema-valid durable JSONL; registered on Linux and Windows.
+- Early UTF-8 metadata validation closes the known asset-import leftover-file
+  observation. New unit/CLI regressions preserve project files/directories on
+  rejection, including a valid alias to an invalid POSIX source filename.
+- Optional extended fuzz mode: 600 seconds per GLB/image/RPC target, nightly or
+  manual dispatch, cached corpus across successful runs, retained diagnostics.
+  Ordinary six-job CI and its short fuzz requirement remain unchanged.
+- Current build/testing/dependency/format/architecture/vision/agent docs and an
+  explicit clean-clone M3 acceptance entry point. No format, dependency, module
+  boundary, shader, golden, tolerance or public command schema is changed.
+
+Local validation is captured in [committed evidence](verification/M3_8_LOCAL_EVIDENCE.txt).
+Independent Claude review and new-source reference CI/public clean clone are
+still pending at this snapshot. No interim A.5 report is delivered. Review is
+performed locally before publishing this delivery for CI. This authorization
+does not permit merge/tag or M4 work.

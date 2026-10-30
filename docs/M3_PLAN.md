@@ -1,15 +1,15 @@
 # M3 Plan — Asset pipeline and live control
 
-**Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 and
-M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
-M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
-on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
-ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
-M3.6 and M3.7 are owner-approved. Durable JSONL and all M3.7 corrections are
-independently approved by Claude Opus5.5 high on d0797e1. Final CI41108912088
-completed/success in all six jobs; M3.8 remains unstarted. Its authorized scope includes explicit auth, resource,
-sandbox, lock, fuzz and negative-test requirements. The latest owner clarification restores Claude Opus5.5 high and requires
-re-review of the three M3.7 fixes plus durable JSONL before approval. The owner corrected emissive to sRGB.
+**Status:** Approved by the owner on 2026-10-30. M3.1/M3.2 are
+reviewer-approved; M3.3–M3.7 are complete. M3.4/M3.5/M3.6/M3.7 are
+owner-approved, including the emissive-sRGB correction and the pinned official
+MikkTSpace dependency with its marked UB-fixed build copy. Claude Opus5.5 high
+independently approved all M3.7 corrections and durable JSONL on d0797e1;
+CI41108912088 completed/success in all six jobs. The owner has now authorized
+M3.8 hardening and final acceptance. Merge/tag still require owner approval.
+Reviewer selection remains exclusively the owner's decision; Claude remains
+the reviewer. Deliver the consolidated A.5 report only after review, any
+required corrections/re-review and final reference CI are complete.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 

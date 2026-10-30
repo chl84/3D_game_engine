@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M3.7 implementation; verification/review is recorded in STATUS.md. This document describes the approved module boundaries and
+**Status:** M3.8 hardening; verification/review is recorded in STATUS.md. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -294,7 +294,7 @@ The current implementation contains:
 
 Instance placement and automatic project-asset resolution are implemented in
 M3.6 through shared undoable asset commands and CLI composition-root uploads.
-Live control (M3.7) remains. Physics, scripting, streaming and editor remain planned.
+Live control and durable command journaling were delivered in M3.7. Physics, scripting, streaming and editor remain planned.
 
 ## M3.7 live control
 

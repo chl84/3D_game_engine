@@ -260,3 +260,14 @@ No project/scene/sidecar/cooked schema version changes in this substep.
 Importer `gltf-import@4` changes derived texture metadata: baseColor and emissive
 are sRGB, while normal/MR/AO remain linear. Reimport rebuilds old caches while
 preserving asset and internal stable IDs.
+
+### M3.8 metadata and acceptance
+
+Project format1, scene format3, asset/cooked format1 and importer@4 are unchanged.
+Asset metadata must be valid UTF-8 to be represented in JSON. Import validates
+metadata serialization before cooking/source-copy writes, including the
+canonical original source path behind a symlink. Invalid filesystem names or
+asset names return E_VALIDATION without new project files/directories; rename
+those inputs to UTF-8. This is validation of the existing JSON contract, not a
+format migration. Live journals retain their existing version1 schema and
+per-session intent/completion synchronization contract.

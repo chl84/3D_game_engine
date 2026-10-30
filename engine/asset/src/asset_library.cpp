@@ -502,6 +502,20 @@ void assign_existing_ids(ImportedAsset& asset, const json& sidecar) {
     };
 }
 
+[[nodiscard]] Result<void> validate_metadata_text(const AssetRecord& record,
+                                                  const ImportedAsset& asset) {
+    try {
+        // JSON sidecars cannot represent non-UTF-8 filesystem names. Check all
+        // metadata before cooking or copying a source creates any project files.
+        static_cast<void>(sidecar_document(record, asset).dump());
+        return {};
+    } catch (const json::exception&) {
+        return core::make_failure<void>(
+            asset_error(ErrorCode::Validation, "asset metadata must contain valid UTF-8 text",
+                        "Use UTF-8 source paths, asset names and model metadata."));
+    }
+}
+
 void append_u32(std::vector<std::byte>& output, std::uint32_t value) {
     output.push_back(static_cast<std::byte>(value & 0xFFU));
     output.push_back(static_cast<std::byte>((value >> 8U) & 0xFFU));
@@ -1205,6 +1219,9 @@ core::Result<ImportResult> import_asset(const std::filesystem::path& project_roo
     if (auto tangents = generate_missing_tangents(*imported); !tangents) {
         return core::make_failure<ImportResult>(tangents.error());
     }
+    if (auto text = validate_metadata_text(result.record, *imported); !text) {
+        return core::make_failure<ImportResult>(text.error());
+    }
     auto source_copy =
         resolve_inside_project(project_root, result.record.source_copy, "sourceCopy");
     auto cache_dir = resolve_inside_project(project_root, result.record.cache_path, "cooked.path");
@@ -1291,6 +1308,9 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     }
     if (auto tangents = generate_missing_tangents(*imported); !tangents) {
         return core::make_failure<ImportResult>(tangents.error());
+    }
+    if (auto text = validate_metadata_text(*record, *imported); !text) {
+        return core::make_failure<ImportResult>(text.error());
     }
     auto source_copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
     if (!source_copy) {

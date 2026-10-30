@@ -1,0 +1,362 @@
+M3.8 LOCAL VERIFICATION — 2026-10-30
+
+Scope: local candidate after afea88a; independent review and final exact-source
+CI/public clone are separate gates, not claimed by this file.
+
+Environment: Clang23.1.3, GCC16.2.1, CMake4.4.4, Ninja1.13.2.
+CI pins Clang18/GCC14/CMake4.4.5 and is authoritative.
+All graphics runs below explicitly select local lavapipe lvp_icd.json.
+The local window suite uses the existing display.
+
+=== Full Clang Werror build and suite ===
+$ cmake --build --preset ci-linux-clang -j2; VK_ICD_FILENAMES=<lavapipe-icd> ctest --preset ci-linux-clang --output-on-failure
+Test project <repository>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.04 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.16 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.09 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.03 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.09 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.12 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.18 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.22 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.22 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.32 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.02 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    0.47 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.17 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    1.31 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.12 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    0.81 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.39 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.15 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.22 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    1.58 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    7.78 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.25 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.10 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =  11.42 sec*proc (7 tests)
+asset           =   4.63 sec*proc (7 tests)
+cli             =  11.14 sec*proc (8 tests)
+contract        =  14.31 sec*proc (13 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.61 sec*proc (3 tests)
+live            =  10.68 sec*proc (5 tests)
+render          =  12.41 sec*proc (14 tests)
+security        =   9.84 sec*proc (5 tests)
+unit            =   0.60 sec*proc (9 tests)
+
+Total Test time (real) =  16.17 sec
+
+=== Full GCC Werror build and suite ===
+$ cmake --build --preset ci-linux-gcc -j2; VK_ICD_FILENAMES=<lavapipe-icd> ctest --preset ci-linux-gcc --output-on-failure
+Test project <repository>/build/ci-linux-gcc
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.04 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.16 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.08 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.03 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.09 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.18 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.21 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.18 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.37 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.02 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    0.49 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.17 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    0.96 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.08 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    0.55 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.27 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.11 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.18 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    1.08 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    4.88 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.19 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.09 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =   7.50 sec*proc (7 tests)
+asset           =   3.31 sec*proc (7 tests)
+cli             =   7.46 sec*proc (8 tests)
+contract        =  10.16 sec*proc (13 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.59 sec*proc (3 tests)
+live            =   7.36 sec*proc (5 tests)
+render          =   8.37 sec*proc (14 tests)
+security        =   6.89 sec*proc (5 tests)
+unit            =   0.58 sec*proc (9 tests)
+
+Total Test time (real) =  11.82 sec
+
+=== ASan/UBSan complete suite ===
+$ cmake --build --preset linux-asan -j2; VK_ICD_FILENAMES=<lavapipe-icd> ctest --preset linux-asan-lavapipe --output-on-failure
+Test project <repository>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/26 Test  #1: engine_core_tests ................   Passed    0.24 sec
+      Start  2: engine_dependencies_smoke
+ 2/26 Test  #2: engine_dependencies_smoke ........   Passed    0.03 sec
+      Start  3: engine_asset_tests
+ 3/26 Test  #3: engine_asset_tests ...............   Passed    1.29 sec
+      Start  4: engine_render_tests
+ 4/26 Test  #4: engine_render_tests ..............   Passed    0.45 sec
+      Start  5: engine_window_smoke
+ 5/26 Test  #5: engine_window_smoke ..............   Passed    0.15 sec
+      Start  6: engine_swapchain_test
+ 6/26 Test  #6: engine_swapchain_test ............   Passed    0.35 sec
+      Start  7: engine_overlay_test
+ 7/26 Test  #7: engine_overlay_test ..............   Passed    0.29 sec
+      Start  8: engine_run_smoke
+ 8/26 Test  #8: engine_run_smoke .................   Passed    1.46 sec
+      Start  9: engine_point_light_warning
+ 9/26 Test  #9: engine_point_light_warning .......   Passed    1.47 sec
+      Start 10: engine_screenshot_golden
+10/26 Test #10: engine_screenshot_golden .........   Passed    0.20 sec
+      Start 11: engine_screenshot_cli
+11/26 Test #11: engine_screenshot_cli ............   Passed    1.56 sec
+      Start 12: engine_version_json
+12/26 Test #12: engine_version_json ..............   Passed    0.10 sec
+      Start 13: engine_cli_contract
+13/26 Test #13: engine_cli_contract ..............   Passed    5.56 sec
+      Start 14: engine_docs_links
+14/26 Test #14: engine_docs_links ................   Passed    0.06 sec
+      Start 15: engine_sensitive_scan
+15/26 Test #15: engine_sensitive_scan ............   Passed    0.99 sec
+      Start 16: engine_acceptance_m1
+16/26 Test #16: engine_acceptance_m1 .............   Passed    2.15 sec
+      Start 17: engine_acceptance_m3
+17/26 Test #17: engine_acceptance_m3 .............   Passed    7.05 sec
+      Start 18: engine_api_reference
+18/26 Test #18: engine_api_reference .............   Passed    0.28 sec
+      Start 19: engine_asset_cli
+19/26 Test #19: engine_asset_cli .................   Passed    8.18 sec
+      Start 20: engine_pbr_golden
+20/26 Test #20: engine_pbr_golden ................   Passed    1.61 sec
+      Start 21: engine_pbr_color_golden
+21/26 Test #21: engine_pbr_color_golden ..........   Passed    0.84 sec
+      Start 22: engine_pbr_window
+22/26 Test #22: engine_pbr_window ................   Passed    1.04 sec
+      Start 23: engine_asset_placement
+23/26 Test #23: engine_asset_placement ...........   Passed    8.78 sec
+      Start 24: engine_live_api
+24/26 Test #24: engine_live_api ..................   Passed   34.42 sec
+      Start 25: engine_local_socket_deadline
+25/26 Test #25: engine_local_socket_deadline .....   Passed    1.26 sec
+      Start 26: engine_live_journal
+26/26 Test #26: engine_live_journal ..............   Passed    1.10 sec
+
+100% tests passed out of 26
+
+Label Time Summary:
+acceptance      =  55.05 sec*proc (7 tests)
+asset           =  28.79 sec*proc (7 tests)
+cli             =  61.54 sec*proc (8 tests)
+contract        =  73.28 sec*proc (12 tests)
+dependencies    =   0.03 sec*proc (1 test)
+docs            =   1.32 sec*proc (3 tests)
+live            =  43.83 sec*proc (4 tests)
+render          =  59.67 sec*proc (14 tests)
+security        =  37.76 sec*proc (4 tests)
+unit            =   3.11 sec*proc (9 tests)
+
+Total Test time (real) =  80.93 sec
+
+=== TSan CPU scope ===
+$ cmake --build --preset linux-tsan -j2 --target engine_core_tests engine_asset_tests engine_dependencies_smoke engine; ctest --preset linux-tsan -R engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan)$ --output-on-failure
+Test project <repository>/build/linux-tsan
+    Start  1: engine_core_tests
+1/9 Test  #1: engine_core_tests ................   Passed    0.19 sec
+    Start  2: engine_dependencies_smoke
+2/9 Test  #2: engine_dependencies_smoke ........   Passed    0.01 sec
+    Start  3: engine_asset_tests
+3/9 Test  #3: engine_asset_tests ...............   Passed    0.97 sec
+    Start 12: engine_version_json
+4/9 Test #12: engine_version_json ..............   Passed    0.04 sec
+    Start 14: engine_docs_links
+5/9 Test #14: engine_docs_links ................   Passed    0.03 sec
+    Start 15: engine_sensitive_scan
+6/9 Test #15: engine_sensitive_scan ............   Passed    0.46 sec
+    Start 16: engine_acceptance_m1
+7/9 Test #16: engine_acceptance_m1 .............   Passed    0.56 sec
+    Start 18: engine_api_reference
+8/9 Test #18: engine_api_reference .............   Passed    0.11 sec
+    Start 19: engine_asset_cli
+9/9 Test #19: engine_asset_cli .................   Passed    3.20 sec
+
+100% tests passed out of 9
+
+Label Time Summary:
+acceptance      =   0.56 sec*proc (1 test)
+asset           =   4.17 sec*proc (2 tests)
+cli             =   3.24 sec*proc (2 tests)
+contract        =   3.87 sec*proc (3 tests)
+dependencies    =   0.01 sec*proc (1 test)
+docs            =   0.60 sec*proc (3 tests)
+security        =   0.46 sec*proc (1 test)
+unit            =   1.21 sec*proc (4 tests)
+
+Total Test time (real) =   5.57 sec
+
+=== Public Blender golden / full CLI-live flow ===
+$ .venv/bin/python scripts/acceptance_m3.py build/ci-linux-clang/tools/engine/engine
+M3 public CLI Blender golden passed: max=1, changed=0
+M3 import/inspect/validate/place/PBR/save/load/live/reimport/stable IDs/JSONL acceptance passed
+
+=== Metadata validation removed, then restored (real production mutation) ===
+$ Replace the metadata dump in validate_metadata_text with void casts, rebuild engine_asset_tests/engine, run new unit and asset_cli contracts; finally restore original source and rebuild.
+[1/5] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_library_test.cpp.o
+[2/5] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/asset_library.cpp.o
+[3/5] Linking CXX static library engine/asset/libengine_asset.a
+[4/5] Linking CXX executable tests/engine_asset_tests
+[5/5] Linking CXX executable tools/engine/engine
+Metadata validation removed: unit exit 42
+Filters: "unrepresentable asset metadata is rejected without project writes"
+Randomness seeded to: 1584894843
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+engine_asset_tests is a Catch2 v3.16.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+unrepresentable asset metadata is rejected without project writes
+-------------------------------------------------------------------------------
+<repository>/tests/unit/asset_library_test.cpp:372
+...............................................................................
+
+<repository>/tests/unit/asset_library_test.cpp:50: FAILED:
+  {Unknown expression after the reported line}
+due to unexpected exception with message:
+  [json.exception.type_error.316] invalid UTF-8 byte at index 8: 0xFF
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 4 | 3 passed | 1 failed
+
+
+Metadata validation removed: contract exit 1
+Traceback (most recent call last):
+  File "<repository>/tests/contract/asset_cli.py", line 222, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<repository>/tests/contract/asset_cli.py", line 175, in main
+    assert snapshot(project) == before
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+[1/4] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/asset_library.cpp.o
+[2/4] Linking CXX static library engine/asset/libengine_asset.a
+[3/4] Linking CXX executable tests/engine_asset_tests
+[4/4] Linking CXX executable tools/engine/engine
+Original source restored and rebuilt
+
+=== Reference formatter18 and final local tidy23 ===
+$ clang-format18.1.8 --dry-run --Werror on changed C++; clang-tidy23 with --warnings-as-errors=* (changed source clean; one test-lambda style finding fixed, test file rechecked)
+14466 warnings generated.
+Suppressed 14530 warnings (14466 in non-user code, 64 NOLINT).
+Use -header-filter=.* or leave it as default to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+
+ASan environment: linux-asan-lavapipe sets detect_leaks=1:abort_on_error=1,
+halt_on_error=1:print_stacktrace=1 and loader retention. No LSAN_OPTIONS or
+suppression file. Plain local driver unloading has the previously identified
+Mesa RTASM leak; see M3_SANITIZER_DIAGNOSIS.md. CI policy remains unchanged.
+
+Direct unit runs: core560 assertions/69cases; asset22755 assertions/20cases.
+Windows compilation/execution is not claimed for this source until new CI.
+
+=== Fuzz helper fresh30s ===
+$ ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 bash scripts/run_fuzz_targets.sh <seconds> <same-corpus-directory> <separate-artifact-directory>
+Fuzz target gltf: seconds=30, corpus files=7
+Done 3153 runs in 31 second(s)
+Fuzz target image: seconds=30, corpus files=5
+Done 3286 runs in 31 second(s)
+Fuzz target rpc: seconds=30, corpus files=4
+Done 38558 runs in 31 second(s)
+
+=== Fuzz helper reused5s ===
+$ ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 bash scripts/run_fuzz_targets.sh <seconds> <same-corpus-directory> <separate-artifact-directory>
+Fuzz target gltf: seconds=5, corpus files=69
+Done 973 runs in 6 second(s)
+Fuzz target image: seconds=5, corpus files=184
+Done 632 runs in 6 second(s)
+Fuzz target rpc: seconds=5, corpus files=815
+Done 8217 runs in 6 second(s)
+
+UBSan halt_on_error is enforced by the helper. All three targets exited0 in
+both runs. Corpus grew from7/5/4 seeds to69/184/815 files before reuse. This
+proves local directory reuse, not yet GitHub cache save/restore or a nightly
+scheduled event. Invalid duration0 returns2 before creating corpus/artifacts.
+
+Static workflow check: PyYAML BaseLoader parses cron02:23UTC, long_fuzz default
+false and5job definitions (Linux matrix produces6normal jobs). bash -n on
+the three shell scripts and py_compile on acceptance_m3.py pass.
+
+Fixture verifier: mirrored coupon1024triangles,512positive/512negativeUVs;
+no TANGENT in primary, TANGENT in reference, matching embedded PNGs; no
+personal-path markers. Goldens/shaders/third_party/schemas are unchanged.

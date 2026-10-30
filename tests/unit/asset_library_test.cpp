@@ -368,3 +368,36 @@ TEST_CASE("reimport repairs corrupt derived buffers with a matching cache key",
     CHECK(repaired->record.asset_id == id);
     CHECK(load_asset(project->root(), id).has_value());
 }
+
+TEST_CASE("unrepresentable asset metadata is rejected without project writes", "[asset][library]") {
+    engine::test::TempDir temp("asset-invalid-text");
+    auto project = engine::scene::Project::create(temp.path() / "project", "Text");
+    REQUIRE(project);
+    const auto snapshot = [&] {
+        std::map<std::filesystem::path, std::string> files;
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(project->root())) {
+            files.emplace(entry.path().lexically_relative(project->root()),
+                          entry.is_regular_file() ? read_text(entry.path()) : "directory");
+        }
+        return files;
+    };
+    const auto before = snapshot();
+    for (const bool dry_run : {false, true}) {
+        auto rejected = import_asset(project->root(), fixture("blender_cube.glb"),
+                                     std::string("invalid-\xFF"), dry_run);
+        REQUIRE_FALSE(rejected);
+        CHECK(rejected.error().code == ErrorCode::Validation);
+        CHECK(snapshot() == before);
+    }
+#ifndef _WIN32
+    const auto invalid_path = temp.path() / std::string("model-\xFF.glb");
+    std::filesystem::copy_file(fixture("blender_cube.glb"), invalid_path);
+    const auto alias = temp.path() / "valid-alias.glb";
+    std::filesystem::create_symlink(invalid_path, alias);
+    // The canonical source recorded in the sidecar can differ from the UTF-8 alias.
+    auto rejected = import_asset(project->root(), alias);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().code == ErrorCode::Validation);
+    CHECK(snapshot() == before);
+#endif
+}
