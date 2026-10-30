@@ -46,12 +46,21 @@ using core::Result;
     default:
         break;
     }
+    std::string pointer;
+    if (error == Error::MissingExtensions || error == Error::UnknownRequiredExtension) {
+        pointer = "/extensionsRequired";
+    } else if (error == Error::UnsupportedVersion) {
+        pointer = "/asset/version";
+    }
     return core::make_error(
         code,
         "cannot parse GLB '" + std::string(source) +
             "': " + std::string(fastgltf::getErrorMessage(error)),
         "Export the asset as a self-contained binary glTF (.glb) from the source tool.",
-        {{"importerError", std::string(fastgltf::getErrorName(error))}});
+        {
+            {"importerError", std::string(fastgltf::getErrorName(error))},
+            {"pointer", std::move(pointer)},
+        });
 }
 
 [[nodiscard]] Result<std::span<const std::byte>> buffer_bytes(const fastgltf::Asset& gltf,
@@ -62,7 +71,7 @@ using core::Result;
                               {{"buffer", index}, {"count", gltf.buffers.size()}}));
     }
     return std::visit(
-        [](const auto& data) -> Result<std::span<const std::byte>> {
+        [index](const auto& data) -> Result<std::span<const std::byte>> {
             using T = std::decay_t<decltype(data)>;
             if constexpr (std::is_same_v<T, fastgltf::sources::Array>) {
                 return std::span<const std::byte>(data.bytes.data(), data.bytes.size());
@@ -71,10 +80,10 @@ using core::Result;
             } else if constexpr (std::is_same_v<T, fastgltf::sources::Vector>) {
                 return std::span<const std::byte>(data.bytes.data(), data.bytes.size());
             } else {
-                return core::make_failure<std::span<const std::byte>>(core::make_error(
+                return core::make_failure<std::span<const std::byte>>(make_import_error(
                     ErrorCode::Unsupported,
                     "external or custom buffers are not supported by the M3 importer",
-                    "Export a self-contained .glb with the binary buffer embedded."));
+                    "/buffers/" + std::to_string(index), {{"buffer", index}}));
             }
         },
         gltf.buffers[index].data);
@@ -106,7 +115,8 @@ using core::Result;
                 const auto view_index = data.bufferViewIndex;
                 if (view_index >= gltf.bufferViews.size()) {
                     return core::make_failure<std::vector<std::byte>>(make_import_error(
-                        ErrorCode::Validation, "image buffer view is out of range", "/images",
+                        ErrorCode::Validation, "image buffer view is out of range",
+                        "/images/" + std::to_string(index),
                         {{"image", index}, {"bufferView", view_index}}));
                 }
                 const auto& view = gltf.bufferViews[view_index];
@@ -131,7 +141,7 @@ using core::Result;
             } else {
                 return core::make_failure<std::vector<std::byte>>(make_import_error(
                     ErrorCode::Unsupported, "external images are not supported by the M3 importer",
-                    "/images", {{"image", index}}));
+                    "/images/" + std::to_string(index), {{"image", index}}));
             }
         },
         image.data);
@@ -168,6 +178,147 @@ texture_reference(const std::optional<T>& info, const fastgltf::Asset& gltf, std
         return std::optional<TextureReference>{};
     }
     return texture_reference(&*info, gltf, std::move(pointer));
+}
+
+[[nodiscard]] Result<void> validate_buffer_layout(const fastgltf::Asset& gltf) {
+    std::vector<std::span<const std::byte>> buffers;
+    buffers.reserve(gltf.buffers.size());
+    for (std::size_t index = 0; index < gltf.buffers.size(); ++index) {
+        auto bytes = buffer_bytes(gltf, index);
+        if (!bytes) {
+            return core::make_failure<void>(bytes.error());
+        }
+        const auto& buffer = gltf.buffers[index];
+        if (bytes->size() < buffer.byteLength) {
+            return core::make_failure<void>(make_import_error(
+                ErrorCode::Validation, "buffer is shorter than its declared byte length",
+                "/buffers/" + std::to_string(index),
+                {
+                    {"buffer", index},
+                    {"declared", buffer.byteLength},
+                    {"available", bytes->size()},
+                }));
+        }
+        buffers.push_back(*bytes);
+    }
+
+    for (std::size_t index = 0; index < gltf.bufferViews.size(); ++index) {
+        const auto& view = gltf.bufferViews[index];
+        if (view.bufferIndex >= buffers.size()) {
+            return core::make_failure<void>(
+                make_import_error(ErrorCode::Validation, "buffer view references a missing buffer",
+                                  "/bufferViews/" + std::to_string(index),
+                                  {{"bufferView", index}, {"buffer", view.bufferIndex}}));
+        }
+        const auto available = buffers[view.bufferIndex];
+        const auto& buffer = gltf.buffers[view.bufferIndex];
+        if (view.byteOffset > available.size() ||
+            view.byteLength > available.size() - view.byteOffset ||
+            view.byteOffset > buffer.byteLength ||
+            view.byteLength > buffer.byteLength - view.byteOffset) {
+            return core::make_failure<void>(make_import_error(
+                ErrorCode::Validation, "buffer view exceeds the actual buffer data",
+                "/bufferViews/" + std::to_string(index),
+                {
+                    {"bufferView", index},
+                    {"buffer", view.bufferIndex},
+                    {"offset", view.byteOffset},
+                    {"length", view.byteLength},
+                    {"declared", buffer.byteLength},
+                    {"available", available.size()},
+                }));
+        }
+    }
+
+    for (std::size_t index = 0; index < gltf.accessors.size(); ++index) {
+        const auto& accessor = gltf.accessors[index];
+        const std::size_t element_size =
+            fastgltf::getElementByteSize(accessor.type, accessor.componentType);
+        if (element_size == 0U) {
+            return core::make_failure<void>(
+                make_import_error(ErrorCode::Validation, "accessor has an invalid element type",
+                                  "/accessors/" + std::to_string(index), {{"accessor", index}}));
+        }
+        if (accessor.bufferViewIndex.has_value()) {
+            if (*accessor.bufferViewIndex >= gltf.bufferViews.size()) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "accessor references a missing buffer view",
+                    "/accessors/" + std::to_string(index),
+                    {{"accessor", index}, {"bufferView", *accessor.bufferViewIndex}}));
+            }
+            const auto& view = gltf.bufferViews[*accessor.bufferViewIndex];
+            const std::size_t stride = view.byteStride.value_or(element_size);
+            if (stride < element_size) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "buffer view stride is smaller than the element size",
+                    "/bufferViews/" + std::to_string(*accessor.bufferViewIndex),
+                    {
+                        {"bufferView", *accessor.bufferViewIndex},
+                        {"stride", stride},
+                        {"elementSize", element_size},
+                    }));
+            }
+            std::size_t required = 0;
+            if (accessor.count > 0U) {
+                if (accessor.count - 1U >
+                    (std::numeric_limits<std::size_t>::max() - element_size) / stride) {
+                    return core::make_failure<void>(
+                        make_import_error(ErrorCode::Validation, "accessor byte range overflows",
+                                          "/accessors", {{"accessor", index}}));
+                }
+                required = (stride * (accessor.count - 1U)) + element_size;
+            }
+            if (accessor.byteOffset > view.byteLength ||
+                required > view.byteLength - accessor.byteOffset) {
+                return core::make_failure<void>(
+                    make_import_error(ErrorCode::Validation, "accessor exceeds its buffer view",
+                                      "/accessors/" + std::to_string(index),
+                                      {
+                                          {"accessor", index},
+                                          {"bufferView", *accessor.bufferViewIndex},
+                                          {"offset", accessor.byteOffset},
+                                          {"required", required},
+                                          {"available", view.byteLength},
+                                      }));
+            }
+        }
+        if (accessor.sparse.has_value()) {
+            const auto& sparse = *accessor.sparse;
+            if (sparse.indicesBufferView >= gltf.bufferViews.size() ||
+                sparse.valuesBufferView >= gltf.bufferViews.size()) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "sparse accessor references a missing buffer view",
+                    "/accessors/" + std::to_string(index), {{"accessor", index}}));
+            }
+            const std::size_t index_size = fastgltf::getElementByteSize(
+                fastgltf::AccessorType::Scalar, sparse.indexComponentType);
+            const std::size_t index_stride =
+                gltf.bufferViews[sparse.indicesBufferView].byteStride.value_or(index_size);
+            const std::size_t value_stride =
+                gltf.bufferViews[sparse.valuesBufferView].byteStride.value_or(element_size);
+            const auto fits = [](std::size_t count, std::size_t stride, std::size_t size,
+                                 std::size_t offset, std::size_t length) {
+                if (count == 0U) {
+                    return offset <= length;
+                }
+                if (stride == 0U ||
+                    count - 1U > (std::numeric_limits<std::size_t>::max() - size) / stride) {
+                    return false;
+                }
+                const std::size_t required = (stride * (count - 1U)) + size;
+                return offset <= length && required <= length - offset;
+            };
+            if (!fits(sparse.count, index_stride, index_size, sparse.indicesByteOffset,
+                      gltf.bufferViews[sparse.indicesBufferView].byteLength) ||
+                !fits(sparse.count, value_stride, element_size, sparse.valuesByteOffset,
+                      gltf.bufferViews[sparse.valuesBufferView].byteLength)) {
+                return core::make_failure<void>(make_import_error(
+                    ErrorCode::Validation, "sparse accessor exceeds its buffer views",
+                    "/accessors/" + std::to_string(index), {{"accessor", index}}));
+            }
+        }
+    }
+    return {};
 }
 
 [[nodiscard]] Result<std::vector<Vertex>> read_vertices(const fastgltf::Asset& gltf,
@@ -631,11 +782,6 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
             make_import_error(ErrorCode::Unsupported, "cameras are not imported from assets in M3",
                               "/cameras", {{"cameras", gltf.cameras.size()}}));
     }
-    if (!gltf.lights.empty()) {
-        return core::make_failure<ImportedAsset>(make_import_error(
-            ErrorCode::Unsupported, "punctual lights are not imported from assets in M3",
-            "/extensions/KHR_lights_punctual"));
-    }
     if (gltf.nodes.size() > kMaxNodes) {
         return core::make_failure<ImportedAsset>(
             make_import_error(ErrorCode::Validation, "asset exceeds the node limit", "/nodes",
@@ -656,12 +802,11 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
     }
 
     // Buffers: only embedded GLB buffers are supported in M3. Verify every
-    // buffer up front so accessor errors cannot hide an external reference.
-    for (std::size_t index = 0; index < gltf.buffers.size(); ++index) {
-        auto bytes_view = buffer_bytes(gltf, index);
-        if (!bytes_view) {
-            return core::make_failure<ImportedAsset>(bytes_view.error());
-        }
+    // buffer, buffer view and accessor against the actual data before any
+    // accessor is read; fastgltf checks the declared lengths, not the bytes
+    // present in the GLB.
+    if (auto layout = validate_buffer_layout(gltf); !layout) {
+        return core::make_failure<ImportedAsset>(layout.error());
     }
 
     for (std::size_t index = 0; index < gltf.images.size(); ++index) {

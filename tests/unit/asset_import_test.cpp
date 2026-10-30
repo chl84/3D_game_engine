@@ -272,12 +272,23 @@ TEST_CASE("node transforms compose in double precision", "[asset][gltf]") {
 TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", "[asset][gltf]") {
     const auto valid = read_bytes(fixture("blender_cube.glb"));
 
+    SECTION("binary chunk shorter than the declared buffer") {
+        auto chunks = split_glb(valid);
+        chunks.binary.resize(16U);
+        const auto bytes = compose_glb(chunks.json, chunks.binary);
+        const auto result = engine::asset::import_glb(as_span(bytes), "short-bin.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/buffers/0");
+    }
+
     SECTION("truncated container") {
         auto truncated = valid;
         truncated.resize(100U);
         const auto result = engine::asset::import_glb(as_span(truncated), "truncated.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "");
     }
 
     SECTION("JSON glTF container") {
@@ -296,6 +307,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "broken.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "");
     }
 
     SECTION("required extension") {
@@ -305,6 +317,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "draco.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/extensionsRequired");
     }
 
     SECTION("optional extension that the importer does not implement") {
@@ -334,6 +347,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "no-position.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
     }
 
     SECTION("unsupported vertex attribute") {
@@ -352,6 +366,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "external-buffer.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/buffers/0");
     }
 
     SECTION("missing binary chunk") {
@@ -380,6 +395,69 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         CHECK(result.error().code == ErrorCode::Unsupported);
     }
 
+    SECTION("skinned mesh") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["skins"] = nlohmann::json::array({
+                {{"joints", {0}}},
+            });
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "skin.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+    }
+
+    SECTION("camera") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["cameras"] = nlohmann::json::array({
+                {
+                    {"type", "perspective"},
+                    {"perspective", {{"yfov", 0.7}, {"znear", 0.1}, {"zfar", 100.0}}},
+                },
+            });
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "camera.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+    }
+
+    SECTION("punctual light extension") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["extensionsUsed"] = nlohmann::json::array({"KHR_lights_punctual"});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "lights.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+    }
+
+    SECTION("morph targets") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            const auto position = primitive["attributes"]["POSITION"];
+            primitive["targets"] = nlohmann::json::array({
+                {{"POSITION", position}},
+            });
+            document["meshes"][0]["weights"] = nlohmann::json::array({0.0});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "morph.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+    }
+
+    SECTION("non-float vertex data") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            auto& accessor =
+                document["accessors"][primitive["attributes"]["POSITION"].get<std::size_t>()];
+            accessor["componentType"] = 5121;
+            accessor["normalized"] = true;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "quantized.glb");
+        REQUIRE_FALSE(result.has_value());
+        // fastgltf validates the accessor before the importer sees it; either
+        // way the non-float POSITION is rejected instead of being read.
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
     SECTION("compressed texture image") {
         const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
             document["images"][0]["mimeType"] = "image/ktx2";
@@ -397,6 +475,7 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         const auto result = engine::asset::import_glb(as_span(bytes), "external-image.glb");
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/images/0");
     }
 
     SECTION("node hierarchy cycle") {
