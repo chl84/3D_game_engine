@@ -1,0 +1,141 @@
+M3.8 ROUND-1 CORRECTION EVIDENCE — 2026-10-30
+
+Source delta after014ba20, before correction commit/re-review. Runtime engine,
+unit tests, fuzz targets, goldens and public schemas are unchanged by this fix.
+Independent source re-review and reference CI/public clone remain pending.
+
+F1: the initial9-test TSan regex dropped4viable tests. That original selection
+was not the complete inherited scope and is superseded. Build ALL targets:
+$ cmake --build --preset linux-tsan -j2
+[1/28] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/asset_library.cpp.o
+[2/28] Linking CXX static library engine/asset/libengine_asset.a
+[3/28] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/camera_test.cpp.o
+[4/28] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_library_test.cpp.o
+[5/28] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/descriptor_requirements_test.cpp.o
+[6/28] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/scene_transform_test.cpp.o
+[7/28] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/device_test.cpp.o
+[8/28] Building CXX object tests/CMakeFiles/engine_window_smoke.dir/render/window_smoke.cpp.o
+[9/28] Building CXX object tests/CMakeFiles/engine_screenshot_test.dir/render/screenshot_test.cpp.o
+[10/28] Building CXX object tests/CMakeFiles/engine_swapchain_test.dir/render/swapchain_test.cpp.o
+[11/28] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/gltf_import_fuzz.cpp.o
+[12/28] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/image_decode_fuzz.cpp.o
+[13/28] Building CXX object tests/CMakeFiles/engine_overlay_test.dir/render/overlay_test.cpp.o
+[14/28] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/json_rpc_fuzz.cpp.o
+[15/28] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/render/pbr_test.cpp.o
+[16/28] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/render/pbr_probes.cpp.o
+[17/28] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/__/tools/engine/src/stb_image_write_impl.cpp.o
+[18/28] Building CXX object tests/CMakeFiles/engine_local_socket_fixture.dir/contract/local_socket_fixture.cpp.o
+[19/28] Linking CXX executable tools/engine/engine
+[20/28] Linking CXX executable tests/engine_asset_tests
+[21/28] Linking CXX executable tests/engine_render_tests
+[22/28] Linking CXX executable tests/engine_window_smoke
+[23/28] Linking CXX executable tests/engine_screenshot_test
+[24/28] Linking CXX executable tests/engine_overlay_test
+[25/28] Linking CXX static library tests/libengine_fuzz_harness.a
+[26/28] Linking CXX executable tests/engine_swapchain_test
+[27/28] Linking CXX executable tests/engine_local_socket_fixture
+[28/28] Linking CXX executable tests/engine_pbr_test
+
+Run13tests, including the restored CLI/schema/basic-device contracts and new
+journal/production-socket tests, with an actual working lavapipe ICD:
+$ VK_ICD_FILENAMES=<lavapipe-icd> ctest --preset linux-tsan -R 'engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan|cli_contract|render_tests|live_journal|local_socket_deadline)$' --output-on-failure
+Test project <repository>/build/linux-tsan
+      Start  1: engine_core_tests
+ 1/13 Test  #1: engine_core_tests ................   Passed    0.25 sec
+      Start  2: engine_dependencies_smoke
+ 2/13 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/13 Test  #3: engine_asset_tests ...............   Passed    1.21 sec
+      Start  4: engine_render_tests
+ 4/13 Test  #4: engine_render_tests ..............   Passed    0.42 sec
+      Start 12: engine_version_json
+ 5/13 Test #12: engine_version_json ..............   Passed    0.05 sec
+      Start 13: engine_cli_contract
+ 6/13 Test #13: engine_cli_contract ..............   Passed    1.64 sec
+      Start 14: engine_docs_links
+ 7/13 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+ 8/13 Test #15: engine_sensitive_scan ............   Passed    0.55 sec
+      Start 16: engine_acceptance_m1
+ 9/13 Test #16: engine_acceptance_m1 .............   Passed    0.66 sec
+      Start 18: engine_api_reference
+10/13 Test #18: engine_api_reference .............   Passed    0.12 sec
+      Start 19: engine_asset_cli
+11/13 Test #19: engine_asset_cli .................   Passed    3.62 sec
+      Start 25: engine_local_socket_deadline
+12/13 Test #25: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 26: engine_live_journal
+13/13 Test #26: engine_live_journal ..............   Passed    0.36 sec
+
+100% tests passed out of 13
+
+Label Time Summary:
+acceptance      =   0.66 sec*proc (1 test)
+asset           =   4.83 sec*proc (2 tests)
+cli             =   5.31 sec*proc (3 tests)
+contract        =   7.64 sec*proc (6 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   0.71 sec*proc (3 tests)
+live            =   1.60 sec*proc (2 tests)
+render          =   0.42 sec*proc (1 test)
+security        =   2.16 sec*proc (3 tests)
+unit            =   1.96 sec*proc (5 tests)
+
+Total Test time (real) =  10.20 sec
+
+The basic-device test was also inspected verbosely to disclose any internal
+Catch2 skips; it executes all cases successfully on lavapipe:
+$ VK_ICD_FILENAMES=<lavapipe-icd> ctest --preset linux-tsan -R '^engine_render_tests$' -V
+UpdateCTestConfiguration  from :<repository>/DartConfiguration.tcl
+Test project <repository>/build/linux-tsan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 4
+    Start 4: engine_render_tests
+
+4: Test command: <repository>/build/linux-tsan/tests/engine_render_tests
+4: Working Directory: <repository>/build/linux-tsan/tests
+4: Test timeout computed to be: 10000000
+4: Randomness seeded to: 3619765651
+4: ===============================================================================
+4: All tests passed (105 assertions in 13 test cases)
+4:
+1/1 Test #4: engine_render_tests ..............   Passed    0.36 sec
+
+The following tests passed:
+	engine_render_tests
+
+100% tests passed out of 1
+
+Label Time Summary:
+render    =   0.36 sec*proc (1 test)
+unit      =   0.36 sec*proc (1 test)
+
+Total Test time (real) =   0.36 sec
+
+L1: YAML BaseLoader parse passes; timeout expression chooses20minutes in
+ordinary mode and55in extended mode. Normal CI still6jobs including its Linux
+matrix. No required job/test/sanitizer flag is removed or weakened.
+
+L2: docs now say corpus minimization is not implemented and each successful
+extended run stores a full immutable copy. Measured local30s+5s corpora occupy
+about18MiB;7copies at that size would be126MiB, not an upper bound. Larger
+600-second corpora and GitHub cache operations are not yet claimed complete.
+
+L3: clean clone writes/reads CTest's JUnit report and prints totals. Any skipped
+test or empty report is an explicit failure. Manual controls run the actual
+embedded report-check code with passed/skipped/empty XML fixtures:
+passed exit 0 M3 clean-clone CTest: 1 tests, 0 skipped
+skipped exit 1 M3 clean-clone CTest: 1 tests, 1 skipped
+error: incomplete clean-clone acceptance; skipped: golden
+empty exit 1 error: clean-clone CTest report contains no tests
+Clean-clone skip/empty negative controls passed
+
+Documentation links:39files OK; generated API reference up to date; bash -n
+on acceptance_m3.sh and git diff --check pass. No source was pushed before
+independent re-review. Physical Windows/power-loss/scheduled activation are
+not claimed by these local checks.

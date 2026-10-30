@@ -480,9 +480,10 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.7 is implemented locally. Finish exact-source reference CI and independent
-GPT-6 Astra high review, handle all findings and any required re-review, then
-deliver one consolidated A.5 report. M3.8/merge/tag need owner authorization.
+M3.8 is authorized. Complete the TSan-scope correction and Claude re-review,
+then publish for exact-source reference CI, extended fuzz/cache verification
+and public clean-clone acceptance. Deliver the consolidated A.5 report only
+after those gates pass. Merge/tag and M4 remain subject to owner authorization.
 
 ## M3.5 implementation and verification
 
@@ -796,3 +797,20 @@ Independent Claude review and new-source reference CI/public clean clone are
 still pending at this snapshot. No interim A.5 report is delivered. Review is
 performed locally before publishing this delivery for CI. This authorization
 does not permit merge/tag or M4 work.
+
+### M3.8 Claude round 1 and corrections
+
+Claude reviewed014ba20 againstafea88a and requested one required Medium
+correction: the nine-test TSan selection omitted four viable contracts/device
+tests from the intended scope. It must include13tests and build all targets.
+The initial nine-test evidence is retained as historical and superseded.
+[Review record](verification/M3_8_REVIEW_ROUND1.md).
+
+The correction also retains20minutes for ordinary fuzz CI (55for extended),
+documents measured corpus storage without claiming minimization, and makes the
+clean-clone script report/reject skipped CTest tests or an empty report.
+All TSan targets now build and the corrected scope passes13/13 on lavapipe,
+including all internal headless-device cases. Skip/empty-report negative
+controls pass. [Correction evidence](verification/M3_8_REVIEW_CORRECTION_EVIDENCE.txt).
+Independent re-review is pending; this is not final technical/owner approval.
+Source remains unpublished.

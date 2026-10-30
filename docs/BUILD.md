@@ -411,7 +411,9 @@ bash scripts/acceptance_m3.sh https://github.com/chl84/3D_game_engine.git m3/ass
 
 Select a working lavapipe ICD and a display for the complete Linux window suite;
 CI uses Xvfb/openbox. `KEEP=1` retains the fresh clone for diagnosis. The clean
-clone runs full CTest plus explicit M1 and M3 acceptance. No release version is
+clone runs full CTest plus explicit M1 and M3 acceptance. It reports JUnit
+test/skip totals and rejects incomplete acceptance with any skipped CTest
+test. No release version is
 changed before owner approval of merge/tag. The nightly fuzz mode reuses the
 pinned CI toolchain and adds no package; see TESTING.md for limits and cache
 provenance. Hardware performance goals remain M5/M8 and are not inferred from

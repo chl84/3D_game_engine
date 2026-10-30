@@ -30,7 +30,19 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
 cmake --preset linux-debug -DPython3_EXECUTABLE="$PWD/.venv/bin/python3"
 cmake --build --preset linux-debug
-ctest --preset linux-debug --output-on-failure
+ctest --preset linux-debug --output-on-failure --output-junit "$workdir/ctest-m3.xml"
+.venv/bin/python - "$workdir/ctest-m3.xml" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+
+cases = list(ET.parse(sys.argv[1]).getroot().iter("testcase"))
+if not cases:
+    raise SystemExit("error: clean-clone CTest report contains no tests")
+skipped = [case.get("name", "unknown") for case in cases if case.find("skipped") is not None]
+print(f"M3 clean-clone CTest: {len(cases)} tests, {len(skipped)} skipped")
+if skipped:
+    raise SystemExit("error: incomplete clean-clone acceptance; skipped: " + ", ".join(skipped))
+PY
 .venv/bin/python scripts/acceptance_m1.py ./build/linux-debug/tools/engine/engine
 .venv/bin/python scripts/acceptance_m3.py ./build/linux-debug/tools/engine/engine
 echo "M3 clean-clone acceptance passed"

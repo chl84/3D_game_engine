@@ -270,21 +270,25 @@ cmake --build --preset linux-asan
 ctest --preset linux-asan --output-on-failure
 ```
 
-ThreadSanitizer (CPU-side tests only):
+ThreadSanitizer (CPU, protocol and basic headless-device tests):
 
 ```bash
 cmake --preset linux-tsan
 cmake --build --preset linux-tsan
-ctest --preset linux-tsan -R 'engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan)$' \
+ctest --preset linux-tsan -R 'engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan|cli_contract|render_tests|live_journal|local_socket_deadline)$' \
   --output-on-failure
 ```
 
-This is the CPU-only scope. The old exclusion list predated PBR/live render
-tests and no longer expressed that scope correctly. GPU drivers and validation
-layers are not instrumented; their behavior is tested separately under
-ASan/UBSan and ordinary lavapipe/window suites. All tests remain registered and
-required in their normal presets. M3 commands and transport execute sequentially;
-job-system race tests are deferred until that system exists in M5.
+Build all targets, then run these 13 tests. This retains the earlier CLI/schema
+contract and basic headless device coverage and adds the production socket
+deadline and durable journal contracts. A missing Vulkan environment may skip
+individual device cases using their existing rules; disclose those skips. The
+rendering/window tests outside this scope reach uninstrumented GPU drivers and
+validation layers; they run separately under ASan/UBSan and ordinary lavapipe/
+window suites. All tests remain registered and required in their normal presets.
+M3 commands and transport execute sequentially; job-system race tests are
+deferred until that system exists in M5. The initial M3.8 nine-test selection
+was too narrow and is superseded by this corrected scope after Claude review.
 
 Documentation links and sensitive-data scan:
 
@@ -484,6 +488,10 @@ It uses the same strict image tolerance (maximum 8, fewer than 0.1% of channels
 with difference above 3). The separately tested analytic color chart remains
 required; the acceptance does not regenerate goldens or relax their checks.
 
+The clean-clone shell entry point writes a CTest JUnit report, prints its test/
+skip counts and refuses a success result if any CTest test was skipped. A
+complete Linux clone therefore needs both lavapipe and a working display.
+
 The test then opens the saved scene in live mode through the shipped client,
 compares the actual pixels with the CLI image, saves/loads, changes the GLB
 source transform and reimports. It requires a changed image and cache key,
@@ -504,6 +512,7 @@ exercises the same mode on a selected branch. Ordinary required CI retains all
 six jobs and the original 30 seconds per target with fresh checked-in seeds.
 The two modes have independent concurrency groups. Budget: one Ubuntu job,
 roughly 30 minutes of fuzzing plus setup/build per night, timeout 55 minutes.
+The ordinary short-mode fuzz job retains its original 20-minute timeout.
 No Windows/GPU build is scheduled in this mode.
 
 Only this repository's MIT fixtures and synthetic RPC seeds plus their fuzzer
@@ -514,7 +523,13 @@ run/attempt; a stable prefix restores the newest compatible cache on the same
 branch or default branch. A cache miss or eviction starts from original seeds.
 Bump `fuzz-corpus-v1` when its layout/provenance changes. Cache storage and
 inactivity eviction follow GitHub's repository cache policy; it is not archival
-crash storage. The helper continues to the other targets after a target fails,
+crash storage. Corpus minimization is not implemented. One local 30-second run
+plus a five-second reuse per target occupied about 18 MiB across the three
+corpora. Seven full snapshots at that measured size would occupy about 126 MiB;
+this is a planning example, not a growth limit. Longer runs can grow further,
+and every successful nightly stores a full new copy. Monitor cache usage and
+consider bounded merge/minimization if it grows; there is no automatic disk
+cap beyond GitHub's quota/eviction policy. The helper continues to the other targets after a target fails,
 then returns failure. Logs and libFuzzer crash/timeout/OOM artifacts are uploaded
 on success/failure for 14 days. A failed corpus is not saved as a successful
 cache. Reproduce a saved artifact with the matching source/binary before turning

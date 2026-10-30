@@ -228,7 +228,10 @@ unit            =   3.11 sec*proc (9 tests)
 
 Total Test time (real) =  80.93 sec
 
-=== TSan CPU scope ===
+=== INITIAL NINE-TEST TSAN RUN — HISTORICAL, SUPERSEDED ===
+Claude F1 found this selection too narrow. The corrected full-build 13-test
+run is recorded in M3_8_REVIEW_CORRECTION_EVIDENCE.txt; do not treat this
+initial subset as complete TSan acceptance.
 $ cmake --build --preset linux-tsan -j2 --target engine_core_tests engine_asset_tests engine_dependencies_smoke engine; ctest --preset linux-tsan -R engine_(core_tests|dependencies_smoke|asset_tests|asset_cli|version_json|acceptance_m1|api_reference|docs_links|sensitive_scan)$ --output-on-failure
 Test project <repository>/build/linux-tsan
     Start  1: engine_core_tests
