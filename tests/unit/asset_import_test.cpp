@@ -386,6 +386,40 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         CHECK(result.error().code == ErrorCode::Unsupported);
     }
 
+    SECTION("non-indexed primitive") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["meshes"][0]["primitives"][0].erase("indices");
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "non-indexed.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Unsupported);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
+    SECTION("non-indexed primitive with invalid POSITION accessor") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            primitive.erase("indices");
+            primitive["attributes"]["POSITION"] = 100000000;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "bad-position.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
+    SECTION("non-indexed primitive with huge vertex count") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& primitive = document["meshes"][0]["primitives"][0];
+            primitive.erase("indices");
+            document["accessors"][primitive["attributes"]["POSITION"].get<std::size_t>()]["count"] =
+                std::uint64_t{1} << 62U;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "huge-count.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
     SECTION("non-triangle primitive") {
         const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
             document["meshes"][0]["primitives"][0]["mode"] = 1;
@@ -483,6 +517,89 @@ TEST_CASE("malformed and unsupported GLB input is rejected with stable errors", 
         REQUIRE_FALSE(result.has_value());
         CHECK(result.error().code == ErrorCode::Unsupported);
         CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0");
+    }
+
+    SECTION("material factor outside the glTF range") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["materials"][0]["pbrMetallicRoughness"]["metallicFactor"] = 1.5;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "metallic.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/materials/0");
+    }
+
+    SECTION("alpha cutoff above one is valid glTF") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["materials"][0]["alphaMode"] = "MASK";
+            document["materials"][0]["alphaCutoff"] = 1.5;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "alpha-cutoff.glb");
+        REQUIRE(result.has_value());
+    }
+
+    SECTION("non-unit node rotation") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["nodes"][0]["rotation"] = nlohmann::json::array({0.0, 0.0, 0.0, 2.0});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "rotation.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/nodes/0");
+    }
+
+    SECTION("zero node matrix") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            auto& node = document["nodes"][0];
+            node.erase("translation");
+            node.erase("rotation");
+            node.erase("scale");
+            node["matrix"] = nlohmann::json::array(
+                {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "matrix.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().details["pointer"] == "/nodes/0");
+    }
+
+    SECTION("invalid primitive material index") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["meshes"][0]["primitives"][0]["material"] = 99;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "material.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/meshes/0/primitives/0/material");
+    }
+
+    SECTION("default scene out of range") {
+        const auto bytes =
+            mutate_json(valid, [](nlohmann::json& document) { document["defaultScene"] = 99; });
+        const auto result = engine::asset::import_glb(as_span(bytes), "scene.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        // fastgltf rejects this while parsing, before the importer's own check.
+        CHECK(result.error().details.contains("pointer"));
+    }
+
+    SECTION("scene root out of range") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["scenes"][0]["nodes"] = nlohmann::json::array({99});
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "root.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/scenes/0/nodes/99");
+    }
+
+    SECTION("accessor byte range overflow") {
+        const auto bytes = mutate_json(valid, [](nlohmann::json& document) {
+            document["accessors"][0]["count"] = std::uint64_t{1} << 62U;
+        });
+        const auto result = engine::asset::import_glb(as_span(bytes), "overflow.glb");
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["pointer"] == "/accessors/0");
     }
 
     SECTION("compressed texture image") {

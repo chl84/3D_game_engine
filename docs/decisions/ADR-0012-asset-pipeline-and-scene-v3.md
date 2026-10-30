@@ -52,6 +52,10 @@ represent faithfully:
 - external buffers or images, glTF JSON containers, and more than one scene
 - any `extensionsUsed` or `extensionsRequired` entry
 - skins, cameras, punctual lights, morph targets and non-triangle primitives
+- non-indexed primitives; export indexed meshes instead. fastgltf's
+  `GenerateMeshIndices` is not used because fastgltf 0.9.1 generates indices
+  during parsing, before the importer can validate the POSITION reference or
+  its count.
 - blended transparency, unsupported vertex attributes and non-float vertex data
 - truncated or malformed containers, hierarchy cycles and out-of-range indices
 

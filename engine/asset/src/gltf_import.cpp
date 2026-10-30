@@ -331,9 +331,9 @@ texture_reference(const std::optional<T>& info, const fastgltf::Asset& gltf, std
             if (accessor.count > 0U) {
                 if (accessor.count - 1U >
                     (std::numeric_limits<std::size_t>::max() - element_size) / stride) {
-                    return core::make_failure<void>(
-                        make_import_error(ErrorCode::Validation, "accessor byte range overflows",
-                                          "/accessors", {{"accessor", index}}));
+                    return core::make_failure<void>(make_import_error(
+                        ErrorCode::Validation, "accessor byte range overflows",
+                        "/accessors/" + std::to_string(index), {{"accessor", index}}));
                 }
                 required = (stride * (accessor.count - 1U)) + element_size;
             }
@@ -551,8 +551,9 @@ read_indices(const fastgltf::Asset& gltf, const fastgltf::Primitive& primitive,
         "/meshes/" + std::to_string(mesh_index) + "/primitives/" + std::to_string(primitive_index);
     if (!primitive.indicesAccessor.has_value()) {
         return core::make_failure<std::vector<std::uint32_t>>(
-            make_import_error(ErrorCode::Validation, "primitive has no index accessor", pointer,
-                              {{"primitive", primitive_index}}));
+            make_import_error(ErrorCode::Unsupported,
+                              "non-indexed primitives are not supported; export indexed meshes",
+                              pointer, {{"primitive", primitive_index}}));
     }
     if (*primitive.indicesAccessor >= gltf.accessors.size()) {
         return core::make_failure<std::vector<std::uint32_t>>(make_import_error(
@@ -646,10 +647,12 @@ read_indices(const fastgltf::Asset& gltf, const fastgltf::Primitive& primitive,
     material.alpha_cutoff = source.alphaCutoff;
     material.double_sided = source.doubleSided;
     const auto in_unit = [](float value) { return value >= 0.0F && value <= 1.0F; };
-    const bool factors_valid =
-        std::ranges::all_of(material.base_color_factor, in_unit) &&
-        in_unit(material.metallic_factor) && in_unit(material.roughness_factor) &&
-        std::ranges::all_of(material.emissive_factor, in_unit) && in_unit(material.alpha_cutoff);
+    const auto non_negative = [](float value) { return std::isfinite(value) && value >= 0.0F; };
+    const bool factors_valid = std::ranges::all_of(material.base_color_factor, in_unit) &&
+                               in_unit(material.metallic_factor) &&
+                               in_unit(material.roughness_factor) &&
+                               std::ranges::all_of(material.emissive_factor, in_unit) &&
+                               non_negative(material.alpha_cutoff);
     if (!factors_valid) {
         return core::make_failure<Material>(make_import_error(
             ErrorCode::Validation, "material factors are outside the glTF 0..1 range",
@@ -822,8 +825,11 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         return core::make_failure<ImportedAsset>(from_fastgltf(buffer.error(), source_name));
     }
     fastgltf::Parser parser{fastgltf::Extensions::None};
-    const auto options =
-        fastgltf::Options::DecomposeNodeMatrices | fastgltf::Options::GenerateMeshIndices;
+    // GenerateMeshIndices is deliberately not enabled: fastgltf 0.9.1
+    // generates indices during parsing, before the importer can validate the
+    // POSITION reference or its count. Non-indexed primitives are rejected
+    // explicitly below instead.
+    const auto options = fastgltf::Options::DecomposeNodeMatrices;
     auto parsed = parser.loadGltfBinary(buffer.get(), {}, options, fastgltf::Category::All);
     if (parsed.error() != fastgltf::Error::None) {
         return core::make_failure<ImportedAsset>(from_fastgltf(parsed.error(), source_name));
@@ -1003,7 +1009,7 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
             if (source_primitive.dracoCompression != nullptr) {
                 return core::make_failure<ImportedAsset>(make_import_error(
                     ErrorCode::Unsupported, "Draco-compressed primitives are not supported",
-                    "/meshes", {{"mesh", mesh_index}, {"primitive", primitive_index}}));
+                    primitive_pointer, {{"mesh", mesh_index}, {"primitive", primitive_index}}));
             }
             if (++total_primitives > kMaxPrimitives) {
                 return core::make_failure<ImportedAsset>(
@@ -1024,7 +1030,8 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
                 if (*source_primitive.materialIndex >= gltf.materials.size()) {
                     return core::make_failure<ImportedAsset>(make_import_error(
                         ErrorCode::Validation, "primitive material index is out of range",
-                        "/meshes", {{"mesh", mesh_index}, {"primitive", primitive_index}}));
+                        primitive_pointer + "/material",
+                        {{"mesh", mesh_index}, {"primitive", primitive_index}}));
                 }
                 material = *source_primitive.materialIndex;
             }
@@ -1094,7 +1101,7 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
         const std::size_t scene_index = gltf.defaultScene.value_or(0);
         if (scene_index >= gltf.scenes.size()) {
             return core::make_failure<ImportedAsset>(make_import_error(
-                ErrorCode::Validation, "default scene index is out of range", "/scenes",
+                ErrorCode::Validation, "default scene index is out of range", "/defaultScene",
                 {{"scene", scene_index}, {"count", gltf.scenes.size()}}));
         }
         asset.scene_roots.assign(gltf.scenes[scene_index].nodeIndices.begin(),
@@ -1110,9 +1117,13 @@ Result<ImportedAsset> import_glb(std::span<const std::byte> bytes, std::string s
     }
     for (const std::size_t root : asset.scene_roots) {
         if (root >= gltf.nodes.size()) {
+            const std::string pointer = asset.default_scene.has_value()
+                                            ? "/scenes/" + std::to_string(*asset.default_scene) +
+                                                  "/nodes/" + std::to_string(root)
+                                            : "/nodes/" + std::to_string(root);
             return core::make_failure<ImportedAsset>(
                 make_import_error(ErrorCode::Validation, "scene root index is out of range",
-                                  "/scenes", {{"root", root}}));
+                                  pointer, {{"root", root}}));
         }
     }
 
