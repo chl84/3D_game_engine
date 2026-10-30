@@ -215,6 +215,12 @@ core::Result<void> LocalServer::serve(const std::function<std::string(std::strin
             return core::make_failure<void>(net_error());
         }
         for (auto& c : clients) {
+            // A preceding synchronous handler may have consumed this client's
+            // remaining I/O deadline since select returned.
+            if (Clock::now() >= c.deadline) {
+                c.socket = Socket();
+                continue;
+            }
             if (!c.output.empty() && FD_ISSET(c.socket.value, &write)) {
                 const auto left = c.output.size() - c.sent;
                 const int count = transmit(c.socket.value, c.output.data() + c.sent,
@@ -248,7 +254,7 @@ core::Result<void> LocalServer::serve(const std::function<std::string(std::strin
                     continue;
                 }
                 if (newline != std::string::npos) {
-                    if (newline + 1 != c.input.size()) {
+                    if (newline + 1 != c.input.size() || Clock::now() >= c.deadline) {
                         c.socket = Socket();
                         continue;
                     }

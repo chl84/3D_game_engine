@@ -343,7 +343,7 @@ int live_call(const std::string& root, const std::string& method, const std::str
                 ErrorCode::Conflict,     ErrorCode::Io,         ErrorCode::Unsupported,
                 ErrorCode::Precondition, ErrorCode::Internal,   ErrorCode::Cancelled,
             };
-            const auto* const found = std::ranges::find_if(
+            const std::array<ErrorCode, 9>::const_iterator found = std::ranges::find_if(
                 codes, [&](auto value) { return code == core::error_code_name(value); });
             if (found == codes.end()) {
                 throw std::runtime_error("invalid response");

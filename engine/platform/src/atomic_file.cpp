@@ -146,8 +146,8 @@ core::Result<void> write_file(const std::filesystem::path& path, std::string_vie
             io_error("could not create temporary file", temporary, std::strerror(errno)));
     }
 
-    struct stat target_status{};
-    struct stat private_status{};
+    struct stat target_status = {};
+    struct stat private_status = {};
     if (owner_only &&
         (::fchmod(descriptor, 0600) != 0 || ::fstat(descriptor, &private_status) != 0 ||
          (private_status.st_mode & 0777U) != 0600 || private_status.st_uid != ::geteuid())) {

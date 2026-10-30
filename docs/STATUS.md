@@ -658,3 +658,14 @@ no merge/tag.
 - [Working verification record](verification/M3_7_STATUS_REPORT.md) and
   [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt). No owner report is
   delivered until review and required CI/re-review are complete.
+
+### M3.7 independent review round1
+
+GPT-6 Astra high reviewed6e3fb73 against16c5805: changes required for an MSVC
+checked-iterator declaration, clang-format18 compatibility and a queued-client
+deadline after a blocking handler. Parent corrections are being verified;
+engine_local_socket_deadline adds a discriminating cross-platform regression.
+The initial CI41091300737 failed Windows compilation and Quality formatting;
+those results are not final acceptance evidence. Corrected CI must pass all6jobs
+with Linux24/24 and Windows18/18. Review/closure details are in
+[round1](verification/M3_7_REVIEW_ROUND1.md). No consolidated owner report yet.

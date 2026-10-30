@@ -242,3 +242,212 @@ Commands: clang-tidy -p build/ci-linux-clang <changed .cpp files> --warnings-as-
 clang-format --dry-run --Werror <changed C++ files>
 .venv/bin/python scripts/generate_api_reference.py --engine build/ci-linux-clang/tools/engine/engine --check -> API reference is up to date
 .venv/bin/python tests/docs/check_links.py -> docs links OK (35 files)
+
+
+M3.7 review corrections and clean-clone evidence
+Public clean clone of6e3fb7343944637e054212d946f1ef7d7fa4d80e:
+COMMAND: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=<lavapipe ICD> scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+10/23 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+11/23 Test #11: engine_screenshot_cli ............   Passed    0.22 sec
+12/23 Test #12: engine_version_json ..............   Passed    0.03 sec
+13/23 Test #13: engine_cli_contract ..............   Passed    0.46 sec
+14/23 Test #14: engine_docs_links ................   Passed    0.04 sec
+15/23 Test #15: engine_sensitive_scan ............   Passed    0.60 sec
+16/23 Test #16: engine_acceptance_m1 .............   Passed    0.22 sec
+17/23 Test #17: engine_api_reference .............   Passed    0.12 sec
+18/23 Test #18: engine_asset_cli .................   Passed    0.80 sec
+19/23 Test #19: engine_pbr_golden ................   Passed    0.39 sec
+20/23 Test #20: engine_pbr_color_golden ..........   Passed    0.13 sec
+21/23 Test #21: engine_pbr_window ................   Passed    0.19 sec
+22/23 Test #22: engine_asset_placement ...........   Passed    1.25 sec
+23/23 Test #23: engine_live_api ..................   Passed    4.86 sec
+100% tests passed out of 23
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Initial exact-SHA CI41091300737: Windows failed compilation due to a pointer assumption for MSVC debug std::array iterators. Quality failed clang-format18 on two stat initializers. These are actual failures, fixed without weakening tests or checks.
+
+COMMAND: cmake --build --preset ci-linux-clang; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset ci-linux-clang
+Test project <workspace>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/24 Test  #1: engine_core_tests ................   Passed    0.05 sec
+      Start  2: engine_dependencies_smoke
+ 2/24 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/24 Test  #3: engine_asset_tests ...............   Passed    0.15 sec
+      Start  4: engine_render_tests
+ 4/24 Test  #4: engine_render_tests ..............   Passed    0.08 sec
+      Start  5: engine_window_smoke
+ 5/24 Test  #5: engine_window_smoke ..............   Passed    0.03 sec
+      Start  6: engine_swapchain_test
+ 6/24 Test  #6: engine_swapchain_test ............   Passed    0.09 sec
+      Start  7: engine_overlay_test
+ 7/24 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+      Start  8: engine_run_smoke
+ 8/24 Test  #8: engine_run_smoke .................   Passed    0.16 sec
+      Start  9: engine_point_light_warning
+ 9/24 Test  #9: engine_point_light_warning .......   Passed    0.21 sec
+      Start 10: engine_screenshot_golden
+10/24 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+      Start 11: engine_screenshot_cli
+11/24 Test #11: engine_screenshot_cli ............   Passed    0.18 sec
+      Start 12: engine_version_json
+12/24 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/24 Test #13: engine_cli_contract ..............   Passed    0.37 sec
+      Start 14: engine_docs_links
+14/24 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/24 Test #15: engine_sensitive_scan ............   Passed    0.40 sec
+      Start 16: engine_acceptance_m1
+16/24 Test #16: engine_acceptance_m1 .............   Passed    0.16 sec
+      Start 17: engine_api_reference
+17/24 Test #17: engine_api_reference .............   Passed    0.08 sec
+      Start 18: engine_asset_cli
+18/24 Test #18: engine_asset_cli .................   Passed    0.59 sec
+      Start 19: engine_pbr_golden
+19/24 Test #19: engine_pbr_golden ................   Passed    0.29 sec
+      Start 20: engine_pbr_color_golden
+20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.10 sec
+      Start 21: engine_pbr_window
+21/24 Test #21: engine_pbr_window ................   Passed    0.20 sec
+      Start 22: engine_asset_placement
+22/24 Test #22: engine_asset_placement ...........   Passed    1.06 sec
+      Start 23: engine_live_api
+23/24 Test #23: engine_live_api ..................   Passed    3.81 sec
+      Start 24: engine_local_socket_deadline
+24/24 Test #24: engine_local_socket_deadline .....   Passed    1.23 sec
+
+100% tests passed out of 24
+
+Label Time Summary:
+acceptance      =   5.45 sec*proc (6 tests)
+asset           =   2.39 sec*proc (6 tests)
+cli             =   6.41 sec*proc (8 tests)
+contract        =   7.85 sec*proc (10 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.51 sec*proc (3 tests)
+live            =   5.03 sec*proc (2 tests)
+render          =   6.36 sec*proc (13 tests)
+security        =   5.44 sec*proc (3 tests)
+unit            =   0.58 sec*proc (9 tests)
+
+Total Test time (real) =   9.46 sec
+
+COMMAND: cmake --build --preset linux-asan; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset linux-asan-lavapipe
+Test project <workspace>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/24 Test  #1: engine_core_tests ................   Passed    0.16 sec
+      Start  2: engine_dependencies_smoke
+ 2/24 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/24 Test  #3: engine_asset_tests ...............   Passed    0.87 sec
+      Start  4: engine_render_tests
+ 4/24 Test  #4: engine_render_tests ..............   Passed    0.27 sec
+      Start  5: engine_window_smoke
+ 5/24 Test  #5: engine_window_smoke ..............   Passed    0.11 sec
+      Start  6: engine_swapchain_test
+ 6/24 Test  #6: engine_swapchain_test ............   Passed    0.23 sec
+      Start  7: engine_overlay_test
+ 7/24 Test  #7: engine_overlay_test ..............   Passed    0.21 sec
+      Start  8: engine_run_smoke
+ 8/24 Test  #8: engine_run_smoke .................   Passed    0.73 sec
+      Start  9: engine_point_light_warning
+ 9/24 Test  #9: engine_point_light_warning .......   Passed    0.94 sec
+      Start 10: engine_screenshot_golden
+10/24 Test #10: engine_screenshot_golden .........   Passed    0.12 sec
+      Start 11: engine_screenshot_cli
+11/24 Test #11: engine_screenshot_cli ............   Passed    0.94 sec
+      Start 12: engine_version_json
+12/24 Test #12: engine_version_json ..............   Passed    0.08 sec
+      Start 13: engine_cli_contract
+13/24 Test #13: engine_cli_contract ..............   Passed    3.05 sec
+      Start 14: engine_docs_links
+14/24 Test #14: engine_docs_links ................   Passed    0.02 sec
+      Start 15: engine_sensitive_scan
+15/24 Test #15: engine_sensitive_scan ............   Passed    0.43 sec
+      Start 16: engine_acceptance_m1
+16/24 Test #16: engine_acceptance_m1 .............   Passed    1.12 sec
+      Start 17: engine_api_reference
+17/24 Test #17: engine_api_reference .............   Passed    0.17 sec
+      Start 18: engine_asset_cli
+18/24 Test #18: engine_asset_cli .................   Passed    4.76 sec
+      Start 19: engine_pbr_golden
+19/24 Test #19: engine_pbr_golden ................   Passed    0.90 sec
+      Start 20: engine_pbr_color_golden
+20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.43 sec
+      Start 21: engine_pbr_window
+21/24 Test #21: engine_pbr_window ................   Passed    0.56 sec
+      Start 22: engine_asset_placement
+22/24 Test #22: engine_asset_placement ...........   Passed    4.49 sec
+      Start 23: engine_live_api
+23/24 Test #23: engine_live_api ..................   Passed   13.83 sec
+      Start 24: engine_local_socket_deadline
+24/24 Test #24: engine_local_socket_deadline .....   Passed    1.27 sec
+
+100% tests passed out of 24
+
+Label Time Summary:
+acceptance      =  20.89 sec*proc (6 tests)
+asset           =  12.01 sec*proc (6 tests)
+cli             =  28.82 sec*proc (8 tests)
+contract        =  31.31 sec*proc (10 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   0.62 sec*proc (3 tests)
+live            =  15.10 sec*proc (2 tests)
+render          =  23.76 sec*proc (13 tests)
+security        =  15.54 sec*proc (3 tests)
+unit            =   2.05 sec*proc (9 tests)
+
+Total Test time (real) =  35.72 sec
+
+MANUAL MUTATION: remove added per-client/pre-dispatch deadline checks, rebuild fixture and run engine_local_socket_deadline; restore and rerun.
+[1/4] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/local_socket.cpp.o
+[2/4] Linking CXX static library engine/platform/libengine_platform.a
+[3/4] Building CXX object tests/CMakeFiles/engine_local_socket_fixture.dir/contract/local_socket_fixture.cpp.o
+[4/4] Linking CXX executable tests/engine_local_socket_fixture
+MUTATION: remove receive/send/dispatch deadline rechecks
+Test project <workspace>/build/ci-linux-clang
+    Start 24: engine_local_socket_deadline
+1/1 Test #24: engine_local_socket_deadline .....***Failed    1.24 sec
+Traceback (most recent call last):
+  File "<workspace>/tests/contract/local_socket_deadline.py", line 62, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "<workspace>/tests/contract/local_socket_deadline.py", line 46, in main
+    assert closed(pending), "expired pending frame was dispatched"
+           ~~~~~~^^^^^^^^^
+AssertionError: expired pending frame was dispatched
+
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+contract    =   1.24 sec*proc (1 test)
+live        =   1.24 sec*proc (1 test)
+security    =   1.24 sec*proc (1 test)
+
+Total Test time (real) =   1.24 sec
+
+The following tests FAILED:
+	 24 - engine_local_socket_deadline (Failed)             contract live security
+Errors while running CTest
+mutation exit 8
+[1/3] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/local_socket.cpp.o
+[2/3] Linking CXX static library engine/platform/libengine_platform.a
+[3/3] Linking CXX executable tests/engine_local_socket_fixture
+RESTORED:
+Test project <workspace>/build/ci-linux-clang
+    Start 24: engine_local_socket_deadline
+1/1 Test #24: engine_local_socket_deadline .....   Passed    1.23 sec
+
+100% tests passed out of 1
+
+Label Time Summary:
+contract    =   1.23 sec*proc (1 test)
+live        =   1.23 sec*proc (1 test)
+security    =   1.23 sec*proc (1 test)
+
+Total Test time (real) =   1.23 sec
+
+Reference formatter18.1.8 installed only in a temporary isolated tool environment. All tracked first-party C++ sources pass --dry-run --Werror with clang-format18. No formatter configuration change.

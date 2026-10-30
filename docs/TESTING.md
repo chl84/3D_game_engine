@@ -435,3 +435,8 @@ The third permanent fuzz target engine_rpc_fuzz uses checked-in parser seeds,
 raw bytes and an authenticated wrapper. No fuzz input reaches sockets, disk or
 the command bus. The existing CI fuzz job runs all three targets for30s each
 with ASan and UBSan halt-on-error. Nightly cached-corpus fuzzing remains M3.8.
+
+The engine_local_socket_deadline test uses the production platform transport
+in a process fixture with stdin gates. It proves an expired queued frame cannot
+dispatch after a slow accepted handler, while that handler can finish. It runs
+on both platforms without server threads or POSIX-only process signals.

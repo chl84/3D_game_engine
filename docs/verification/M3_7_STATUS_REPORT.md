@@ -13,7 +13,7 @@ M3.6 is owner-approved. The owner selected GPT-6 Astra high for new reviews.
 | Shared CLI/live authoring | Automatically tested locally | Same register_project_commands/CommandBus; schema equality and actual log entries checked |
 | Loopback and per-request auth | Automatically tested locally | Alternate127.0.0.2 destination fails; wrong/missing token yields exact generic Unauthorized with no data/echo |
 | Parser resource/error handling | Automatically tested locally | 64KiB, depth32, duplicate members/invalid UTF-8/syntax/envelope cases; bounded pure-parser fuzz target |
-| Connection lifetime | Automatically tested locally | Absolute I/O deadlines,8client cap, idle fairness, partial EOF and complete-request RST; server remains responsive |
+| Connection lifetime | Automatically tested locally | New queued-deadline regression rejects expiry during a preceding slow handler; Absolute I/O deadlines,8client cap, idle fairness, partial EOF and complete-request RST; server remains responsive |
 | Private token discovery | Implemented and POSIX verified | CSPRNG32bytes;0600/current UID; Windows protected current-user-only DACL/owner readback implemented but not yet reference-tested |
 | Token rotation and shutdown | Automatically tested locally | Normal shutdown removes discovery/lock; restart rejects old credential and accepts new one |
 | Sandbox | Automatically tested locally | Import/save/load/screenshot relative/absolute/NUL escapes rejected; symlinks checked where available; live reimport cannot read external original |
@@ -21,11 +21,11 @@ M3.6 is owner-approved. The owner selected GPT-6 Astra high for new reviews.
 | Live asset acceptance | Automatically tested locally | Import/list/inspect/validate/place/save/load/reimport/screenshot entirely through RPC; PNG bytes match optional output; IDs/scene bytes preserved |
 | Shared screenshot and history | Automatically tested locally | Existing CLI limits/error contract retained; scene load clears stale undo; delete/undo restores asset and both light components |
 | Session log admission | Automatically tested locally |4096-entry and16MiB admission limits exercised separately; last completed record retained; paged log and shutdown remain available |
-| Local Clang | Compiled and automatically tested |23/23 on lavapipe, no skips |
-| Local ASan/UBSan | Automatically tested |23/23 with leak checks and documented Mesa retention, no suppression file |
+| Local Clang | Compiled and automatically tested |24/24 on lavapipe, no skips after review corrections |
+| Local ASan/UBSan | Automatically tested |24/24 with leak checks and documented Mesa retention, no suppression file |
 | Local three-target fuzz | Automatically tested |30s each: GLB4994, image8284, RPC66839runs; no sanitizer findings |
-| Windows/reference CI | Not verified for this source yet | Must run new exact-SHA CI; expected Linux23/23 and Windows17/17 |
-| Independent review | Pending | GPT-6 Astra with reasoningEffort=high is available and required; no verdict claimed |
+| Windows/reference CI | Not verified for this source yet | Must run new exact-SHA CI; expected corrected Linux24/24 and Windows18/18 |
+| Independent review | Completed; correction verification pending | GPT-6 Astra high reviewed6e3fb73 and requested MSVC iterator, formatter18 and queued-deadline fixes; see [round1 record](M3_7_REVIEW_ROUND1.md) |
 
 [Local evidence](M3_7_LOCAL_EVIDENCE.txt). Wire contracts are
 [request](../../schemas/jsonrpc-request@1.schema.json) and
@@ -48,7 +48,7 @@ retention does not test Mesa unload/reload behavior.
 **Known defects:** Existing Mesa RTASM unload metadata leak is diagnosed and
 covered by the opt-in local retention policy; ordinary local unload is not
 claimed clean. Source importer/renderer budgets and performance limits remain
-as documented for M3. No independent reviewer verdict is claimed here yet.
+as documented for M3. Review changes are corrected in source; final correction CI is still pending.
 
 **Deviations from plan:** No new dependency. The CLI launcher is a foreground
 live serve command plus live call client; screenshots render the persistent
@@ -59,5 +59,6 @@ screenshot to offline writers. Shared light snapshot undo restoration is fixed.
 **Decisions requiring approval:** None newly proposed within the authorized
 M3.7 contract. Owner assessment/merge/tag/M3.8 remain separate and unauthorized.
 
-**Next step:** Exact-source reference CI and independent GPT-6 Astra high
-review, then handle findings and deliver the consolidated A.5 report.
+**Next step:** Verify the corrected source in exact-SHA reference CI, then record
+closure and deliver the consolidated A.5 report. No second independent verdict
+is claimed for the parent correction.

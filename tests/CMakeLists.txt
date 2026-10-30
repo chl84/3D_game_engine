@@ -368,3 +368,12 @@ add_test(NAME engine_live_api
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_api.py" "$<TARGET_FILE:engine>"
 )
 set_tests_properties(engine_live_api PROPERTIES LABELS "contract;cli;live;security;render;acceptance" TIMEOUT 120)
+
+add_executable(engine_local_socket_fixture contract/local_socket_fixture.cpp)
+target_link_libraries(engine_local_socket_fixture PRIVATE engine::platform)
+engine_set_warnings(engine_local_socket_fixture)
+add_test(NAME engine_local_socket_deadline
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/local_socket_deadline.py"
+            "$<TARGET_FILE:engine_local_socket_fixture>"
+)
+set_tests_properties(engine_local_socket_deadline PROPERTIES LABELS "contract;live;security" TIMEOUT 20)
