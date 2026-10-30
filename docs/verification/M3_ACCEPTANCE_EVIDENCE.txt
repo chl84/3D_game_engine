@@ -1,0 +1,92 @@
+Local Clang acceptance
+Command: VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang --output-on-failure
+ 1/21 Test  #1: engine_core_tests ................   Passed    0.06 sec
+ 2/21 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+ 3/21 Test  #3: engine_asset_tests ...............   Passed    0.21 sec
+ 4/21 Test  #4: engine_render_tests ..............   Passed    0.13 sec
+ 5/21 Test  #5: engine_window_smoke ..............   Passed    0.04 sec
+ 6/21 Test  #6: engine_swapchain_test ............   Passed    0.10 sec
+ 7/21 Test  #7: engine_overlay_test ..............   Passed    0.13 sec
+ 8/21 Test  #8: engine_run_smoke .................   Passed    0.28 sec
+ 9/21 Test  #9: engine_point_light_warning .......   Passed    0.28 sec
+10/21 Test #10: engine_screenshot_golden .........   Passed    0.05 sec
+11/21 Test #11: engine_screenshot_cli ............   Passed    0.21 sec
+12/21 Test #12: engine_version_json ..............   Passed    0.04 sec
+13/21 Test #13: engine_cli_contract ..............   Passed    0.40 sec
+14/21 Test #14: engine_docs_links ................   Passed    0.04 sec
+15/21 Test #15: engine_sensitive_scan ............   Passed    0.48 sec
+16/21 Test #16: engine_acceptance_m1 .............   Passed    0.20 sec
+17/21 Test #17: engine_api_reference .............   Passed    0.13 sec
+18/21 Test #18: engine_asset_cli .................   Passed    0.66 sec
+19/21 Test #19: engine_pbr_golden ................   Passed    0.35 sec
+20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.12 sec
+21/21 Test #21: engine_pbr_window ................   Passed    0.21 sec
+100% tests passed out of 21
+Total Test time (real) =   4.15 sec
+
+Exact clean clone
+Command: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+59c2e979a12484e2c9124f38ad0165ca2b9be0c3
+ 1/21 Test  #1: engine_core_tests ................   Passed    0.04 sec
+ 2/21 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+ 3/21 Test  #3: engine_asset_tests ...............   Passed    0.15 sec
+ 4/21 Test  #4: engine_render_tests ..............   Passed    0.09 sec
+ 5/21 Test  #5: engine_window_smoke ..............   Passed    0.03 sec
+ 6/21 Test  #6: engine_swapchain_test ............   Passed    0.10 sec
+ 7/21 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+ 8/21 Test  #8: engine_run_smoke .................   Passed    0.22 sec
+ 9/21 Test  #9: engine_point_light_warning .......   Passed    0.20 sec
+10/21 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+11/21 Test #11: engine_screenshot_cli ............   Passed    0.16 sec
+12/21 Test #12: engine_version_json ..............   Passed    0.03 sec
+13/21 Test #13: engine_cli_contract ..............   Passed    0.37 sec
+14/21 Test #14: engine_docs_links ................   Passed    0.03 sec
+15/21 Test #15: engine_sensitive_scan ............   Passed    0.47 sec
+16/21 Test #16: engine_acceptance_m1 .............   Passed    0.16 sec
+17/21 Test #17: engine_api_reference .............   Passed    0.08 sec
+18/21 Test #18: engine_asset_cli .................   Passed    0.48 sec
+19/21 Test #19: engine_pbr_golden ................   Passed    0.28 sec
+20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.11 sec
+21/21 Test #21: engine_pbr_window ................   Passed    0.19 sec
+100% tests passed out of 21
+Total Test time (real) =   3.33 sec
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Physical Iris Xe controls and window recovery
+Commands: VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/intel_icd.json build/ci-linux-clang/tests/engine_pbr_test --device-smoke; then --window
+PBR device: Intel(R) Iris(R) Xe Graphics (ADL GT2)
+Blender tangent image difference: 0
+normal difference: 48226 roots: 2 meshes: 2
+Analytical reflected normal: red=137 expected=137
+Analytical reflected normal: red=137 expected=137
+PBR color-space, alpha, sampler, reflected-normal, node-scale and full 4096-slot probes passed
+PBR physical-device controls (fixed golden not compared), normal-map sensitivity, reflection, budgets and 16 km passed
+PBR device: Intel(R) Iris(R) Xe Graphics (ADL GT2)
+PBR error recovery, two-frame retirement and reuse passed
+
+
+Asset suite
+Command: build/ci-linux-clang/tests/engine_asset_tests
+Randomness seeded to: 1666820146
+===============================================================================
+All tests passed (22693 assertions in 18 test cases)
+
+
+
+Pinned official MikkTSpace source hashes
+Command: sha256sum third_party/mikktspace/mikktspace.c third_party/mikktspace/mikktspace.h
+de87e74107df766ce68108801262bd8d53899414236b59810509a8fc2a51e288  third_party/mikktspace/mikktspace.c
+17fc433894f24c73753d548086cc4d8c5c0379f4a6edfb98b5da243e4f0bc3d0  third_party/mikktspace/mikktspace.h
+
+
+Historical original M3.5 clean clone, source eceb5f9
+eceb5f9e7dd63c2e2aef7a5c54b8cab239d99f18
+100% tests passed out of 20
+M1 acceptance passed
+M1 clean-clone acceptance passed
+
+Historical M3.5 local fuzz, same importer/runtime implementation
+Command: scripts/run_fuzz.sh 30
+Done 4335 runs in 31 second(s)
+Done 8640 runs in 31 second(s)

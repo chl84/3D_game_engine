@@ -22,10 +22,10 @@ M3.6 has not started. No merge/tag or milestone closure is included.
 | Original M3.5 Linux and Windows acceptance | Compiled and automatically tested | Final original CI below: Clang/GCC14/ASan 20/20; WindowsMSVC 14/14 inclPBRgolden on lavapipe; all six jobs success |
 | Original exact clean clone | Automatically tested | `eceb5f9`: 20/20, M1 acceptance and clean-clone acceptance passed; independently reproduced by reviewer with GCC |
 | Physical Iris Xe | Automatically tested | Strict Blender reference difference 0, normal probes137, wrap/filter/underflow controls and window recovery/lifetime pass; independently repeated in review |
-| Dedicated color-space PNG golden (follow-up) | Implemented and locally automatically tested | `engine_pbr_color_golden` compares six Vulkan-rendered patches to `m3_pbr_colorspace_192x128.png` and checks independent pixel values; included in Linux/Windows CTest |
-| Full follow-up local Clang | Automatically tested | 21/21 without skips; command and final CI evidence recorded below |
+| Dedicated color-space PNG golden (follow-up) | Automatically tested on Linux and Windows lavapipe | `engine_pbr_color_golden` compares six Vulkan-rendered patches to `m3_pbr_colorspace_192x128.png` and checks independent pixel values; included in Linux/Windows CTest |
+| Full follow-up local Clang and exact clean clone | Automatically tested | 21/21 without skips plus CLI acceptance, commands/output in M3_ACCEPTANCE_EVIDENCE.txt |
 | Local Mesa ASan/UBSan policy | Automatically tested | 21/21 using `linux-asan-lavapipe`, detect_leaks=1 and UBSan halt-on-error; ordinary preset and reference CI stay unsuppressed |
-| Native leak ownership/negative control | Automatically tested | Separate Build-ID-guarded C program reproduces112 bytes after allocator/free+unload; retained driver exits0; intentional application leak73 still exits1 with LSan error |
+| Native leak ownership/negative control | Manually verified | Manual cc/probe commands in M3_SANITIZER_DIAGNOSIS.md; exact 112-byte reproduction and fatal 73-byte control captured in M3_SANITIZER_EVIDENCE.txt |
 
 ## CI and source boundaries
 
@@ -64,31 +64,39 @@ contains Blender's tangents with both handedness signs.
 [Fixed PNG](../../tests/fixtures/golden/m3_pbr_colorspace_192x128.png), 192x128,
 row-major six 64x64 GPU renders (one shared PBR implementation):
 
-| Patch | Input | Expected center red (±2) |
+| Patch | Input | Test reference center red (±2) |
 |---|---|---|
 | 0 | 128 sRGB baseColor | 19 |
 | 1 | Same 128 interpreted linearly, negative format control | 33 |
-| 2 | Linear metallic-roughness, blue128/green200 | 33 (local readback32) |
+| 2 | Linear metallic-roughness, blue128/green200 | 33 band center; analytic rounded value and PNG readback 32 |
 | 3 | Linear AO 128 | 33 |
 | 4 | Linear emissive 128 and black base | 156 |
 | 5 | Linear normal (128,204,230), authored directional light | 137 |
 
-Every patch must satisfy the analytical check even when recording the golden.
+Unrounded analytical values are approximately 18.8 / 32.5 / 32.4 / 32.5 /
+156.4 / 137.3. The PNG center bytes are 19 / 33 / 32 / 33 / 156 / 137.
+Patch 2 retains the legacy integer band center 33 with tolerance ±2; 33 is
+not presented as its rounded analytical value. No tolerance is widened.
+Every patch must satisfy its independent reference band even when recording.
 The complete PNG comparison uses the same strict tolerance as the Blender
 image test. The existing separate sRGB mip probe verifies linear-space mip
 filtering. Emissive-linear is the owner's approved M3 policy (ADR-0012).
 Seven mutations verify discrimination: changing the format of any patch fails
-its analytical check; corrupting one loaded reference pixel fails the fixed
+its independent reference check; corrupting one loaded reference pixel fails the fixed
 PNG comparison. Correct test artifacts were restored.
+
+The owner's emissive-linear policy differs from glTF 2.0, which specifies sRGB
+for emissiveTexture. The golden locks the approved policy: linear gives 156;
+sRGB would give 117. No policy change is made here.
 
 This dedicated PNG was added in this follow-up: before it, these color inputs
 were covered by numeric GPU readback in `engine_pbr_golden`, not by a separate
 fixed color-chart PNG. The distinction corrects the earlier short report.
 
 ```sh
-VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \\
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
   ctest --preset ci-linux-clang -R engine_pbr_color_golden -V
-VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \\
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
   ctest --preset linux-asan-lavapipe --output-on-failure
 ```
 
@@ -98,17 +106,22 @@ VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \\
 [captured native stack/control](M3_SANITIZER_EVIDENCE.txt),
 [narrow LSan file](../../tests/sanitizers/mesa-lavapipe.supp).
 The two allocations are Mesa's RTASM arena metadata, not engine-owned objects.
-The standalone program releases all requested executable code and still
-reproduces exactly 56+56 bytes. The loader had unloaded the driver before LSan
+The manually run standalone program releases all requested executable code
+and still reproduces exactly 56+56 bytes. The loader had unloaded the driver before LSan
 symbolization; address/base correlation recovers the originating module and
 source functions. Exact DWARF was unavailable; recovered names are explicitly
 identified as instruction/source correlation, not invented debug symbols.
 
 The supported loader-retention switch preserves process-lifetime globals.
-The narrow file only names rtasm_exec_malloc; unknown modules/calloc/engine
-code are not excluded. On this stripped build retention alone makes the arena
+The file only names rtasm_exec_malloc; unknown modules/calloc/engine code are
+not excluded. This rule is inactive and unverified on the available stripped
+binaries; a matching external debug file would be needed to make it usable. On this stripped build retention alone makes the arena
 reachable, so zero suppression patterns are consumed. An intentional 73-byte
-application leak remains fatal with that policy. No broad exception, disabled
+application leak remains fatal with that policy. Reviewer also injected 91
+bytes into engine_pbr_test itself; LSan reported them and exited 134. This
+control does not establish that every possible allocation referenced only
+through a retained driver/layer global is freed: such globals are LSan roots.
+No broad exception, disabled
 leak check or normal-map/validation bypass is used.
 
 **Not verified / test limitations:** Windows window/swapchain presentation;
@@ -138,7 +151,30 @@ has not been started.
 
 ## Follow-up final evidence
 
-Pending final CI/review. Current local logs: `/tmp/m35-followup-clang-tests.log`
-(21/21), `/tmp/m35-followup-local-asan.log` (21/21),
-`/tmp/m35-colorspace-record.log` (six expected GPU values). Final source and
-cross-platform results will replace this pending paragraph after verification.
+Source `59c2e979a12484e2c9124f38ad0165ca2b9be0c3`,
+[CI41065543569](https://github.com/chl84/3D_game_engine/actions/runs/41065543569),
+attempt 2 completed/success. All six jobs succeeded. Linux Clang, GCC14 and
+unsuppressed ASan/UBSan passed 21/21; Windows MSVC passed 15/15. The fixed
+color-space PNG test explicitly passed on both lavapipe platforms with center
+bytes 19/33/32/33/156/137. Fuzz and Quality also passed.
+
+Attempt 1 Windows failed before compilation on a Chocolatey HTTP 504 during
+pinned SDK installation. Only that job was rerun, with no source, SDK version,
+skip or tolerance change. The successful retry supplies the missing Windows
+compilation/headless/offscreen evidence.
+
+Permanent evidence:
+
+- [CI excerpts, source/attempt identity and sanitizer flags](M3_CI_EVIDENCE.txt).
+- [Local21/21, exact clean-clone acceptance, Iris Xe and asset/hash output](M3_ACCEPTANCE_EVIDENCE.txt).
+- [Local-policy21/21, native112-byte stack and73-byte negative control](M3_SANITIZER_EVIDENCE.txt).
+- [Independent reviewer91-byte injection into engine_pbr_test, exit134](M3_REVIEW_LEAK_CONTROL.txt).
+
+The independent technical audit confirmed the native source attribution,
+local-policy21/21, upstream MikkTSpace hashes, Blender TANGENT absence/presence,
+color mathematics, PNG-alone discrimination and production-code mutations.
+Mandatory reporting corrections are applied: manual native diagnostics are
+marked Manually verified, and acceptance evidence is committed rather than
+pointing to temporary logs. The inactive rule, driver-global reachability
+limit and diagnostic exit codes are explicit. No rendering/import runtime code
+changed during these reporting corrections. M3.6 remains stopped.

@@ -68,7 +68,9 @@ links only ASan and libdl. It calls the driver's private allocator/free pair,
 verifies all requested code memory is free, then closes the library. It neither
 links nor runs engine, SDL, VMA or Vulkan rendering code. Because its entry
 points are private binary offsets, it checks the exact ELF Build ID first and
-returns 77 on any other build. It is a manual diagnostic, not an engine API or
+returns 77 when a successfully loaded library has another Build ID. Its
+hardcoded Arch path is not a portable driver locator: if that path cannot be
+loaded it returns 2. It is a manual diagnostic, not an engine API or
 an automatic platform acceptance test.
 
 ```sh
@@ -100,8 +102,9 @@ Vulkan/LLVM libraries or engine code. A function rule needs a symbolized stack;
 it cannot match the original stripped/unloaded `<unknown module>` reports.
 On the installed driver, retention alone keeps this process-lifetime arena
 reachable, so the successful run consumes **zero suppression matches**. The
-rule is a narrow fallback for symbolized RTASM reports, not the explanation
-for the clean result. This distinction is intentional and must remain visible.
+rule is inactive and unverified on the available binaries: it would require
+matching external debug information, which was unavailable. It is not the
+explanation for the clean result. This distinction must remain visible.
 
 ```sh
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
@@ -111,12 +114,18 @@ VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
 The ordinary `linux-asan` preset and Ubuntu CI remain unsuppressed and unchanged.
 ASan memory errors, UBSan and LeakSanitizer stay enabled. No rendering feature,
 normal map, validation layer, test or shader is disabled by this local policy.
-Driver unload/reload behavior itself is not exercised by the retention preset;
+Retained driver/layer globals are LSan roots. An allocation referenced only
+there can consequently remain reachable; the application-leak control does not
+prove all possible driver-global references are cleaned up. Driver unload/reload
+behavior itself is not exercised by the retention preset;
 the standalone diagnostic documents that limitation explicitly.
 
 Before the follow-up color golden was added, the complete retained local suite
-passed 20/20; the ordinary run was 12/20 due these native reports. The final
-follow-up count and CI results are recorded in the M3 status reports.
+passed 20/20; the ordinary run was 12/20 due these native reports. In the final
+follow-up the local policy passed 21/21; the independent ordinary local run was
+12/21, with the same 112 bytes in all 9 failures and no other leaks. The
+unsuppressed Ubuntu reference CI passed 21/21. Permanent output is linked in
+[the full M3.5 report](M3_5_STATUS_REPORT.md).
 
 ## Primary sources
 

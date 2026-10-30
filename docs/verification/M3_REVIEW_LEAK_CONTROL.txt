@@ -1,0 +1,9 @@
+Independent reviewer manual application-leak control.
+Repository path normalized to <repo>; command/output otherwise retained.
+
+$ cd /tmp/audit-probe && printf '#include <stdlib.h>\n#include <stdio.h>\nvoid* volatile sink;\n__attribute__((constructor)) static void audit_injected_leak(void){ void* p=malloc(91); sink=p; sink=0; fprintf(stderr,"audit leak injected\\n"); }\n' > leak.c && cc -O0 -fPIC -shared leak.c -o libauditleak.so && cd <repo> && B=build/linux-asan/tests/engine_pbr_test; VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING=1 ASAN_OPTIONS=detect_leaks=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 LSAN_OPTIONS=suppressions=$PWD/tests/sanitizers/mesa-lavapipe.supp:print_suppressions=1 LD_PRELOAD="$(gcc -print-file-name=libasan.so) /tmp/audit-probe/libauditleak.so" $B --color-golden tests/fixtures/golden/m3_pbr_colorspace_192x128.png 2>&1 | grep -E "injected|passed|leak of|SUMMARY|audit_injected|Suppressions"; echo "exit ${PIPESTATUS[0]}"
+audit leak injected
+Direct leak of 91 byte(s) in 1 object(s) allocated from:
+    #1 0x7ff1cf25812a in audit_injected_leak (/tmp/audit-probe/libauditleak.so+0x112a) (BuildId: ca5314e28ab26b903cf23c46a6cf83f4009ee0b2)
+SUMMARY: AddressSanitizer: 91 byte(s) leaked in 1 allocation(s).
+exit 134

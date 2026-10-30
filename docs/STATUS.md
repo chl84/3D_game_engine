@@ -3,7 +3,9 @@
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.5 complete — reviewer GODKJENT (round 3).
-All six CI jobs passed on code SHA `eceb5f9`. M3.6 is next.
+All six original CI jobs passed on `eceb5f9`; owner-requested reporting/color
+follow-up passed all six jobs on `59c2e97` (Ubuntu 21/21, Windows15/15).
+M3.6 is stopped pending the owner's assessment.
 M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 
 ## Substeps
@@ -494,17 +496,17 @@ Review corrections:
 
 | Check | Result / evidence |
 |---|---|
-| Clang warnings-as-errors and full lavapipe CTest | 20/20, no skips; `/tmp/m35-r3-full-clang.log` |
-| Exact clean clone of `eceb5f9` | 20/20 plus M1 and clean-clone acceptance passed; `/tmp/m35-r3-clean-clone.log` |
-| Iris Xe final offscreen controls | Blender image difference 0, analytical red 137, wrap/underflow probes pass; `/tmp/m35-r3-intel.log` |
-| Iris Xe window recovery/lifetime | Passed with Required validation; `/tmp/m35-r3-intel.log` |
-| Mutations | Wrap removed, S/T swapped and normalization removed each fail; correct artifacts restored; `/tmp/m35-r3-mutations.log` |
+| Clang warnings-as-errors and full lavapipe CTest | Original `eceb5f9` CI 20/20; current follow-up 21/21 is captured in the committed evidence below |
+| Exact clean clone of `eceb5f9` | Historically 20/20 and CLI acceptance, independently confirmed in review; follow-up `59c2e97` 21/21 and acceptance are captured in the committed evidence below |
+| Iris Xe final offscreen controls | Blender image difference 0, analytical red 137, wrap/underflow probes pass; [committed Iris Xe output](verification/M3_ACCEPTANCE_EVIDENCE.txt) |
+| Iris Xe window recovery/lifetime | Passed with Required validation; [committed Iris Xe output](verification/M3_ACCEPTANCE_EVIDENCE.txt) |
+| Mutations | Wrap removed, S/T swapped and normalization removed each fail; correct artifacts restored; reviewer-verified mutation results summarized in [M3.5 report](verification/M3_5_STATUS_REPORT.md) |
 | Static checks | Changed C++ passes clang-tidy 23 and compatible local clang-tidy 18 with warnings-as-errors; clang-format 18, docs/sensitive scan and both shaders' spirv-val pass |
-| Asset/fuzz | Asset suite 18 cases / 22,693 assertions; 30-second fuzz targets passed (GLB 4335 runs, image 8640); `/tmp/m35-asset-summary.log`, `/tmp/m35-fuzz.log` |
-| Full local ASan/UBSan on `b417101` | 12/20; eight graphics-related failures with 112-byte unknown-native-module leaks; `/tmp/m35-r2-full-asan.log` |
-| Local ASan PBR after final test correction | Same two PBR leak failures, no suppression; `/tmp/m35-r3-asan-pbr.log` |
+| Asset/fuzz | Asset suite 18 cases / 22,693 assertions; 30-second fuzz targets passed (GLB 4335 runs, image 8640); [asset output](verification/M3_ACCEPTANCE_EVIDENCE.txt) and the linked CI Fuzz job |
+| Full local ASan/UBSan on `b417101` | 12/20; eight graphics-related failures with 112-byte unknown-native-module leaks; native source subsequently verified in [diagnosis/evidence](verification/M3_SANITIZER_DIAGNOSIS.md) |
+| Local ASan PBR after final test correction | Same two PBR leak failures, no suppression; same source recorded in [committed evidence](verification/M3_SANITIZER_EVIDENCE.txt) |
 | Original implementation CI | All six jobs succeeded on `47569ea`, run 41051934696; Ubuntu 20/20 including ASan, Windows 14/14 including PBR lavapipe golden |
-| Correction CI | Run 41055106806 on `b417101`: Ubuntu/Windows/Fuzz passed; Quality failed with six clang-tidy 18 optional-access warnings; `/tmp/m35-r2-ci-quality-failure.log` |
+| Correction CI | Run 41055106806 on `b417101`: Ubuntu/Windows/Fuzz passed; Quality failed with six clang-tidy 18 optional-access warnings; failure retained in the linked CI history |
 | Final correction CI | [Run 41057830415](https://github.com/chl84/3D_game_engine/actions/runs/41057830415) completed/success on `eceb5f9`: all six jobs green; Ubuntu Clang/GCC14/ASan 20/20, Windows MSVC 14/14 including PBR lavapipe golden, Fuzz and Quality success |
 | Independent review | GODKJENT (round 3), including a separate GCC clean clone 20/20, Iris Xe controls/window recovery, wrap/underflow/handedness mutation failures and all six CI job results |
 
@@ -514,12 +516,13 @@ This preserves the recovery/terminal behavior; no check is suppressed. Local
 clang-tidy 23 had accepted the former member-access flow. Final CI verified
 18.1.3 across every C++ source with warnings as errors. Local 18.1.8 also passes
 the changed units with
-checksum-verified Ubuntu GCC 14 headers (`/tmp/m35-r3-tidy18-compatible.log`);
+checksum-verified Ubuntu GCC 14 headers (verified locally and then by the linked successful Quality job);
 the system GCC 16 headers are too new for that parser.
 
-The exact owner of the local sanitizer leaks is unproved. The Ubuntu reference
-ASan job passes all 20 tests with leak detection enabled and no suppression.
-Windows presentation is unverified.
+The formerly unknown local112-byte source is now proved to be Mesa RTASM
+arena metadata; see the follow-up diagnosis below. Original Ubuntu ASan passed
+20/20; follow-up unsuppressed Ubuntu ASan passes21/21. Windows presentation
+remains unverified.
 Initial development exposed an embedded-shader inline-symbol collision and an
 optional SPIR-V discard capability; unique symbols and explicit SPIR-V 1.5 fixed
 both before delivery. No existing tests or validation requirements were weakened.
@@ -537,12 +540,21 @@ Build-ID-guarded C probe reproduces it after freeing all requested code; an
 intentional 73-byte application leak still fails. Exact normalized stack/source
 correlation and captured evidence are in the [diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md).
 The opt-in local sanitizer preset uses the supported loader-retention switch
-and narrow documented LSan file; all 21 tests pass with leak detection active.
-No patterns are actually consumed on this build: retention preserves the arena
-root. The ordinary preset and reference Ubuntu CI remain unsuppressed.
+and documented LSan file; all 21 tests pass with leak detection active. The
+function rule is inactive/unverified on available stripped binaries. No
+patterns are consumed: retention preserves the arena root. The ordinary preset and reference Ubuntu CI remain unsuppressed.
 
 The former color checks were numeric GPU probes, not a separate fixed PNG.
 `engine_pbr_color_golden` now supplies that explicit six-patch PNG test on Linux
-and Windows. Local Clang 21/21 and local-policy ASan 21/21 pass; final follow-up
-CI/review are pending. Existing rendering/import runtime and Blender golden
-are unchanged. No merge or tag is authorized or performed.
+and Windows. Local Clang 21/21 and local-policy ASan 21/21 pass. Follow-up
+[CI41065543569](https://github.com/chl84/3D_game_engine/actions/runs/41065543569)
+on `59c2e97` completed/success in attempt 2: all six jobs green, Ubuntu 21/21
+including unsuppressed ASan and Windows MSVC 15/15 including the new color-space
+golden on lavapipe. Initial Windows SDK download failed with HTTP 504 before
+build; its unchanged retry passed. Technical audit confirmed the source and
+policy; required report corrections are applied. Permanent
+[CI](verification/M3_CI_EVIDENCE.txt),
+[local acceptance](verification/M3_ACCEPTANCE_EVIDENCE.txt) and
+[native diagnostic](verification/M3_SANITIZER_EVIDENCE.txt) evidence is committed.
+Existing rendering/import runtime and Blender golden are unchanged. M3.6 stays
+stopped. No merge or tag is authorized or performed.

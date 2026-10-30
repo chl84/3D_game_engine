@@ -6,5 +6,6 @@
 # Stripped/unloaded frames cannot match a function rule. The opt-in local test
 # preset retains driver libraries using the supported Vulkan loader switch.
 # On this build retention alone keeps the arena reachable; no suppression is
-# consumed. Keep this distinction when interpreting the successful run.
+# consumed. The rule is inactive/unverified on available stripped binaries;
+# matching external debuginfo would be required. It does not produce the pass.
 leak:rtasm_exec_malloc
