@@ -1,14 +1,14 @@
 # Status report — 2026-10-30 — M3.7
 
-Verification is complete: all six reference jobs succeeded on the exact tested
-source. The independent review is complete and its three findings have been
-corrected and verified by the parent; no second independent verdict is claimed.
-M3.7 is ready for owner assessment.
+Previous verification below applies to7c24116 only. The latest owner clarification
+requires independent Claude Opus re-review of all three fixes, especially queued
+deadlines, plus durable live JSONL. M3.7 is not approved. New journal changes are
+being verified and will be included in that re-review before a new owner report.
 
 **Delivered:** A local JSON-RPC server and CLI client for persistent in-memory
 scene authoring, inspection and screenshots. Live and offline authoring use the
-same CommandBus and handler registration. The owner-selected reviewer is
-GPT-6 Astra with high reasoning effort, documented in AI_AGENT_GUIDE.md.
+same CommandBus and handler registration. The current owner-selected reviewer is Claude Opus5.5 high, documented in
+AI_AGENT_GUIDE.md. The earlier Astra review remains historical evidence.
 M3.6 is owner-approved; M3.8, merge and tag remain unauthorized.
 
 **Verification source:** `7c241168583e5cd1b37c6b14aa60fd959819753d`.
@@ -69,8 +69,8 @@ the existing command-result@1 envelope. ADR-0013 documents the complete profile.
 **Not verified / limitations:** Physical Windows presentation is not verified.
 No new threads were introduced; TSan was not rerun. Deadlines bound I/O rather than asynchronous CPU/GPU command
 cancellation. JSON-RPC batch arrays and positional params are outside the M3
-profile. The command log is bounded in memory and is not automatically exported
-on shutdown; scene persistence requires the explicit save command. Abrupt server
+profile. The in-memory log is bounded and durable JSONL is now written continuously;
+new verification/re-review is pending. Scene persistence still requires explicit save. Abrupt server
 termination can leave a stale lock/discovery requiring the existing recovery
 path. Local Mesa retention does not test unload/reload behavior.
 
@@ -90,5 +90,33 @@ assertions are unchanged; only the child PowerShell module environment is reset.
 **Decisions requiring approval:** Owner assessment of M3.7. No additional A.6
 exception is requested. Merge, tag and M3.8 remain separate owner decisions.
 
-**Next step:** Await owner assessment of M3.7. Do not merge, tag or start M3.8
-without the corresponding owner authorization.
+**Next step:** Complete journal verification and mandatory Claude Opus re-review,
+handle findings and only then deliver the updated consolidated A.5 report.
+No merge, tag or M3.8 is authorized.
+
+## Durable JSONL addition and mandatory re-review (pending)
+
+The owner requested live persistence under .engine/ and restored Claude Opus
+as reviewer. The parent implements this in M3.7 before combined re-review of
+all three prior fixes plus journaling. New contract: journalVersion1 JSONL,
+private per-session file, synchronized started intent before dispatch, actual
+completed CommandLog results before acknowledgement. Both successful and failed
+commands are preserved. Journal failure stops dispatch; failure after execution
+returns E_IO with an uncertain-outcome hint, never a success acknowledgement.
+
+New engine_live_journal covers hard termination without destructors/shutdown,
+complete acknowledged JSONL before the crash, restart retention, failed commands,
+credential exclusion and append-failure prevention of a subsequent mutation.
+Platform unit tests cover synchronized append, missing/directory/symlink/hardlink
+targets and POSIX mode rejection. Local Clang and final-source ASan/UBSan both pass25/25. Expected reference totals are Linux25/25 and
+Windows19/19. New Windows/private journal runtime verification and Claude
+re-review remain pending. [Journal evidence](M3_7_JOURNAL_EVIDENCE.txt) also records
+a manual post-execution fsync fault: the actual scene write occurs, the RPC
+returns E_IO and the session stops. No success or atomic rollback is claimed.
+
+This supersedes the old in-memory-only limitation; scene state is still saved
+explicitly. Started without completed is uncertain; retain complete earlier
+JSONL lines and treat an incomplete final line as incomplete. Do not auto-replay
+an uncertain command. Files are retained per session, without automatic total
+disk retention/archival. This is process-crash durability, not a power-loss
+guarantee or an atomic transaction with scene/asset writes.

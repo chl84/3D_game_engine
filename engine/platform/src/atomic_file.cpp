@@ -262,4 +262,91 @@ core::Result<void> atomic_write_private_file(const std::filesystem::path& path,
                                              std::string_view content) {
     return write_file(path, content, true);
 }
+core::Result<void> append_private_file_synced(const std::filesystem::path& path,
+                                              std::string_view content) {
+#ifndef _WIN32
+    unsigned flags = static_cast<unsigned>(O_WRONLY) | static_cast<unsigned>(O_APPEND) |
+                     static_cast<unsigned>(O_NONBLOCK) | static_cast<unsigned>(O_CLOEXEC);
+#ifdef O_NOFOLLOW
+    flags |= static_cast<unsigned>(O_NOFOLLOW);
+#endif
+    const int descriptor = ::open(path.c_str(), static_cast<int>(flags));
+    if (descriptor < 0) {
+        return core::make_failure<void>(io_error("could not open private journal", path));
+    }
+    struct CloseFile {
+        int descriptor;
+        ~CloseFile() {
+            (void)::close(descriptor);
+        }
+    };
+    const CloseFile guard{descriptor};
+    const auto appended = [&]() -> core::Result<void> {
+        struct stat status = {};
+        if (::fstat(descriptor, &status) != 0 || !S_ISREG(status.st_mode) || status.st_nlink != 1 ||
+            (status.st_mode & 0777U) != 0600 || status.st_uid != ::geteuid()) {
+            return core::make_failure<void>(io_error("invalid private journal", path));
+        }
+        std::size_t written = 0;
+        while (written < content.size()) {
+            const auto count =
+                ::write(descriptor, content.data() + written, content.size() - written);
+            if (count < 0 && errno == EINTR) {
+                continue;
+            }
+            if (count <= 0) {
+                return core::make_failure<void>(io_error("could not append private journal", path));
+            }
+            written += static_cast<std::size_t>(count);
+        }
+        if (::fsync(descriptor) != 0) {
+            return core::make_failure<void>(io_error("could not sync private journal", path));
+        }
+        return {};
+    }();
+#else
+    HANDLE handle =
+        CreateFileW(path.wstring().c_str(), GENERIC_WRITE | READ_CONTROL, FILE_SHARE_READ, nullptr,
+                    OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) {
+        return core::make_failure<void>(io_error("could not open private journal", path));
+    }
+    struct CloseFile {
+        HANDLE handle;
+        ~CloseFile() {
+            (void)CloseHandle(handle);
+        }
+    };
+    const CloseFile guard{handle};
+    const auto appended = [&]() -> core::Result<void> {
+        PrivateSecurity security;
+        BY_HANDLE_FILE_INFORMATION info{};
+        LARGE_INTEGER end{};
+        if (!security.initialize() || !security.verify(handle) ||
+            !GetFileInformationByHandle(handle, &info) || info.nNumberOfLinks != 1 ||
+            (info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) !=
+                0 ||
+            GetFileType(handle) != FILE_TYPE_DISK ||
+            !SetFilePointerEx(handle, end, nullptr, FILE_END)) {
+            return core::make_failure<void>(io_error("invalid private journal", path));
+        }
+        std::size_t written = 0;
+        while (written < content.size()) {
+            const auto chunk =
+                static_cast<DWORD>(std::min<std::size_t>(content.size() - written, 1U << 20U));
+            DWORD count = 0;
+            if (!WriteFile(handle, content.data() + written, chunk, &count, nullptr) ||
+                count == 0) {
+                return core::make_failure<void>(io_error("could not append private journal", path));
+            }
+            written += static_cast<std::size_t>(count);
+        }
+        if (!FlushFileBuffers(handle)) {
+            return core::make_failure<void>(io_error("could not sync private journal", path));
+        }
+        return {};
+    }();
+#endif
+    return appended;
+}
 } // namespace engine::platform

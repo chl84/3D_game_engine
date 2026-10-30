@@ -377,3 +377,9 @@ add_test(NAME engine_local_socket_deadline
             "$<TARGET_FILE:engine_local_socket_fixture>"
 )
 set_tests_properties(engine_local_socket_deadline PROPERTIES LABELS "contract;live;security" TIMEOUT 20)
+
+add_test(NAME engine_live_journal
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_journal.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_live_journal PROPERTIES LABELS "contract;live;security" TIMEOUT 40)

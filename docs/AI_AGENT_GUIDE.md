@@ -17,10 +17,12 @@ The end-of-session/substep reporting rules do not require a premature report.
 
 ## Independent reviewer
 
-Owner instruction, 2026-10-30: new independent reviews use GPT-6 Astra,
-model `gpt-6-astra`, with `reasoningEffort=high`. This replaces Claude Opus5.5
-high for future review rounds; historical verdicts retain their original
-reviewer attribution. Do not silently substitute another model or provider.
+Owner clarification, 2026-10-30: Claude Opus5.5 high is the reviewer until
+further owner instruction. Reviewer selection and changes belong to the owner.
+The earlier owner message selected GPT-6 Astra high; the latest clarification
+supersedes it. Preserve historical reviewer attribution rather than rewriting it.
+The three M3.7 review corrections require independent re-review, especially the
+queued-deadline correction, before M3.7 can be approved.
 
 ## Principles
 
@@ -344,3 +346,12 @@ the project copy is used instead. Screenshot outputs must be .png and cannot
 replace session/cache/scene files. Offline writers, including screenshot and
 force-unlock of an active process, conflict with the lifetime live project lock.
 After a crash, use project unlock --force only once the owning process is dead.
+
+Live command journals persist under .engine/live-commands-<session UUID>.jsonl.
+The startup result identifies commandLogFile. Intent is synchronized before
+execution; completed CommandBus records are synchronized before acknowledgement.
+Restart preserves old session files, including after a crash. A started record
+without completion has an uncertain outcome; do not replay it automatically.
+Ignore an incomplete trailing JSONL line when reading earlier complete records.
+Journal failure ends the live session with E_IO. This does not save scene state;
+use scene.save@1. Journals contain command arguments/results and are owner-only.

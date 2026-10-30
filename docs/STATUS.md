@@ -2,18 +2,20 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.7 — implemented and verified; awaiting owner assessment.
-Final CI41093710140 on7c24116 completed/success: all six jobs, Linux24/24 and
-Windows18/18. GPT-6 Astra high review findings are corrected and verified.
-[Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
+**Current substep:** M3.7 — owner requested Claude Opus re-review and durable live JSONL.
+Not approved. Prior green CI41093710140 covers7c24116 only; new changes need
+fresh verification and independent Claude Opus5.5 high re-review. The owner
+controls reviewer selection; the latest clarification restores Claude and
+supersedes the earlier Astra selection. Live journal persistence is being
+implemented in M3.7, before that combined re-review. M3.8 remains unstarted.
+
 M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
 CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
 The owner requires shared CLI handlers/bus, 127.0.0.1 only, per-request token,
 bounded framing/connections/timeouts, sandboxed client paths, exclusive
 project locking, parser fuzzing and explicit negative/security/log tests.
-The independent reviewer is now GPT-6 Astra with high reasoning effort
-(`gpt-6-astra`, `reasoningEffort=high`), replacing Claude Opus5.5 high for new
-reviews. Availability was verified through orchestrator capabilities.
+The current independent reviewer is Claude Opus5.5 high. Historical Astra
+review attribution is retained; no substitution is permitted without the owner.
 No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule.
 
 ## Substeps
@@ -68,7 +70,7 @@ No M3 merge/tag or M3.8 work is authorized. Reports follow the owner timing rule
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
-| M3.7 | Local JSON-RPC live API | Implemented and verified; all six CI jobs green; review findings addressed; awaiting owner assessment |
+| M3.7 | Local JSON-RPC live API | Not approved; durable JSONL implementation and mandatory Claude Opus re-review in progress |
 | M3.8 | M3 hardening and acceptance | Planned |
 
 ## M3.5 fixture preparation (owner requested)
@@ -709,3 +711,14 @@ presentation remains unverified; I/O deadlines do not cancel accepted CPU/GPU
 commands; the log is bounded in memory. See the full report for limitations.
 
 M3.7 now awaits owner assessment. No merge/tag or M3.8 work is authorized.
+
+### Latest owner clarification: durable journal and mandatory re-review
+
+The earlier Astra reviewer choice came from an explicit owner message. The owner
+now restores Claude Opus as reviewer and requires re-review of all three fixes,
+especially queued deadlines. Parent-only closure is insufficient for M3.7
+approval. Reviewer selection belongs exclusively to the owner.
+
+Implement continuous, synchronized JSONL command journaling under .engine/ in
+M3.7, then run combined Claude Opus5.5 high re-review before an owner report.
+No interim A.5 report, merge/tag or M3.8 is authorized.

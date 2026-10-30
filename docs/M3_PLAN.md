@@ -5,10 +5,10 @@ M3.2 are reviewer-approved and CI-green. M3.3 through M3.5 are complete;
 M3.5 PBR rendering is reviewer-approved (round 3), with all six CI jobs green
 on `eceb5f9`. M3.4/M3.5 are owner-approved; M3.6 is reviewer-approved on `4ce8cac`, its low UUID finding is corrected in
 ef6775a, and final CI 41076353145 is 6/6 success (Linux 22/22, Windows 16/16).
-M3.6 is owner-approved. M3.7 is implemented and verified, awaiting owner
-assessment. Its authorized scope includes explicit auth, resource,
-sandbox, lock, fuzz and negative-test requirements. The reviewer is now
-GPT-6 Astra high. The owner corrected emissive to sRGB.
+M3.6 is owner-approved. M3.7 is not approved; durable JSONL and mandatory
+Claude Opus re-review are in progress. Its authorized scope includes explicit auth, resource,
+sandbox, lock, fuzz and negative-test requirements. The latest owner clarification restores Claude Opus5.5 high and requires
+re-review of the three M3.7 fixes plus durable JSONL before approval. The owner corrected emissive to sRGB.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -331,7 +331,10 @@ credential with generic denial; bounded messages/connections/I/O deadlines;
 PathSandbox for every client path; lifetime project writer lock; permanent
 parser fuzzing in the existing CI job; tests for wrong token, oversized data,
 disconnect, lock exclusion and actual command-log visibility. New reviews use
-GPT-6 Astra with high reasoning effort. Concrete protocol is ADR-0013.
+Claude Opus5.5 high. A synchronized JSONL command journal under .engine/ is
+required in M3.7; intent precedes execution and completion precedes reply.
+Independent re-review of all three prior findings is mandatory. Concrete
+protocol is ADR-0013.
 
 - Implement the loopback JSON-RPC server and the CLI client/launcher.
 - Expose command, inspect, screenshot, ping and shutdown.

@@ -131,11 +131,44 @@ live acceptance covers auth, framing/size/depth/duplicate-key errors,
 disconnects, connection cap, idle-client fairness/deadlines, private permissions,
 lock conflicts, sandbox escapes, command-log visibility and live-only asset
 import/place/save/load/reimport/screenshot. Reference Linux/Windows results and
-independent review are recorded in STATUS.md. The owner's new reviewer is
-GPT-6 Astra with high reasoning effort, replacing Claude for future reviews.
+independent review are recorded in STATUS.md. The owner's latest clarification restores Claude Opus5.5 high and requires
+independent re-review of the three prior corrections, especially queued deadlines.
+Historical Astra attribution is retained.
 
 Primary references:
 
 - [JSON-RPC2.0 specification](https://www.jsonrpc.org/specification)
 - [Windows GetSecurityInfo/read-control requirements](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo)
 - [Windows system-preferred CSPRNG](https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom)
+
+### Durable live journal (owner clarification)
+
+M3.7 writes .engine/live-commands-<session UUID>.jsonl from startup onward. The
+private file is created atomically using the same owner-only permissions as the
+credential file. Its path is resolved through PathSandbox; it is not client-chosen.
+The ready message exposes commandLogFile. Each new session gets a separate file;
+shutdown and restart preserve previous files. Session UUIDs are independent of
+authentication tokens. No raw RPC envelope or credential enters the journal.
+
+Before a CommandBus dispatch, a started record containing name/arguments is
+appended and synchronized. After dispatch, actual CommandLog entries (including
+failed command results) are appended as completed records and synchronized before
+a reply is sent. Records carry journalVersion1, session UUID, dispatch index, and
+completed records also contain bus sequence and result. Native fsync on POSIX and
+FlushFileBuffers on Windows provide the synchronization boundary. File type,
+private permissions/owner and non-link status are checked on every append.
+
+Any journal error stops further dispatch and ends the session with E_IO. Failure
+before intent persistence prevents execution. Failure after execution must not be
+reported as command success: outcome can be uncertain. A started record without
+a matching completed record marks an uncertain command; do not automatically
+replay it. A crash or partial write may leave an incomplete final JSONL line;
+retain complete preceding lines and treat that tail as incomplete. A new session
+never appends to that damaged file. This preserves acknowledged records across
+process crashes; hardware/storage-controller power-loss guarantees are outside
+the tested claim. This journal is an audit/replay source, not automatic scene
+saving or an atomic transaction between asset/scene writes and command results.
+
+The existing per-session command admission bounds remain. Durable history is
+retained across sessions; aggregate disk retention/archival is not automatic.
+The hard-termination/restart/error tests run on Linux and Windows.

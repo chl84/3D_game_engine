@@ -1,0 +1,218 @@
+M3.7 durable live JSONL — local verification and re-review preparation
+Owner clarification: Claude Opus5.5 high is restored; mandatory independent re-review pending.
+Previous CI applies only to7c24116. This record does not claim new Windows/CI/re-review success.
+
+COMMAND: cmake --build --preset ci-linux-clang; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset ci-linux-clang
+Test project <workspace>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/25 Test  #1: engine_core_tests ................   Passed    0.05 sec
+      Start  2: engine_dependencies_smoke
+ 2/25 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/25 Test  #3: engine_asset_tests ...............   Passed    0.17 sec
+      Start  4: engine_render_tests
+ 4/25 Test  #4: engine_render_tests ..............   Passed    0.09 sec
+      Start  5: engine_window_smoke
+ 5/25 Test  #5: engine_window_smoke ..............   Passed    0.04 sec
+      Start  6: engine_swapchain_test
+ 6/25 Test  #6: engine_swapchain_test ............   Passed    0.09 sec
+      Start  7: engine_overlay_test
+ 7/25 Test  #7: engine_overlay_test ..............   Passed    0.12 sec
+      Start  8: engine_run_smoke
+ 8/25 Test  #8: engine_run_smoke .................   Passed    0.20 sec
+      Start  9: engine_point_light_warning
+ 9/25 Test  #9: engine_point_light_warning .......   Passed    0.23 sec
+      Start 10: engine_screenshot_golden
+10/25 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+      Start 11: engine_screenshot_cli
+11/25 Test #11: engine_screenshot_cli ............   Passed    0.19 sec
+      Start 12: engine_version_json
+12/25 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/25 Test #13: engine_cli_contract ..............   Passed    0.35 sec
+      Start 14: engine_docs_links
+14/25 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/25 Test #15: engine_sensitive_scan ............   Passed    0.49 sec
+      Start 16: engine_acceptance_m1
+16/25 Test #16: engine_acceptance_m1 .............   Passed    0.16 sec
+      Start 17: engine_api_reference
+17/25 Test #17: engine_api_reference .............   Passed    0.09 sec
+      Start 18: engine_asset_cli
+18/25 Test #18: engine_asset_cli .................   Passed    0.61 sec
+      Start 19: engine_pbr_golden
+19/25 Test #19: engine_pbr_golden ................   Passed    0.30 sec
+      Start 20: engine_pbr_color_golden
+20/25 Test #20: engine_pbr_color_golden ..........   Passed    0.12 sec
+      Start 21: engine_pbr_window
+21/25 Test #21: engine_pbr_window ................   Passed    0.18 sec
+      Start 22: engine_asset_placement
+22/25 Test #22: engine_asset_placement ...........   Passed    1.18 sec
+      Start 23: engine_live_api
+23/25 Test #23: engine_live_api ..................   Passed    4.87 sec
+      Start 24: engine_local_socket_deadline
+24/25 Test #24: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 25: engine_live_journal
+25/25 Test #25: engine_live_journal ..............   Passed    0.14 sec
+
+100% tests passed out of 25
+
+Label Time Summary:
+acceptance      =   6.67 sec*proc (6 tests)
+asset           =   2.56 sec*proc (6 tests)
+cli             =   7.66 sec*proc (8 tests)
+contract        =   9.26 sec*proc (11 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.60 sec*proc (3 tests)
+live            =   6.25 sec*proc (3 tests)
+render          =   7.65 sec*proc (13 tests)
+security        =   6.74 sec*proc (4 tests)
+unit            =   0.63 sec*proc (9 tests)
+
+Total Test time (real) =  11.01 sec
+
+COMMAND: clang-tidy -p build/ci-linux-clang engine/platform/src/atomic_file.cpp tools/engine/src/live.cpp tests/unit/project_test.cpp --warnings-as-errors=*
+[1/3] Processing file <workspace>/engine/platform/src/atomic_file.cpp.
+13440 warnings generated.
+[2/3] Processing file <workspace>/tools/engine/src/live.cpp.
+27092 warnings generated.
+[3/3] Processing file <workspace>/tests/unit/project_test.cpp.
+41558 warnings generated.
+Suppressed 41609 warnings (41558 in non-user code, 51 NOLINT).
+Use -header-filter=.* or leave it as default to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+
+Manual Linux fsync error injection (not a CTest target):
+The second append fsync fails with EIO after scene.save has executed.
+The RPC must return E_IO, never success; the session stops and leaves its journal.
+COMMAND: cc -shared -fPIC -Wall -Wextra -Werror <fault.c> -ldl -o <fault.so>
+.venv/bin/python <fault-check.py>
+Injected second journal fsync EIO after scene.save executed: RPC returns E_IO, no success acknowledgement; session stops and retains journal.
+
+Reproducer fault.c:
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+int fsync(int fd) {
+    char descriptor[64], path[1024];
+    snprintf(descriptor, sizeof(descriptor), "/proc/self/fd/%d", fd);
+    ssize_t n = readlink(descriptor, path, sizeof(path)-1);
+    static int journal_syncs;
+    if (n > 0) {
+        path[n] = 0;
+        if (strstr(path, "live-commands-") && n >= 6 && strcmp(path+n-6, ".jsonl") == 0 && ++journal_syncs == 2) {
+            errno = EIO;
+            return -1;
+        }
+    }
+    int (*real_fsync)(int) = (int (*)(int))dlsym(RTLD_NEXT, "fsync");
+    return real_fsync(fd);
+}
+
+Reproducer fault-check.py (temporary paths are local diagnostic artifacts):
+import json, os, pathlib, socket, subprocess, tempfile
+engine=str(pathlib.Path('build/ci-linux-clang/tools/engine/engine').resolve())
+with tempfile.TemporaryDirectory(prefix='journal-sync-fault-') as t:
+    project=pathlib.Path(t)/'project'
+    subprocess.run([engine,'project','create',str(project),'--json'],check=True,capture_output=True)
+    p=subprocess.Popen([engine,'live','serve',str(project),'--json'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=dict(os.environ,LD_PRELOAD='/tmp/m37-journal-fsync-fault.so'))
+    try:
+        ready=json.loads(p.stdout.readline())
+        discovery=json.loads((project/'.engine/live.json').read_text())
+        args={'path':'scenes/completed-before-sync-failure.scene.json'}
+        wire={'jsonrpc':'2.0','protocolVersion':1,'token':discovery['token'],'id':1,'method':'command','params':{'name':'scene.save@1','arguments':args}}
+        with socket.create_connection(('127.0.0.1',discovery['port']),timeout=5) as connection:
+            connection.sendall(json.dumps(wire).encode()+b'\n')
+            raw=b''
+            while part:=connection.recv(65536): raw+=part
+        result=json.loads(raw)['result']
+        assert result['status']=='error' and result['error']['code']=='E_IO'
+        assert (project/args['path']).exists(), 'command must have executed before the injected result sync failure'
+        assert p.wait(timeout=10)==0
+        journal=project/ready['data']['commandLogFile']
+        rows=[json.loads(x) for x in journal.read_text().splitlines()]
+        assert [r['event'] for r in rows]==['started','completed']
+        assert not (project/'.engine/live.json').exists() and not (project/'.engine/lock').exists()
+        print('Injected second journal fsync EIO after scene.save executed: RPC returns E_IO, no success acknowledgement; session stops and retains journal.')
+    finally:
+        if p.poll() is None: p.kill()
+        p.wait(timeout=10)
+
+A strace experiment could not run because strace is not installed; no syscall-trace success is claimed.
+The LD_PRELOAD diagnostic above independently confirms the actual fsync error path.
+
+COMMAND: cmake --build --preset linux-asan; VK_ICD_FILENAMES=<lavapipe ICD> ctest --preset linux-asan-lavapipe
+Test project <workspace>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/25 Test  #1: engine_core_tests ................   Passed    0.17 sec
+      Start  2: engine_dependencies_smoke
+ 2/25 Test  #2: engine_dependencies_smoke ........   Passed    0.01 sec
+      Start  3: engine_asset_tests
+ 3/25 Test  #3: engine_asset_tests ...............   Passed    0.84 sec
+      Start  4: engine_render_tests
+ 4/25 Test  #4: engine_render_tests ..............   Passed    0.29 sec
+      Start  5: engine_window_smoke
+ 5/25 Test  #5: engine_window_smoke ..............   Passed    0.11 sec
+      Start  6: engine_swapchain_test
+ 6/25 Test  #6: engine_swapchain_test ............   Passed    0.23 sec
+      Start  7: engine_overlay_test
+ 7/25 Test  #7: engine_overlay_test ..............   Passed    0.21 sec
+      Start  8: engine_run_smoke
+ 8/25 Test  #8: engine_run_smoke .................   Passed    0.72 sec
+      Start  9: engine_point_light_warning
+ 9/25 Test  #9: engine_point_light_warning .......   Passed    0.96 sec
+      Start 10: engine_screenshot_golden
+10/25 Test #10: engine_screenshot_golden .........   Passed    0.12 sec
+      Start 11: engine_screenshot_cli
+11/25 Test #11: engine_screenshot_cli ............   Passed    0.92 sec
+      Start 12: engine_version_json
+12/25 Test #12: engine_version_json ..............   Passed    0.09 sec
+      Start 13: engine_cli_contract
+13/25 Test #13: engine_cli_contract ..............   Passed    3.73 sec
+      Start 14: engine_docs_links
+14/25 Test #14: engine_docs_links ................   Passed    0.04 sec
+      Start 15: engine_sensitive_scan
+15/25 Test #15: engine_sensitive_scan ............   Passed    0.59 sec
+      Start 16: engine_acceptance_m1
+16/25 Test #16: engine_acceptance_m1 .............   Passed    1.45 sec
+      Start 17: engine_api_reference
+17/25 Test #17: engine_api_reference .............   Passed    0.18 sec
+      Start 18: engine_asset_cli
+18/25 Test #18: engine_asset_cli .................   Passed    5.04 sec
+      Start 19: engine_pbr_golden
+19/25 Test #19: engine_pbr_golden ................   Passed    0.90 sec
+      Start 20: engine_pbr_color_golden
+20/25 Test #20: engine_pbr_color_golden ..........   Passed    0.38 sec
+      Start 21: engine_pbr_window
+21/25 Test #21: engine_pbr_window ................   Passed    0.50 sec
+      Start 22: engine_asset_placement
+22/25 Test #22: engine_asset_placement ...........   Passed    4.28 sec
+      Start 23: engine_live_api
+23/25 Test #23: engine_live_api ..................   Passed   18.09 sec
+      Start 24: engine_local_socket_deadline
+24/25 Test #24: engine_local_socket_deadline .....   Passed    1.25 sec
+      Start 25: engine_live_journal
+25/25 Test #25: engine_live_journal ..............   Passed    0.35 sec
+
+100% tests passed out of 25
+
+Label Time Summary:
+acceptance      =  25.22 sec*proc (6 tests)
+asset           =  11.95 sec*proc (6 tests)
+cli             =  33.83 sec*proc (8 tests)
+contract        =  36.98 sec*proc (11 tests)
+dependencies    =   0.01 sec*proc (1 test)
+docs            =   0.80 sec*proc (3 tests)
+live            =  19.69 sec*proc (3 tests)
+render          =  27.71 sec*proc (13 tests)
+security        =  20.28 sec*proc (4 tests)
+unit            =   2.06 sec*proc (9 tests)
+
+Total Test time (real) =  41.46 sec
+
+Sanitizers retain detect_leaks=1:abort_on_error=1 and halt_on_error=1; only the documented local Mesa retention policy, no suppression.
+
+COMMAND: build/ci-linux-clang/tests/engine_core_tests
+All tests passed (560 assertions in 69 test cases)

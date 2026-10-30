@@ -440,3 +440,10 @@ The engine_local_socket_deadline test uses the production platform transport
 in a process fixture with stdin gates. It proves an expired queued frame cannot
 dispatch after a slow accepted handler, while that handler can finish. It runs
 on both platforms without server threads or POSIX-only process signals.
+
+engine_live_journal verifies synchronized live JSONL under .engine/: intent
+before execution, actual bus results before reply, process hard-kill survival,
+restart retention, failed-command records, credential exclusion and fail-closed
+append errors. Platform units reject unsafe link/type/permission targets.
+The manual Linux post-execution fsync EIO diagnostic is recorded separately
+in verification/M3_7_JOURNAL_EVIDENCE.txt; it is not claimed as a CTest/CI target.

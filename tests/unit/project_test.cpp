@@ -329,3 +329,33 @@ TEST_CASE("project lock is exclusive and can be released", "[project]") {
     REQUIRE_FALSE(project->locked());
     REQUIRE(second->lock().has_value());
 }
+
+TEST_CASE("private journal appends synchronize and reject unsafe targets", "[platform][journal]") {
+    engine::test::TempDir temp("journal");
+    const auto file = temp.path() / "commands.jsonl";
+    REQUIRE(engine::platform::atomic_write_private_file(file, "").has_value());
+    REQUIRE(engine::platform::append_private_file_synced(file, "{\"n\":1}\n").has_value());
+    REQUIRE(engine::platform::append_private_file_synced(file, "{\"n\":2}\n").has_value());
+    CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+    CHECK_FALSE(engine::platform::append_private_file_synced(temp.path(), "bad"));
+    CHECK_FALSE(engine::platform::append_private_file_synced(temp.path() / "missing", "bad"));
+    const auto alias = temp.path() / "alias";
+    std::error_code error;
+    std::filesystem::create_symlink(file, alias, error);
+    if (!error) {
+        CHECK_FALSE(engine::platform::append_private_file_synced(alias, "bad"));
+        CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+    }
+    const auto hard_link = temp.path() / "hard-link";
+    error.clear();
+    std::filesystem::create_hard_link(file, hard_link, error);
+    if (!error) {
+        CHECK_FALSE(engine::platform::append_private_file_synced(hard_link, "bad"));
+        CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+        std::filesystem::remove(hard_link);
+    }
+#ifndef _WIN32
+    std::filesystem::permissions(file, std::filesystem::perms::owner_read);
+    CHECK_FALSE(engine::platform::append_private_file_synced(file, "bad"));
+#endif
+}

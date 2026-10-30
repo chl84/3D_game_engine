@@ -57,3 +57,11 @@ a PowerShell module-environment correction; no assertion was removed.
 The original verdict on6e3fb73 is preserved; no second independent verdict is
 claimed. The parent corrected these findings with discriminating tests and
 reference CI. This is not owner approval or permission to merge/tag/start M3.8.
+
+## Superseding owner instruction
+
+The parent-only closure above is insufficient for approval. The owner requires
+independent re-review of all three corrections, particularly the deadline fix,
+by Claude Opus. The latest owner decision restores Claude Opus5.5 high and adds
+continuous durable live JSONL in M3.7 before that combined re-review. The earlier
+Astra verdict/attribution is historical and is not rewritten. M3.7 is not approved.

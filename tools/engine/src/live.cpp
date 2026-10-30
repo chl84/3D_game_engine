@@ -3,6 +3,7 @@
 #include <array>
 #include <engine/control/json_rpc.hpp>
 #include <engine/core/path_sandbox.hpp>
+#include <engine/core/uuid.hpp>
 #include <engine/platform/atomic_file.hpp>
 #include <engine/platform/local_socket.hpp>
 #include <filesystem>
@@ -81,6 +82,21 @@ int live_server(const std::string& root, const std::string& scene_path, int time
     if (!locked) {
         return emit(CommandResult::failure(locked.error()), as_json);
     }
+    const auto journal_session = core::Uuid::generate().to_string();
+    const auto journal_relative = ".engine/live-commands-" + journal_session + ".jsonl";
+    auto journal_path = sandbox->resolve(journal_relative);
+    if (!journal_path) {
+        return emit(CommandResult::failure(journal_path.error()), as_json);
+    }
+    if (std::filesystem::exists(*journal_path, ec) || ec) {
+        return emit(
+            CommandResult::failure(core::make_error(ErrorCode::Io, "journal path unavailable")),
+            as_json);
+    }
+    auto created_journal = platform::atomic_write_private_file(*journal_path, "");
+    if (!created_journal) {
+        return emit(CommandResult::failure(created_journal.error()), as_json);
+    }
     core::ReflectionRegistry registry;
     scene::register_scene_components(registry);
     auto scene = project->load_scene(scene_path, registry);
@@ -112,11 +128,13 @@ int live_server(const std::string& root, const std::string& scene_path, int time
     }
     const SessionFile session_file{*token_path};
     bool stopping = false;
+    std::uint64_t dispatch = 0;
     std::size_t logged_bytes = 0;
     (void)emit(CommandResult::success(command::CommandOutput{{
                    {"port", server->port()},
                    {"protocolVersion", 1},
                    {"sessionFile", ".engine/live.json"},
+                   {"commandLogFile", journal_relative},
                }}),
                as_json);
     const auto handle = [&](std::string_view wire) -> std::string {
@@ -140,9 +158,51 @@ int live_server(const std::string& root, const std::string& scene_path, int time
                 return finish(
                     control::rpc_error(request.id, -32002, "Session command limit reached"));
             }
+            const auto journal_error = [&] {
+                stopping = true;
+                return finish(control::rpc_result(
+                    request.id, CommandResult::failure(
+                                    core::make_error(ErrorCode::Io, "live command journal failed",
+                                                     "The session is stopping; consult the journal "
+                                                     "for an uncertain outcome."))
+                                    .to_json()));
+            };
+            const auto append = [&](json record) -> core::Result<void> {
+                try {
+                    record["journalVersion"] = 1;
+                    record["session"] = journal_session;
+                    record["dispatch"] = dispatch;
+                    return platform::append_private_file_synced(*journal_path,
+                                                                record.dump() + '\n');
+                } catch (const std::exception&) {
+                    return core::make_failure<void>(
+                        core::make_error(ErrorCode::Io, "live journal failure"));
+                }
+            };
+            ++dispatch;
+            // Persist intent before execution, then actual bus results before acknowledgement.
+            if (!append({
+                    {"event", "started"},
+                    {"name", command.name},
+                    {"arguments", command.arguments},
+                })) {
+                return journal_error();
+            }
+            const auto previous_count = log.entries().size();
             const auto result = bus.execute(command);
-            const auto& entry = log.entries().back();
-            logged_bytes += entry.arguments.dump().size() + entry.result.dump().size();
+            for (auto i = previous_count; i < log.entries().size(); ++i) {
+                const auto& entry = log.entries()[i];
+                logged_bytes += entry.arguments.dump().size() + entry.result.dump().size();
+                if (!append({
+                        {"event", "completed"},
+                        {"sequence", entry.sequence},
+                        {"name", entry.name},
+                        {"arguments", entry.arguments},
+                        {"result", entry.result},
+                    })) {
+                    return journal_error();
+                }
+            }
             return finish(control::rpc_result(request.id, result.to_json()));
         };
         try {
