@@ -144,6 +144,10 @@ TEST_CASE("reimport preserves asset and stable IDs without changing bytes", "[as
     std::filesystem::copy_file(fixture("blender_cube.glb"), source);
 
     auto imported = import_asset(project->root(), source);
+    if (!imported) {
+        UNSCOPED_INFO("import failed: " << imported.error().message << " "
+                                        << imported.error().details.dump());
+    }
     REQUIRE(imported.has_value());
     auto first = load_asset(project->root(), imported->record.asset_id);
     REQUIRE(first.has_value());
@@ -224,6 +228,10 @@ TEST_CASE("asset library rejects missing projects and stale caches", "[asset][li
     auto project = engine::scene::Project::create(temp.path() / "project", "Asset Test");
     REQUIRE(project.has_value());
     auto imported = import_asset(project->root(), source);
+    if (!imported) {
+        UNSCOPED_INFO("import failed: " << imported.error().message << " "
+                                        << imported.error().details.dump());
+    }
     REQUIRE(imported.has_value());
     const auto cooked = project->root() / imported->record.cache_path / "cooked.json";
     auto document = read_text(cooked);
