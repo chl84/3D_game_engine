@@ -96,15 +96,12 @@ switch for preserving native libraries and complete leak stacks. The older
 attempt used `LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING`, which was not the
 runtime variable and had no effect.
 
-The documented [LSan file](../../tests/sanitizers/mesa-lavapipe.supp) contains only
-`leak:rtasm_exec_malloc`. It does not suppress calloc, unknown modules, entire
-Vulkan/LLVM libraries or engine code. A function rule needs a symbolized stack;
-it cannot match the original stripped/unloaded `<unknown module>` reports.
-On the installed driver, retention alone keeps this process-lifetime arena
-reachable, so the successful run consumes **zero suppression matches**. The
-rule is inactive and unverified on the available binaries: it would require
-matching external debug information, which was unavailable. It is not the
-explanation for the clean result. This distinction must remain visible.
+The owner requested removal of the inactive `rtasm_exec_malloc` suppression
+rule after source ownership was established. No suppression file or
+LSAN_OPTIONS override is now loaded by this preset. On the installed stripped
+driver, retention alone keeps this process-lifetime arena reachable; no
+suppression produced the earlier successful run either. Historical commands
+and captured output remain as evidence of the diagnosis.
 
 ```sh
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \

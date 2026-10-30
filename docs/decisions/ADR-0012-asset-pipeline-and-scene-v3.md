@@ -16,8 +16,8 @@ constraints:
   later overrides. Overrides are not implemented in M3.
 - `asset.json` stores the original source path for reimport; `.engine/cache/` is
   ignored by git.
-- PBR uses sRGB for base-color textures and linear data for the remaining
-  texture inputs. A golden test verifies the color pipeline.
+- PBR uses sRGB for base-color and emissive textures; normal, occlusion and
+  metallic-roughness textures use linear data. A golden test verifies the color pipeline.
 - Animations are not imported in M3; `asset inspect` only reports that they
   exist.
 
@@ -116,9 +116,9 @@ assets/<assetId>/source.glb          # project-relative source copy
 
 - glTF metallic-roughness: base-color, metallic/roughness, normal, occlusion
   and emissive inputs.
-- Base-color textures use sRGB. All other texture inputs, including emissive,
-  normal, metallic-roughness and occlusion, use linear values, as approved by
-  the owner.
+- Base-color and emissive textures use sRGB, as specified by glTF 2.0. Normal,
+  metallic-roughness and occlusion textures use linear values. Material factors
+  remain linear; the GPU decodes texture RGB through SRGB image formats.
 - Opaque and alpha-mask materials are supported. Blended transparency is
   deferred because it requires sorting.
 - One authored `DirectionalLight` plus a small fixed ambient term. No IBL or
@@ -210,3 +210,16 @@ free-form metadata object. Cooked loading restores those roots instead of losing
 scene membership or treating unused parentless nodes as part of the scene.
 `gltf-import@3` requires recooking older derived caches. No sidecar/cooked format
 version changes; original sources and stable IDs remain intact. See ADR-0014.
+
+## Owner correction and approvals — 2026-10-30
+
+The owner corrected the earlier emissive-linear instruction: emissiveTexture
+uses sRGB in accordance with glTF 2.0. There is no emissive color-space deviation.
+`gltf-import@4` invalidates caches cooked under the former instruction; reimport
+regenerates their format metadata while preserving stable IDs and v1 schemas.
+The color golden expects red 117 instead of 156 for the emissive patch; a linear
+negative control must remain distinguishable.
+
+The owner formally approved official mmikk/MikkTSpace, the pinned commit and
+zlib license, including the separately marked build copy with its documented
+UB corrections. M3.4 and M3.5 are owner-approved.

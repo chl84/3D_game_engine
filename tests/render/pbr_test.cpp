@@ -208,8 +208,8 @@ int main(int argc, char** argv) {
                 require(images_match(pixels, expected), "color-space golden mismatch");
             }
             validation(device);
-            std::cout << "PBR color-space fixed golden passed (sRGB base; linear "
-                         "MR/AO/emissive/normal)\n";
+            std::cout << "PBR color-space fixed golden passed (sRGB base/emissive; linear "
+                         "MR/AO/normal)\n";
             return 0;
         }
         auto renderer = take(render::OffscreenRenderer::create(device, {256, 192}));

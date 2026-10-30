@@ -241,13 +241,14 @@ void sampler_probes(render::OffscreenRenderer& renderer) {
 std::vector<std::uint8_t> render_pbr_color_chart(const render::Device& device) {
     auto renderer = take(render::OffscreenRenderer::create(device, {64, 64}));
     std::vector<std::uint8_t> chart(std::size_t{192} * 128U * 4U);
-    constexpr std::array expected{19, 33, 33, 33, 156, 137};
+    constexpr std::array expected{19, 33, 33, 33, 117, 137};
     // Row-major: sRGB base, linear base control, linear MR, linear AO,
-    // linear emissive (owner-approved policy), linear normal with authored sun.
+    // sRGB emissive, linear normal with authored sun.
     for (std::size_t patch = 0; patch < expected.size(); ++patch) {
         auto a = quad();
         add_texture(a,
-                    patch == 0 ? asset::TextureColorSpace::Srgb : asset::TextureColorSpace::Linear,
+                    (patch == 0 || patch == 4) ? asset::TextureColorSpace::Srgb
+                                               : asset::TextureColorSpace::Linear,
                     {128, 128, 128, 255});
         auto& material = a.asset.materials[0];
         if (patch < 2) {
@@ -314,12 +315,19 @@ void verify_pbr_probes(const render::Device& device) {
     mr.asset.materials[0].metallic_roughness_texture = asset::TextureReference{};
     near(red(renderer, mr), 33, "metallic-roughness blue channel or linear data failed");
     auto emissive = quad();
-    add_texture(emissive, asset::TextureColorSpace::Linear, {128, 128, 128, 255});
+    add_texture(emissive, asset::TextureColorSpace::Srgb, {128, 128, 128, 255});
     auto& em = emissive.asset.materials[0];
     em.base_color_factor = {0, 0, 0, 1};
     em.emissive_factor = {1, 1, 1};
     em.emissive_texture = asset::TextureReference{};
-    near(red(renderer, emissive), 156, "linear emissive/tone-map pipeline failed");
+    const auto srgb_emissive = red(renderer, emissive);
+    near(srgb_emissive, 117, "emissive sRGB decode/tone-map pipeline failed");
+    emissive.record.asset_id = core::Uuid::generate();
+    emissive.textures[0].color_space = asset::TextureColorSpace::Linear;
+    const auto linear_emissive = red(renderer, emissive);
+    near(linear_emissive, 156, "linear emissive negative control failed");
+    require(std::abs(srgb_emissive - linear_emissive) > 30,
+            "emissive probe does not distinguish sRGB from linear");
     auto alpha = quad();
     alpha.asset.materials[0].base_color_factor = {1, 1, 1, 0.25F};
     alpha.asset.materials[0].alpha_mode = asset::AlphaMode::Mask;

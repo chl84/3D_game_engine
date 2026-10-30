@@ -372,7 +372,7 @@ The earlier 112-byte LSan report is identified as Mesa 26.2.5 RTASM arena metada
 not an unknown engine allocation. See the [source/stack diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md)
 and [full M3.5 report](verification/M3_5_STATUS_REPORT.md).
 The opt-in local test preset preserves native-library globals using the supported
-Vulkan loader switch and loads a function-specific LSan file. Leak detection,
+Vulkan loader switch. The inactive LSan rule was removed at the owner's request. Leak detection,
 ASan/UBSan and Required Vulkan validation remain enabled. The ordinary preset
 and Ubuntu CI do not inherit this local policy.
 

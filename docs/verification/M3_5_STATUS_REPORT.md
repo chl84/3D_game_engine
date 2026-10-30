@@ -104,7 +104,7 @@ VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json \
 
 [Full diagnosis, normalized stacks and source proof](M3_SANITIZER_DIAGNOSIS.md),
 [captured native stack/control](M3_SANITIZER_EVIDENCE.txt),
-[narrow LSan file](../../tests/sanitizers/mesa-lavapipe.supp).
+the historical narrow LSan rule (removed at the owner's request).
 The two allocations are Mesa's RTASM arena metadata, not engine-owned objects.
 The manually run standalone program releases all requested executable code
 and still reproduces exactly 56+56 bytes. The loader had unloaded the driver before LSan
@@ -178,3 +178,13 @@ marked Manually verified, and acceptance evidence is committed rather than
 pointing to temporary logs. The inactive rule, driver-global reachability
 limit and diagnostic exit codes are explicit. No rendering/import runtime code
 changed during these reporting corrections. M3.6 remains stopped.
+
+## Owner approval and subsequent correction — 2026-10-30
+
+The owner approved M3.4 and M3.5 and authorized M3.6. The evidence above describes
+`59c2e97` and its former emissive-linear policy. The subsequent owner correction
+requires sRGB emissiveTexture: ADR-0012 is updated, importer@4 invalidates old
+caches, the regenerated color golden expects 117 for emissive, and a linear
+negative control expects 156. The inactive suppression rule is removed;
+linux-asan-lavapipe retains the loader policy without any suppression file.
+Current correction and M3.6 verification are recorded in STATUS.md.

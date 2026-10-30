@@ -73,18 +73,45 @@ def main():
         run("asset", "reimport", project, asset_id, code=5, error="E_CONFLICT")
         lock.rmdir()
 
-        # Simulate a legitimate cache from the previous tangent algorithm.
+        # Emissive and baseColor may share an sRGB texture. The same texture
+        # cannot also serve linear data. Exercise cooking, not just GPU mocks.
+        raw_color = source.read_bytes()
+        color_length = struct.unpack_from("<I", raw_color, 12)[0]
+        color_doc = json.loads(raw_color[20:20 + color_length])
+        color_doc["materials"][0]["emissiveTexture"] = {"index": 0}
+        color_doc["materials"][0]["emissiveFactor"] = [1, 1, 1]
+        emissive_source = tmp / "emissive.glb"
+
+        def write_color_source():
+            encoded = json.dumps(color_doc, separators=(",", ":")).encode()
+            encoded += b" " * (-len(encoded) % 4)
+            payload = struct.pack("<II", len(encoded), 0x4E4F534A) + encoded + raw_color[20 + color_length:]
+            emissive_source.write_bytes(struct.pack("<III", 0x46546C67, 2, len(payload) + 12) + payload)
+
+        write_color_source()
+        emissive = run("asset", "import", project, emissive_source)["data"]
+        emissive_info = run("asset", "inspect", project, emissive["assetId"])["data"]
+        assert emissive_info["textures"][0]["colorSpace"] == "srgb"
+        emissive_cooked = json.loads((project / emissive["cachePath"] / "cooked.json").read_text())
+        assert emissive_cooked["textures"][0]["colorSpace"] == "srgb"
+        color_doc["materials"][0]["occlusionTexture"] = {"index": 0}
+        write_color_source()
+        before = snapshot(project)
+        run("asset", "import", project, emissive_source, code=3, error="E_VALIDATION")
+        assert snapshot(project) == before
+
+        # Simulate the previous emissive-linear cache; reimport must repair it.
         sidecar_path = project / "assets" / asset_id / "asset.json"
         legacy = json.loads(sidecar_path.read_text())
-        old_key = hashlib.sha256((legacy["sourceHash"] + "|gltf-import@1|{}").encode()).hexdigest()
+        old_key = hashlib.sha256((legacy["sourceHash"] + "|gltf-import@3|{}").encode()).hexdigest()
         old_path = ".engine/cache/" + asset_id + "/" + old_key[:16]
         shutil.move(str(project / legacy["cooked"]["path"]), str(project / old_path))
-        legacy["importerVersion"] = "gltf-import@1"
+        legacy["importerVersion"] = "gltf-import@3"
         legacy["cooked"] = {"key": old_key, "path": old_path}
         sidecar_path.write_text(json.dumps(legacy))
         cooked_path = project / old_path / "cooked.json"
         cooked = json.loads(cooked_path.read_text())
-        cooked["importerVersion"] = "gltf-import@1"
+        cooked["importerVersion"] = "gltf-import@3"
         cooked["cacheKey"] = old_key
         cooked_path.write_text(json.dumps(cooked))
         run("asset", "validate", project, asset_id, code=3, error="E_VALIDATION")

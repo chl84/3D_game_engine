@@ -246,8 +246,7 @@
       "environment": {
         "VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING": "1",
         "ASAN_OPTIONS": "detect_leaks=1:abort_on_error=1",
-        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1",
-        "LSAN_OPTIONS": "suppressions=${sourceDir}/tests/sanitizers/mesa-lavapipe.supp:print_suppressions=1"
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
       }
     },
     {

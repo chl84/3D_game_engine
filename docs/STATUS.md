@@ -2,11 +2,12 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.5 complete — reviewer GODKJENT (round 3).
-All six original CI jobs passed on `eceb5f9`; owner-requested reporting/color
-follow-up passed all six jobs on `59c2e97` (Ubuntu 21/21, Windows15/15).
-M3.6 is stopped pending the owner's assessment.
-M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
+**Current substep:** M3.6 — asset instances and scene placement (authorized).
+M3.4 and M3.5 were approved by the owner on 2026-10-30. All six reporting
+follow-up CI jobs passed on `59c2e97` (Ubuntu21/21, Windows15/15).
+The owner corrected emissiveTexture to sRGB, formally approved the pinned
+MikkTSpace implementation including the marked UB-corrected build copy, and
+requested removal of the inactive LSan rule. No M3 merge or tag is authorized.
 
 ## Substeps
 
@@ -57,9 +58,9 @@ M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 | M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
-| M3.4 | Asset CLI and approved MikkTSpace cooking | Done — reviewer GODKJENT (round 3); all CI green |
-| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Done — reviewer GODKJENT (round 3); all CI green |
-| M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
+| M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
+| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
+| M3.6 | `AssetInstance` placement and scene v3 save/load | In progress — owner authorized |
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
 
@@ -558,3 +559,20 @@ policy; required report corrections are applied. Permanent
 [native diagnostic](verification/M3_SANITIZER_EVIDENCE.txt) evidence is committed.
 Existing rendering/import runtime and Blender golden are unchanged. M3.6 stays
 stopped. No merge or tag is authorized or performed.
+
+## Owner correction before M3.6 — 2026-10-30
+
+- Emissive textures now cook as sRGB, matching baseColor and glTF 2.0. Factors
+  and normal/MR/AO inputs remain linear. Importer@4 invalidates old cooked caches
+  while preserving stable IDs and v1 source/cache schemas.
+- The fixed color PNG is regenerated: emissive117, with a deliberately linear
+  control156. Import/cooked metadata tests also cover shared base/emissive
+  textures and rejection of mixed sRGB/data uses.
+- The inactive suppression file is removed, together with the preset's
+  LSAN_OPTIONS reference. The local preset retains only the documented loader
+  retention switch and active ASan/UBSan/leak checks. Historical leak evidence
+  remains unchanged.
+- MikkTSpace, the pinned mmikk commit/zlib license and marked UB-corrected build
+  copy are formally owner-approved.
+- Local Clang asset/PBR verification and subsequent M3.6 results are recorded
+  below as they complete. No merge/tag has been performed.

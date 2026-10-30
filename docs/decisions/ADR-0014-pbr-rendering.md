@@ -95,8 +95,8 @@ fails explicitly. Without one, only fixed ambient and emissive remain. Ambient
 is multiplied by occlusion and the nonmetal diffuse color. The tone map is
 Reinhard (`linear / (1 + linear)`), followed by the standard piecewise sRGB
 transfer. UNORM targets encode explicitly; SRGB targets encode in the attachment,
-so there is exactly one output conversion. As approved in ADR-0012, baseColor is
-sRGB while the remaining inputs, including emissive textures, are linear.
+so there is exactly one output conversion. As corrected by the owner in ADR-0012, baseColor and emissive textures are
+sRGB; metallic-roughness, normal and occlusion textures are linear.
 
 Shaders are built by glslc for Vulkan 1.3 with SPIR-V 1.5. This avoids requiring
 optional shaderDemoteToHelperInvocation for alpha discard. Each embedded shader

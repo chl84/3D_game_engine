@@ -372,14 +372,14 @@ void assign_existing_ids(ImportedAsset& asset, const json& sidecar) {
         mark(material.metallic_roughness_texture, false);
         mark(material.normal_texture, false);
         mark(material.occlusion_texture, false);
-        mark(material.emissive_texture, false);
+        mark(material.emissive_texture, true);
     }
     for (std::size_t index = 0; index < usage.size(); ++index) {
         if (usage[index] == 3U) {
             return core::make_failure<void>(asset_error(
                 ErrorCode::Validation,
                 "a texture is used as both sRGB and linear data in the same material set",
-                "Use separate glTF textures for base color and data textures.",
+                "Use separate glTF textures for base color/emissive and data textures.",
                 {{"texture", index}}));
         }
         asset.textures[index].color_space =
