@@ -210,21 +210,27 @@ TEST_CASE("scene format v3 components require version 3", "[project][scene]") {
     ReflectionRegistry registry;
     register_scene_components(registry);
     const auto scene_file = project->root() / "scenes/main.scene.json";
-    auto scene_document = nlohmann::json::parse(read_file(scene_file));
-    REQUIRE(scene_document["formatVersion"] == 3);
-    auto& entity = scene_document["entities"][0];
-    entity["components"]["engine.scene.DirectionalLight"] = {
-        {"direction", {0.0, -1.0, 0.0}},
-        {"color", {1.0, 1.0, 1.0}},
-        {"intensity", 1.0},
-        {"enabled", true},
+    const auto original = nlohmann::json::parse(read_file(scene_file));
+    REQUIRE(original["formatVersion"] == 3);
+
+    const auto rejects_in_v2 = [&](const std::string& component, const std::string& value) {
+        auto scene_document = original;
+        scene_document["entities"][0]["components"][component] = nlohmann::json::parse(value);
+        scene_document["formatVersion"] = 2;
+        REQUIRE(engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n")
+                    .has_value());
+        auto invalid = project->load_scene("scenes/main.scene.json", registry);
+        REQUIRE_FALSE(invalid.has_value());
+        REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
     };
-    scene_document["formatVersion"] = 2;
-    REQUIRE(
-        engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n").has_value());
-    auto invalid = project->load_scene("scenes/main.scene.json", registry);
-    REQUIRE_FALSE(invalid.has_value());
-    REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
+
+    rejects_in_v2("engine.scene.AssetInstance",
+                  R"({"assetId":"5f0c2a2e-7d4b-4c1e-9a2f-1f3d4c5b6a70"})");
+    rejects_in_v2("engine.scene.DirectionalLight",
+                  R"({"direction":[0.0,-1.0,0.0],"color":[1.0,1.0,1.0],)"
+                  R"("intensity":1.0,"enabled":true})");
+    rejects_in_v2("engine.scene.PointLight", R"({"color":[1.0,0.9,0.8],"intensity":4.0,)"
+                                             R"("range":12.0,"enabled":true})");
 }
 
 TEST_CASE("scene loader rejects missing IDs and negative revisions", "[project]") {

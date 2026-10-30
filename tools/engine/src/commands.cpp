@@ -1,4 +1,5 @@
 #include "commands.hpp"
+#include "scene_warnings.hpp"
 
 #include <engine/command/command.hpp>
 #include <engine/core/path_sandbox.hpp>
@@ -47,23 +48,6 @@ using scene::Transform;
 
 [[nodiscard]] CommandResult success(nlohmann::json data, std::vector<std::string> warnings = {}) {
     return CommandResult::success(CommandOutput{std::move(data), std::move(warnings)});
-}
-
-[[nodiscard]] std::vector<std::string> point_light_warnings(const Scene& scene,
-                                                            std::string_view scene_path) {
-    std::size_t count = 0;
-    for (const Entity entity : scene.entities()) {
-        if (scene.has<PointLight>(entity)) {
-            ++count;
-        }
-    }
-    if (count == 0) {
-        return {};
-    }
-    return {
-        "scene '" + std::string(scene_path) + "' contains " + std::to_string(count) +
-            " PointLight component(s); point lights are not rendered until M5",
-    };
 }
 
 [[nodiscard]] CommandResult failure(Error error) {

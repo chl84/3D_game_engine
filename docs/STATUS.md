@@ -3,7 +3,7 @@
 **Last updated:** 2026-10-29
 **Current milestone:** M2 — Vulkan renderer
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.1 implemented — decisions, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement, `stb_image` approval and PointLight warnings. Reviewer approval is pending before M3.2.
+**Current substep:** M3.1 approved by reviewer — decisions, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement, `stb_image` approval and PointLight warnings. M3.2 (GLB import core) is in progress.
 
 ## Substeps
 
@@ -51,7 +51,7 @@
 
 | Substep | Scope | Status |
 |---|---|---|
-| M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Implemented — reviewer pending |
+| M3.1 | ADRs, scene format v3, asset schemas, fastgltf dependency, `ilammy` replacement and PointLight warnings | Reviewer GODKJENT |
 | M3.2 | GLB import core; animation channels reported only | Planned |
 | M3.3 | Cooked asset cache, stable IDs and reimport | Planned |
 | M3.4 | Asset CLI | Planned |

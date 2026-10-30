@@ -40,7 +40,7 @@ New optional components:
 
 Version 1 and 2 scenes load and upgrade to v3 on save. Components introduced in
 v3 are rejected when read from a v1 or v2 file. Version 4 and higher fail with
-`E_UNSUPPORTED_FORMAT`.
+`E_UNSUPPORTED`, the codebase's error for unsupported versions.
 
 ### Asset format and cache
 

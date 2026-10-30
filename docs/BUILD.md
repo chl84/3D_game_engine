@@ -221,7 +221,8 @@ tested there. Graphics on Windows is not part of the M2/M3 approval and will be
 reported as **not verified** until the owner tests it manually on a Windows
 machine.
 
-The CI workflow sets up MSVC with `ilammy/msvc-dev-cmd` and uses the
+The CI workflow locates Visual Studio with `vswhere`, imports
+`vcvarsall.bat x64` and verifies `cl.exe` before configuring. It uses the
 `x64-windows` vcpkg triplet. The first configure installs the dependencies in
 `build/ci-windows/vcpkg_installed/`.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that point lights produce warnings in project validate, run and screenshot."""
+"""Verify that point lights produce warnings in validate, run and screenshot."""
 
 from __future__ import annotations
 
@@ -46,12 +46,6 @@ def main() -> int:
     if len(sys.argv) != 2:
         return fail("usage: point_light_warning.py <engine>")
     engine = sys.argv[1]
-
-    if sys.platform.startswith("linux") and not (
-        os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
-    ):
-        print("SKIPPED: no display server is available")
-        return SKIP_EXIT_CODE
 
     with tempfile.TemporaryDirectory(prefix="engine-point-light-") as temporary:
         project = Path(temporary) / "demo"
@@ -100,7 +94,16 @@ def main() -> int:
         light = light_document["data"]["result"]["id"]
         added = run_engine(
             engine,
-            ["component", "add", str(project), "--id", light, "--component", "engine.scene.PointLight", "--json"],
+            [
+                "component",
+                "add",
+                str(project),
+                "--id",
+                light,
+                "--component",
+                "engine.scene.PointLight",
+                "--json",
+            ],
         )
         if added.returncode != 0:
             print(added.stdout, added.stderr)
@@ -111,6 +114,19 @@ def main() -> int:
         validated_document = parse_result(validated, "project validate")
         if validated.returncode != 0 or not has_point_light_warning(validated_document):
             return fail("project validate did not warn about PointLight")
+
+        scene_validated = run_engine(
+            engine, ["scene", "validate", str(project), "scenes/main.scene.json", "--json"]
+        )
+        scene_validated_document = parse_result(scene_validated, "scene validate")
+        if scene_validated.returncode != 0 or not has_point_light_warning(scene_validated_document):
+            return fail("scene validate did not warn about PointLight")
+
+        if sys.platform.startswith("linux") and not (
+            os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+        ):
+            print("SKIPPED: no display server is available for run and screenshot")
+            return SKIP_EXIT_CODE
 
         run_result = run_engine(
             engine,
