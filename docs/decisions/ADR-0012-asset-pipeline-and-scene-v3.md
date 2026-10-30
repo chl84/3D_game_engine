@@ -55,6 +55,14 @@ represent faithfully:
 - blended transparency, unsupported vertex attributes and non-float vertex data
 - truncated or malformed containers, hierarchy cycles and out-of-range indices
 
+Base64 data URIs embedded in the GLB JSON are accepted because they are still
+self-contained; the project-relative source copy remains the single file that
+is hashed for the cache key. Every buffer, buffer view and accessor is checked
+against the bytes actually present before any accessor is read, so a truncated
+BIN chunk fails with `E_VALIDATION` instead of reading past the allocation.
+Nodes outside the one imported scene remain in the node table for stable-ID
+mapping in M3.3 but are not scene roots.
+
 Source size is limited to 512 MiB, each encoded image to 64 MiB, primitives to
 4M vertices and 16M indices, and hierarchy depth to 1024 nodes. Animation
 channels are counted and reported; their data is not imported. Node paths are
