@@ -120,3 +120,18 @@ JSONL lines and treat an incomplete final line as incomplete. Do not auto-replay
 an uncertain command. Files are retained per session, without automatic total
 disk retention/archival. This is process-crash durability, not a power-loss
 guarantee or an atomic transaction with scene/asset writes.
+
+## Claude review findings and follow-up (pending)
+
+Claude independently verified all three original corrections and the journal
+design, but requires F1 serialization fail-closed correction. F2–F4 strengthen
+the mode probe, automate native fsync faults and expose terminal failure on
+stderr/exit6, including notifications. The parent addresses all four together;
+new-source CI and another Claude check are required before final reporting.
+[Claude findings](M3_7_CLAUDE_REVIEW_ROUND1.md). New expected totals are Linux
+GCC/Clang26/26, ASan25/25 and Windows19/19; the additional real fsync fault
+interposer runs only in Linux non-sanitized builds.
+
+[Follow-up local evidence](M3_7_CLAUDE_FIX_EVIDENCE.txt) records the new tests
+and discriminating source mutations. Independent Claude re-check and new
+reference CI remain required before final reporting.

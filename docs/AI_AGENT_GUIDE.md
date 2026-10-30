@@ -355,3 +355,7 @@ without completion has an uncertain outcome; do not replay it automatically.
 Ignore an incomplete trailing JSONL line when reading earlier complete records.
 Journal failure ends the live session with E_IO. This does not save scene state;
 use scene.save@1. Journals contain command arguments/results and are owner-only.
+
+A journal failure also ends the foreground server with the existing E_IO exit
+status6 and one constant stderr diagnostic, even when a notification has no
+reply. Malformed result serialization follows this same terminal path.

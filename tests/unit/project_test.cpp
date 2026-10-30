@@ -355,7 +355,9 @@ TEST_CASE("private journal appends synchronize and reject unsafe targets", "[pla
         std::filesystem::remove(hard_link);
     }
 #ifndef _WIN32
-    std::filesystem::permissions(file, std::filesystem::perms::owner_read);
+    std::filesystem::permissions(
+        file, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write |
+                  std::filesystem::perms::group_read | std::filesystem::perms::others_read);
     CHECK_FALSE(engine::platform::append_private_file_synced(file, "bad"));
 #endif
 }

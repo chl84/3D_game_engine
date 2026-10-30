@@ -216,3 +216,26 @@ Sanitizers retain detect_leaks=1:abort_on_error=1 and halt_on_error=1; only the 
 
 COMMAND: build/ci-linux-clang/tests/engine_core_tests
 All tests passed (560 assertions in 69 test cases)
+
+Public clean-clone acceptance — exact source76ecc7d17a084a3775c5098724b3c54517622168
+COMMAND: CMAKE_BUILD_PARALLEL_LEVEL=2 VK_ICD_FILENAMES=<lavapipe ICD> scripts/acceptance_m1.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+10/25 Test #10: engine_screenshot_golden .........   Passed    0.03 sec
+11/25 Test #11: engine_screenshot_cli ............   Passed    0.18 sec
+12/25 Test #12: engine_version_json ..............   Passed    0.03 sec
+13/25 Test #13: engine_cli_contract ..............   Passed    0.34 sec
+14/25 Test #14: engine_docs_links ................   Passed    0.02 sec
+15/25 Test #15: engine_sensitive_scan ............   Passed    0.48 sec
+16/25 Test #16: engine_acceptance_m1 .............   Passed    0.18 sec
+17/25 Test #17: engine_api_reference .............   Passed    0.08 sec
+18/25 Test #18: engine_asset_cli .................   Passed    0.56 sec
+19/25 Test #19: engine_pbr_golden ................   Passed    0.27 sec
+20/25 Test #20: engine_pbr_color_golden ..........   Passed    0.12 sec
+21/25 Test #21: engine_pbr_window ................   Passed    0.17 sec
+22/25 Test #22: engine_asset_placement ...........   Passed    1.11 sec
+23/25 Test #23: engine_live_api ..................   Passed    4.98 sec
+24/25 Test #24: engine_local_socket_deadline .....   Passed    1.23 sec
+25/25 Test #25: engine_live_journal ..............   Passed    0.13 sec
+100% tests passed out of 25
+M1 acceptance passed
+M1 clean-clone acceptance passed
+Independent Claude Opus re-review and final CI remain pending; no final approval claimed.

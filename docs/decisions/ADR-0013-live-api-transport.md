@@ -172,3 +172,13 @@ saving or an atomic transaction between asset/scene writes and command results.
 The existing per-session command admission bounds remain. Durable history is
 retained across sessions; aggregate disk retention/archival is not automatic.
 The hard-termination/restart/error tests run on Linux and Windows.
+
+### Claude re-review corrections
+
+Every serialization step in command dispatch, including memory-budget accounting
+and reply construction, is guarded by the journal failure path. Invalid UTF-8
+filesystem names must not bypass fail-closed behavior. Journal failures drain
+existing replies, print one constant credential-free stderr diagnostic and exit
+with the existing E_IO status6, including for notifications without replies.
+Linux non-sanitized CTest includes real started/completed fsync EIO injection
+and a no-fault control; ASan/UBSan and Windows keep all their existing tests.

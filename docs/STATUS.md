@@ -722,3 +722,18 @@ approval. Reviewer selection belongs exclusively to the owner.
 Implement continuous, synchronized JSONL command journaling under .engine/ in
 M3.7, then run combined Claude Opus5.5 high re-review before an owner report.
 No interim A.5 report, merge/tag or M3.8 is authorized.
+
+### Claude re-review outcome on76ecc7d
+
+All three original fixes independently hold. Claude requires a new serialization
+fail-closed correction (F1), and recommends mode0644 coverage (F2), registered
+post-execution fsync fault tests (F3), and non-zero/visible terminal journal
+errors (F4). All four are being corrected together, then independently re-reviewed.
+[Review record](verification/M3_7_CLAUDE_REVIEW_ROUND1.md). Reference totals for
+new source: Linux GCC/Clang26, ASan25, Windows19 because the new fault interposer
+is Linux non-sanitized only. No existing tests are disabled or weakened.
+
+Follow-up local verification: Clang26/26; ASan/UBSan25/25 with leak checks on.
+All four new defect mutations fail the new tests; restored checks pass. New
+exact-source CI and Claude re-check are still required. Evidence is in
+[follow-up](verification/M3_7_CLAUDE_FIX_EVIDENCE.txt).

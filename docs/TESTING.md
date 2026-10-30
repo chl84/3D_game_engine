@@ -447,3 +447,11 @@ restart retention, failed-command records, credential exclusion and fail-closed
 append errors. Platform units reject unsafe link/type/permission targets.
 The manual Linux post-execution fsync EIO diagnostic is recorded separately
 in verification/M3_7_JOURNAL_EVIDENCE.txt; it is not claimed as a CTest/CI target.
+
+engine_live_journal_fault is a Linux non-sanitized CTest using a test-only
+LD_PRELOAD interposer for fsync on final journal files. It injects EIO at the
+started/completed synchronization boundary, checks side effects and rejection
+of success acknowledgement, verifies notification exit/stderr and has a no-fault
+control. It is not registered on Windows or sanitizer presets; none of their
+existing tests are skipped/disabled. Linux serialization regressions and the
+0644 owner-writable mode test cover the actual fail-closed guards.

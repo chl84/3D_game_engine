@@ -128,6 +128,7 @@ int live_server(const std::string& root, const std::string& scene_path, int time
     }
     const SessionFile session_file{*token_path};
     bool stopping = false;
+    bool journal_failed = false;
     std::uint64_t dispatch = 0;
     std::size_t logged_bytes = 0;
     (void)emit(CommandResult::success(command::CommandOutput{{
@@ -160,6 +161,7 @@ int live_server(const std::string& root, const std::string& scene_path, int time
             }
             const auto journal_error = [&] {
                 stopping = true;
+                journal_failed = true;
                 return finish(control::rpc_result(
                     request.id, CommandResult::failure(
                                     core::make_error(ErrorCode::Io, "live command journal failed",
@@ -179,31 +181,35 @@ int live_server(const std::string& root, const std::string& scene_path, int time
                         core::make_error(ErrorCode::Io, "live journal failure"));
                 }
             };
-            ++dispatch;
-            // Persist intent before execution, then actual bus results before acknowledgement.
-            if (!append({
-                    {"event", "started"},
-                    {"name", command.name},
-                    {"arguments", command.arguments},
-                })) {
-                return journal_error();
-            }
-            const auto previous_count = log.entries().size();
-            const auto result = bus.execute(command);
-            for (auto i = previous_count; i < log.entries().size(); ++i) {
-                const auto& entry = log.entries()[i];
-                logged_bytes += entry.arguments.dump().size() + entry.result.dump().size();
+            try {
+                ++dispatch;
+                // Persist intent before execution, then actual bus results before acknowledgement.
                 if (!append({
-                        {"event", "completed"},
-                        {"sequence", entry.sequence},
-                        {"name", entry.name},
-                        {"arguments", entry.arguments},
-                        {"result", entry.result},
+                        {"event", "started"},
+                        {"name", command.name},
+                        {"arguments", command.arguments},
                     })) {
                     return journal_error();
                 }
+                const auto previous_count = log.entries().size();
+                const auto result = bus.execute(command);
+                for (auto i = previous_count; i < log.entries().size(); ++i) {
+                    const auto& entry = log.entries()[i];
+                    logged_bytes += entry.arguments.dump().size() + entry.result.dump().size();
+                    if (!append({
+                            {"event", "completed"},
+                            {"sequence", entry.sequence},
+                            {"name", entry.name},
+                            {"arguments", entry.arguments},
+                            {"result", entry.result},
+                        })) {
+                        return journal_error();
+                    }
+                }
+                return finish(control::rpc_result(request.id, result.to_json()));
+            } catch (const std::exception&) {
+                return journal_error();
             }
-            return finish(control::rpc_result(request.id, result.to_json()));
         };
         try {
             const auto& params = request.params;
@@ -327,6 +333,10 @@ int live_server(const std::string& root, const std::string& scene_path, int time
     if (!result) {
         std::cerr << "error: " << result.error().message << '\n';
         return core::exit_code(result.error().code);
+    }
+    if (journal_failed) {
+        std::cerr << "error: live command journal failed; session stopped\n";
+        return core::exit_code(ErrorCode::Io);
     }
     return 0;
 }

@@ -108,7 +108,8 @@ def main():
             failed = rpc("command", {"name": "scene.save@1", "arguments": {"path": "scenes/never.scene.json"}})
             assert failed["status"] == "error" and failed["error"]["code"] == "E_IO"
             assert not (project / "scenes/never.scene.json").exists()
-            assert second.wait(timeout=10) == 0
+            assert second.wait(timeout=10) == 6
+            assert second.stderr.read() == "error: live command journal failed; session stopped\n"
             assert not session.exists() and not (project / ".engine/lock").exists()
             assert journal.read_bytes() == surviving
             assert len(records(backup)[1]) == 2
@@ -116,7 +117,28 @@ def main():
             if second.poll() is None:
                 second.kill()
             second.wait(timeout=10)
-    print("Live JSONL intent/result sync, hard-crash survival, restart retention and append-failure exclusion passed")
+        if sys.platform.startswith("linux"):
+            invalid_name = os.fsdecode(b"scn\xff")
+            target = project / invalid_name
+            target.mkdir()
+            (project / "ls").symlink_to(target, target_is_directory=True)
+            (target / "directory.scene.json").mkdir()
+            for name in ("scene.load@1", "scene.save@1"):
+                failing, failed_journal, token, rpc = start()
+                try:
+                    result = rpc("command", {"name": name, "arguments": {"path": "ls/directory.scene.json"}})
+                    assert result["status"] == "error" and result["error"]["code"] == "E_IO", (name, result)
+                    assert failing.wait(timeout=10) == 6
+                    assert failing.stderr.read() == "error: live command journal failed; session stopped\n"
+                    _, rows = records(failed_journal)
+                    assert len(rows) == 1 and rows[0]["event"] == "started"
+                    assert token.encode() not in failed_journal.read_bytes()
+                    assert not session.exists() and not (project / ".engine/lock").exists()
+                finally:
+                    if failing.poll() is None:
+                        failing.kill()
+                    failing.wait(timeout=10)
+    print("Live JSONL crash/restart/error handling and Linux serialization fail-closed regression passed")
     return 0
 
 

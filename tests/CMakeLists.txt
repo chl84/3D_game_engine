@@ -383,3 +383,17 @@ add_test(NAME engine_live_journal
             "$<TARGET_FILE:engine>"
 )
 set_tests_properties(engine_live_journal PROPERTIES LABELS "contract;live;security" TIMEOUT 40)
+
+# LD_PRELOAD syscall fault injection is Linux-only and intentionally excludes
+# sanitizer presets; their runtime/linker instrumentation is verified separately.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENGINE_SANITIZE_ADDRESS
+   AND NOT ENGINE_SANITIZE_UNDEFINED AND NOT ENGINE_SANITIZE_THREAD)
+    add_library(engine_journal_sync_fault SHARED contract/journal_sync_fault.c)
+    target_link_libraries(engine_journal_sync_fault PRIVATE ${CMAKE_DL_LIBS})
+    target_compile_options(engine_journal_sync_fault PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME engine_live_journal_fault
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_journal_fault.py"
+                "$<TARGET_FILE:engine>" "$<TARGET_FILE:engine_journal_sync_fault>"
+    )
+    set_tests_properties(engine_live_journal_fault PROPERTIES LABELS "contract;live;security" TIMEOUT 40)
+endif()
