@@ -305,3 +305,66 @@ TEST_CASE("asset library rejects missing projects and stale caches", "[asset][li
     REQUIRE_FALSE(absolute_load.has_value());
     CHECK(absolute_load.error().code == ErrorCode::Validation);
 }
+
+TEST_CASE("cooked assets preserve scene roots and exclude unused root nodes", "[asset][library]") {
+    engine::test::TempDir temp("asset-scene-roots");
+    auto project = engine::scene::Project::create(temp.path() / "project", "Roots");
+    REQUIRE(project);
+    const auto original = read_bytes(fixture("blender_cube.glb"));
+    const auto u32 = [&original](std::size_t offset) {
+        std::uint32_t value = 0;
+        for (std::size_t i = 0; i < 4; ++i) {
+            value |= static_cast<std::uint32_t>(original[offset + i]) << (8U * i);
+        }
+        return value;
+    };
+    const auto json_size = u32(12);
+    auto document = nlohmann::json::parse(
+        std::string(reinterpret_cast<const char*>(original.data() + 20), json_size));
+    document["nodes"].push_back({{"name", "UnusedRoot"}, {"mesh", 0}});
+    auto encoded = document.dump();
+    while (encoded.size() % 4U) {
+        encoded.push_back(' ');
+    }
+    std::string bytes;
+    const auto append = [&bytes](std::uint32_t value) {
+        for (unsigned i = 0; i < 4; ++i) {
+            bytes.push_back(static_cast<char>((value >> (i * 8U)) & 255U));
+        }
+    };
+    append(0x46546C67U);
+    append(2U);
+    append(static_cast<std::uint32_t>(20U + encoded.size() + original.size() - 20U - json_size));
+    append(static_cast<std::uint32_t>(encoded.size()));
+    append(0x4E4F534AU);
+    bytes += encoded;
+    bytes.append(reinterpret_cast<const char*>(original.data() + 20U + json_size),
+                 original.size() - 20U - json_size);
+    const auto source = temp.path() / "unused-root.glb";
+    write_text(source, bytes);
+    auto imported = import_asset(project->root(), source);
+    REQUIRE(imported);
+    auto loaded = load_asset(project->root(), imported->record.asset_id);
+    REQUIRE(loaded);
+    REQUIRE(loaded->asset.scene_roots.size() == 1U);
+    CHECK(loaded->asset.nodes[loaded->asset.scene_roots[0]].name != "UnusedRoot");
+    CHECK(std::ranges::any_of(loaded->asset.nodes,
+                              [](const auto& node) { return node.name == "UnusedRoot"; }));
+}
+
+TEST_CASE("reimport repairs corrupt derived buffers with a matching cache key",
+          "[asset][library]") {
+    engine::test::TempDir temp("asset-repair-cache");
+    auto project = engine::scene::Project::create(temp.path() / "project", "Repair");
+    REQUIRE(project);
+    auto imported = import_asset(project->root(), fixture("blender_cube.glb"));
+    REQUIRE(imported);
+    const auto id = imported->record.asset_id;
+    write_text(project->root() / imported->record.cache_path / "meshes.bin", "corrupt");
+    REQUIRE_FALSE(load_asset(project->root(), id));
+    auto repaired = reimport_asset(project->root(), id);
+    REQUIRE(repaired);
+    CHECK_FALSE(repaired->cache_hit);
+    CHECK(repaired->record.asset_id == id);
+    CHECK(load_asset(project->root(), id).has_value());
+}

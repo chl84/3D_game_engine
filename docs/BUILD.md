@@ -1,6 +1,6 @@
 # Build
 
-**Status:** M2.7. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M3.5 implementation. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
@@ -337,3 +337,28 @@ checks: `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
 `Quality` and `Linux ASan/UBSan`. Force pushes and deletions are disabled, and
 conversations must be resolved before merging. `enforce_admins` is off so the
 owner can still push directly during M0.
+
+## M3 PBR verification
+
+The shared PBR shaders compile for Vulkan 1.3 / SPIR-V 1.5 so alpha discard does
+not require optional shaderDemoteToHelperInvocation. Generated embedded shader
+symbols are unique for each pair. No new build/runtime dependency is added.
+
+`engine_pbr_golden` uses the checked-in 256x192 lavapipe golden
+`tests/fixtures/golden/m3_pbr_256.png` and the locally baked mirrored-UV Blender
+model without exported tangents. It also compares Blender's exported tangents,
+checks sensitivity to disabled normals/flipped handedness, reflection and 16 km,
+and runs numerical color-space/mip/alpha and full descriptor-boundary probes.
+Vulkan validation is Required; initialization errors fail the test. A different
+GPU skips only this lavapipe-specific CTest (77), not the window lifetime test.
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang --output-on-failure
+# Local physical-GPU controls, without fixed-golden comparison:
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/intel_icd.json build/ci-linux-clang/tests/engine_pbr_test --device-smoke
+```
+
+`engine_pbr_window` checks two-frame descriptor/resource retirement and reuse on
+Linux with a display (CI uses Xvfb). Windows runs the offscreen golden/probes;
+Windows presentation remains unverified. Use the existing sanitizer preset
+`linux-asan`. Whole-process/reference-scene performance remains M5/M8.

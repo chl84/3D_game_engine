@@ -35,3 +35,4 @@ ADRs are not rewritten.
 | [0011](ADR-0011-descriptor-strategy.md) | Descriptor strategy for materials and textures | Accepted |
 | [0012](ADR-0012-asset-pipeline-and-scene-v3.md) | Asset pipeline, scene format v3 and PBR lighting | Accepted |
 | [0013](ADR-0013-live-api-transport.md) | Local live API transport | Accepted |
+| [0014](ADR-0014-pbr-rendering.md) | Shared PBR rendering, descriptors and resource lifetime | Accepted |

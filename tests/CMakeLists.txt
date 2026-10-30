@@ -330,3 +330,15 @@ add_test(NAME engine_asset_cli
             "$<TARGET_FILE:engine>"
 )
 set_tests_properties(engine_asset_cli PROPERTIES LABELS "contract;cli;asset")
+
+add_executable(engine_pbr_test render/pbr_test.cpp render/pbr_probes.cpp ${PROJECT_SOURCE_DIR}/tools/engine/src/stb_image_write_impl.cpp)
+target_link_libraries(engine_pbr_test PRIVATE engine::render engine::asset)
+target_include_directories(engine_pbr_test PRIVATE ${Stb_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/unit)
+target_compile_definitions(engine_pbr_test PRIVATE ENGINE_ASSET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/m3")
+engine_set_warnings(engine_pbr_test)
+add_test(NAME engine_pbr_golden COMMAND engine_pbr_test "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden/m3_pbr_256.png")
+set_tests_properties(engine_pbr_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
+if(NOT WIN32)
+    add_test(NAME engine_pbr_window COMMAND engine_pbr_test --window)
+    set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77)
+endif()

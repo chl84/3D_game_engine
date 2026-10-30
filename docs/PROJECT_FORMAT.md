@@ -220,6 +220,10 @@ This is implemented in `platform` and tested on both platforms.
 - Assets get a UUID and an `asset@1` sidecar with the original source path, a
   project-relative source copy, import settings, source hash, stable node IDs
   and a cooked-cache key (M3).
+- Asset sidecar `metadata.sceneRoots` stores stable node UUIDs for the selected
+  glTF scene roots. Cooked loading preserves that membership rather than
+  rendering every parentless node. `gltf-import@3` regenerates older caches;
+  the sidecar and cooked schema versions remain v1.
 - Cooked data lives under `.engine/cache/` and can be regenerated. The cache is
   ignored by git.
 - Reimport preserves the asset UUID and stable node IDs for nodes that still

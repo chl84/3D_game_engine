@@ -253,6 +253,11 @@ before mutation. Scene placement/undo is added in M3.6.
 
 The official MikkTSpace implementation generates missing normal-map tangents
 during cooking and splits vertices at tangent discontinuities. Source tangents
-are preserved. `gltf-import@2` rejects old cache; use reimport to regenerate it.
+are preserved. `gltf-import@3` rejects old cache; use reimport to regenerate it.
 The checked-in Blender fixtures verify tangent compatibility on the CPU.
-Normal-map PBR golden images are required in M3.5 and are not part of M3.4.
+The M3.5 golden compares the mirrored-UV Blender model without tangents with
+a fixed lavapipe image and its Blender-tangent export. Renderer C++ APIs expose
+explicit `upload_asset`, `retire_asset` and `collect_assets`; scenes reference
+the uploaded ID through `AssetInstance`. CLI placement and automatic project
+asset resolution are M3.6 work. Reimport also rebuilds corrupt derived buffers
+when their stored cache key still matches.

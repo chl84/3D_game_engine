@@ -283,5 +283,14 @@ The current implementation contains:
   source data and cooking without persistent writes. File imports are not
   undoable and are rejected inside command transactions before any writes.
 
-PBR asset rendering, instance placement and live control are the remaining
-M3 steps. Physics, scripting, world streaming and editor remain planned.
+- `engine/render` also provides shared `PbrRenderer` resources for window and
+  offscreen rendering. Explicit `LoadedAsset` uploads supply node hierarchies,
+  meshes and textures to `AssetInstance` references through read-only SceneView.
+  One bindless set holds 4096 images and 4096 materials. GPU mips, sRGB baseColor,
+  linear data inputs, metallic-roughness/normal/AO/emissive shading, OPAQUE/MASK
+  and an authored DirectionalLight use one shared shader pair (ADR-0014).
+  Retired assets retain descriptor leases until idle collection. Resource
+  budgets count VMA blocks plus documented native-resource reservations.
+
+Instance placement and automatic project-asset resolution (M3.6) and live
+control (M3.7) remain. Physics, scripting, streaming and editor remain planned.

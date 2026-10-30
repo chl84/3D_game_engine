@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-10-30
 **Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.4 reviewer GODKJENT (round 3) — asset CLI and approved
-MikkTSpace cooking. All six CI jobs on `7cfad7a` passed. M3.5 is next.
+**Current substep:** M3.5 implemented; final local verification, CI and independent
+review are in progress. M3.4 is reviewer-approved with all six CI jobs green.
 M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 
 ## Substeps
@@ -56,7 +56,7 @@ M3.3 was owner-approved on 2026-10-30. No M3 merge or tag is authorized.
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Done — reviewer GODKJENT (round 3); all CI green |
-| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Planned |
+| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Implemented — verification/review in progress |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Planned |
 | M3.7 | Local JSON-RPC live API | Planned |
 | M3.8 | M3 hardening and acceptance | Planned |
@@ -80,7 +80,7 @@ The full asset suite passes ASan/UBSan: 16 cases / 22,677 assertions. The fixtur
 was reviewer-approved. Small follow-ups remove absolute packed-image metadata
 and add `blender/verify_mirrored_normalmap.py`, which verifies the repository
 files directly. The .blend reopens after relocation without an external PNG.
-The M3.5 renderer and normal-map golden image test remain planned.
+The fixture now also drives the M3.5 PBR golden and Blender-reference image tests.
 
 ## Repository state
 
@@ -458,3 +458,41 @@ DirectionalLight rendering. M3.5 must add the normal-map Blender golden image co
 Windows lavapipe; the current per-corner CPU comparison is not that image test.
 The optional nightly ten-minute fuzz/cached-corpus proposal is recorded for
 M3.8. M3 merges as a complete milestone only after explicit owner approval.
+
+## M3.5 implementation and verification in progress
+
+Shared `PbrRenderer` resources now serve window and offscreen rendering with
+explicit cooked-asset uploads, 4096 sampled images/material records, GPU mip
+creation, metallic-roughness/normal/AO/emissive inputs, OPAQUE/MASK, authored
+DirectionalLight and documented Reinhard/sRGB output (ADR-0014). Retirement
+holds descriptors and buffers until an idle collection point. Allocation
+budgets include VMA blocks plus conservative native-resource reservations.
+The descriptor pool gate is corrected from 4098 to 4099 to include its SSBO.
+Cooked scene-root membership is restored from existing sidecar metadata;
+`gltf-import@3` invalidates older derived cache, without changing v1 schemas.
+
+- Clang warnings-as-errors build and full lavapipe CTest: 20/20, no skips
+  (`/tmp/m35-final-clang-tests.log`). This includes the fixed Blender PBR golden,
+  exported-tangent comparison, negative controls, reflection/16 km, numerical
+  color-space/mip/alpha probes and full 4096-slot boundary rendering.
+- Required Vulkan validation: zero errors in PBR offscreen and two-frame window
+  lifetime tests. Local Iris Xe offscreen controls and window lifetime also
+  pass (`/tmp/m35-intel-smoke.log`, `/tmp/m35-intel-window.log`); the fixed
+  golden comparison is deliberately lavapipe-only.
+- Changed C++ passes clang-tidy warnings-as-errors; both PBR shaders pass
+  `spirv-val --target-env vulkan1.3`.
+- Full local ASan/UBSan: 12/20 passed, eight graphics-related tests failed
+  (`/tmp/m35-final-asan-tests.log`). The six previously affected tests and the
+  two new PBR tests report 112-byte LeakSanitizer allocations in unknown native
+  modules; CLI subprocess failures also prevent some JSON checks. This remains
+  unresolved locally; no sanitizer is disabled and Ubuntu CI must pass.
+- Sanitizer fuzz smoke passed, 30 seconds per target: GLB 4335 runs, image
+  8640 runs (`/tmp/m35-fuzz.log`), with no crash/UB report. The asset suite
+  passes 18 cases / 22,693 assertions. Clean-clone and CI are pending.
+- Initial development exposed an embedded-shader inline-symbol collision and
+  optional SPIR-V discard capability. Unique symbols and explicit SPIR-V 1.5
+  fix both; no validation/sanitizer/test requirement was disabled.
+- Windows compile/headless/offscreen results for this implementation are not
+  yet verified. Windows presentation remains unverified. CLI placement and
+  automatic project-asset resolution remain M3.6; live control remains M3.7.
+- No new dependency, merge, tag or milestone closure is included.

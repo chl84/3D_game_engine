@@ -253,3 +253,12 @@ Approved by the owner on 2026-10-29 with one change: there is no classic
 fallback. Descriptor indexing, with the listed feature bits and limits, is a
 minimum requirement. A fallback may be considered in a new ADR only if a
 concrete target device lacks the required support.
+
+## M3.5 implementation accounting correction
+
+The actual bindless pool uses 4099 descriptors, including the material SSBO
+omitted from the earlier 4098 image/sampler subtotal. Sampled images and the two
+samplers are separate bindings to preserve the approved sampler budget. See
+[ADR-0014](ADR-0014-pbr-rendering.md) for the exact layout, sampler behavior,
+lifetime safe points and budget accounting. The device/doctor gate includes
+this SSBO; no classic fallback or additional feature requirement is introduced.

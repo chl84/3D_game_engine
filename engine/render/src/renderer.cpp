@@ -245,6 +245,10 @@ struct Renderer::Impl {
     };
 
     const Device* device{nullptr};
+    std::unique_ptr<PbrRenderer> pbr;
+    std::uint64_t swapchain_budget{0};
+    std::uint64_t overlay_budget{0};
+    std::uint64_t overlay_peak_vertices{0}, overlay_peak_indices{0};
     const platform::Window* window{nullptr};
     SwapchainOptions options;
     bool overlay_visible{true};
@@ -484,8 +488,8 @@ core::Result<Renderer::Impl::GpuMesh> Renderer::Impl::create_gpu_mesh(const Mesh
         VmaAllocationCreateInfo allocation_info{};
         allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-        const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
-                                                &buffer, &allocation, nullptr);
+        const VkResult result = detail::create_budgeted_buffer(
+            *device, &buffer_info, &allocation_info, &buffer, &allocation, nullptr);
         if (result != VK_SUCCESS) {
             return core::make_failure<void>(
                 detail::vulkan_error("could not create a mesh buffer", "mesh", result));
@@ -610,8 +614,8 @@ core::Result<void> Renderer::Impl::create_depth_resources() {
     VmaAllocationCreateInfo allocation_info{};
     allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    VkResult result = vmaCreateImage(device->allocator(), &image_info, &allocation_info,
-                                     &depth_image, &depth_allocation, nullptr);
+    VkResult result = detail::create_budgeted_image(*device, &image_info, &allocation_info,
+                                                    &depth_image, &depth_allocation, nullptr);
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(
             detail::vulkan_error("could not create the depth image", "depth", result));
@@ -913,7 +917,15 @@ core::Result<void> Renderer::Impl::create_overlay_vulkan() {
     rendering.depthAttachmentFormat = depth_format;
     info.PipelineInfoMain.PipelineRenderingCreateInfo = rendering;
 
+    constexpr std::uint64_t overlay_reservation = 64ULL * 1024ULL * 1024ULL;
+    auto reserved = device->reserve_gpu_overhead_bytes(overlay_reservation);
+    if (!reserved) {
+        return reserved;
+    }
+    overlay_budget = overlay_reservation;
     if (!ImGui_ImplVulkan_Init(&info)) {
+        device->release_gpu_overhead_bytes(overlay_budget);
+        overlay_budget = 0;
         return core::make_failure<void>(core::make_error(
             core::ErrorCode::Internal, "could not initialize the ImGui Vulkan backend", {},
             {{"stage", "overlay"}}));
@@ -927,6 +939,12 @@ void Renderer::Impl::destroy_overlay_vulkan() {
         ImGui_ImplVulkan_Shutdown();
         overlay_vulkan_initialized = false;
     }
+    if (overlay_budget) {
+        device->release_gpu_overhead_bytes(overlay_budget);
+        overlay_budget = 0;
+    }
+    overlay_peak_vertices = 0;
+    overlay_peak_indices = 0;
 }
 
 void Renderer::Impl::build_overlay(const scene::SceneView& scene_view) {
@@ -1147,6 +1165,15 @@ core::Result<void> Renderer::Impl::create_swapchain() {
     window_width = window->width();
     window_height = window->height();
 
+    const std::uint64_t native_reservation =
+        static_cast<std::uint64_t>(images.size()) *
+        ((2ULL * extent.width * extent.height * 4ULL) + (1024ULL * 1024ULL));
+    auto native_budget = device->reserve_gpu_overhead_bytes(native_reservation);
+    if (!native_budget) {
+        destroy_swapchain();
+        return native_budget;
+    }
+    swapchain_budget = native_reservation;
     auto depth_result = create_depth_resources();
     if (!depth_result) {
         destroy_swapchain();
@@ -1201,6 +1228,10 @@ void Renderer::Impl::destroy_swapchain() {
         vkDestroySwapchainKHR(handle, swapchain, nullptr);
         swapchain = VK_NULL_HANDLE;
     }
+    if (swapchain_budget) {
+        device->release_gpu_overhead_bytes(swapchain_budget);
+        swapchain_budget = 0;
+    }
     format = VK_FORMAT_UNDEFINED;
     extent = VkExtent2D{0, 0};
 }
@@ -1232,6 +1263,47 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
         camera.projection(aspect) * camera_view_from_world(camera_world);
     const Frustum frustum = Frustum::from_view_projection(view_projection);
 
+    if (pbr) {
+        auto configured = pbr->set_format(format, depth_format);
+        if (!configured) {
+            return configured;
+        }
+        auto prepared =
+            pbr->prepare(scene_view, camera_world, aspect, static_cast<std::uint32_t>(frame_index));
+        if (!prepared) {
+            return prepared;
+        }
+    } else {
+        for (auto entity : scene_view.entities()) {
+            if (scene_view.scene().has<scene::AssetInstance>(entity)) {
+                return core::make_failure<void>(core::make_error(
+                    core::ErrorCode::NotFound, "scene asset has not been uploaded"));
+            }
+        }
+    }
+    if (overlay_vulkan_initialized && overlay_visible) {
+        const auto* draw = ImGui::GetDrawData();
+        if (draw) {
+            overlay_peak_vertices =
+                std::max(overlay_peak_vertices, static_cast<std::uint64_t>(draw->TotalVtxCount));
+            overlay_peak_indices =
+                std::max(overlay_peak_indices, static_cast<std::uint64_t>(draw->TotalIdxCount));
+            std::uint64_t required =
+                2ULL * std::max<std::size_t>(images.size(), 2U) *
+                ((overlay_peak_vertices * sizeof(ImDrawVert)) +
+                 (overlay_peak_indices * sizeof(ImDrawIdx)) + (2ULL * 1024ULL * 1024ULL));
+            for (const ImTextureData* texture : ImGui::GetPlatformIO().Textures) {
+                required += (static_cast<std::uint64_t>(std::max(texture->Width, 0)) *
+                             static_cast<std::uint64_t>(std::max(texture->Height, 0)) * 16ULL) +
+                            (4ULL * 1024ULL * 1024ULL);
+            }
+            if (required > overlay_budget) {
+                return core::make_failure<void>(
+                    core::make_error(core::ErrorCode::Validation,
+                                     "debug overlay exceeds its reserved GPU memory budget"));
+            }
+        }
+    }
     Frame& frame = frames[frame_index];
     VkResult result = vkResetCommandBuffer(frame.command_buffer, 0);
     if (result != VK_SUCCESS) {
@@ -1348,6 +1420,9 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
     }
     last_visible_entities = visible;
 
+    if (pbr) {
+        pbr->draw(frame.command_buffer, static_cast<std::uint32_t>(frame_index));
+    }
     if (overlay_vulkan_initialized && overlay_visible) {
         ImDrawData* draw_data = ImGui::GetDrawData();
         if (draw_data != nullptr) {
@@ -1673,6 +1748,30 @@ std::uint64_t Renderer::overlay_entity_count() const noexcept {
 
 std::uint32_t Renderer::overlay_draw_vertices() const noexcept {
     return impl_->overlay_draw_vertices;
+}
+
+core::Result<void> Renderer::upload_asset(const asset::LoadedAsset& asset) {
+    if (!impl_->pbr) {
+        auto p = PbrRenderer::create(*impl_->device, 2);
+        if (!p) {
+            return core::make_failure<void>(p.error());
+        }
+        impl_->pbr = std::make_unique<PbrRenderer>(std::move(*p));
+    }
+    return impl_->pbr->upload(asset);
+}
+core::Result<void> Renderer::retire_asset(std::string_view id) {
+    if (!impl_->pbr) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::NotFound, "no PBR assets uploaded"));
+    }
+    return impl_->pbr->retire(id);
+}
+core::Result<void> Renderer::collect_assets() {
+    return impl_->pbr ? impl_->pbr->collect() : core::Result<void>{};
+}
+PbrStats Renderer::pbr_stats() const {
+    return impl_->pbr ? impl_->pbr->stats() : PbrStats{};
 }
 
 } // namespace engine::render

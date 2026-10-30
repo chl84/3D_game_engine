@@ -474,6 +474,10 @@ void assign_existing_ids(ImportedAsset& asset, const json& sidecar) {
         });
     }
 
+    json scene_roots = json::array();
+    for (const auto root : asset.scene_roots) {
+        scene_roots.push_back(asset.nodes.at(root).id.to_string());
+    }
     return {
         {"formatVersion", 1},
         {"assetId", record.asset_id.to_string()},
@@ -494,7 +498,7 @@ void assign_existing_ids(ImportedAsset& asset, const json& sidecar) {
                 {{{"kind", "source"}, {"path", record.source_copy}, {"hash", record.source_hash}}}),
         },
         {"cooked", {{"key", record.cache_key}, {"path", record.cache_path}}},
-        {"metadata", json::object()},
+        {"metadata", {{"sceneRoots", std::move(scene_roots)}}},
     };
 }
 
@@ -1143,6 +1147,19 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
                 asset.nodes[*parent].children.push_back(index);
             }
         }
+        const auto& roots = sidecar.at("metadata").at("sceneRoots");
+        if (!roots.is_array()) {
+            return core::make_failure<LoadedAsset>(
+                asset_error(ErrorCode::Validation, "invalid asset scene roots"));
+        }
+        for (const auto& root_id : roots) {
+            const auto found = node_ids.find(root_id.get<std::string>());
+            if (found == node_ids.end() || asset.nodes[found->second].parent.has_value()) {
+                return core::make_failure<LoadedAsset>(
+                    asset_error(ErrorCode::Validation, "invalid asset scene root reference"));
+            }
+            asset.scene_roots.push_back(found->second);
+        }
         return loaded;
     } catch (const std::exception& error) {
         return core::make_failure<LoadedAsset>(
@@ -1260,7 +1277,8 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
     }
     ImportResult result;
     result.record = *record;
-    result.cache_hit = cache_matches(project_root / record->cache_path, record->cache_key);
+    result.cache_hit = cache_matches(project_root / record->cache_path, record->cache_key) &&
+                       load_from_files(project_root, *record).has_value();
     auto cache_dir = resolve_inside_project(project_root, record->cache_path, "cooked.path");
     if (!cache_dir) {
         return core::make_failure<ImportResult>(cache_dir.error());

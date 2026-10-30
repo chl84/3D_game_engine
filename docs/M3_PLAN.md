@@ -1,8 +1,8 @@
 # M3 Plan — Asset pipeline and live control
 
 **Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 and
-M3.2 are reviewer-approved and CI-green. M3.3 is in progress: asset sidecars,
-cooked cache, stable IDs, image decoding and permanent fuzz targets.
+M3.2 are reviewer-approved and CI-green. M3.3 and M3.4 are complete; M3.5
+PBR rendering is implemented and undergoing verification and review.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 

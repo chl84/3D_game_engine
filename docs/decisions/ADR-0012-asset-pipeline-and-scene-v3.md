@@ -202,3 +202,11 @@ UBSan and the permanent GLB fuzzer; the adapter and collapsed-position regressio
 run with the sanitizer checks enabled. See the third-party README for details.
 MikkTSpace's returned sign is inverted when stored in glTF tangent.w, matching
 the glTF UV convention and Blender's exported tangent signs.
+
+## M3.5 scene-root preservation
+
+`metadata.sceneRoots` stores the imported scene's root UUIDs in the existing
+free-form metadata object. Cooked loading restores those roots instead of losing
+scene membership or treating unused parentless nodes as part of the scene.
+`gltf-import@3` requires recooking older derived caches. No sidecar/cooked format
+version changes; original sources and stable IDs remain intact. See ADR-0014.
