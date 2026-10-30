@@ -111,10 +111,7 @@ constexpr std::size_t kTextureHeaderSize = 12U;
     if (!ec) {
         const auto relative = std::filesystem::relative(canonical_source, root, ec);
         if (!ec && !relative.empty()) {
-            const std::string text = relative.generic_string();
-            if (text != ".." && !text.starts_with("../")) {
-                return text;
-            }
+            return relative.generic_string();
         }
     }
     return source.generic_string();

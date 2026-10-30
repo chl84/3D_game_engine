@@ -93,7 +93,10 @@ assets/<assetId>/source.glb          # project-relative source copy
 - `asset.json` stores `assetId`, the original `source` path for reimport, a
   project-relative `sourceCopy`, source SHA-256, importer version, import
   settings, stable node/mesh/material/texture IDs, dependencies, cooked-cache
-  key and metadata.
+  key and metadata. The original `source` is stored relative to the project
+  even when it lives outside it (for example `../models/cube.glb`); an absolute
+  path is used only when no relative path can be expressed, such as a different
+  Windows drive. `sourceCopy` is always the fallback.
 - `.engine/cache/` is ignored by git. Cooked data is derived and regenerable.
   Cache directories use the first 16 hex characters of the cache key to stay
   below the Windows path limit; the full SHA-256 key is stored in the sidecar
