@@ -268,4 +268,21 @@ TEST_CASE("asset library rejects missing projects and stale caches", "[asset][li
     const auto stale = load_asset(project->root(), imported->record.asset_id);
     REQUIRE_FALSE(stale.has_value());
     CHECK(stale.error().code == ErrorCode::Validation);
+
+    const auto sidecar =
+        project->root() / "assets" / imported->record.asset_id.to_string() / "asset.json";
+    auto sidecar_document = nlohmann::json::parse(read_text(sidecar));
+    sidecar_document["sourceCopy"] = "../../escape.glb";
+    write_text(sidecar, sidecar_document.dump(2));
+    const auto escaped = reimport_asset(project->root(), imported->record.asset_id);
+    REQUIRE_FALSE(escaped.has_value());
+    CHECK(escaped.error().code == ErrorCode::Validation);
+    CHECK_FALSE(std::filesystem::exists(temp.path() / "escape.glb"));
+
+    sidecar_document = nlohmann::json::parse(read_text(sidecar));
+    sidecar_document["cooked"]["path"] = "../../escape-cache";
+    write_text(sidecar, sidecar_document.dump(2));
+    const auto escaped_load = load_asset(project->root(), imported->record.asset_id);
+    REQUIRE_FALSE(escaped_load.has_value());
+    CHECK(escaped_load.error().code == ErrorCode::Validation);
 }

@@ -203,6 +203,7 @@
 | M3.2 clean clone | Automatically tested | `scripts/acceptance_m1.sh` on `a19d077` → 17 registered tests (16 passed, golden skipped on local Intel) and `M1 acceptance passed` |
 | M3.3 sidecar and cooked cache | Automatically tested | Import writes `assets/<id>/asset.json`, `source.glb` and `.engine/cache/<id>/<cacheKey16>/`; sidecar and cooked manifest validate against `asset@1` and `engine.asset.cooked@1` |
 | M3.3 stable IDs and reimport | Automatically tested | Reimport preserves the asset UUID, node/mesh IDs and a scene `AssetInstance` reference; unchanged reimport is byte-stable and reuses the cache, changed source changes the cache key |
+| M3.3 sidecar sandbox | Automatically tested | `sourceCopy` and `cooked.path` from the sidecar are resolved through `PathSandbox`; `../../escape` paths are rejected with `E_VALIDATION` |
 | M3.3 image decoding | Automatically tested | PNG/JPEG decode to RGBA8 with 8192×8192 and 256 MiB pre-allocation limits; truncated, corrupt and oversized inputs fail with `E_VALIDATION` |
 | M3.3 cooking tangents | Automatically tested | A normal-mapped triangle without TANGENT attributes gets cooked tangents with unit length and handedness |
 | M3.3 fuzz targets | Automatically tested | `engine_gltf_fuzz` and `engine_image_fuzz` build with Clang libFuzzer + ASan/UBSan, run in the CI `Fuzz (Clang ASan)` job and use the checked-in fixtures as seed corpus |

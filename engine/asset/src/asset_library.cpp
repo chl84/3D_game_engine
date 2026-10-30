@@ -89,6 +89,22 @@ constexpr std::size_t kTextureHeaderSize = 12U;
     return engine::platform::atomic_write_file(path, text);
 }
 
+[[nodiscard]] Result<std::filesystem::path>
+resolve_inside_project(const std::filesystem::path& root, std::string_view relative,
+                       std::string_view what) {
+    auto sandbox = core::PathSandbox::create(root);
+    if (!sandbox) {
+        return core::make_failure<std::filesystem::path>(sandbox.error());
+    }
+    auto resolved = sandbox->resolve(relative);
+    if (!resolved) {
+        return core::make_failure<std::filesystem::path>(
+            asset_error(ErrorCode::Validation, "asset sidecar path escapes the project root",
+                        "Reimport or recreate the asset sidecar.", {{"field", std::string(what)}}));
+    }
+    return *resolved;
+}
+
 [[nodiscard]] std::filesystem::path asset_dir(const std::filesystem::path& root,
                                               const Uuid& asset_id) {
     return root / "assets" / asset_id.to_string();
@@ -128,9 +144,9 @@ constexpr std::size_t kTextureHeaderSize = 12U;
     if (std::filesystem::is_regular_file(original, ec) && !ec) {
         return original;
     }
-    std::filesystem::path copy = root / std::filesystem::path(source_copy);
-    if (std::filesystem::is_regular_file(copy, ec) && !ec) {
-        return copy;
+    if (auto copy = resolve_inside_project(root, source_copy, "sourceCopy");
+        copy && std::filesystem::is_regular_file(*copy, ec) && !ec) {
+        return *copy;
     }
     return {};
 }
@@ -940,18 +956,19 @@ void remove_old_cache_directories(const std::filesystem::path& root, const Uuid&
     if (!sidecar_bytes) {
         return core::make_failure<LoadedAsset>(sidecar_bytes.error());
     }
-    auto cooked_bytes =
-        read_file(root / record.cache_path / "cooked.json", std::size_t{16} * 1024U * 1024U);
+    auto cache_dir = resolve_inside_project(root, record.cache_path, "cooked.path");
+    if (!cache_dir) {
+        return core::make_failure<LoadedAsset>(cache_dir.error());
+    }
+    auto cooked_bytes = read_file(*cache_dir / "cooked.json", std::size_t{16} * 1024U * 1024U);
     if (!cooked_bytes) {
         return core::make_failure<LoadedAsset>(cooked_bytes.error());
     }
-    auto mesh_bytes =
-        read_file(root / record.cache_path / "meshes.bin", std::size_t{1024} * 1024U * 1024U);
+    auto mesh_bytes = read_file(*cache_dir / "meshes.bin", std::size_t{1024} * 1024U * 1024U);
     if (!mesh_bytes) {
         return core::make_failure<LoadedAsset>(mesh_bytes.error());
     }
-    auto texture_bytes =
-        read_file(root / record.cache_path / "textures.bin", std::size_t{1024} * 1024U * 1024U);
+    auto texture_bytes = read_file(*cache_dir / "textures.bin", std::size_t{1024} * 1024U * 1024U);
     if (!texture_bytes) {
         return core::make_failure<LoadedAsset>(texture_bytes.error());
     }
@@ -1289,7 +1306,11 @@ core::Result<ImportResult> reimport_asset(const std::filesystem::path& project_r
         }
         remove_old_cache_directories(project_root, asset_id, record->cache_path);
     }
-    if (auto copied = write_bytes(project_root / record->source_copy, *bytes); !copied) {
+    auto source_copy = resolve_inside_project(project_root, record->source_copy, "sourceCopy");
+    if (!source_copy) {
+        return core::make_failure<ImportResult>(source_copy.error());
+    }
+    if (auto copied = write_bytes(*source_copy, *bytes); !copied) {
         return core::make_failure<ImportResult>(copied.error());
     }
     if (auto written = write_sidecar(project_root, *record, *imported); !written) {
