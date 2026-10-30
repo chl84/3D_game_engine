@@ -1,6 +1,6 @@
 # Status
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
@@ -837,3 +837,20 @@ reject DISABLED/notrun clean-clone cases (real CTest controls verified).
 [Callback/timeout evidence](verification/M3_8_FUZZ_TIMEOUT_EVIDENCE.txt) and
 [prior technical approval](verification/M3_8_REVIEW_ROUND2.md) distinguish
 completed checks from remaining long-run/reference-CI/review gates.
+
+### M3.8 round 3: owner decision required for F2
+
+Claude confirmed bit-identical old/new callback results for all eight GLBs and
+approved the small delta technically. Publication remains blocked by Medium
+F2: duplicating the collapsed primitive still exceeds the ten-second budget
+(four copies 11870 ms; six copies timed out). The corrected parent GLB run
+completed 36120 executions in 601 seconds, but does not disprove that input.
+
+[Review](verification/M3_8_REVIEW_ROUND3.md) and
+[concrete owner-decision proposal](verification/M3_8_TANGENT_BUDGET_PROPOSAL.md).
+The recommendation is an asset-wide deterministic weld-work budget with
+E_VALIDATION before MikkTSpace/writes, covering equal and adjacent positions.
+It changes accepted extreme inputs and the new artifact test's expectation,
+so no rejection policy is implemented before owner approval. No code is pushed;
+reference CI/Windows, GitHub cache proof and public clone remain pending.
+No final A.5 report, merge/tag or M4 authorization is implied.
