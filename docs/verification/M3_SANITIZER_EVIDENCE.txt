@@ -1,0 +1,123 @@
+Native allocator, unload (exit 1)
+Mesa RTASM after allocate/free: heap=0x7bbbba3e3320 block=0x7bbbba3e3380 bytes=56+56 free=1 size=10485760
+
+=================================================================
+==2163444==ERROR: LeakSanitizer: detected memory leaks
+
+Indirect leak of 56 byte(s) in 1 object(s) allocated from:
+    #0 0x7f5bbbb2bea9 in calloc (/usr/lib/libasan.so.8+0x12bea9) (BuildId: b8a4241051a1621937fdc46e867ba7ecb56d96ea)
+    #1 0x7b5bb76d0b7b  (<unknown module>)
+    #2 0x7b5bb74f8bcc  (<unknown module>)
+    #3 0x55b342d9d835 in main tests/sanitizers/lavapipe_rtasm_probe.c:80
+    #4 0x7f5bbb627780  (/usr/lib/libc.so.6+0x27780) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #5 0x7f5bbb6278b8 in __libc_start_main (/usr/lib/libc.so.6+0x278b8) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #6 0x55b342d9d1d4 in _start (/tmp/m35_lvp_rtasm_probe+0x21d4) (BuildId: 562ec44f672f6af0f956fbd994ff59bce9c27eb5)
+
+Objects leaked above:
+0x7bbbba3e3380 (56 bytes)
+
+Indirect leak of 56 byte(s) in 1 object(s) allocated from:
+    #0 0x7f5bbbb2bea9 in calloc (/usr/lib/libasan.so.8+0x12bea9) (BuildId: b8a4241051a1621937fdc46e867ba7ecb56d96ea)
+    #1 0x7b5bb76d0b63  (<unknown module>)
+    #2 0x7b5bb74f8bcc  (<unknown module>)
+    #3 0x55b342d9d835 in main tests/sanitizers/lavapipe_rtasm_probe.c:80
+    #4 0x7f5bbb627780  (/usr/lib/libc.so.6+0x27780) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #5 0x7f5bbb6278b8 in __libc_start_main (/usr/lib/libc.so.6+0x278b8) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #6 0x55b342d9d1d4 in _start (/tmp/m35_lvp_rtasm_probe+0x21d4) (BuildId: 562ec44f672f6af0f956fbd994ff59bce9c27eb5)
+
+Objects leaked above:
+0x7bbbba3e3320 (56 bytes)
+
+SUMMARY: AddressSanitizer: 112 byte(s) leaked in 2 allocation(s).
+
+
+Native allocator retained (exit 0)
+Mesa RTASM after allocate/free: heap=0x7c13333e3320 block=0x7c13333e3380 bytes=56+56 free=1 size=10485760
+
+
+Application leak control, retained + suppression file (exit 1)
+Mesa RTASM after allocate/free: heap=0x7b8de07e3320 block=0x7b8de07e3380 bytes=56+56 free=1 size=10485760
+Intentional application leak control: 0x7b9de07e0250 (73 bytes)
+
+=================================================================
+==2163554==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 73 byte(s) in 1 object(s) allocated from:
+    #0 0x7f2de1f2c0c1 in malloc (/usr/lib/libasan.so.8+0x12c0c1) (BuildId: b8a4241051a1621937fdc46e867ba7ecb56d96ea)
+    #1 0x5589047872b6 in own_leak_control tests/sanitizers/lavapipe_rtasm_probe.c:44
+    #2 0x558904787a89 in main tests/sanitizers/lavapipe_rtasm_probe.c:92
+    #3 0x7f2de1a27780  (/usr/lib/libc.so.6+0x27780) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #4 0x7f2de1a278b8 in __libc_start_main (/usr/lib/libc.so.6+0x278b8) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #5 0x5589047871d4 in _start (/tmp/m35_lvp_rtasm_probe+0x21d4) (BuildId: 562ec44f672f6af0f956fbd994ff59bce9c27eb5)
+
+Objects leaked above:
+0x7b9de07e0250 (73 bytes)
+
+SUMMARY: AddressSanitizer: 73 byte(s) leaked in 1 allocation(s).
+
+
+Local complete suite with documented policy
+Command: VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+ 1/21 Test  #1: engine_core_tests ................   Passed    0.16 sec
+ 2/21 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+ 3/21 Test  #3: engine_asset_tests ...............   Passed    0.66 sec
+ 4/21 Test  #4: engine_render_tests ..............   Passed    0.26 sec
+ 5/21 Test  #5: engine_window_smoke ..............   Passed    0.09 sec
+ 6/21 Test  #6: engine_swapchain_test ............   Passed    0.21 sec
+ 7/21 Test  #7: engine_overlay_test ..............   Passed    0.21 sec
+ 8/21 Test  #8: engine_run_smoke .................   Passed    0.68 sec
+ 9/21 Test  #9: engine_point_light_warning .......   Passed    0.89 sec
+10/21 Test #10: engine_screenshot_golden .........   Passed    0.10 sec
+11/21 Test #11: engine_screenshot_cli ............   Passed    0.79 sec
+12/21 Test #12: engine_version_json ..............   Passed    0.07 sec
+13/21 Test #13: engine_cli_contract ..............   Passed    2.66 sec
+14/21 Test #14: engine_docs_links ................   Passed    0.02 sec
+15/21 Test #15: engine_sensitive_scan ............   Passed    0.40 sec
+16/21 Test #16: engine_acceptance_m1 .............   Passed    0.98 sec
+17/21 Test #17: engine_api_reference .............   Passed    0.13 sec
+18/21 Test #18: engine_asset_cli .................   Passed    3.66 sec
+19/21 Test #19: engine_pbr_golden ................   Passed    0.82 sec
+20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.42 sec
+21/21 Test #21: engine_pbr_window ................   Passed    0.49 sec
+100% tests passed out of 21
+Total Test time (real) =  13.72 sec
+
+Color-space golden analytical values
+PBR device: llvmpipe (LLVM 23.1.3, 256 bits)
+Color-space patch 0: red=19 expected=19
+Color-space patch 1: red=33 expected=33
+Color-space patch 2: red=32 expected=33
+Color-space patch 3: red=33 expected=33
+Color-space patch 4: red=156 expected=156
+Color-space patch 5: red=137 expected=137
+PBR color-space fixed golden passed (sRGB base; linear MR/AO/emissive/normal)
+
+Color-space mutation checks (all correct artifacts restored)
+MUTATION wrong-format-role-0
+color-space golden patch violates analytical value: actual=33 expected=19
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-0
+MUTATION wrong-format-role-1
+color-space golden patch violates analytical value: actual=19 expected=33
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-1
+MUTATION wrong-format-role-2
+color-space golden patch violates analytical value: actual=42 expected=33
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-2
+MUTATION wrong-format-role-3
+color-space golden patch violates analytical value: actual=19 expected=33
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-3
+MUTATION wrong-format-role-4
+color-space golden patch violates analytical value: actual=117 expected=156
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-4
+MUTATION wrong-format-role-5
+color-space golden patch violates analytical value: actual=121 expected=137
+PBR test failed: color-space golden patch violates analytical value
+REJECTED wrong-format-role-5
+MUTATION wrong-fixed-PNG-pixel
+PBR test failed: color-space golden mismatch
+REJECTED wrong-fixed-PNG-pixel
+All seven color mutations rejected; correct artifacts restored and golden passed

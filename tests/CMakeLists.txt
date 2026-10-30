@@ -338,6 +338,8 @@ target_compile_definitions(engine_pbr_test PRIVATE ENGINE_ASSET_FIXTURE_DIR="${C
 engine_set_warnings(engine_pbr_test)
 add_test(NAME engine_pbr_golden COMMAND engine_pbr_test "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden/m3_pbr_256.png")
 set_tests_properties(engine_pbr_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
+add_test(NAME engine_pbr_color_golden COMMAND engine_pbr_test --color-golden "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden/m3_pbr_colorspace_192x128.png")
+set_tests_properties(engine_pbr_color_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
 if(NOT WIN32)
     add_test(NAME engine_pbr_window COMMAND engine_pbr_test --window)
     set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77 TIMEOUT 30)

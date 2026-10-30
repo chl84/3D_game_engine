@@ -365,3 +365,21 @@ Linux with a display (CI uses Xvfb). It also verifies that invalid scene data ca
 be corrected and rendering resumes without a fence/semaphore hang. Windows runs the offscreen golden/probes;
 Windows presentation remains unverified. Use the existing sanitizer preset
 `linux-asan`. Whole-process/reference-scene performance remains M5/M8.
+
+## Local Mesa RTASM leak-check policy
+
+The earlier 112-byte LSan report is identified as Mesa 26.2.5 RTASM arena metadata,
+not an unknown engine allocation. See the [source/stack diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md)
+and [full M3.5 report](verification/M3_5_STATUS_REPORT.md).
+The opt-in local test preset preserves native-library globals using the supported
+Vulkan loader switch and loads a function-specific LSan file. Leak detection,
+ASan/UBSan and Required Vulkan validation remain enabled. The ordinary preset
+and Ubuntu CI do not inherit this local policy.
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+```
+
+The explicit `engine_pbr_color_golden` now compares a fixed 192x128 six-patch
+image as well as numerical sRGB/data expectations. It is registered on Linux
+and Windows. This is separate from the Blender normal-map golden.

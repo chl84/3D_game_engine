@@ -166,7 +166,7 @@ jobs:
           '
 
       - name: Render test summary
-        run: ctest --preset ${{ matrix.preset }} -R "engine_render_tests|engine_pbr_golden" -V
+        run: ctest --preset ${{ matrix.preset }} -R "engine_render_tests|engine_pbr_(golden|color_golden)" -V
 
       - name: Core test summary
         run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
@@ -410,7 +410,7 @@ jobs:
       - name: Render test summary
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: ctest --preset ci-windows -R "engine_render_tests|engine_pbr_golden" -V
+        run: ctest --preset ci-windows -R "engine_render_tests|engine_pbr_(golden|color_golden)" -V
 
       - name: Core test summary
         env:

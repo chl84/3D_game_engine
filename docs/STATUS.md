@@ -524,3 +524,25 @@ Initial development exposed an embedded-shader inline-symbol collision and an
 optional SPIR-V discard capability; unique symbols and explicit SPIR-V 1.5 fixed
 both before delivery. No existing tests or validation requirements were weakened.
 No new dependency, merge, tag or milestone closure is included.
+
+## Owner-requested M3.4/M3.5 reporting follow-up
+
+M3.6 is explicitly stopped and has not started. Full reports are available:
+[M3.4](verification/M3_4_STATUS_REPORT.md) and
+[M3.5](verification/M3_5_STATUS_REPORT.md).
+
+The 112-byte source is now proved: Mesa 26.2.5 RTASM's process-lifetime arena
+metadata, two 56-byte objects from u_mmInit via rtasm_exec_malloc. A standalone
+Build-ID-guarded C probe reproduces it after freeing all requested code; an
+intentional 73-byte application leak still fails. Exact normalized stack/source
+correlation and captured evidence are in the [diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md).
+The opt-in local sanitizer preset uses the supported loader-retention switch
+and narrow documented LSan file; all 21 tests pass with leak detection active.
+No patterns are actually consumed on this build: retention preserves the arena
+root. The ordinary preset and reference Ubuntu CI remain unsuppressed.
+
+The former color checks were numeric GPU probes, not a separate fixed PNG.
+`engine_pbr_color_golden` now supplies that explicit six-patch PNG test on Linux
+and Windows. Local Clang 21/21 and local-policy ASan 21/21 pass; final follow-up
+CI/review are pending. Existing rendering/import runtime and Blender golden
+are unchanged. No merge or tag is authorized or performed.

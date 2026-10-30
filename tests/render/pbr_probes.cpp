@@ -1,4 +1,5 @@
 #include "pbr_probes.hpp"
+#include <algorithm>
 #include <cmath>
 #include <engine/render/offscreen_renderer.hpp>
 #include <iostream>
@@ -237,6 +238,62 @@ void sampler_probes(render::OffscreenRenderer& renderer) {
     }
 }
 } // namespace
+std::vector<std::uint8_t> render_pbr_color_chart(const render::Device& device) {
+    auto renderer = take(render::OffscreenRenderer::create(device, {64, 64}));
+    std::vector<std::uint8_t> chart(std::size_t{192} * 128U * 4U);
+    constexpr std::array expected{19, 33, 33, 33, 156, 137};
+    // Row-major: sRGB base, linear base control, linear MR, linear AO,
+    // linear emissive (owner-approved policy), linear normal with authored sun.
+    for (std::size_t patch = 0; patch < expected.size(); ++patch) {
+        auto a = quad();
+        add_texture(a,
+                    patch == 0 ? asset::TextureColorSpace::Srgb : asset::TextureColorSpace::Linear,
+                    {128, 128, 128, 255});
+        auto& material = a.asset.materials[0];
+        if (patch < 2) {
+            material.base_color_texture = asset::TextureReference{};
+        }
+        if (patch == 2) {
+            a.textures[0].rgba8 = {0, 200, 128, 255};
+            material.metallic_factor = 1;
+            material.metallic_roughness_texture = asset::TextureReference{};
+        }
+        if (patch == 3) {
+            material.occlusion_texture = asset::TextureReference{};
+        }
+        if (patch == 4) {
+            material.base_color_factor = {0, 0, 0, 1};
+            material.emissive_factor = {1, 1, 1};
+            material.emissive_texture = asset::TextureReference{};
+        }
+        if (patch == 5) {
+            a.textures[0].rgba8 = {128, 204, 230, 255};
+            material.normal_texture = asset::TextureReference{};
+        }
+        good(renderer.upload_asset(a));
+        auto s = make_scene(a.record.asset_id.to_string());
+        if (patch == 5) {
+            auto sun = take(s.create_entity("Color chart sun"));
+            good(s.add_component<scene::DirectionalLight>(sun));
+            s.component<scene::DirectionalLight>(sun).direction = {0, -1, -1};
+            s.component<scene::DirectionalLight>(sun).intensity = 1;
+        }
+        const auto pixels = take(renderer.render(scene::SceneView(s), 1));
+        const auto center = pixels[((std::size_t{32} * 64U) + 32U) * 4U];
+        near(center, expected[patch], "color-space golden patch violates analytical value");
+        std::cout << "Color-space patch " << patch << ": red=" << static_cast<int>(center)
+                  << " expected=" << expected[patch] << '\n';
+        for (std::size_t row = 0; row < 64; ++row) {
+            const auto destination =
+                (((((patch / 3U) * 64U) + row) * 192U) + ((patch % 3U) * 64U)) * 4U;
+            std::copy_n(pixels.data() + (row * 64U * 4U), std::size_t{64} * 4U,
+                        chart.data() + destination);
+        }
+        good(renderer.retire_asset(a.record.asset_id.to_string()));
+        good(renderer.collect_assets());
+    }
+    return chart;
+}
 void verify_pbr_probes(const render::Device& device) {
     auto renderer = take(render::OffscreenRenderer::create(device, {64, 64}));
     auto base = quad();

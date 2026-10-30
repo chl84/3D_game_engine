@@ -102,7 +102,9 @@ int main(int argc, char** argv) {
     try {
         const bool window_test = argc > 1 && std::string(argv[1]) == "--window";
         const bool device_smoke = argc > 1 && std::string(argv[1]) == "--device-smoke";
-        const bool write_golden = argc > 2 && std::string(argv[2]) == "--write";
+        const bool color_test = argc > 2 && std::string(argv[1]) == "--color-golden";
+        const bool write_golden = (argc > 2 && std::string(argv[2]) == "--write") ||
+                                  (argc > 3 && std::string(argv[3]) == "--write");
         test::TempDir temp("pbr-golden");
         auto project = take(scene::Project::create(temp.path() / "project", "PBR"));
         auto generated = load(project.root(), "blender_mirrored_no_tangents.glb");
@@ -185,6 +187,30 @@ int main(int argc, char** argv) {
             device.device_name().find("lavapipe") == std::string::npos) {
             std::cout << "SKIPPED: golden requires lavapipe\n";
             return 77;
+        }
+        if (color_test) {
+            const auto pixels = test::render_pbr_color_chart(device);
+            if (write_golden) {
+                require(stbi_write_png(argv[2], 192, 128, 4, pixels.data(), 192 * 4) != 0,
+                        "cannot write color-space golden");
+            } else {
+                int width = 0;
+                int height = 0;
+                int channels = 0;
+                auto* image = stbi_load(argv[2], &width, &height, &channels, 4);
+                require(image != nullptr, "cannot load color-space golden");
+                if (width != 192 || height != 128) {
+                    stbi_image_free(image);
+                    throw std::runtime_error("wrong color-space golden dimensions");
+                }
+                const std::vector<std::uint8_t> expected(image, image + pixels.size());
+                stbi_image_free(image);
+                require(images_match(pixels, expected), "color-space golden mismatch");
+            }
+            validation(device);
+            std::cout << "PBR color-space fixed golden passed (sRGB base; linear "
+                         "MR/AO/emissive/normal)\n";
+            return 0;
         }
         auto renderer = take(render::OffscreenRenderer::create(device, {256, 192}));
         good(renderer.upload_asset(generated));
