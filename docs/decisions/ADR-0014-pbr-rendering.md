@@ -122,14 +122,18 @@ and the Blender-tangent export. Negative controls remove normal mapping and flip
 tangent signs. Numerical probes cover sRGB versus linear textures, the MR blue
 channel, occlusion, emissive/tone mapping, alpha modes, SRGB mip blits and the last
 slot of full 4096-image/material tables. Blender comparisons use the fixed
-image tolerance (maximum byte delta8, delta>3 on fewer than0.1% of bytes), and
+image tolerance (maximum byte delta 8, delta>3 on fewer than 0.1% of bytes), and
 removing the normal map must fail that comparison. An independently calculated
-reflected-normal quad expects about137 in the red channel; removing determinant
-handedness produces75 and fails. Sampler probes cover both wrap axes, negative
-UVs, nearest/linear magnification and every min/mip filter at known fractional
-LODs. Tiny uniform and collapsed-node probes cover the transform policy.
+reflected-normal quad expects about 137 in the red channel; removing determinant
+handedness produces 75 and fails. Sampler probes cover both wrap axes, negative
+UVs at 1.25, -0.25, 1.75 and -0.75 (distinct repeat/clamp/mirror results), asymmetric
+S/T modes, nearest/linear magnification and every min/mip filter at known fractional
+LODs. Tiny uniform and collapsed-node probes cover the transform policy. The
+analytical normal is also tested at node scale 1e-14 (with compensating vertex
+coordinates), which exercises Float32 determinant underflow without shader
+normalization.
 Window tests exercise validation-error recovery, missing-camera recovery and
-two-frame retirement/collection/reuse, with a30-second timeout. Validation is
+two-frame retirement/collection/reuse, with a 30-second timeout. Validation is
 Required for the PBR tests.
 
 ## References

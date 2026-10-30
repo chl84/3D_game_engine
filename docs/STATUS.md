@@ -453,70 +453,73 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.5 is implemented; review round1 requested frame-error recovery and stronger
-reflection/Blender-reference tests. Those fixes are being verified before a
-new CI run and re-review. M3.6 remains next after M3.5 approval.
-The optional nightly ten-minute fuzz/cached-corpus proposal is recorded for
-M3.8. M3 merges as a complete milestone only after explicit owner approval.
+M3.5 is implemented. Review round 2 confirmed the frame-error recovery and
+strict reflection/Blender-reference tests in `b417101`. The final correction adds discriminating mirrored-wrap/axis and shader-underflow
+probes, plus a behavior-preserving clang-tidy 18 compatibility fix.
+New CI and the final review round remain before approval. M3.6 is next after
+M3.5 approval. The optional nightly ten-minute fuzz/cached-corpus proposal is
+recorded for M3.8. M3 merges only after explicit owner approval.
 
-## M3.5 implementation and verification in progress
+## M3.5 implementation and verification
 
-Shared `PbrRenderer` resources now serve window and offscreen rendering with
+Shared `PbrRenderer` resources serve window and offscreen rendering with
 explicit cooked-asset uploads, 4096 sampled images/material records, GPU mip
 creation, metallic-roughness/normal/AO/emissive inputs, OPAQUE/MASK, authored
-DirectionalLight and documented Reinhard/sRGB output (ADR-0014). Retirement
-holds descriptors and buffers until an idle collection point. Allocation
-budgets include VMA blocks plus conservative native-resource reservations.
-The descriptor pool gate is corrected from 4098 to 4099 to include its SSBO.
-Cooked scene-root membership is restored from existing sidecar metadata;
-`gltf-import@3` invalidates older derived cache, without changing v1 schemas.
+DirectionalLight and Reinhard/sRGB output (ADR-0014). Retirement holds buffers
+and descriptor slots until an idle collection point. Budgets count VMA blocks
+plus documented conservative native-resource reservations. The descriptor pool
+gate is corrected from 4098 to 4099 to include its SSBO.
 
-- Clang warnings-as-errors build and full lavapipe CTest: 20/20, no skips
-  (`/tmp/m35-final-clang-tests.log`). This includes the fixed Blender PBR golden,
-  exported-tangent comparison, negative controls, reflection/16 km, numerical
-  color-space/mip/alpha probes and full 4096-slot boundary rendering.
-- Required Vulkan validation: zero errors in PBR offscreen and two-frame window
-  lifetime tests. Local Iris Xe offscreen controls and window lifetime also
-  pass (`/tmp/m35-intel-smoke.log`, `/tmp/m35-intel-window.log`); the fixed
-  golden comparison is deliberately lavapipe-only.
-- Changed C++ passes clang-tidy warnings-as-errors; both PBR shaders pass
-  `spirv-val --target-env vulkan1.3`.
-- Full local ASan/UBSan: 12/20 passed, eight graphics-related tests failed
-  (`/tmp/m35-final-asan-tests.log`). The six previously affected tests and the
-  two new PBR tests report 112-byte LeakSanitizer allocations in unknown native
-  modules; CLI subprocess failures also prevent some JSON checks. This remains
-  unresolved locally; no sanitizer is disabled and Ubuntu CI must pass.
-- Sanitizer fuzz smoke passed, 30 seconds per target: GLB 4335 runs, image
-  8640 runs (`/tmp/m35-fuzz.log`), with no crash/UB report. The asset suite
-  passes 18 cases / 22,693 assertions. Clean-clone and CI are pending.
-- Initial development exposed an embedded-shader inline-symbol collision and
-  optional SPIR-V discard capability. Unique symbols and explicit SPIR-V 1.5
-  fix both; no validation/sanitizer/test requirement was disabled.
-- Windows compile/headless/offscreen results for this implementation are not
-  yet verified. Windows presentation remains unverified. CLI placement and
-  automatic project-asset resolution remain M3.6; live control remains M3.7.
-- No new dependency, merge, tag or milestone closure is included.
+Cooked scene-root membership is preserved through existing sidecar metadata;
+`gltf-import@3` regenerates older caches without changing v1 schemas. Matching-
+key reimport also repairs corrupt buffers. CLI placement and automatic project
+asset resolution remain M3.6; live control remains M3.7.
 
-## M3.5 review round1 and corrections
+Review corrections:
 
-Review of `47569ea` returned RETT FØRST: resetting a frame fence before PBR
-validation could hang the next draw after a data error. Window preparation now
-finishes before acquire, and fence reset happens immediately before submit.
-The new regression renders after multiple-light, retired-asset and missing-camera
-errors. Fatal Vulkan errors after acquire return a stored terminal error.
-Blender-reference tolerances now match the strict fixed-golden tolerance; an
-analytical reflected-normal probe independently checks determinant handedness.
-Sampler wrap/filter and tiny/collapsed-node probes address the remaining low
-findings. Required validation remains unchanged. Final local Clang20/20 passes
-(`/tmp/m35-r2-full-clang.log`); Iris Xe controls/window recovery pass. Both PBR
-shaders pass spirv-val; changed C++ passes clang-tidy warnings-as-errors and
-clang-format18. Mutations prove the analytical normal fails at75 instead of137,
-and late preparation/reset recreates the hang; correct artifacts are restored.
-ASan remains12/20 locally with the same112-byte graphics leaks
-(`/tmp/m35-r2-full-asan.log`). New CI and re-review are pending.
+- Scene preparation and overlay budget validation finish after the frame-slot
+  fence wait and before acquire. Fence reset occurs immediately before submit.
+  Data errors leave the slot reusable; post-acquire Vulkan errors are terminal
+  until renderer recreation. Tests recover from missing upload/camera, multiple
+  lights and a retired scene asset with Required validation and a 30-second
+  timeout. Deliberately reversing the order reproduces the fence hang.
+- Golden and Blender-reference comparisons use one strict tolerance: maximum
+  byte delta 8, fewer than 0.1% of bytes with delta greater than 3. Removing the
+  normal map must fail the reference comparison. The fixed golden is unchanged.
+- An analytical reflected-normal probe expects red 137; omitting determinant
+  handedness gives 75 and fails. The probe also runs at scale 1e-14; omitting
+  shader scale normalization gives 48 and fails. Collapsed nodes are skipped,
+  while small uniform scales remain valid under the relative determinant test.
+- Four UV coordinates distinguish repeat/clamp/mirror on each axis. Asymmetric
+  S/T modes distinguish swapped axes. Both shader mutations now fail at 188
+  versus expected 0. Fractional-LOD probes cover all min/mip and mag filters.
 
-All six jobs of the original implementation's CI41051934696 ultimately passed:
-Clang/GCC14/ASan20/20, Windows14/14 including PBR golden on lavapipe, Fuzz and
-Quality success. This evidence is for `47569ea`, not the uncommitted review fixes.
-Windows presentation and unresolved local112-byte sanitizer leaks remain as
-reported above. No merge/tag is authorized.
+| Check | Result / evidence |
+|---|---|
+| Clang warnings-as-errors and full lavapipe CTest | 20/20, no skips; `/tmp/m35-r3-full-clang.log` |
+| Exact clean clone of `b417101` | 20/20 plus M1 and clean-clone acceptance passed; `/tmp/m35-r2-clean-clone.log` |
+| Iris Xe final offscreen controls | Blender image difference 0, analytical red 137, wrap/underflow probes pass; `/tmp/m35-r3-intel.log` |
+| Iris Xe window recovery/lifetime | Passed with Required validation; `/tmp/m35-r2-intel.log` |
+| Mutations | Wrap removed, S/T swapped and normalization removed each fail; correct artifacts restored; `/tmp/m35-r3-mutations.log` |
+| Static checks | Changed C++ passes clang-tidy 23 and compatible local clang-tidy 18 with warnings-as-errors; clang-format 18, docs/sensitive scan and both shaders' spirv-val pass |
+| Asset/fuzz | Asset suite 18 cases / 22,693 assertions; 30-second fuzz targets passed (GLB 4335 runs, image 8640); `/tmp/m35-asset-summary.log`, `/tmp/m35-fuzz.log` |
+| Full local ASan/UBSan on `b417101` | 12/20; eight graphics-related failures with 112-byte unknown-native-module leaks; `/tmp/m35-r2-full-asan.log` |
+| Local ASan PBR after final test correction | Same two PBR leak failures, no suppression; `/tmp/m35-r3-asan-pbr.log` |
+| Original implementation CI | All six jobs succeeded on `47569ea`, run 41051934696; Ubuntu 20/20 including ASan, Windows 14/14 including PBR lavapipe golden |
+| Correction CI | Run 41055106806 on `b417101`: Ubuntu/Windows/Fuzz passed; Quality failed with six clang-tidy 18 optional-access warnings; `/tmp/m35-r2-ci-quality-failure.log` |
+| Final correction CI/review | Pending |
+
+The clang-tidy 18 warnings are corrected by copying the terminal optional to a
+local checked value and returning local errors immediately after storing them.
+This preserves the recovery/terminal behavior; no check is suppressed. Local
+clang-tidy 23 had accepted the former member-access flow. Final CI must verify
+the pinned version 18. Local version 18.1.8 now passes the changed units with
+checksum-verified Ubuntu GCC 14 headers (`/tmp/m35-r3-tidy18-compatible.log`);
+the system GCC 16 headers are too new for that parser.
+
+The exact owner of the local sanitizer leaks is unproved. The Ubuntu reference
+ASan job must pass without suppression. Windows presentation is unverified.
+Initial development exposed an embedded-shader inline-symbol collision and an
+optional SPIR-V discard capability; unique symbols and explicit SPIR-V 1.5 fixed
+both before delivery. No existing tests or validation requirements were weakened.
+No new dependency, merge, tag or milestone closure is included.

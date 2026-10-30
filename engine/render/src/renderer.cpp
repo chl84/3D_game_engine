@@ -1509,8 +1509,9 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view, const Came
 
 core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
                                              const CameraPose* camera) {
-    if (impl_->terminal_error) {
-        return core::make_failure<bool>(*impl_->terminal_error);
+    const auto terminal = impl_->terminal_error;
+    if (terminal.has_value()) {
+        return core::make_failure<bool>(*terminal);
     }
     if (impl_->window->minimized()) {
         return false;
@@ -1602,7 +1603,7 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
         // An acquired image/semaphore cannot be reused after a Vulkan failure.
         // Recreate this renderer; subsequent calls return instead of waiting.
         impl_->terminal_error = recorded.error();
-        return core::make_failure<bool>(*impl_->terminal_error);
+        return core::make_failure<bool>(recorded.error());
     }
 
     VkSemaphoreSubmitInfo wait_info{};
@@ -1630,15 +1631,16 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
 
     result = vkResetFences(impl_->device->device(), 1, &frame.in_flight);
     if (result != VK_SUCCESS) {
-        impl_->terminal_error =
-            detail::vulkan_error("could not reset the frame fence", "frame", result);
-        return core::make_failure<bool>(*impl_->terminal_error);
+        auto error = detail::vulkan_error("could not reset the frame fence", "frame", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
 
     result = vkQueueSubmit2(impl_->device->graphics_queue(), 1, &submit_info, frame.in_flight);
     if (result != VK_SUCCESS) {
-        impl_->terminal_error = detail::vulkan_error("could not submit the frame", "frame", result);
-        return core::make_failure<bool>(*impl_->terminal_error);
+        auto error = detail::vulkan_error("could not submit the frame", "frame", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
     impl_->timestamp_ready[frame_slot] = impl_->timestamp_supported;
     const auto cpu_end = std::chrono::steady_clock::now();
@@ -1664,14 +1666,15 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
         return false;
     }
     if (result == VK_ERROR_SURFACE_LOST_KHR) {
-        impl_->terminal_error =
+        auto error =
             detail::vulkan_error("the surface was lost while presenting", "swapchain", result);
-        return core::make_failure<bool>(*impl_->terminal_error);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        impl_->terminal_error =
-            detail::vulkan_error("could not present the frame", "swapchain", result);
-        return core::make_failure<bool>(*impl_->terminal_error);
+        auto error = detail::vulkan_error("could not present the frame", "swapchain", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
 
     ++impl_->presented_frames;

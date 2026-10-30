@@ -97,10 +97,16 @@ void near(int actual, int expected, const char* message) {
 // Known normal (approximately 0,0.6,0.8) and L=(0,1,1)/sqrt(2).
 // Reflection in X preserves its positive Y component only when tangent.w
 // changes sign. GGX at roughness=1 gives about 137, versus 74 with wrong w.
-void reflected_normal(render::OffscreenRenderer& renderer) {
+void reflected_normal(render::OffscreenRenderer& renderer, float node_scale = 1) {
     auto a = quad();
     add_texture(a, asset::TextureColorSpace::Linear, {128, 204, 230, 255});
     a.asset.materials[0].normal_texture = asset::TextureReference{};
+    a.asset.nodes[0].scale = {node_scale, node_scale, node_scale};
+    for (auto& v : a.asset.meshes[0].primitives[0].vertices) {
+        for (auto& position : v.position) {
+            position /= node_scale;
+        }
+    }
     good(renderer.upload_asset(a));
     auto s = make_scene(a.record.asset_id.to_string());
     for (auto e : s.entities()) {
@@ -147,21 +153,43 @@ asset::LoadedAsset sampling_quad(bool vertical = false) {
     return a;
 }
 void sampler_probes(render::OffscreenRenderer& renderer) {
+    constexpr std::array modes{
+        asset::Wrap::Repeat,
+        asset::Wrap::ClampToEdge,
+        asset::Wrap::MirroredRepeat,
+    };
+    constexpr std::array<float, 4> coordinates{1.25F, -0.25F, 1.75F, -0.75F};
+    // Rows are repeat/clamp/mirror. Each row differs over these four UVs.
+    constexpr std::array<std::array<bool, 4>, 3> white{
+        {
+            {false, true, true, false},
+            {true, false, true, false},
+            {true, false, false, true},
+        },
+    };
     for (bool vertical : {false, true}) {
-        for (auto mode :
-             {asset::Wrap::Repeat, asset::Wrap::ClampToEdge, asset::Wrap::MirroredRepeat}) {
-            for (float uv : {1.25F, -0.25F}) {
+        for (std::size_t mode = 0; mode < modes.size(); ++mode) {
+            for (std::size_t coordinate = 0; coordinate < coordinates.size(); ++coordinate) {
+                const float uv = coordinates[coordinate];
                 auto a = sampling_quad(vertical);
-                a.textures[0].sampler.wrap_s = mode;
-                a.textures[0].sampler.wrap_t = mode;
+                a.textures[0].sampler.wrap_s = modes[mode];
+                a.textures[0].sampler.wrap_t = modes[mode];
                 for (auto& v : a.asset.meshes[0].primitives[0].vertices) {
                     v.uv0 =
                         vertical ? std::array<float, 2>{0.5F, uv} : std::array<float, 2>{uv, 0.5F};
                 }
-                const bool white = mode == asset::Wrap::Repeat ? uv < 0 : uv > 1;
-                near(red(renderer, a), white ? 188 : 0, "sampler wrap mode failed");
+                near(red(renderer, a), white[mode][coordinate] ? 188 : 0,
+                     "sampler wrap mode failed");
             }
         }
+        // Both axes are out of range; distinct modes make an S/T swap observable.
+        auto asymmetric = sampling_quad(vertical);
+        asymmetric.textures[0].sampler.wrap_s = asset::Wrap::Repeat;
+        asymmetric.textures[0].sampler.wrap_t = asset::Wrap::ClampToEdge;
+        for (auto& v : asymmetric.asset.meshes[0].primitives[0].vertices) {
+            v.uv0 = {1.25F, 1.25F};
+        }
+        near(red(renderer, asymmetric), vertical ? 188 : 0, "sampler wrap S/T modes swapped");
     }
     for (auto filter : {asset::Filter::Nearest, asset::Filter::Linear}) {
         auto a = sampling_quad();
@@ -266,6 +294,8 @@ void verify_pbr_probes(const render::Device& device) {
     }
     near(red(renderer, mip), 33, "sRGB mip generation or LOD sampling failed");
     reflected_normal(renderer);
+    // det(scale)=1e-42 underflows without shader normalization on FTZ hardware.
+    reflected_normal(renderer, 1e-14F);
     sampler_probes(renderer);
     auto tiny = quad();
     tiny.asset.nodes[0].scale = {1e-6F, 1e-6F, 1e-6F};
