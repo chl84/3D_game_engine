@@ -27,6 +27,15 @@ budget and measurement plan in [PERFORMANCE.md](PERFORMANCE.md). M2.9 adds the
 windowed fly-camera run command and routes input to ImGui without mutating
 authoritative state.
 
+### M3 follow-ups (non-blocking)
+
+- Non-indexed GLB primitives are rejected in M3.3. A later extension can
+  generate indices in a separate, bounds-checked importer step after validating
+  the POSITION accessor, its count and the vertex limit. It is not part of M3.
+- Permanent libFuzzer targets (`engine_gltf_fuzz`, `engine_image_fuzz`) run in
+  a short CI job with the checked-in fixtures as the seed corpus. Crashes found
+  by fuzzing are added as regression tests.
+
 ## M0 substeps
 
 | Substep | Scope | Status |

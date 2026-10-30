@@ -1,10 +1,8 @@
 # M3 Plan — Asset pipeline and live control
 
-**Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 is
-reviewer-approved and CI-green. M3.2 (GLB import core) is reviewer-approved
-(round 4): self-contained GLB import, checked-in Blender fixtures,
-double-precision world composition, and explicit rejection of unsupported
-features.
+**Status:** Approved by the owner on 2026-10-30 with the changes below. M3.1 and
+M3.2 are reviewer-approved and CI-green. M3.3 is in progress: asset sidecars,
+cooked cache, stable IDs, image decoding and permanent fuzz targets.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
 
@@ -237,6 +235,8 @@ runtime.
 
 ### M3.3 Cooked asset format, cache and reimport
 
+**Status:** In progress.
+
 - Write `asset@1` sidecars and `engine.asset.cooked@1` cache entries.
 - Implement source hashing, dependency tracking, cache invalidation, atomic
   writes and project sandboxing.
@@ -246,6 +246,9 @@ runtime.
   changes the cache key; reimport preserves the asset ID and stable node IDs;
   a scene `AssetInstance` reference remains valid; `.engine/cache/` is ignored
   by git.
+- Add permanent libFuzzer targets for GLB import and PNG/JPEG decoding with the
+  checked-in fixtures as seed corpus. A short, time-limited CI job runs them;
+  crashes found by fuzzing become regression tests.
 
 ### M3.4 Asset CLI
 

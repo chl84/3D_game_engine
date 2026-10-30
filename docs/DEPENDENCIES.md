@@ -96,7 +96,7 @@ and the license texts used for redistribution.
   volk defines `VK_NO_PROTOTYPES`.
 - GLM is used only inside `engine/render`. Authoritative scene data keeps the
   `core::Vec3` and `core::Quat` types.
-- The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library. M3 PNG/JPEG texture decoding with `stb_image` was approved on 2026-10-30 with the macro, limit and sanitizer requirements above. The decoder implementation starts in M3.2.
+- The `stb` port is header-only. `stb_image_write` is used by the screenshot command and `stb_image`/`stb_image_write` by the golden-image test; neither is linked into the renderer library. M3 PNG/JPEG texture decoding with `stb_image` was approved on 2026-10-30 with the macro, limit and sanitizer requirements above. The decoder is implemented in `engine/asset/src/image_decode.cpp` in M3.3 and is covered by unit tests, ASan/UBSan and a libFuzzer target.
 - Dear ImGui uses a local overlay port in `cmake/vcpkg-overlay/imgui`.
   The stock port's `sdl3-binding` enables SDL3's default `ibus` feature, which
   pulls dbus, systemd and libxcrypt, and its `vulkan-binding` pulls a second

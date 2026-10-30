@@ -1,12 +1,12 @@
 # Testing
 
-**Status:** M3.2. Seventeen CTest tests exist on Linux; Windows registers twelve
+**Status:** M3.3. Seventeen CTest tests exist on Linux; Windows registers twelve
 because the window, swapchain, overlay and `engine run` tests remain Linux-only
 while the offscreen golden and screenshot tests are registered on both
 platforms.
-`engine_core_tests` contains 63 test cases and 500 assertions on Linux;
-Windows reports 61 cases / 488 assertions because two POSIX-only tests are
-compiled out. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
+`engine_core_tests` contains 65 test cases and 507 assertions on Linux;
+Windows reports 63 cases / 495 assertions because two POSIX-only tests are
+compiled out. `engine_asset_tests` contains 9 test cases and 599 assertions. `engine_render_tests` contains 13 test cases and 105 assertions. CI also runs
 clang-format, clang-tidy with project headers included, ASan/UBSan, and Vulkan
 detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 
@@ -16,7 +16,7 @@ detection with pinned CMake 4.4.5 and Ninja 1.13.2.
 |---|---|---|
 | `engine_core_tests` | Catch2 unit test | `unit` |
 | `engine_dependencies_smoke` | Catch2 compile/link smoke test for all M0/M1 dependencies | `unit`, `dependencies` |
-| `engine_asset_tests` | GLB import, hierarchy composition, materials/textures and malformed-input rejection | `unit`, `asset` |
+| `engine_asset_tests` | GLB import, hierarchy composition, image decoding, asset sidecar/cooked cache, reimport and malformed-input rejection | `unit`, `asset` |
 | `engine_version_json` | CLI JSON smoke test | `unit`, `cli` |
 | `engine_cli_contract` | JSON Schema contract test for version and doctor output | `contract`, `cli` |
 | `engine_docs_links` | Local Markdown links and the B.10 documentation file list | `docs` |
@@ -57,7 +57,12 @@ multiple scenes, non-triangle primitives, blended materials, missing attributes,
 unsupported vertex attributes, hierarchy cycles and out-of-range indices. The
 M3.2 importer accepts only self-contained GLB: external buffers/images, skins,
 cameras, punctual lights, morph targets and texture or mesh compression fail
-with an explicit error instead of being ignored.
+with an explicit error instead of being ignored. The M3.3 tests also import a
+source into a project, validate the `asset@1` and `engine.asset.cooked@1`
+documents against their schemas, load the cooked asset, reimport unchanged and
+changed sources, compare byte-stable sidecar/cache files, and prove that the
+asset UUID and stable node/mesh IDs survive reimport. PNG and JPEG decoding is
+tested with valid, truncated, corrupt and oversized images.
 
 `engine_render_tests` creates a headless Vulkan 1.3 device, verifies the
 graphics queue and VMA allocator, requires `VK_LAYER_KHRONOS_validation` and
@@ -165,6 +170,21 @@ Tests that cannot run on a platform use Catch2 `SKIP`, and the CI
 `Core test summary` step runs `ctest -R engine_core_tests -V` so skipped cases
 are visible instead of being reported as ordinary passes.
 
+## Fuzzing
+
+Permanent targets: `engine_gltf_fuzz` (imports arbitrary GLB bytes and composes
+world transforms) and `engine_image_fuzz` (PNG/JPEG decoding). Both are built
+with Clang libFuzzer, ASan and UBSan through the `linux-fuzz` preset. The
+checked-in fixtures seed the corpus:
+
+```bash
+VCPKG_ROOT=... scripts/run_fuzz.sh 30
+```
+
+CI runs both targets for 30 seconds each in the `Fuzz (Clang ASan)` job. Any
+crash found by fuzzing must be reduced and added as a regression test before
+the finding is closed.
+
 ## CI jobs
 
 | Job | Purpose |
@@ -174,6 +194,7 @@ are visible instead of being reported as ordinary passes.
 | `Windows (MSVC)` | MSVC build and headless tests; no GPU |
 | `Quality` | clang-format 18 and clang-tidy 18 with warnings as errors; project headers are analysed |
 | `Linux ASan/UBSan` | ASan + UBSan build, CTest and Vulkan detection under the sanitizers |
+| `Fuzz (Clang ASan)` | Short libFuzzer runs for GLB import and image decoding with fixture seed corpora |
 
 CI runs on pull requests to `main`, pushes to `main` and manual dispatches.
 Feature-branch pushes do not trigger CI. To verify a feature branch, open a
