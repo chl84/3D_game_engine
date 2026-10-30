@@ -106,6 +106,17 @@ The fixture now also drives the M3.5 PBR golden and Blender-reference image test
   `required_conversation_resolution`, because six Codex review threads were
   unresolved. `--admin` bypassed the rule and must not be used again.
 
+## Owner reporting instruction — 2026-10-30
+
+Do not send interim or substep status reports before independent review is
+fully handled. Send one consolidated A.5 report after review findings have
+been addressed and required re-review and CI checks have passed. During the
+work, provide only brief progress updates, necessary questions or genuine
+blockers. This owner instruction applies across sessions and supersedes any
+interpretation of A.2/A.4 that would require a premature report. It is also
+recorded in the versioned AI_AGENT_GUIDE.md and under A.5 in the local prompt
+sources AGENT_RULES.md and MASTERPROMPT_v0.2.md.
+
 ## Owner approval required
 
 - Merging to `main`, creating or pushing a tag, and using GitHub admin bypass

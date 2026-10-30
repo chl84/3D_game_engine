@@ -4,6 +4,16 @@
 CLI, fixed-tick simulation, the Vulkan renderer and offscreen screenshots exist. The live API is
 planned for M3.
 
+## Status reports and independent review
+
+Owner instruction, 2026-10-30: do not send interim or substep status reports
+while independent review is pending. Deliver one consolidated A.5 report only
+after review is complete, findings have been addressed, and required re-review
+and CI verification have completed successfully. During ongoing work, provide
+only brief progress updates, necessary questions or genuine blockers. This
+instruction applies across sessions, including when a review runs asynchronously.
+The end-of-session/substep reporting rules do not require a premature report.
+
 ## Principles
 
 - Use the CLI or live API, never the editor, for automation.
