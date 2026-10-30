@@ -575,3 +575,22 @@ timeout, not a brittle new wall-clock assertion in the unit suite. Diagnostic
 replay timings are not a controlled hardware performance benchmark or a
 universal worst-case bound. A fresh long run and independent source review are
 required after this change.
+
+### Owner-approved tangent work admission
+
+The owner approved [ADR-0015](decisions/ADR-0015-tangent-work-budget.md) on
+2026-10-31: preflight all missing-tangent primitives, with an inclusive asset
+budget of 1,000,000 dense-position pair estimates; groups of at most 64 corners
+are exempt. The eight shifted grids cover adjacent Float32 positions and
+canonical zero, with conservative minimum spacing for subnormal/FTZ spans.
+Reject E_VALIDATION before generation or writes when the budget is exceeded.
+
+The retained timeout fixture and its six-copy variant must now be rejected;
+this exact expectation change is owner-approved. Tests require unchanged input/
+project/cached files, aggregate work across meshes and primitives, the exact
+million-pair boundary, all eight grid phases, zero/tiny/finite-limit values,
+source-tangent preservation and normal/dry-run import/reimport rejection.
+Small collapsed correctness cases and all Blender/image tests remain required.
+The ten-second fuzzer input timeout, 30/600-second target limits, sanitizer
+flags and 2048 MiB RSS limits remain unchanged. See ADR-0015 for compatibility,
+existing-cache behavior and the estimator's limited claim.

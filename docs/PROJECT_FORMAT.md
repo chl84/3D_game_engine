@@ -271,3 +271,12 @@ asset names return E_VALIDATION without new project files/directories; rename
 those inputs to UTF-8. This is validation of the existing JSON contract, not a
 format migration. Live journals retain their existing version1 schema and
 per-session intent/completion synchronization contract.
+
+### Owner-approved tangent admission limit
+
+[ADR-0015](decisions/ADR-0015-tangent-work-budget.md) restricts missing-tangent
+generation for dense position groups with an asset-wide estimated-work budget.
+Some previously accepted extreme GLBs now return E_VALIDATION before writes,
+including on reimport/dry-run. This source-input restriction is explicitly
+owner-approved. Stored formats and importer@4 remain unchanged; accepted
+tangent output is identical and existing cooked caches remain loadable.

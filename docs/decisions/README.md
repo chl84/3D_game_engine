@@ -36,3 +36,6 @@ ADRs are not rewritten.
 | [0012](ADR-0012-asset-pipeline-and-scene-v3.md) | Asset pipeline, scene format v3 and PBR lighting | Accepted |
 | [0013](ADR-0013-live-api-transport.md) | Local live API transport | Accepted |
 | [0014](ADR-0014-pbr-rendering.md) | Shared PBR rendering, descriptors and resource lifetime | Accepted |
+
+[ADR-0015](ADR-0015-tangent-work-budget.md) records the owner-approved M3.8
+asset-wide tangent work budget and its explicit source-compatibility tradeoff.

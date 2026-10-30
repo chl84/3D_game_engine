@@ -1,6 +1,8 @@
 # M3.8 proposed tangent-generation work budget — owner decision required
 
-**Status:** Proposed, not implemented or accepted. Source remains unpublished.
+**Status:** Option 1 approved by the owner on 2026-10-31, including the
+artifact-test expectation change. Implementation/review is in progress; source
+remains unpublished. The original proposal/alternatives are retained below.
 The source delta at c2304ef is technically sound, but Claude found F2 and did
 not approve publication. M3.8 is not complete. This is a decision proposal,
 not the final A.5 owner report.
@@ -92,6 +94,10 @@ part of the requested owner decision, not already authorized by this proposal.
    claim. Known accepted inputs still time out; this is not recommended as
    publication-ready hardening and cannot be silently counted as a green gate.
 
-After the owner decides: implement only the approved policy, obtain fresh
+The owner selected option 1. Implement only the approved policy, obtain fresh
 Claude review, then publish for all six reference CI jobs, extended fuzz/cache
 save/restore and public exact-SHA clone. Merge/tag and M4 remain unauthorized.
+
+Implementation details and cache/compatibility policy are recorded in
+[ADR-0015](../decisions/ADR-0015-tangent-work-budget.md). Approval of this
+restriction does not approve M3.8 as complete or authorize merge/tag.

@@ -642,7 +642,7 @@ clarified; I3 required no code change. This small low-severity correction is
 handled directly, with no new delegated review. Final exact-SHA CI 41076353145 on `ef6775a` completed/success: all six jobs,
 LinuxClang/GCC14/ASan22/22 and WindowsMSVC16/16, no unexplained skips.
 Both lavapipe platforms passed emissive 117 and Blender difference 0. Quality
-clang-format18/clang-tidy18 and Fuzz passed. The final corrected clean public
+clang-format18/clang-tidy 18 and Fuzz passed. The final corrected clean public
 clone passed 22/22 plus M1 acceptance; explicit Iris Xe acceptance also passed.
 At the M3.6 handback its consolidated report was ready and M3.7 was unstarted.
 M3.7 was subsequently authorized; its current status is recorded below.
@@ -691,7 +691,7 @@ GCC, Clang and ASan24/24; Windows18/18; Fuzz success. Windows live/DACL checks,
 queued-deadline regression and PBR color golden all passed. At this historical
 snapshot Quality was still in progress; final success is recorded below.
 Exact-source public clean clone passed24/24 and both acceptance summaries.
-Local clang-tidy18 passed all17changed C++ units with compatible GCC14 headers;
+Local clang-tidy 18 passed all17changed C++ units with compatible GCC14 headers;
 its incompatible GCC16-header attempt is recorded honestly.
 [CI excerpts](verification/M3_7_CI_EVIDENCE.txt) and
 [local evidence](verification/M3_7_LOCAL_EVIDENCE.txt) preserve the proof.
@@ -705,7 +705,7 @@ All six jobs in [CI41093710140](https://github.com/chl84/3D_game_engine/actions/
 completed/success on7c241168583e5cd1b37c6b14aa60fd959819753d. Linux GCC, Clang
 and ASan/UBSan passed24/24; Windows MSVC passed18/18, including live authoring,
 ACL checks, queued deadlines and color golden on lavapipe. Quality passed the
-reference clang-format18/clang-tidy18 gates. All three fuzz targets passed.
+reference clang-format18/clang-tidy 18 gates. All three fuzz targets passed.
 Exact-source public clean clone passed24/24 and both acceptance summaries.
 
 The original independent GPT-6 Astra high review requested three changes.
@@ -854,3 +854,24 @@ It changes accepted extreme inputs and the new artifact test's expectation,
 so no rejection policy is implemented before owner approval. No code is pushed;
 reference CI/Windows, GitHub cache proof and public clone remain pending.
 No final A.5 report, merge/tag or M4 authorization is implied.
+
+### Owner approved F2 admission policy — 2026-10-31
+
+The owner approved the proposed million-pair, asset-wide dense-weld limit and
+the artifact regression's controlled-rejection expectation. The A.6 decision
+is recorded in [ADR-0015](decisions/ADR-0015-tangent-work-budget.md).
+Implementation preflights all generating primitives before mutation, covers
+adjacent Float32 values/zero/tiny spans, and preserves official MikkTSpace and
+all current fuzz/compiler/sanitizer limits. Test expansion and fresh review/
+reference CI/extended fuzz/public clone are in progress. No pushing, final
+M3.8 approval, merge/tag or M4 work is implied by this specific approval.
+
+The approved F2 policy is now implemented and locally verified: full Clang/
+GCC 27/27, ASan/UBSan 26/26 and full-build TSan 13/13; asset tests 22878 assertions
+in 27 cases. Five production mutations are caught and restored; CLI normal/
+dry-run import/reimport preserve project/cache bytes on rejection, and live
+continues after the logged validation error. The old timeout input replays
+ten times in 85 ms under unchanged limits. New long fuzzing is in progress.
+[Budget evidence](verification/M3_8_TANGENT_BUDGET_EVIDENCE.txt).
+Claude review of this delta is pending before publication; Windows/reference
+CI, real GitHub corpus save/restore and public exact-SHA clone remain pending.

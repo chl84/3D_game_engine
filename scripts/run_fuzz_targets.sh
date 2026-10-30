@@ -16,8 +16,8 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 export UBSAN_OPTIONS="${UBSAN_OPTIONS:+$UBSAN_OPTIONS:}halt_on_error=1:print_stacktrace=1"
 mkdir -p "$corpus/gltf" "$corpus/image" "$corpus/rpc"
-# Only original MIT fixtures and synthetic RPC seeds enter the cache. Mutations
-# are untrusted parser input, never build tools or executable dependencies.
+# Original MIT fixtures, retained own fuzz mutations and synthetic RPC seeds
+# enter the cache as untrusted parser input, never tools or dependencies.
 cp tests/assets/m3/*.glb "$corpus/gltf/"
 cp tests/assets/m3/*.png tests/assets/m3/*.jpg "$corpus/image/"
 cp tests/fuzz/corpus/rpc/* "$corpus/rpc/"

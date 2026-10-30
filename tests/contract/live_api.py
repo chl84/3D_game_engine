@@ -46,6 +46,7 @@ def main():
         project = tmp / "project"
         cli("project", "create", project)
         shutil.copyfile(ROOT / "tests/assets/m3/blender_cube.glb", project / "model.glb")
+        shutil.copyfile(ROOT / "tests/assets/m3/fuzz_collapsed_position_view.glb", project / "dense.glb")
         outside = tmp / "outside.glb"
         shutil.copyfile(project / "model.glb", outside)
         external = cli("asset", "import", project, outside)["data"]
@@ -213,6 +214,12 @@ if($r.Count -ne 1 -or $r[0].IdentityReference.Value -ne $u -or $r[0].IsInherited
             # Shared schema surface, then exclusively live authoring.
             schemas = rpc("inspect", {"target": "schema"})
             assert schemas == cli("schema")["data"]
+            dense = request("command", {"name": "asset.import@1", "arguments": {"source": "dense.glb"}})["result"]
+            assert dense["status"] == "error" and dense["error"]["code"] == "E_VALIDATION"
+            assert dense["error"]["details"]["estimatedWork"] > dense["error"]["details"]["limit"] == 1000000
+            assert rpc("ping")["alive"], "controlled work rejection stopped the live session"
+            error_log = rpc("inspect", {"target": "log", "limit": 64})["entries"]
+            assert any(e["name"] == "asset.import@1" and e["result"]["status"] == "error" for e in error_log)
             camera = command("scene.entity.create@1", {"name": "Camera"})["id"]
             command("scene.component.add@1", {"id": camera, "component": "engine.scene.Camera"})
             command("scene.component.set@1", {"id": camera, "component": "engine.scene.Transform", "value": {"position": [0, 0, 7]}})

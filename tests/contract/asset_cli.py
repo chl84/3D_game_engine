@@ -162,6 +162,37 @@ def main():
         assert snapshot(project) == before
         run("asset", "import", project, tmp / "missing.glb", code=4, error="E_NOT_FOUND")
 
+        # Owner-approved tangent work admission is asset-wide and precedes
+        # cooking/source-copy writes, for import and reimport (also dry-run).
+        dense = FIXTURES / "fuzz_collapsed_position_view.glb"
+        dense_raw = dense.read_bytes()
+        dense_length = struct.unpack_from("<I", dense_raw, 12)[0]
+        dense_doc = json.loads(dense_raw[20:20 + dense_length])
+        dense_doc["meshes"][1]["primitives"] *= 6
+        dense_json = json.dumps(dense_doc, separators=(",", ":")).encode()
+        dense_json += b" " * (-len(dense_json) % 4)
+        dense_end = struct.unpack_from("<I", dense_raw, 8)[0]
+        dense_payload = (struct.pack("<II", len(dense_json), 0x4E4F534A) + dense_json
+                         + dense_raw[20 + dense_length:dense_end])
+        six_copies = tmp / "six-collapsed-primitives.glb"
+        six_copies.write_bytes(struct.pack("<III", 0x46546C67, 2, len(dense_payload) + 12)
+                              + dense_payload)
+        for candidate in (dense, six_copies):
+            for extra in ((), ("--dry-run",)):
+                before = snapshot(project)
+                rejected = run("asset", "import", project, candidate, *extra,
+                               code=3, error="E_VALIDATION")
+                assert rejected["error"]["details"]["estimatedWork"] > 1000000
+                assert rejected["error"]["details"]["limit"] == 1000000
+                assert snapshot(project) == before
+        source.write_bytes(dense.read_bytes())
+        before = snapshot(project)
+        for extra in ((), ("--dry-run",)):
+            run("asset", "reimport", project, asset_id, *extra, code=3, error="E_VALIDATION")
+            assert snapshot(project) == before, "budget rejection modified the existing cache"
+        source.unlink()  # Existing valid portable copy remains usable.
+        run("asset", "validate", project, asset_id)
+
         if sys.platform == "linux":
             invalid_source = tmp / "model-\udcff.glb"
             shutil.copyfile(FIXTURES / "blender_cube.glb", invalid_source)

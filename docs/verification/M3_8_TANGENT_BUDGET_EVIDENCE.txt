@@ -1,0 +1,358 @@
+M3.8 OWNER-APPROVED TANGENT BUDGET — LOCAL EVIDENCE — 2026-10-31
+
+Owner approved the concrete million-pair admission policy and artifact-test
+rejection expectation (A.6). See ADR-0015 and accepted proposal. This working
+candidate follows b2f43d2; new Claude review/reference CI/public clone/cache
+proof remain separate pending gates. No source has been published.
+
+Policy: preflight all selected primitives before any mutation. Per bucket with
+n>64 charge n(n-1)/2; maximum over8 shifted grids perprimitive, sum acrossmeshes/
+primitives, inclusive 1M limit. Monotone integer Float32 keys normalize zero and
+coarsen tiny spans conservatively to smallest-normal spacing for FTZ/DAZ.
+One balanced tree at a time, checked counts, early prefix rejection. Diagnostics
+report an observed lower bound, limit and source primitive JSON pointer.
+
+Full current local builds/suites, restored after mutations:
+
+=== Clang Werror ===
+Test project <repository>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.09 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.63 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.18 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.06 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.16 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.17 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.36 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.48 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.08 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.37 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.05 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.51 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    0.82 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.30 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    2.03 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.13 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    1.12 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.59 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.26 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.33 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    1.97 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    8.59 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.25 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.20 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.13 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =  13.83 sec*proc (7 tests)
+asset           =   6.93 sec*proc (7 tests)
+cli             =  13.46 sec*proc (8 tests)
+contract        =  17.46 sec*proc (13 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   0.99 sec*proc (3 tests)
+live            =  12.20 sec*proc (5 tests)
+render          =  15.64 sec*proc (14 tests)
+security        =  10.99 sec*proc (5 tests)
+unit            =   1.42 sec*proc (9 tests)
+
+Total Test time (real) =  20.93 sec
+
+=== GCC Werror ===
+Test project <repository>/build/ci-linux-gcc
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.07 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    0.42 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.17 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.06 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.14 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.15 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    0.32 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    0.40 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.05 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    0.26 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.03 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    0.54 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.06 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    1.09 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    0.29 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    1.81 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.18 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    1.03 sec
+      Start 20: engine_pbr_golden
+20/27 Test #20: engine_pbr_golden ................   Passed    0.43 sec
+      Start 21: engine_pbr_color_golden
+21/27 Test #21: engine_pbr_color_golden ..........   Passed    0.17 sec
+      Start 22: engine_pbr_window
+22/27 Test #22: engine_pbr_window ................   Passed    0.33 sec
+      Start 23: engine_asset_placement
+23/27 Test #23: engine_asset_placement ...........   Passed    1.70 sec
+      Start 24: engine_live_api
+24/27 Test #24: engine_live_api ..................   Passed    6.45 sec
+      Start 25: engine_local_socket_deadline
+25/27 Test #25: engine_local_socket_deadline .....   Passed    1.23 sec
+      Start 26: engine_live_journal
+26/27 Test #26: engine_live_journal ..............   Passed    0.19 sec
+      Start 27: engine_live_journal_fault
+27/27 Test #27: engine_live_journal_fault ........   Passed    0.09 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      =  10.89 sec*proc (7 tests)
+asset           =   5.90 sec*proc (7 tests)
+cli             =  10.74 sec*proc (8 tests)
+contract        =  14.49 sec*proc (13 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   1.32 sec*proc (3 tests)
+live            =   9.77 sec*proc (5 tests)
+render          =  12.44 sec*proc (14 tests)
+security        =   9.05 sec*proc (5 tests)
+unit            =   1.10 sec*proc (9 tests)
+
+Total Test time (real) =  17.68 sec
+
+=== ASan/UBSan full retention preset ===
+Test project <repository>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/26 Test  #1: engine_core_tests ................   Passed    0.21 sec
+      Start  2: engine_dependencies_smoke
+ 2/26 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/26 Test  #3: engine_asset_tests ...............   Passed    2.55 sec
+      Start  4: engine_render_tests
+ 4/26 Test  #4: engine_render_tests ..............   Passed    0.37 sec
+      Start  5: engine_window_smoke
+ 5/26 Test  #5: engine_window_smoke ..............   Passed    0.12 sec
+      Start  6: engine_swapchain_test
+ 6/26 Test  #6: engine_swapchain_test ............   Passed    0.28 sec
+      Start  7: engine_overlay_test
+ 7/26 Test  #7: engine_overlay_test ..............   Passed    0.25 sec
+      Start  8: engine_run_smoke
+ 8/26 Test  #8: engine_run_smoke .................   Passed    0.84 sec
+      Start  9: engine_point_light_warning
+ 9/26 Test  #9: engine_point_light_warning .......   Passed    1.06 sec
+      Start 10: engine_screenshot_golden
+10/26 Test #10: engine_screenshot_golden .........   Passed    0.12 sec
+      Start 11: engine_screenshot_cli
+11/26 Test #11: engine_screenshot_cli ............   Passed    0.99 sec
+      Start 12: engine_version_json
+12/26 Test #12: engine_version_json ..............   Passed    0.09 sec
+      Start 13: engine_cli_contract
+13/26 Test #13: engine_cli_contract ..............   Passed    3.26 sec
+      Start 14: engine_docs_links
+14/26 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/26 Test #15: engine_sensitive_scan ............   Passed    0.54 sec
+      Start 16: engine_acceptance_m1
+16/26 Test #16: engine_acceptance_m1 .............   Passed    1.15 sec
+      Start 17: engine_acceptance_m3
+17/26 Test #17: engine_acceptance_m3 .............   Passed    4.18 sec
+      Start 18: engine_api_reference
+18/26 Test #18: engine_api_reference .............   Passed    0.15 sec
+      Start 19: engine_asset_cli
+19/26 Test #19: engine_asset_cli .................   Passed    5.54 sec
+      Start 20: engine_pbr_golden
+20/26 Test #20: engine_pbr_golden ................   Passed    0.91 sec
+      Start 21: engine_pbr_color_golden
+21/26 Test #21: engine_pbr_color_golden ..........   Passed    0.45 sec
+      Start 22: engine_pbr_window
+22/26 Test #22: engine_pbr_window ................   Passed    0.57 sec
+      Start 23: engine_asset_placement
+23/26 Test #23: engine_asset_placement ...........   Passed    4.46 sec
+      Start 24: engine_live_api
+24/26 Test #24: engine_live_api ..................   Passed   18.86 sec
+      Start 25: engine_local_socket_deadline
+25/26 Test #25: engine_local_socket_deadline .....   Passed    1.25 sec
+      Start 26: engine_live_journal
+26/26 Test #26: engine_live_journal ..............   Passed    0.56 sec
+
+100% tests passed out of 26
+
+Label Time Summary:
+acceptance      =  30.13 sec*proc (7 tests)
+asset           =  18.66 sec*proc (7 tests)
+cli             =  35.10 sec*proc (8 tests)
+contract        =  42.29 sec*proc (12 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   0.71 sec*proc (3 tests)
+live            =  24.84 sec*proc (4 tests)
+render          =  33.46 sec*proc (14 tests)
+security        =  21.21 sec*proc (4 tests)
+unit            =   4.01 sec*proc (9 tests)
+
+Total Test time (real) =  48.81 sec
+
+=== Full TSan build and 13-test scope ===
+Test project <repository>/build/linux-tsan
+      Start  1: engine_core_tests
+ 1/13 Test  #1: engine_core_tests ................   Passed    0.27 sec
+      Start  2: engine_dependencies_smoke
+ 2/13 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+      Start  3: engine_asset_tests
+ 3/13 Test  #3: engine_asset_tests ...............   Passed    3.18 sec
+      Start  4: engine_render_tests
+ 4/13 Test  #4: engine_render_tests ..............   Passed    0.52 sec
+      Start 12: engine_version_json
+ 5/13 Test #12: engine_version_json ..............   Passed    0.08 sec
+      Start 13: engine_cli_contract
+ 6/13 Test #13: engine_cli_contract ..............   Passed    2.26 sec
+      Start 14: engine_docs_links
+ 7/13 Test #14: engine_docs_links ................   Passed    0.06 sec
+      Start 15: engine_sensitive_scan
+ 8/13 Test #15: engine_sensitive_scan ............   Passed    0.71 sec
+      Start 16: engine_acceptance_m1
+ 9/13 Test #16: engine_acceptance_m1 .............   Passed    0.72 sec
+      Start 18: engine_api_reference
+10/13 Test #18: engine_api_reference .............   Passed    0.16 sec
+      Start 19: engine_asset_cli
+11/13 Test #19: engine_asset_cli .................   Passed    5.49 sec
+      Start 25: engine_local_socket_deadline
+12/13 Test #25: engine_local_socket_deadline .....   Passed    1.26 sec
+      Start 26: engine_live_journal
+13/13 Test #26: engine_live_journal ..............   Passed    0.42 sec
+
+100% tests passed out of 13
+
+Label Time Summary:
+acceptance      =   0.72 sec*proc (1 test)
+asset           =   8.67 sec*proc (2 tests)
+cli             =   7.82 sec*proc (3 tests)
+contract        =  10.31 sec*proc (6 tests)
+dependencies    =   0.02 sec*proc (1 test)
+docs            =   0.93 sec*proc (3 tests)
+live            =   1.68 sec*proc (2 tests)
+render          =   0.52 sec*proc (1 test)
+security        =   2.39 sec*proc (3 tests)
+unit            =   4.07 sec*proc (5 tests)
+
+Total Test time (real) =  15.15 sec
+
+Commands: cmake --build --preset <preset> -j2 (ALL targets); ctest with explicit
+VK_ICD_FILENAMES=<local-lavapipe>. ASan uses linux-asan-lavapipe, detect_leaks=1,
+abort_on_error=1, UBSan halt_on_error=1, loader retention, no LSAN_OPTIONS or
+suppression. TSan uses exact 13-test regex from TESTING.md. Reference CI remains
+unchanged and authoritative for Clang 18/GCC 14/Windows; local Clang 23/GCC 16.
+
+Verbose assertion/golden excerpts:
+3: All tests passed (22878 assertions in 27 test cases)
+17: M3 public CLI Blender golden passed: max=1, changed=0
+17: M3 import/inspect/validate/place/PBR/save/load/live/reimport/stable IDs/JSONL acceptance passed
+20: Blender tangent image difference: 0
+21: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+100% tests passed out of 4
+
+Tests include exact 1M admission plus 64-corner exemption, rejection after adding
+65 corners, per-primitive and per-mesh accumulation, six copied artifact
+primitives, all 8 neighbor-grid phases, signed zero, subnormals, normal endpoints
+with subnormal span, coarsening transition, negative/extreme finite positions,
+NaN/infinity rejection, supplied tangents/non-normal materials preserved.
+Geometry snapshots compare actual Float32 bits (including signed zero/NaN), not
+JSON NaN equality. Initial helper equality/style mistakes were fixed before
+these successful runs; no production guard or test was disabled to pass them.
+
+CLI import original/six-copy source and reimport reject E_VALIDATION, also
+--dry-run, preserving all project/cached-file snapshots. Live rejection is
+recorded in the shared command log and a subsequent ping/authoring succeeds.
+
+Five independent real-source mutations (isolated in time, restored in finally):
+Correct source [budget] baseline: passed
+guard_removed unit exit 42
+guard_removed CLI exit 1
+asset_accumulation_removed unit exit 42
+only_first_grid unit exit 42
+tiny_coarsening_removed unit exit 42
+generation_before_admission unit exit 42
+Original source restored/rebuilt; [budget] tests pass
+
+Mutation meanings: disable guard; drop per-asset accumulation; run only grid 0;
+remove tiny-span coarsening; generate each primitive before whole-asset
+admission finishes. Each fails engine_asset_tests [budget]; the disabled guard
+also fails the CLI expected-error contract. Original source rebuilt/restored
+and baseline passes. No mutation remains.
+
+Reference formatter 18.1.8 dry-run passes current changed C++/header. Local
+tidy 23 warnings-as-errors passes source/test, after resolving trailing-comma
+style findings. No new NOLINT/sanitizer suppression. Reference tidy 18 is pending.
+
+Exact old timeout artifact, same 10-second limit, ten fixed-input replays:
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 1403859679
+INFO: Loaded 1 modules   (43423 inline 8-bit counters): 43423 [0x5566198b4fb8, 0x5566198bf957),
+INFO: Loaded 1 PC tables (43423 PCs): 43423 [0x5566198bf958,0x556619969348),
+build/linux-fuzz/tests/engine_gltf_fuzz: Running 1 inputs 10 time(s) each.
+Running: tests/assets/m3/fuzz_collapsed_position_view.glb
+Executed tests/assets/m3/fuzz_collapsed_position_view.glb in 85 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+30seconds/target helper run, fresh corpus:
+Fuzz target gltf: seconds=30, corpus files=8
+Done 4950 runs in 31 second(s)
+Fuzz target image: seconds=30, corpus files=5
+Done 9680 runs in 31 second(s)
+Fuzz target rpc: seconds=30, corpus files=4
+Done 71603 runs in 31 second(s)
+
+Fuzz retains existing detect_leaks=0 plus ASan abort and mandatory UBSan halt.
+The full leak-checked suite above is distinct. A 600-second-per-target run using
+the previous corpus is in progress; no completion/success is claimed yet.
+The initial old run failed its GLB timeout and remains recorded as failed;
+its image/RPC completed 154693/1004819 runs in 601 seconds each. The intermediate
+callback-only GLB run passed 36120/601s but was not enough to resolve F2. Only
+the owner-approved admission policy addresses that counterexample.
+
+No third-party source/build-copy modification, dependency/schema/format change,
+new tangent algorithm, source-tangent change or relaxed compiler/fuzz/time/RSS
+setting. Importer@4 remains unchanged: old cooked caches still load without
+rerunning MikkTSpace; over-budget reimport fails without changing that cache.

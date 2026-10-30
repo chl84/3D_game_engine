@@ -5,8 +5,13 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <filesystem>
+#include <limits>
+
+#include <nlohmann/json.hpp>
 
 namespace {
 
@@ -40,6 +45,77 @@ engine::asset::ImportedAsset mirrored_mesh() {
     mesh.primitives.push_back(p);
     asset.meshes.push_back(mesh);
     return asset;
+}
+
+engine::asset::ImportedAsset dense_asset(std::size_t copies, std::size_t corners) {
+    auto asset = mirrored_mesh();
+    auto primitive = asset.meshes[0].primitives[0];
+    primitive.vertices.resize(8);
+    for (std::size_t i = 0; i < primitive.vertices.size(); ++i) {
+        auto& v = primitive.vertices[i];
+        v.position = {1, 1, 1};
+        v.normal = {0, 0, 1};
+        v.tangent = {};
+        v.uv0 = {static_cast<float>(i) / 8.0F, 0};
+    }
+    primitive.indices.clear();
+    for (std::size_t i = 0; i < corners; ++i) {
+        primitive.indices.push_back(static_cast<std::uint32_t>(i % 8U));
+    }
+    asset.meshes[0].primitives.assign(copies, primitive);
+    return asset;
+}
+
+engine::asset::Primitive dense_group(std::size_t count) {
+    auto asset = dense_asset(1, ((count + 2U) / 3U) * 3U);
+    auto primitive = asset.meshes[0].primitives[0];
+    std::ranges::fill(primitive.indices, 0U);
+    primitive.vertices[1].position = {2, 2, 2};
+    for (std::size_t i = count; i < primitive.indices.size(); ++i) {
+        primitive.indices[i] = 1;
+    }
+    return primitive;
+}
+
+template <std::size_t N>
+std::array<std::uint32_t, N> bit_values(const std::array<float, N>& values) {
+    std::array<std::uint32_t, N> bits{};
+    for (std::size_t i = 0; i < N; ++i) {
+        bits[i] = std::bit_cast<std::uint32_t>(values[i]);
+    }
+    return bits;
+}
+
+nlohmann::json geometry(const engine::asset::ImportedAsset& asset) {
+    auto meshes = nlohmann::json::array();
+    for (const auto& mesh : asset.meshes) {
+        auto primitives = nlohmann::json::array();
+        for (const auto& p : mesh.primitives) {
+            auto vertices = nlohmann::json::array();
+            for (const auto& v : p.vertices) {
+                // Bit snapshots preserve signed zero and NaN identity too.
+                vertices.push_back({
+                    bit_values(v.position),
+                    bit_values(v.normal),
+                    bit_values(v.tangent),
+                    bit_values(v.uv0),
+                });
+            }
+            primitives.push_back({{"vertices", vertices}, {"indices", p.indices}});
+        }
+        meshes.push_back(primitives);
+    }
+    return meshes;
+}
+
+void require_budget_error(const engine::core::Result<void>& result) {
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == engine::core::ErrorCode::Validation);
+    REQUIRE(result.error().details.contains("estimatedWork"));
+    CHECK(result.error().details.at("estimatedWork").get<std::uint64_t>() >
+          engine::asset::kMaxTangentWeldPairs);
+    CHECK(result.error().details.at("limit").get<std::uint64_t>() ==
+          engine::asset::kMaxTangentWeldPairs);
 }
 
 } // namespace
@@ -122,7 +198,7 @@ TEST_CASE("MikkTSpace handles collapsed position bounds without casting NaN", "[
     }
 }
 
-TEST_CASE("fuzzed absent position view retains MikkTSpace degenerate results",
+TEST_CASE("fuzzed absent position view is rejected before expensive tangent welding",
           "[asset][tangents][fuzz-regression]") {
     auto asset = engine::asset::import_glb_file(std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR) /
                                                 "fuzz_collapsed_position_view.glb");
@@ -134,12 +210,154 @@ TEST_CASE("fuzzed absent position view retains MikkTSpace degenerate results",
     REQUIRE(std::ranges::all_of(primitive.vertices, [](const auto& v) {
         return v.position == std::array<float, 3>{0, 0, 0};
     }));
-    REQUIRE(engine::asset::generate_missing_tangents(*asset));
-    CHECK(primitive.indices.size() == 3072U);
-    CHECK(std::ranges::all_of(primitive.vertices, [](const auto& v) {
-        return v.position == std::array<float, 3>{0, 0, 0} &&
-               std::ranges::all_of(v.tangent, [](float x) { return std::isfinite(x); });
-    }));
+    const auto before = geometry(*asset);
+    const auto rejected = engine::asset::generate_missing_tangents(*asset);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().code == engine::core::ErrorCode::Validation);
+    CHECK(rejected.error().details.at("limit") == engine::asset::kMaxTangentWeldPairs);
+    CHECK(rejected.error().details.at("estimatedWork").get<std::uint64_t>() >
+          engine::asset::kMaxTangentWeldPairs);
+    CHECK(rejected.error().details.at("jsonPointer") == "/meshes/1/primitives/0");
+    CHECK(geometry(*asset) == before);
+}
+
+TEST_CASE("tangent work is admitted for the entire asset before any mutation",
+          "[asset][tangents][budget]") {
+    // Each primitive costs 999*998/2 = 498501 pairs. Two fit; three do not.
+    auto admitted = dense_asset(2, 999);
+    REQUIRE(engine::asset::generate_missing_tangents(admitted));
+    auto rejected = dense_asset(3, 999);
+    const auto before = geometry(rejected);
+    auto result = engine::asset::generate_missing_tangents(rejected);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == engine::core::ErrorCode::Validation);
+    CHECK(result.error().details.at("primitiveIndex") == 2);
+    CHECK(geometry(rejected) == before);
+
+    auto across_meshes = dense_asset(1, 999);
+    const auto repeated_mesh = across_meshes.meshes[0];
+    across_meshes.meshes.assign(3, repeated_mesh);
+    const auto across_before = geometry(across_meshes);
+    result = engine::asset::generate_missing_tangents(across_meshes);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().details.at("meshIndex") == 2);
+    CHECK(geometry(across_meshes) == across_before);
+
+    auto source = engine::asset::import_glb_file(std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR) /
+                                                 "fuzz_collapsed_position_view.glb");
+    REQUIRE(source);
+    auto& primitives = source->meshes[1].primitives;
+    const auto repeated_primitive = primitives[0];
+    primitives.assign(6, repeated_primitive);
+    const auto six_before = geometry(*source);
+    REQUIRE_FALSE(engine::asset::generate_missing_tangents(*source));
+    CHECK(geometry(*source) == six_before);
+}
+
+TEST_CASE("tangent admission includes the exact budget and exempts 64-corner groups",
+          "[asset][tangents][budget]") {
+    auto asset = mirrored_mesh();
+    // Independently chosen triangular numbers: 2080 + 185745 + 812175 = 1M.
+    asset.meshes[0].primitives = {
+        dense_group(65),
+        dense_group(610),
+        dense_group(1275),
+        dense_group(64),
+    };
+    auto admitted = asset;
+    REQUIRE(engine::asset::generate_missing_tangents(admitted));
+    asset.meshes[0].primitives.push_back(dense_group(65));
+    const auto before = geometry(asset);
+    const auto rejected = engine::asset::generate_missing_tangents(asset);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().details.at("primitiveIndex") == 4);
+    CHECK(rejected.error().details.at("estimatedWork").get<std::uint64_t>() ==
+          engine::asset::kMaxTangentWeldPairs + 2080U);
+    CHECK(geometry(asset) == before);
+}
+
+TEST_CASE("tangent work covers neighboring float positions at every grid boundary",
+          "[asset][tangents][budget]") {
+    for (std::uint32_t phase = 0; phase < 8U; ++phase) {
+        auto asset = dense_asset(1, 1440);
+        auto& vertices = asset.meshes[0].primitives[0].vertices;
+        for (std::uint32_t v = 0; v < 8U; ++v) {
+            for (std::uint32_t axis = 0; axis < 3U; ++axis) {
+                const auto bits = 0x3F800000U + ((phase >> axis) & 1U) + ((v >> axis) & 1U);
+                vertices[v].position[axis] = std::bit_cast<float>(bits);
+            }
+        }
+        // Only the matching shifted grid combines all eight positions. Every
+        // other grid's estimate is below the limit at this corner count.
+        const auto before = geometry(asset);
+        require_budget_error(engine::asset::generate_missing_tangents(asset));
+        CHECK(geometry(asset) == before);
+    }
+}
+
+TEST_CASE("tangent work handles signed zero and tiny Float32 positions",
+          "[asset][tangents][budget]") {
+    const auto minimum = std::numeric_limits<float>::min();
+    const auto subnormal = std::numeric_limits<float>::denorm_min();
+    const auto boundary = std::ldexp(1.0F, -103);
+    const std::array ranges{
+        std::array{-0.0F, 0.0F},
+        std::array{-subnormal, subnormal},
+        std::array{minimum, std::nextafter(minimum, 1.0F)},
+        std::array{4.0F * minimum, 4.5F * minimum}, // Normal values with a subnormal span.
+        std::array{std::nextafter(boundary, 0.0F), boundary},
+        std::array{-1.0F, std::nextafter(-1.0F, 0.0F)},
+        std::array{
+            std::nextafter(std::numeric_limits<float>::max(), 0.0F),
+            std::numeric_limits<float>::max(),
+        },
+    };
+    for (const auto& range : ranges) {
+        auto asset = dense_asset(1, 1440);
+        auto& vertices = asset.meshes[0].primitives[0].vertices;
+        for (std::size_t v = 0; v < vertices.size(); ++v) {
+            for (std::size_t axis = 0; axis < 3; ++axis) {
+                vertices[v].position[axis] = range[(v >> axis) & 1U];
+            }
+        }
+        require_budget_error(engine::asset::generate_missing_tangents(asset));
+    }
+}
+
+TEST_CASE("supplied tangents and non-normal materials retain their import behavior",
+          "[asset][tangents][budget]") {
+    auto supplied = dense_asset(6, 3072);
+    for (auto& primitive : supplied.meshes[0].primitives) {
+        for (auto& v : primitive.vertices) {
+            v.tangent = {1, 0, 0, -1};
+        }
+    }
+    const auto before = geometry(supplied);
+    REQUIRE(engine::asset::generate_missing_tangents(supplied));
+    CHECK(geometry(supplied) == before);
+    auto flat = dense_asset(6, 3072);
+    flat.materials[0].normal_texture.reset();
+    const auto flat_before = geometry(flat);
+    REQUIRE(engine::asset::generate_missing_tangents(flat));
+    CHECK(geometry(flat) == flat_before);
+}
+
+TEST_CASE("non-finite positions are rejected before spatial budget accounting",
+          "[asset][tangents][budget]") {
+    const std::array values{
+        std::numeric_limits<float>::infinity(),
+        -std::numeric_limits<float>::infinity(),
+        std::numeric_limits<float>::quiet_NaN(),
+    };
+    for (const float value : values) {
+        auto asset = dense_asset(1, 1440);
+        asset.meshes[0].primitives[0].vertices[0].position[0] = value;
+        const auto before = geometry(asset);
+        const auto invalid = engine::asset::generate_missing_tangents(asset);
+        REQUIRE_FALSE(invalid);
+        CHECK(invalid.error().code == engine::core::ErrorCode::Validation);
+        CHECK(geometry(asset) == before);
+    }
 }
 
 TEST_CASE("Blender mirrored UV fixture matches generated tangents on both islands",

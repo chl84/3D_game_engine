@@ -106,3 +106,9 @@ callbacks; the algorithm, source distribution, build-copy patches and time/
 memory limits are unchanged. The fixture runs both as a permanent unit
 regression and as an automatically seeded GLB fuzzer input. A unit pass checks
 correct finite output; it does not assert a hardware-independent timing bound.
+
+On 2026-10-31 the owner approved a deterministic asset-wide work budget for
+missing-tangent generation (ADR-0015). This retained artifact now has a required
+E_VALIDATION/unchanged-input expectation before MikkTSpace; the older finite-
+tangent expectation is historical. Six-copy and nearby-Float32 regressions
+exercise the same policy. The original file and fuzzer seeding remain intact.
