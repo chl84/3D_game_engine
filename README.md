@@ -55,6 +55,7 @@ and `Escape` to close. See `samples/m2-demo/README.md` for details.
 - `docs/TESTING.md` — test types and commands
 - `docs/BUILD.md` — environment and build details
 - `docs/PERFORMANCE.md` — reference-scene budget and measurement plan
+- [Manual M3 Blender test](samples/m3-manual/README.md) — export, import, place, run and reimport your own model
 
 ## License
 

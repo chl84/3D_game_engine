@@ -348,6 +348,12 @@ add_test(NAME engine_asset_cli
 )
 set_tests_properties(engine_asset_cli PROPERTIES LABELS "contract;cli;asset")
 
+add_test(NAME engine_large_normalmap
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/large_normalmap.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_large_normalmap PROPERTIES LABELS "contract;cli;asset;acceptance" TIMEOUT 180)
+
 add_executable(engine_pbr_test render/pbr_test.cpp render/pbr_probes.cpp ${PROJECT_SOURCE_DIR}/tools/engine/src/stb_image_write_impl.cpp)
 target_link_libraries(engine_pbr_test PRIVATE engine::render engine::asset)
 target_include_directories(engine_pbr_test PRIVATE ${Stb_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/unit)

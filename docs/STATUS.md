@@ -4,6 +4,31 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+### Latest owner acceptance requirements — 2026-10-31
+
+- Before M3.8 closure, verify that the approved tangent-work budget admits a
+  realistic normal-mapped asset of at least 200,000 triangles and measure import
+  time on the reference machine. Added `engine_large_normalmap`: original
+  Blender 5.2.2 LTS machined ring, 262,144 triangles, baked normal PNG, no source
+  tangents. Local GCC Debug passes; optimized fresh-cache imports take median
+  0.854202 seconds across three runs. Full conditions/limitations are recorded
+  in [PERFORMANCE.md](PERFORMANCE.md#m38-high-poly-import-admission-measurement-2026-10-31).
+- The owner will test their own Blender model **before merge** using
+  [samples/m3-manual](../samples/m3-manual/README.md). Manual owner acceptance
+  remains pending; these additions do not approve merge or tag.
+- **Only after M3 merge and tag:** draft the M4 plan and wait for owner
+  approval before implementation. Include ADR proposals for the Lua binding
+  library, deterministic Jolt configuration and game-module linking strategy.
+  Do not start M4 planning or implementation before that sequence completes.
+- Existing M3.8 independent review/reference-CI/extended-fuzz/clean-clone gates
+  remain required, including review of this new acceptance delta.
+- Local verification of this addition: GCC asset/unit/CLI/large-model/docs
+  selection 4/4; the new test also passes ASan/UBSan with leak detection enabled
+  (1/1). Guide commands pass with hidden three-frame lavapipe runs; a changed
+  source preserves the UUID/scene bytes and changes the screenshot. The first
+  sandbox attempts could not run LeakSanitizer/SDL; host reruns passed without
+  disabling checks. [Evidence](verification/M3_8_LARGE_MODEL_EVIDENCE.txt).
+
 M3.7 is owner-approved on 2026-10-30.
 Verified source d0797e1b361f4f4379b69d33ebc523ab88e93035. Claude Opus5.5 high
 independently approved all required corrections and durable JSONL with no

@@ -1,5 +1,28 @@
 # Testing
 
+## Large normal-mapped import regression
+
+`engine_large_normalmap` imports the original Blender-exported machined ring
+in `tests/assets/m3/large/` through the public CLI. The source has 262,144
+triangles, UVs and an embedded baked normal texture, and deliberately lacks
+tangents. The test requires successful uncached cooking, exact preservation
+of triangle count, finite unit-length tangent vectors with valid handedness
+for every cooked vertex, and successful asset validation. It runs on all
+platforms, needs no GPU or Blender, and has no hardware-specific timing gate.
+The 120-second subprocess / 180-second CTest limits detect hangs, not performance
+regressions against a particular machine. Existing pathological-input
+rejection tests and short-fuzz seeds are unchanged.
+
+```bash
+ctest --test-dir build/ci-linux-gcc -R '^engine_large_normalmap$' --output-on-failure
+.venv/bin/python3 tests/contract/large_normalmap.py \
+  build/linux-release/tools/engine/engine --repeat 3
+```
+
+See [performance evidence](PERFORMANCE.md#m38-high-poly-import-admission-measurement-2026-10-31),
+[fixture provenance](../tests/assets/m3/PROVENANCE.md), and the
+[manual Blender guide](../samples/m3-manual/README.md).
+
 **Status:** M3.8 hardening. The suite registers 27 tests on Linux without
 sanitizers, 26 with sanitizers and 20 on Windows. Six window/presentation
 contracts are Linux-only; the real fsync fault interposer is Linux-only without
