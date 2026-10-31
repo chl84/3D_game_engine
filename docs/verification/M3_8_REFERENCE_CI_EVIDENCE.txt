@@ -12,8 +12,10 @@ Render summary logs show 105 assertions/13 device cases on Linux/Windows,
 Blender tangent image difference0 and fixed color-space goldens passing.
 The large normal-mapped 262144-triangle import passes on all four builders.
 
-Extended fuzz run41177977464 is SEPARATE and still running at this snapshot;
-no long-run cache-save/restore or final M3.8 completion is claimed here.
+These excerpts record the normal reference CI, separately from extended fuzz.
+The extended run later completed/success and saved its corpus; the next run
+restored and used it before owner-requested cancellation. See the separate
+M3_8_GITHUB_LONG_FUZZ_FIRST.txt and M3_8_GITHUB_CORPUS_REUSE_EVIDENCE.txt.
 
 === gcc ===
 2026-10-31T06:49:37.2773313Z  1/28 Test  #1: engine_core_tests ................   Passed    0.08 sec

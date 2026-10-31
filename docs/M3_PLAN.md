@@ -6,7 +6,10 @@ owner-approved, including the emissive-sRGB correction and the pinned official
 MikkTSpace dependency with its marked UB-fixed build copy. Claude Opus5.5 high
 independently approved all M3.7 corrections and durable JSONL on d0797e1;
 CI41108912088 completed/success in all six jobs. The owner has now authorized
-M3.8 hardening and final acceptance. Merge/tag still require owner approval.
+M3.8 hardening and final acceptance. That technical acceptance is now complete:
+Astra high approved the implementation, all six reference CI jobs passed, and
+the owner reported the manual Blender test passed on 2026-10-31. Publication
+checks are tracked in PR5; merge/tag still require explicit owner instruction. See [the consolidated report](verification/M3_8_STATUS_REPORT.md).
 Reviewer selection remains exclusively the owner's decision. The owner
 correction on 2026-10-31 selects GPT-6 Astra high (REVIEWER.json) for M3.8 and
 the M3.7 corrections/journal re-review; the return-to-Claude instruction is

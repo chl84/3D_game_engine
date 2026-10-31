@@ -30,8 +30,8 @@ See [performance evidence](PERFORMANCE.md#m38-high-poly-import-admission-measure
 [fixture provenance](../tests/assets/m3/PROVENANCE.md), and the
 [manual Blender guide](../samples/m3-manual/README.md).
 
-**Status:** M3.8 hardening. The suite registers 27 tests on Linux without
-sanitizers, 26 with sanitizers and 20 on Windows. Six window/presentation
+**Status:** M3.8 technical acceptance complete. The suite registers 28 tests on Linux without
+sanitizers, 27 with sanitizers and 21 on Windows. Six window/presentation
 contracts are Linux-only; the real fsync fault interposer is Linux-only without
 sanitizers. Offscreen golden images and CLI/live asset acceptance run on both
 platforms. No existing tests were removed or weakened. Exact results for the

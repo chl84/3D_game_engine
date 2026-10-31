@@ -1,6 +1,6 @@
 # AI Agent Guide
 
-**Status:** M3.8 hardening and acceptance. Offline authoring, asset
+**Status:** M3.8 technical acceptance complete; release authorization pending. Offline authoring, asset
 cooking/reimport/placement, shared PBR rendering, fixed-tick simulation,
 offscreen screenshots and the authenticated local live API are implemented.
 Current review and exact-source verification results are in STATUS.md.

@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M3.8 hardening; verification/review is recorded in STATUS.md. This document describes the approved module boundaries and
+**Status:** M3.8 technical acceptance complete; final publication/release state is recorded in STATUS.md. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles

@@ -1,137 +1,94 @@
 # Status
 
 **Last updated:** 2026-10-31
-**Current milestone:** M3 — asset pipeline and live control
-**Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
+**Current milestone:** M3 — asset pipeline and live control; release pending
+**Current substep:** M3.8 — technical acceptance complete; owner manual Blender test passed; explicit merge/tag instruction pending.
 
-### First GitHub long run passed; reuse run launched — 2026-10-31
+## M3.8 final acceptance
 
-Run41177977464 completed/success: GLB96,906, image286,644 and RPC2,484,027
-executions, 600-second budgets per target. GitHub saved the new corpus with
-key suffix41177977464-1 after the initial cache miss.
-[First-run evidence](verification/M3_8_GITHUB_LONG_FUZZ_FIRST.txt).
-The separate corpus-reuse run is now
-[41182629918](https://github.com/chl84/3D_game_engine/actions/runs/41182629918),
-on the same published candidate9c812f5. Restore/reuse and successful completion
-are pending. PR-required-check success alone does not close this separate gate.
+The owner reported the manual Blender test **passed** on 2026-10-31 and asked
+work to continue. This records the owner's result without inventing model,
+export-setting or hardware details. [Manual guide](../samples/m3-manual/README.md).
+Merge/tag still require a separate explicit instruction; none is authorized.
 
-### Fresh local extended fuzz completed — 2026-10-31
+- **Independent reviewer:** GPT-6 Astra high, configured in
+  [REVIEWER.json](../REVIEWER.json). Astra approved implementation
+  `5d01a36d83b590392349b5925d6ce38cd7b3a7c1`, including the full M3.8 delta
+  and M3.7 corrections/durable journal, with no blocking or required findings.
+  [Review](verification/M3_8_ASTRA_REVIEW.md).
+- **Reference CI:** published candidate
+  `9c812f5063b3f4a291777a43e071022d56865f54` has identical implementation.
+  [CI41177949157](https://github.com/chl84/3D_game_engine/actions/runs/41177949157)
+  completed/success in all six jobs: GCC14/Clang18 28/28, ASan/UBSan 27/27,
+  Windows MSVC 21/21, Quality and Fuzz. The large-model import and offscreen
+  Blender/color-space goldens pass on Linux and Windows; format/tidy18 pass.
+  [CI evidence](verification/M3_8_REFERENCE_CI_EVIDENCE.txt).
+- **Local sanitizer coverage:** full-build TSan 13/13; GCC/Clang 28/28 and
+  ASan/UBSan 27/27 with leak checks under the documented lavapipe policy.
+  [Local evidence](verification/M3_8_ASTRA_LOCAL_EVIDENCE.txt).
+- **Public exact-source clean clone:** candidate9c812f5 rebuilt and passed
+  28/28, no CTest skips, plus M1 and complete M3 CLI/live/golden/reimport
+  acceptance. Supplemental doctor/Catch2 XML confirms lavapipe/descriptor
+  indexing and 13/13 device/render cases, 105 assertions, zero internal skips.
+  [Clone evidence](verification/M3_8_PUBLIC_CLONE_EVIDENCE.txt).
+- **Extended fuzz:** fresh local and GitHub runs completed 600 seconds per
+  target after the PNG correction, with no sanitizer failures. GitHub totals:
+  GLB 96,906, image 286,644 and RPC 2,484,027 executions.
+  [Local](verification/M3_8_FRESH_EXTENDED_FUZZ_EVIDENCE.txt) and
+  [GitHub](verification/M3_8_GITHUB_LONG_FUZZ_FIRST.txt) evidence.
+- **GitHub corpus save/restore:** the successful first run saved its corpus.
+  Run41182629918 restored that exact key and started GLB fuzzing with 676 files.
+  It was then cancelled at the owner's request; it is not a successful second
+  long run. Cache restoration/use is proven by its logs. A second complete
+  long run was an unnecessary parent-imposed gate, not a requirement in the
+  approved plan. [Reuse evidence](verification/M3_8_GITHUB_CORPUS_REUSE_EVIDENCE.txt).
+- **Large normal-mapped model:** original Blender-exported ring, 262,144
+  triangles, baked normal PNG, no source tangents. Median uncached import
+  0.854202 seconds in the optimized build on the i7-1265U development machine,
+  AC connected, fixed balanced profile, current 30 GiB RAM, warm OS page cache.
+  [Conditions/limits](PERFORMANCE.md#m38-high-poly-import-admission-measurement-2026-10-31).
+- **Approved tangent limit/error contract:** inclusive 1,000,000 estimated
+  dense-weld pairs per asset, not a triangle-count cap. Over-budget input fails
+  before project writes with E_VALIDATION, structured work/limit/primitive
+  details and Blender tangent-export advice. CLI/live contracts are tested and
+  documented in [the agent guide](AI_AGENT_GUIDE.md).
+- **PNG fuzz regression:** leading empty IDAT chunks are normalized without
+  dependency/version changes or rejecting valid empty-chunk PNGs. The exact
+  corrupt artifact is retained; valid images preserve identical pixels.
+  [Regression evidence](verification/M3_8_EMPTY_IDAT_EVIDENCE.txt).
 
-The corrected Astra-approved implementation completed a fresh 600-second run
-for **all three** targets with exit0: GLB65,407, image168,215 and RPC1,274,502
-executions. No sanitizer failures/artifacts; timeout/RSS/sanitizer guards are
-unchanged. [Evidence](verification/M3_8_FRESH_EXTENDED_FUZZ_EVIDENCE.txt).
-GitHub long run41177977464 and a subsequent successful corpus-cache reuse run
-remain separate pending gates. The local result does not claim GitHub reuse.
+[Consolidated M3.8 report](verification/M3_8_STATUS_REPORT.md).
+The final publication contains documentation/evidence changes only. Its normal
+PR CI checks must pass before handback; no new implementation review, repeat
+clean clone or extra long fuzz run is needed for those prose-only changes.
 
-### Reference CI and public-clone gates passed — 2026-10-31
+## Remaining decisions and limitations
 
-Published candidate `9c812f5063b3f4a291777a43e071022d56865f54` has no
-implementation delta from Astra-approved `5d01a36`. All **six** jobs in
-[reference CI41177949157](https://github.com/chl84/3D_game_engine/actions/runs/41177949157)
-completed/success, including Fuzz in addition to the five required checks.
-Actual full suites: GCC14/Clang18 28/28, ASan/UBSan 27/27, Windows MSVC21/21.
-The large normal-mapped model and offscreen Blender/color-space goldens pass
-on Linux and Windows. Reference format/tidy18 pass.
-[CI evidence](verification/M3_8_REFERENCE_CI_EVIDENCE.txt).
+- No known unresolved required implementation/review finding for the tested M3.8
+  candidate. Latest documentation publication checks are tracked in PR5, separately from
+  the green exact-source implementation baseline above.
+- Physical Windows window/swapchain/presentation remains unverified; M3's
+  approved Windows acceptance path is offscreen lavapipe and passes.
+- CTest JUnit does not reveal every internal Catch2 skip. The verified clone's
+  direct device report has zero skips; broader reporting is optional follow-up.
+- Full reference-world 60 FPS/memory-budget compliance remains M5/M8 work. The
+  large-model import timing is not a frame-rate or 16 GB memory-budget claim.
+- Journal synchronization tests do not prove storage-controller/power-loss
+  durability or cross-file atomicity with scene/asset writes.
+- PR5 remains draft pending explicit merge/tag instruction. M4 planning starts
+  **after merge and tag**, then waits for owner approval before implementation.
+  Include ADR proposals for Lua bindings, deterministic Jolt configuration and
+  game-module linking. Do not start M4 before that sequence.
 
-The unchanged public-clone acceptance script rebuilt exact candidate9c812f5:
-28/28, zero CTest skips, plus M1 and full M3 CLI/live/golden/reimport acceptance.
-Supplemental doctor/Catch2 XML confirms lavapipe/descriptor indexing and
-13/13 render/device cases, 105 assertions, **zero internal skips**.
-[Public-clone evidence](verification/M3_8_PUBLIC_CLONE_EVIDENCE.txt).
-
-Remaining technical gates: finish fresh extended fuzzing and demonstrate real
-GitHub corpus save/restore with a second successful long run after the first
-cache has been saved. [First long run41177977464](https://github.com/chl84/3D_game_engine/actions/runs/41177977464)
-is still running at this snapshot. No full M3.8 completion/report is claimed.
-PR5 remains draft; owner manual test and explicit merge/tag instruction pending.
-
-### Astra technical approval and publication candidate — 2026-10-31
-
-GPT-6 Astra high independently approved exact source
-`5d01a36d83b590392349b5925d6ce38cd7b3a7c1`, including the full M3.8 delta and
-M3.7 corrections/durable journal, with no blocking/required findings.
-[Review and optional skip-reporting limitation](verification/M3_8_ASTRA_REVIEW.md).
-Parent verification on the same implementation: GCC/Clang 28/28, full
-ASan/UBSan 27/27 (leaks enabled with documented lavapipe retention), full-build
-TSan 13/13. [Local evidence](verification/M3_8_ASTRA_LOCAL_EVIDENCE.txt).
-Fresh 600-second-per-target fuzzing is running; reference CI/Windows,
-GitHub corpus save/restore and public exact-SHA clean clone remain pending.
-The next commit records only review/evidence and is a publication candidate;
-there is no implementation delta after the reviewed source.
-No final M3.8 report, owner approval, merge or tag is claimed yet.
-
-## Active reviewer and acceptance instruction — 2026-10-31
+## Reviewer and historical evidence
 
 The owner intentionally selected GPT-6 Astra high and withdrew the instruction
-to return to Claude Opus for M3.7. REVIEWER.json is the active delegation target.
-Astra must re-review M3.8, including the tangent budget/large-model regression,
-and the M3.7 corrections/durable journal. Historical review records below retain
-their actual authors; earlier reviewer-selection instructions are superseded.
-The tangent budget is explicitly owner-approved. Over-budget input returns
-E_VALIDATION with structured work/limit/primitive details and a Blender tangent
-export hint; AI_AGENT_GUIDE.md documents the contract, and CLI/live tests assert
-it. Complete review/corrections and green reference CI before the final report.
-The owner will test samples/m3-manual before authorizing merge. No merge/tag is
-currently authorized. M4 planning waits until after merge/tag.
-
-### Extended-fuzz PNG finding addressed before Astra review
-
-Audit of the completed prior long-fuzz log found a real image-target UBSan
-failure: an empty leading PNG IDAT reached pinned stb's null-buffer zero-byte
-memcpy. This is not a green extended-fuzz result. The exact retained input is
-now `tests/assets/m3/fuzz_empty_idat.png`, automatically seeded and covered by
-a permanent unit test. The engine wrapper removes only empty leading IDAT
-chunks before decoding. Valid PNGs with multiple empty chunks preserve exact
-RGBA pixels; corrupted input returns E_VALIDATION. No dependency patch/upgrade,
-format restriction or sanitizer relaxation is introduced. The old fuzzer
-replay fails; the corrected replay and ASan/UBSan image tests pass with leak
-checks enabled for unit tests. Fresh extended fuzzing, full-source Astra review
-and reference CI remain required before M3.8 completion.
-
-### Latest owner acceptance requirements — 2026-10-31
-
-- Before M3.8 closure, verify that the approved tangent-work budget admits a
-  realistic normal-mapped asset of at least 200,000 triangles and measure import
-  time on the reference machine. Added `engine_large_normalmap`: original
-  Blender 5.2.2 LTS machined ring, 262,144 triangles, baked normal PNG, no source
-  tangents. Local GCC Debug passes; optimized fresh-cache imports take median
-  0.854202 seconds across three runs. Full conditions/limitations are recorded
-  in [PERFORMANCE.md](PERFORMANCE.md#m38-high-poly-import-admission-measurement-2026-10-31).
-- The owner will test their own Blender model **before merge** using
-  [samples/m3-manual](../samples/m3-manual/README.md). Manual owner acceptance
-  remains pending; these additions do not approve merge or tag.
-- **Only after M3 merge and tag:** draft the M4 plan and wait for owner
-  approval before implementation. Include ADR proposals for the Lua binding
-  library, deterministic Jolt configuration and game-module linking strategy.
-  Do not start M4 planning or implementation before that sequence completes.
-- Existing M3.8 independent review/reference-CI/extended-fuzz/clean-clone gates
-  remain required, including review of this new acceptance delta.
-- Local verification of this addition: GCC asset/unit/CLI/large-model/docs
-  selection 4/4; the new test also passes ASan/UBSan with leak detection enabled
-  (1/1). Guide commands pass with hidden three-frame lavapipe runs; a changed
-  source preserves the UUID/scene bytes and changes the screenshot. The first
-  sandbox attempts could not run LeakSanitizer/SDL; host reruns passed without
-  disabling checks. [Evidence](verification/M3_8_LARGE_MODEL_EVIDENCE.txt).
-
-M3.7 is owner-approved on 2026-10-30.
-Verified source d0797e1b361f4f4379b69d33ebc523ab88e93035. Claude Opus5.5 high
-independently approved all required corrections and durable JSONL with no
-blocking/required findings. Final CI41108912088 completed/success in all six
-jobs: GCC/Clang26/26, ASan25/25, Windows19/19, Fuzz and Quality success.
-[Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
-Reviewer selection remains exclusively the owner's decision; GPT-6 Astra high
-is the current reviewer (owner correction 2026-10-31; REVIEWER.json). M3.8 is authorized; merge and tag require separate owner approval.
-
-M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
-CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
-The owner requires shared CLI handlers/bus, 127.0.0.1 only, per-request token,
-bounded framing/connections/timeouts, sandboxed client paths, exclusive
-project locking, parser fuzzing and explicit negative/security/log tests.
-The current independent reviewer is GPT-6 Astra high. Historical Claude/Astra
-review attribution is retained; no substitution is permitted without the owner.
-M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner timing rule.
+to return to Claude for M3.7. Reviewer selection belongs exclusively to the
+owner. Historical Claude/Astra reviews below retain their actual attribution;
+old pending statements are snapshots, superseded by the final status above.
+M3.7 remains owner-approved on 2026-10-30; M3.4/M3.5/M3.6 are also approved.
+No merge, tag or admin bypass is authorized by reviewer approval or a passed
+manual test alone. Earlier history below is retained for audit.
 
 ## Substeps
 
@@ -183,10 +140,10 @@ M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner tim
 | M3.2 | GLB import core; animation channels reported only | Reviewer GODKJENT (round 4) |
 | M3.3 | Cooked asset cache, stable IDs, reimport, image decoding and fuzz targets | Reviewer GODKJENT (round 2) |
 | M3.4 | Asset CLI and approved MikkTSpace cooking | Owner approved 2026-10-30 |
-| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
+| M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive-sRGB correction delivered |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Astra high technically approved 5d01a36; local full suites pass; reference CI, extended fuzz/cache and public clone pending |
+| M3.8 | M3 hardening and acceptance | Technical acceptance complete; Astra high approved; CI/clone/fuzz/cache evidence recorded; owner manual Blender test passed; explicit merge/tag instruction pending |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -592,10 +549,10 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.8 is authorized and Astra high re-review is technically approved. Publish
-the approved implementation for exact-source reference CI, extended fuzz/cache verification
-and public clean-clone acceptance. Deliver the consolidated A.5 report only
-after those gates pass. Merge/tag and M4 remain subject to owner authorization.
+Publish the consolidated M3.8 documentation/evidence and verify its normal PR
+checks. Then await the owner's explicit merge/tag instruction. After merge and
+tag, draft the M4 plan with the requested ADR proposals and wait for approval.
+No further long fuzz run is required for M3.8 closure.
 
 ## M3.5 implementation and verification
 
@@ -886,7 +843,9 @@ commits afterd0797e1 do not change the tested source. The pre-existing non-UTF-8
 asset-import orphan-directory case remains documented for hardening assessment.
 No new M3.7 blocking/required finding remains. No merge, tag or M3.8 is authorized.
 
-## M3.8 authorized hardening — 2026-10-30
+## Historical M3.8 hardening snapshots — superseded by final acceptance above
+
+### M3.8 authorized hardening — 2026-10-30
 
 The owner authorized M3.8 after approving M3.7. Local implementation adds:
 

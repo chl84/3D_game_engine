@@ -43,8 +43,10 @@ lavapipe run. Retain this limitation; inspect verbose render/device output and
 the mandatory lavapipe doctor checks when closing acceptance. A future stricter
 gate can collect per-executable Catch2 reports. Existing checks are unchanged.
 
-This is technical approval, not final M3.8/owner approval. Reference CI,
-extended-fuzz/cache and exact-source public clean-clone evidence remain
-separate gates. Merge/tag await the owner's manual test and explicit instruction.
+This records the reviewer's technical approval and its limits at handback.
+Subsequent reference CI, extended-fuzz/cache and public clean-clone gates passed,
+and the owner reported the manual Blender test passed. See the
+[consolidated report](M3_8_STATUS_REPORT.md). Explicit merge/tag instruction
+remains pending; the historical reviewer scope above is unchanged.
 
 Review thread: <t3-thread://v2/e8adac88-d3a8-4ac9-9a86-5e57d674d69f/thread:delegated-task:command%3Amcp%3Ab0792849-851f-4386-885f-2995c30d47d2%3Adelegate-task%3Ac00c5a1e-9fdb-4f1c-a037-c64bbcc764ba>

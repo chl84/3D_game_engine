@@ -1,6 +1,6 @@
 # ADR-0015: Asset-wide tangent-generation work admission
 
-- **Status:** Accepted by the owner; implementation/review in progress
+- **Status:** Accepted by the owner; implemented, Astra high reviewed and verified
 - **Date:** 2026-10-31
 - **Related:** [ADR-0012](ADR-0012-asset-pipeline-and-scene-v3.md),
   [M3.8 approved proposal](../verification/M3_8_TANGENT_BUDGET_PROPOSAL.md)
@@ -78,7 +78,8 @@ This is an estimate for the confirmed dense welding bottleneck, not a universal
 CPU-time deadline or a replacement for existing vertex/index/source limits.
 Ordinary small position groups are exempt; other linear import/generation work
 can still depend on asset size and hardware. Reference CI, fresh extended fuzz
-and GPT-6 Astra high review must pass before publication is declared complete.
+and GPT-6 Astra high review have passed; source-specific evidence is recorded
+in the [M3.8 report](../verification/M3_8_STATUS_REPORT.md).
 
 ## Alternatives considered
 

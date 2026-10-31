@@ -4,8 +4,9 @@ Candidate: 9c812f5063b3f4a291777a43e071022d56865f54.
 Run: https://github.com/chl84/3D_game_engine/actions/runs/41177977464
 Job: 124469381656; completed/success. Three targets, 600 seconds each.
 No prior corpus key was found. The generated corpus was saved successfully.
-A separate second run41182629918 has now been launched to verify restore/reuse;
-that result is still pending and is not claimed by this evidence.
+Subsequent run41182629918 restored this exact corpus and started using it,
+then was cancelled at the owner's request. It is not a second successful long
+run. See M3_8_GITHUB_CORPUS_REUSE_EVIDENCE.txt for the restore/use proof.
 
 2026-10-31T06:47:53.9460817Z   key: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-41177977464-1
 2026-10-31T06:47:53.9461243Z   restore-keys: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-

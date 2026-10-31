@@ -4,8 +4,10 @@ An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
 M0–M2 are released (`v0.3.0`). M3 is in progress: GLB import, cooked assets,
 reimport, PBR rendering and asset placement are implemented. The authenticated
-local live API is M3.7 owner-approved; M3.8 is undergoing final acceptance with
-GPT-6 Astra high as reviewer (see `REVIEWER.json`). The engine is not ready for shipping games.
+local live API is M3.7 owner-approved. M3.8 technical acceptance and the owner
+manual Blender test have passed; explicit merge/tag approval remains.
+Documentation publication checks are tracked in PR #5. GPT-6 Astra high is the active reviewer
+(see `REVIEWER.json`). The engine is not ready for shipping games.
 
 ## Requirements
 

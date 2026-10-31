@@ -1,6 +1,6 @@
 # Build
 
-**Status:** M3.8 hardening and acceptance. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M3.8 technical acceptance complete; release authorization pending. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick

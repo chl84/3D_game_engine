@@ -383,10 +383,12 @@ minimization.
 
 ### M3 — Asset pipeline and live control
 
-**Delivery status:** M3.1–M3.7 are implemented and approved; final M3.8
-hardening/acceptance is in progress. Release, merge and tag require owner
-approval. The implementation includes shared CLI/live commands and synchronized
-JSONL audit records. See STATUS.md for exact-source evidence and limitations.
+**Delivery status:** M3.1–M3.7 are implemented and approved. M3.8 technical
+acceptance is complete with Astra high approval, green reference CI and an
+owner-reported passed manual Blender test. Documentation publication checks
+are tracked in PR5; release, merge and tag require explicit owner approval.
+The implementation includes shared CLI/live commands and synchronized JSONL
+audit records. See STATUS.md for exact-source evidence and limitations.
 
 - GLB import via fastgltf: meshes, textures, basic PBR materials and
   hierarchies
