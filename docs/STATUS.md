@@ -4,6 +4,17 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+### First GitHub long run passed; reuse run launched — 2026-10-31
+
+Run41177977464 completed/success: GLB96,906, image286,644 and RPC2,484,027
+executions, 600-second budgets per target. GitHub saved the new corpus with
+key suffix41177977464-1 after the initial cache miss.
+[First-run evidence](verification/M3_8_GITHUB_LONG_FUZZ_FIRST.txt).
+The separate corpus-reuse run is now
+[41182629918](https://github.com/chl84/3D_game_engine/actions/runs/41182629918),
+on the same published candidate9c812f5. Restore/reuse and successful completion
+are pending. PR-required-check success alone does not close this separate gate.
+
 ### Fresh local extended fuzz completed — 2026-10-31
 
 The corrected Astra-approved implementation completed a fresh 600-second run
