@@ -184,6 +184,8 @@ jobs:
         if: always()
         run: |
           probe="./build/${{ matrix.preset }}/tests/admission/engine_m4_admission"
+          python3 scripts/capture_m4_build_profile.py "build/${{ matrix.preset }}" "$VCPKG_ROOT" > m4-build-profile.json
+          .venv/bin/python3 scripts/validate_m4_proposals.py
           cmake --build --preset ${{ matrix.preset }} --target engine_m4_jolt_admission
           set +e
           "$probe" --verify-lua > m4-lua.json
@@ -205,6 +207,7 @@ jobs:
             build/${{ matrix.preset }}/tests/admission/engine_m4_jolt_admission
             m4-lua.json
             m4-jolt.json
+            m4-build-profile.json
 
       - name: Build optimized M4 VM measurement binary
         if: always() && matrix.preset == 'ci-linux-gcc14'
@@ -475,6 +478,8 @@ jobs:
         if: always()
         run: |
           $probe = ".\build\ci-windows\tests\admission\engine_m4_admission.exe"
+          python scripts/capture_m4_build_profile.py build/ci-windows $env:VCPKG_ROOT | Out-File -Encoding utf8 m4-build-profile.json
+          .\.venv\Scripts\python.exe scripts/validate_m4_proposals.py
           cmake --build --preset ci-windows --target engine_m4_jolt_admission
           & $probe --verify-lua | Out-File -Encoding utf8 m4-lua.json
           $luaStatus = $LASTEXITCODE
@@ -494,6 +499,7 @@ jobs:
             build/ci-windows/tests/admission/engine_m4_jolt_admission.exe
             m4-lua.json
             m4-jolt.json
+            m4-build-profile.json
 
       - name: Upload test artifacts
         if: failure()

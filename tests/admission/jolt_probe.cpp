@@ -135,6 +135,7 @@ nlohmann::json verify_jolt() {
     return {{"sourceVersion", "5.6.0"},
             {"sourceCommit", "e77f175595e64cb44218cc9d9d56fc365ad0e36a"},
             {"configuration", JPH::GetConfigurationString()},
+            {"configurationScope", "consumer headers; verify library flags separately"},
             {"jobThreads", 1},
             {"ticks", first.size()},
             {"positionTraceBits", first},

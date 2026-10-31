@@ -1,0 +1,38 @@
+{
+  "formatVersion": 2,
+  "projectId": "00000000-0000-4000-8000-000000000001",
+  "name": "M4 proposal example",
+  "engineVersion": "0.4.0",
+  "assetRoot": "assets",
+  "scriptRoot": "scripts",
+  "scenes": [
+    "scenes/main.scene.json"
+  ],
+  "settings": {
+    "defaultScene": "scenes/main.scene.json",
+    "tickRate": 60,
+    "window": {
+      "width": 1920,
+      "height": 1080,
+      "mode": "windowed"
+    }
+  },
+  "metadata": {},
+  "gameProfile": {
+    "format": "engine.game-profile@1",
+    "id": "game.demo@1",
+    "modules": [],
+    "tickRate": 60,
+    "physicsProfile": "jolt-5.6.0-x64-double-deterministic@1",
+    "lua": {
+      "vmTopology": "per-instance",
+      "limits": {
+        "luaInstanceBytes": 8388608,
+        "luaAggregateBytes": 67108864,
+        "callbackInstructions": 100000,
+        "tickInstructions": 1000000,
+        "queuedEventsAndCommands": 4096
+      }
+    }
+  }
+}

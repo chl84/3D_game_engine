@@ -68,7 +68,8 @@ Existing `engine run` remains the M2/M3 inspection fly camera. Add a distinct
    This deferral requires owner approval. If declined, expand this plan before
    implementation rather than quietly dropping the earlier follow-up.
 
-The versions above are proposed, not added to `vcpkg.json`. M4.1 records exact
+The versions above are now pinned in admission-only overlays and `vcpkg.json`;
+engine gameplay adoption remains conditional on the M4.1 gates. M4.1 records exact
 commit/archive hashes, licenses and any transitive packages/overlay changes.
 Keep the existing vcpkg baseline; use pinned overlays if necessary rather than
 upgrading unrelated M3 packages. Lua's C++ build may require a local overlay.
@@ -228,11 +229,9 @@ ragdolls/vehicles, GPU physics or C++ dynamic loading is implemented under this
 proposal. Broader systems retain their roadmap positions, subject to the
 explicit animation scope decision above.
 
-## Approval requested
+## Remaining M4.1 approval checkpoints
 
-Approve the M4 scope/substeps and proposed ADRs; the three dependency versions
-and pinned overlay approach; the deterministic contract and resource limits;
-the project2/scene4/replay direction subject to concrete schema approval in
-M4.1; and the explicit animation-follow-up deferral. The owner has approved the plan with the conditions at the top. Work starts
-with M4.1 admission/measurements and proposed schemas; topology acceptance and
-concrete schema approval remain separate checkpoints.
+The owner approved the plan with the conditions at the top. M4.1 now covers
+admission/measurements and the concrete schemas proposed in
+[ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md).
+Topology acceptance and concrete schema approval remain separate checkpoints.

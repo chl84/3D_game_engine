@@ -1,0 +1,51 @@
+{
+  "formatVersion": 4,
+  "sceneId": "00000000-0000-4000-8000-000000000003",
+  "gameProfileId": "game.demo@1",
+  "name": "main",
+  "revision": 0,
+  "entities": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Player",
+      "parentId": null,
+      "components": {
+        "engine.scene.Transform": {
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "engine.physics.CharacterController": {
+          "radius": 0.4,
+          "halfHeight": 0.5,
+          "stepHeight": 0.3,
+          "maxSlopeRadians": 0.7853981633974483,
+          "moveSpeed": 4,
+          "jumpSpeed": 5
+        },
+        "engine.script.Script": {
+          "path": "player.lua",
+          "enabled": true,
+          "initialState": {
+            "interactions": 0
+          }
+        }
+      },
+      "metadata": {}
+    }
+  ],
+  "metadata": {}
+}

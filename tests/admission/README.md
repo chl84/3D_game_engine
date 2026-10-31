@@ -41,6 +41,17 @@ stale-ECS-handle policy or per-script allocation attribution in a shared VM.
 Those runtime contracts are future M4 work. The Jolt executable runs independently
 so a Lua compiler blocker does not prevent profile/rigid-body smoke evidence.
 
+The first reference run passed GCC14/MSVC, but Clang18 rejected sol2's direct
+member-variable trampoline. The candidate now uses typed `sol::property`
+accessors without changing script field semantics, argument checks or pinned
+headers. This is an explicit bridge limitation: direct member-pointer binding
+is not admitted. All original error/isolation/field assertions remain required.
+Jolt RTTI/exceptions now explicitly match the C++ host: upstream's private
+no-RTTI default caused missing typeinfo when UBSan instrumented host-side virtual
+operations. Keep vptr checks enabled; fix the library/consumer mismatch instead.
+The configuration string is the consumer header view; generated library flags
+must independently show `-frtti -fexceptions -ffp-contract=off` (or MSVC equivalents).
+
 ## Controlled 1,000-instance comparison
 
 Both models initialize the same libraries, bound type, independent allowlisted

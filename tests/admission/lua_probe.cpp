@@ -76,8 +76,12 @@ public:
         }
         lua["math"]["random"] = sol::nil;
         lua["math"]["randomseed"] = sol::nil;
-        lua.new_usertype<Value>("ProbeValue", sol::constructors<Value()>(), "number",
-                                &Value::number);
+        // sol2 3.3.0's direct member-pointer trampoline fails on Clang18.
+        // Typed accessors keep field reads/writes and argument checks intact.
+        lua.new_usertype<Value>(
+            "ProbeValue", sol::constructors<Value()>(), "number",
+            sol::property([](const Value& value) { return value.number; },
+                          [](Value& value, int number) { value.number = number; }));
     }
 
     [[nodiscard]] sol::environment environment() {

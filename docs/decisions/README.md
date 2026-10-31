@@ -47,3 +47,4 @@ asset-wide tangent work budget and its explicit source-compatibility tradeoff.
 | [0016](ADR-0016-lua-bindings.md) | Lua bindings and VM boundary | Conditional library approval; compiler probes and VM choice pending |
 | [0017](ADR-0017-deterministic-jolt.md) | Deterministic Jolt profile for M4 | Accepted |
 | [0018](ADR-0018-game-module-linking.md) | Static game modules and installed SDK | Accepted; M4.8 packaging stop condition |
+| [0019](ADR-0019-m4-project-scene-replay-formats.md) | M4 project, scene, profile and replay formats | Proposed; concrete owner approval required |
