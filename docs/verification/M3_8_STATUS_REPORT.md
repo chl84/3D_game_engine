@@ -1,5 +1,13 @@
 # Status report — 2026-10-31 — M3.8
 
+**Final release closure:** All six jobs in
+[CI41184429834](https://github.com/chl84/3D_game_engine/actions/runs/41184429834)
+passed on release head 031bc43. Owner-authorized standard merge completed in
+PR5 as 88ccc85; annotated v0.4.0 is published and its remote target verified.
+[Release evidence](M3_FINAL_RELEASE_EVIDENCE.txt). Earlier source-specific
+acceptance records below are retained; no M3 release gate remains open.
+M4 is planning-only until the owner approves its proposal.
+
 **Outcome:** Technical acceptance is complete for the verified implementation.
 The owner reported the manual Blender test passed and asked work to continue.
 The owner subsequently authorized merge and tagging. Normal PR checks must

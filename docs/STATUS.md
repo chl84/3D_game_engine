@@ -1,8 +1,37 @@
 # Status
 
 **Last updated:** 2026-10-31
-**Current milestone:** M3 — asset pipeline and live control; v0.4.0 release authorized
-**Current substep:** M3.8 — technical acceptance complete; owner manual Blender test passed; merge/tag authorized subject to green final CI.
+**Current milestone:** M4 — physics and game logic; planning only
+**Current substep:** Proposed plan/ADRs awaiting owner approval; no implementation started.
+
+## M3 released; M4 plan ready for review
+
+All six final reference CI jobs passed on
+`031bc433021af1a5db565983adde45271ae01030` in
+[CI41184429834](https://github.com/chl84/3D_game_engine/actions/runs/41184429834).
+The owner explicitly authorized merge/tag after the reported manual Blender
+pass. [PR5](https://github.com/chl84/3D_game_engine/pull/5) was merged through
+standard branch protection as `88ccc85d30f03a8d2e6a8b345b1a2216a2d3d818`.
+Annotated tag **v0.4.0** is published and verified against the remote; it points
+at that exact main merge commit. [Release evidence](verification/M3_FINAL_RELEASE_EVIDENCE.txt).
+No unresolved required M3.8 review/test gate remains.
+
+[M4_PLAN.md](M4_PLAN.md) proposes ten substeps with dependencies, risks and
+objective acceptance criteria. The three requested ADR proposals are
+[Lua bindings](decisions/ADR-0016-lua-bindings.md),
+[deterministic Jolt](decisions/ADR-0017-deterministic-jolt.md) and
+[static game modules](decisions/ADR-0018-game-module-linking.md).
+They are **Proposed**, not accepted. This branch changes documentation only;
+no new package is installed and no M4 engine/source/schema code is changed.
+
+Owner decisions before implementation: approve the plan/three ADRs, proposed
+package versions, deterministic limits and format direction; explicitly decide
+on the proposed skeletal-animation deferral because M3 tentatively assigned
+that follow-up to M4. Concrete format schemas require acceptance in M4.1.
+Do not implement M4 until the owner approves the plan.
+
+The M3.8 detail below is retained as source-specific history. Release actions
+and final CI above supersede earlier publication/authorization-pending wording.
 
 ## M3.8 final acceptance
 
@@ -164,7 +193,7 @@ unauthorized. Earlier history below is retained for audit.
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive-sRGB correction delivered |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Technical acceptance complete; Astra high approved; CI/clone/fuzz/cache evidence recorded; owner manual Blender test passed; merge/tag authorized subject to final CI |
+| M3.8 | M3 hardening and acceptance | Complete — final six-job CI passed; owner manual test passed; merged in PR5 and tagged v0.4.0 |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -570,10 +599,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Verify normal PR checks on the v0.4.0 release candidate, merge through standard
-branch protection and tag the actual main merge commit as authorized. After
-merge and tag, draft the M4 plan with the requested ADR proposals and wait for approval.
-No further long fuzz run is required for M3.8 closure.
+Wait for the owner's review/approval of M4_PLAN.md and its proposed ADRs/scope.
+After approval, start M4.1 with the accepted decisions and concrete dependency/
+format admission. Do not install M4 dependencies or implement the runtime yet.
 
 ## M3.5 implementation and verification
 

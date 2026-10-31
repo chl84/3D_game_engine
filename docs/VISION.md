@@ -383,12 +383,10 @@ minimization.
 
 ### M3 — Asset pipeline and live control
 
-**Delivery status:** M3.1–M3.7 are implemented and approved. M3.8 technical
-acceptance is complete with Astra high approval, green reference CI and an
-owner-reported passed manual Blender test. Documentation publication checks
-are tracked in PR5; release, merge and tag require explicit owner approval.
-The implementation includes shared CLI/live commands and synchronized JSONL
-audit records. See STATUS.md for exact-source evidence and limitations.
+**Delivery status:** Released as v0.4.0 after Astra high technical approval,
+six green final reference CI jobs, owner-reported manual Blender pass and
+explicit merge/tag authorization. See STATUS.md for exact-source evidence and
+limitations. Shared CLI/live commands and synchronized JSONL are implemented.
 
 - GLB import via fastgltf: meshes, textures, basic PBR materials and
   hierarchies
@@ -404,6 +402,9 @@ again. After the model is changed and reimported, no references are broken. A
 golden image test of the scene passes.
 
 ### M4 — Physics and game logic
+
+**Planning status:** [M4_PLAN.md](M4_PLAN.md) and ADR-0016–0018 are proposed;
+owner approval is pending. No M4 implementation has started.
 
 - Jolt Physics with deterministic configuration: rigid bodies, collision and
   raycast

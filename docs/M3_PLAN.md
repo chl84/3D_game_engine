@@ -1,5 +1,10 @@
 # M3 Plan — Asset pipeline and live control
 
+**Release closure:** M3 is released as v0.4.0 on main merge commit 88ccc85 after
+all six final CI jobs on 031bc43 passed, the owner's manual test passed and
+explicit merge/tag authorization was given. The earlier planning/review history
+below is retained. [Final release evidence](verification/M3_FINAL_RELEASE_EVIDENCE.txt).
+
 **Status:** Approved by the owner on 2026-10-30. M3.1/M3.2 are
 reviewer-approved; M3.3–M3.7 are complete. M3.4/M3.5/M3.6/M3.7 are
 owner-approved, including the emissive-sRGB correction and the pinned official

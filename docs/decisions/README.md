@@ -39,3 +39,11 @@ ADRs are not rewritten.
 
 [ADR-0015](ADR-0015-tangent-work-budget.md) records the owner-approved M3.8
 asset-wide tangent work budget and its explicit source-compatibility tradeoff.
+
+## M4 proposals — awaiting owner approval
+
+| ADR | Title | Status |
+|---|---|---|
+| [0016](ADR-0016-lua-bindings.md) | Lua bindings and VM boundary | Proposed |
+| [0017](ADR-0017-deterministic-jolt.md) | Deterministic Jolt profile for M4 | Proposed |
+| [0018](ADR-0018-game-module-linking.md) | Static game modules and installed SDK | Proposed |

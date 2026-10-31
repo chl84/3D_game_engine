@@ -2,11 +2,10 @@
 
 An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
-M0–M2 are released (`v0.3.0`). M3 is in progress: GLB import, cooked assets,
-reimport, PBR rendering and asset placement are implemented. The authenticated
-local live API is M3.7 owner-approved. M3.8 technical acceptance and the owner
-manual Blender test have passed; merge/tag are authorized after green release-candidate CI.
-Documentation publication checks are tracked in PR #5. GPT-6 Astra high is the active reviewer
+M0–M3 are released as `v0.4.0`: GLB import/cooking/reimport, stable asset
+placement, PBR rendering and authenticated local live control are implemented
+and verified. M4 physics/gameplay is planned in [docs/M4_PLAN.md](docs/M4_PLAN.md)
+and awaits owner approval. GPT-6 Astra high is the active independent reviewer
 (see `REVIEWER.json`). The engine is not ready for shipping games.
 
 ## Requirements
@@ -52,6 +51,7 @@ and `Escape` to close. See `samples/m2-demo/README.md` for details.
 - `docs/VISION.md` — vision, technology stack and milestones
 - `docs/ARCHITECTURE.md` — modules, dependency rules and data flow
 - `docs/ROADMAP.md` — milestone status
+- `docs/M4_PLAN.md` — proposed physics/gameplay plan and approval decisions
 - `docs/PROJECT_FORMAT.md` — planned project and scene format
 - `docs/decisions/README.md` — architecture decision records index
 - `docs/AI_AGENT_GUIDE.md` — CLI and live API usage
