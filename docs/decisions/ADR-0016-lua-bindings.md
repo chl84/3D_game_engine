@@ -1,6 +1,6 @@
 # ADR-0016: Lua bindings and VM boundary
 
-- **Status:** Partially approved; final acceptance pending M4.1 compiler probes and owner VM-topology decision
+- **Status:** Partially approved; compiler admission verified, final acceptance pending owner VM-topology decision
 - **Date:** 2026-10-31
 - **Scope:** [M4 proposal](../M4_PLAN.md); extends ADR-0005/0007 without changing
   the engine's Result/error contract.
@@ -80,7 +80,13 @@ reload. No Lua coroutine/closure/opaque-heap persistence is promised.
 
 The owner conditionally approved sol2 3.3.0 and C++ Lua 5.4.9, provided all
 three compiler probes pass with warnings-as-errors for our code. The VM choice
-remains pending a measured 1,000-instance comparison and owner approval.
+remains pending owner approval after the completed1,000-instance comparison.
+
+[Reference CI](../verification/M4_1_REFERENCE_CI_EVIDENCE.txt) and independent
+[Astra high re-review](../verification/M4_1_ASTRA_REVIEW.md) passed exact30a130b
+with actual matching host/library compilers and warnings-as-errors on our bridge.
+[Measured costs and recommendation](../verification/M4_1_VM_COMPARISON.md) are
+ready for the owner decision; this records evidence, not topology acceptance.
 
 M4.1's three-compiler admission proves successful bindings, wrong-type errors,
 syntax/runtime failure, instruction exhaustion and allocator failure. Destruction
@@ -103,5 +109,5 @@ not permission to suppress checks or substitute another runtime.
   [Lua 5.4 manual](https://www.lua.org/manual/5.4/manual.html) and
   [Lua license](https://www.lua.org/license.html).
 
-These references inform a proposal, not a claim that the selected combination
-has already compiled or passed the engine's tests.
+References alone are not test evidence. Actual admission results and their
+limits are linked above; production runtime adoption remains separate.

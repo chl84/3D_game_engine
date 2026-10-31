@@ -235,3 +235,10 @@ The owner approved the plan with the conditions at the top. M4.1 now covers
 admission/measurements and the concrete schemas proposed in
 [ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md).
 Topology acceptance and concrete schema approval remain separate checkpoints.
+
+Technical admission and independent Astra high re-review passed exact30a130b;
+all six reference CI jobs are green. [Evidence](verification/M4_1_REFERENCE_CI_EVIDENCE.txt).
+The1,000-instance comparison is complete with a per-instance-VM recommendation
+that retains enforceable approved quotas. [Numbers and scope](verification/M4_1_VM_COMPARISON.md).
+Await owner topology/schema approval, including the explicit64MiB/depth32 legacy
+document rejection exception, before closing M4.1 or starting M4.2.

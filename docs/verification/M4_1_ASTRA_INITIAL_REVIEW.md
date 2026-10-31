@@ -28,7 +28,10 @@ inject OOM at VM creation/library/binding setup before production adoption.
 Production runtime/stale-ECS-handle APIs and the full M4.4 physics suite remain
 outside these isolated probes. No fresh full build/sanitizer/fuzz run was claimed.
 
-Previous CI41189740843/raw probe reports remain historical evidence. Their
+Previous CI41189740843/[raw probe reports](M4_1_PRE_AUDIT_REFERENCE_PROBES.json) remain historical evidence. Their
 missing/mixed library compiler provenance is not relabelled as complete. New
 reference artifacts and review disposition must resolve the two items before
 the consolidated report. No topology or concrete format is accepted yet.
+
+Both findings were subsequently closed by the independent
+[re-review of exact30a130b](M4_1_ASTRA_REVIEW.md).

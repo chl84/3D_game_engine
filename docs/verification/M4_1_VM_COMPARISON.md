@@ -10,6 +10,8 @@ C++/exception/FP settings and archive hashes in both configurations. Subsequent
 Windows-only Jolt platform selection, compile-time SSE guard and CI exit handling
 do not change this GCC14 Lua binary or benchmark semantics. No remeasurement is
 required merely because Windows/Jolt admission evidence is corrected.
+The final30a130b Release artifact13040019080 was independently hashed and is
+byte-identical to the measured binary (SHA-256 in the raw measurement record).
 
 ## Method and actual results
 
@@ -64,4 +66,7 @@ validation. The binding prototype alone does not prove those production APIs.
 
 ADR-0016 remains partially approved. No VM topology has been selected in engine
 runtime code or made the schema default. Independent review and final Quality/
-CI checks remain separate gates before the consolidated M4.1 report.
+CI passed on the reviewed implementation30a130b; see
+[Astra's disposition](M4_1_ASTRA_REVIEW.md) and
+[reference CI evidence](M4_1_REFERENCE_CI_EVIDENCE.txt). Final publication checks
+are attached to PR6. The owner topology decision remains outstanding.

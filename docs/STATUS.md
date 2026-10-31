@@ -2,71 +2,70 @@
 
 **Last updated:** 2026-10-31
 **Current milestone:** M4 — physics and game logic
-**Current substep:** M4.1 — owner-authorized dependency/profile admission, three-compiler probes, VM topology measurements and concrete schema proposals.
+**Current substep:** M4.1 — technical admission/re-review verified; owner VM-topology and concrete-schema decisions pending before M4.2.
 
-## M4.1 admission candidate — review corrections in progress
+## M4.1 technical admission verified — owner decisions pending
 
-Pinned admission-only overlays remain Jolt5.6.0, sol2 release3.3.0 and Lua5.4.9
-as C++. No engine gameplay runtime, topology or concrete format is adopted.
-The owner-selected independent Astra high review of exact `ee92064` found two
-required P2 corrections, tracked in
-[the review record](verification/M4_1_ASTRA_INITIAL_REVIEW.md).
+Independent GPT-6 Astra high re-review passed exact implementation
+`30a130bb6ae5eca02477ea66dc475123e38b4264`, closing both initial P2 findings with
+no new required corrections. [Review](verification/M4_1_ASTRA_REVIEW.md).
+[CI41193913160](https://github.com/chl84/3D_game_engine/actions/runs/41193913160)
+passed all six jobs: GCC14/Clang18 each30/30, ASan/UBSan29/29, MSVC23/23,
+Quality and short fuzz. [CI evidence](verification/M4_1_REFERENCE_CI_EVIDENCE.txt).
+Subsequent publication edits retain documentation/evidence only; the reviewed
+engine/build/test/overlay implementation remains unchanged. Publication-head
+checks are attached to draft PR6, without granting merge/tag authorization.
 
-- Legacy names/project paths/scene-list duplicates and counts now retain their
-  previously accepted values in the proposal. The new64MiB/depth32 parser bounds
-  are an explicit owner-pending compatibility exception: structured rejection
-  without rewriting or truncation. Proposal validation passes five schemas,
-  seven examples,15 rejected controls and12 positive legacy compatibility cases.
-- Lua/Jolt overlays now retain actual compiler path/ID/version, complete generated
-  compile commands and installed archive SHA-256 inside cached packages for both
-  Debug/Release. Capture requires library/host compiler identity/version equality,
-  verifies archive digests and effective C++/exception/FP/numeric flags. Linux CI
-  selects CC/CXX explicitly. Lua's exception/FP contraction policy is explicit.
-  Local GCC16 verifies139 Jolt and32 Lua commands per configuration. Focused
-  controls reject absent metadata, compiler mismatch, unsafe Lua FP and altered
-  archive digest; the installed-package audit works without source buildtrees.
-  CI41192173709 on982b3f8 verified the actual GCC14/Clang18 library identities,
-  both configurations and full command reports. All six jobs reported success,
-  but artifact inspection found a masked Windows profile-audit failure: upstream
-  Jolt's Ninja/MSVC path omitted SSE4 definitions because CMAKE_VS_PLATFORM_NAME
-  was empty. The Windows PowerShell step did not propagate the Python failure.
-  The candidate now passes the triplet architecture to Jolt, requires SSE4.1/4.2
-  in the C++ probe, and throws immediately on profile/validator/build failures.
-  New reference CI must prove Windows evidence; the earlier green job is not
-  treated as complete three-compiler admission.
+Lua5.4.9/C++ and sol2 release3.3.0 admission now satisfies the owner's three-
+compiler condition. Actual Lua/Jolt library compilers match each host in both
+configurations: GCC14.2.0, Clang18.1.3 and MSVC19.44.35229.0. Cached archive
+hashes, all1,026 generated library commands, exception/FP/SSE settings and own
+-Werror or /WX are retained in [summary](verification/M4_1_REFERENCE_PROBES.json)
+and [complete compressed evidence](verification/M4_1_REFERENCE_PROBES_FULL.json.gz).
+The three240-tick primitive traces match exactly. The masked Windows audit and
+Ninja/SSE configuration failures are corrected; prior reports remain explicitly
+historical. This is admission, not the unimplemented full M4.4 physics suite.
 
-Earlier reference CI41189740843 passed the three host probes and ASan/UBSan,
-with identical240-tick primitive Jolt traces, but lacked complete library compiler
-provenance; [those raw reports](verification/M4_1_REFERENCE_PROBES.json) are
-historical, not proof of separately compiled GCC/Clang archives. The corrected
-candidate after review must provide new evidence. Full M4.4 physics fixtures
-are not implemented. The four Quality findings were corrected without disabling
-warnings or changing algorithms/limits; candidate CI remains separate.
+[Measured comparison](verification/M4_1_VM_COMPARISON.md), exactly1,000 instances,
+five fresh processes per model, reference i7-1265U, AC/balanced, GCC14 Release:
 
-The1,000-instance comparison has five fresh processes per model, equal payloads,
-AC/balanced conditions and complete binary/run provenance:
-[VM comparison](verification/M4_1_VM_COMPARISON.md). Refreshed against the982b3f8
-GCC14 Release artifact after the explicit Lua library FP policy. The measured
-recommendation is not owner acceptance of ADR-0016. Concrete schemas are in
-[ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md) and
-[the format proposal](proposals/m4/README.md), pending owner approval.
+| VM model | Median startup | Retained Lua allocation |
+|---|---:|---:|
+| One VM per instance | 53.32ms | 22.22MiB |
+| One VM per session, private environments | 18.01ms | 2.83MiB |
 
-Local GCC16/Clang23 reject upstream sol::optional<T&>::emplace; tidy18 cannot
-parse GCC16 standard headers. No upstream header patch/version substitution or
-warning suppression is applied. The local corrected Jolt bridge passed full
-ASan/UBSan/leak checks [earlier](verification/M4_1_LOCAL_JOLT_ASAN.json); no full
-third-party sanitizer coverage is claimed. Optional OOM injection during VM/
-binding setup belongs before production script-boundary adoption in M4.6.
-M4.1 remains open pending corrected reference evidence/review and owner decisions.
+Whole-child RSS and scope/provenance are in the report. Current installed RAM
+is about32GiB, differing from the original16GB specification. The final candidate
+binary is byte-identical to the measured binary. Recommend per-instance VMs for
+M4 because the approved8MiB per-instance quota has a clear enforceable heap
+boundary; shared environments need a proven allocation attribution design.
+Neither model is selected or adopted in production code.
+
+Owner decisions still needed, as reserved in the M4 approval:
+
+1. VM topology and final acceptance of ADR-0016 after reviewing the measured costs.
+2. Concrete project2/scene4/game-profile1/replay1 contracts in
+   [ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md) and
+   [the proposal](proposals/m4/README.md). Legacy names/paths/counts are preserved;
+   five schemas, seven examples,15 rejection and12 compatibility controls pass.
+3. The explicit new64MiB/depth32 document parser compatibility exception:
+   oversized/deep legacy documents are rejected without writing/truncation.
+
+No format reader/writer, gameplay VM topology or M4.2 implementation is adopted
+before these decisions. Local GCC16/Clang23 upstream sol2 header incompatibility
+and tidy18/GCC16 standard-library incompatibility remain documented deviations;
+reference compilers passed without header patches, substitutions or suppressions.
+Production sandbox/stale-ECS APIs, full physics fixtures and VM-setup OOM
+injection remain future M4 work. Windows compilation/headless/offscreen is
+verified; physical Windows presentation/gameplay was not tested in M4.1.
 
 ## M4 owner approval and active limits — 2026-10-31
 
 M4_PLAN.md is owner-approved with explicit conditions. ADR-0017/0018 are
-accepted. sol2 3.3.0 and C++ Lua 5.4.9 are conditionally approved after green
-GCC14/Clang18/MSVC probes with warnings-as-errors on our code. ADR-0016 remains
-pending the comparison of 1,000 script instances: per-instance VM versus one
-session VM with separate sandbox environments. Measure memory/startup, present
-numbers/recommendation, then await the owner topology decision. No VM model is
+accepted. The conditional sol2 3.3.0 and C++ Lua 5.4.9 compiler
+approval is now evidenced by green GCC14/Clang18/MSVC probes with warnings-as-
+errors on our code. ADR-0016 remains pending the owner topology decision after
+the completed1,000-instance comparison and recommendation. No VM model is
 adopted yet. Resource limits/tick rate are approved starting points.
 
 Project2/scene4/replay direction is approved; concrete schemas must be approved

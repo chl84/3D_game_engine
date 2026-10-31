@@ -228,7 +228,15 @@
     "artifactId": 13040060145,
     "artifactName": "m4-vm-reference-release",
     "artifactZipSha256": "85df4f2cef705380aa3810f142e61926989e7412c101809b8ebd7de0f94fe78c",
-    "note": "GCC14 Lua/Jolt library provenance verified. Subsequent Windows-only Jolt platform selection, compile-time SSE guard and CI exit handling do not alter this Lua benchmark."
+    "note": "GCC14 Lua/Jolt library provenance verified. Subsequent Windows-only Jolt platform selection, compile-time SSE guard and CI exit handling do not alter this Lua benchmark.",
+    "finalCandidateVerification": {
+      "sourceCommit": "30a130bb6ae5eca02477ea66dc475123e38b4264",
+      "workflowRun": 41193913160,
+      "artifactId": 13040019080,
+      "artifactZipSha256": "dd662d5e287106138c6c046be1de60ff4ac7524c87883a3ddeec10c1939a5f4f",
+      "binaryIdenticalToMeasured": true,
+      "binarySha256": "bd522ff5e47009ed71d955e61aa472e64314f56a8b98f38efa0045fd8e2c9b99"
+    }
   },
   "referenceHardware": {
     "cpu": "12th Gen Intel(R) Core(TM) i7-1265U",

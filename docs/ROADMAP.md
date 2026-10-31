@@ -10,7 +10,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Done — `v0.3.0`, owner approved |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | Done — v0.4.0; Astra high approved, final six-job CI green, owner manual test passed, merged in PR5 |
-| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | [Plan approved](M4_PLAN.md) with conditions; M4.1 admission/VM measurements in progress |
+| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | [Plan approved](M4_PLAN.md) with conditions; M4.1 technical probes/re-review passed; owner VM/schema decisions pending |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
 | M7 | AI-assisted game development, MCP adapter, automation tools | Planned |
