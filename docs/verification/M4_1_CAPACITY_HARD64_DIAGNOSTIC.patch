@@ -1,0 +1,8 @@
+--- a/lua_probe.cpp
++++ b/lua_probe.cpp
+@@ -188 +188 @@
+-        states.back()->allocator.limit = std::size_t{256} * 1024U * 1024U;
++        states.back()->allocator.limit = aggregate_limit;
+@@ -222 +222 @@
+-            {"diagnosticSharedAllocatorLimitBytes", 268435456},
++            {"diagnosticSharedAllocatorLimitBytes", 67108864},

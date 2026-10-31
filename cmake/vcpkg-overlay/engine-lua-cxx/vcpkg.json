@@ -1,0 +1,18 @@
+{
+  "name": "engine-lua-cxx",
+  "version": "5.4.9",
+  "description": "Owner-approved Lua 5.4 built as C++ for M4 admission; private engine dependency",
+  "homepage": "https://www.lua.org",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ],
+  "port-version": 1
+}

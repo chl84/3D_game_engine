@@ -41,6 +41,11 @@ dependencies. Cycles are forbidden.
 The job system belongs in `core` but is deferred until `world` streaming needs
 it in M5. M0 and M1 are single-threaded.
 
+Owner-approved M5 persistence direction: world data lives in separate versioned
+chunk files, not scene JSON. Keep the scene document's approved size/depth bounds;
+the M5 plan will define chunk/manifest schemas and persistence contracts.
+[ADR-0020](decisions/ADR-0020-world-chunk-persistence.md) records this direction.
+
 ## Dependency rules
 
 - Simulation modules (`scene`, `physics`, `script`, `world`) never depend on

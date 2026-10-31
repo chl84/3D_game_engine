@@ -1,0 +1,283 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/proposals/m4/scene@4.schema.json",
+  "title": "Proposed scene format 4",
+  "$comment": "Owner-approved concrete contract on 2026-10-31. Unknown component types always reject via registered validation; migration persists only on explicit save. Not yet integrated. M4.2 is held pending local binding/compiler and VM decisions; topology alternatives are not adopted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "sceneId",
+    "gameProfileId",
+    "name",
+    "revision",
+    "entities",
+    "metadata"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": 4
+    },
+    "sceneId": {
+      "$ref": "common@1.schema.json#/definitions/uuid"
+    },
+    "gameProfileId": {
+      "$ref": "common@1.schema.json#/definitions/id"
+    },
+    "name": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "parentId",
+          "components",
+          "metadata"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common@1.schema.json#/definitions/uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "$ref": "common@1.schema.json#/definitions/uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "components": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 128,
+            "required": [
+              "engine.scene.Transform"
+            ],
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^(engine|game)\\.[A-Za-z0-9_.]+$"
+            },
+            "properties": {
+              "engine.scene.Transform": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "position",
+                  "rotation",
+                  "scale"
+                ],
+                "properties": {
+                  "position": {
+                    "$ref": "common@1.schema.json#/definitions/vec3"
+                  },
+                  "rotation": {
+                    "$ref": "common@1.schema.json#/definitions/quat"
+                  },
+                  "scale": {
+                    "$ref": "common@1.schema.json#/definitions/vec3"
+                  }
+                }
+              },
+              "engine.physics.RigidBody": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "motionType",
+                  "mass",
+                  "friction",
+                  "restitution",
+                  "linearVelocity",
+                  "angularVelocity",
+                  "enabled"
+                ],
+                "properties": {
+                  "motionType": {
+                    "enum": [
+                      "static",
+                      "dynamic",
+                      "kinematic"
+                    ]
+                  },
+                  "mass": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "friction": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "restitution": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "linearVelocity": {
+                    "$ref": "common@1.schema.json#/definitions/vec3"
+                  },
+                  "angularVelocity": {
+                    "$ref": "common@1.schema.json#/definitions/vec3"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "motionType": {
+                          "const": "dynamic"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "mass": {
+                          "exclusiveMinimum": 0
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "engine.physics.BoxCollider": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "halfExtents"
+                ],
+                "properties": {
+                  "halfExtents": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                }
+              },
+              "engine.physics.SphereCollider": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "radius"
+                ],
+                "properties": {
+                  "radius": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                }
+              },
+              "engine.physics.CapsuleCollider": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "radius",
+                  "halfHeight"
+                ],
+                "properties": {
+                  "radius": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "halfHeight": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "engine.physics.CharacterController": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "radius",
+                  "halfHeight",
+                  "stepHeight",
+                  "maxSlopeRadians",
+                  "moveSpeed",
+                  "jumpSpeed"
+                ],
+                "properties": {
+                  "radius": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "halfHeight": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stepHeight": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxSlopeRadians": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMaximum": 1.5707963267948966
+                  },
+                  "moveSpeed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "jumpSpeed": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "engine.script.Script": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "enabled",
+                  "initialState"
+                ],
+                "properties": {
+                  "path": {
+                    "$ref": "common@1.schema.json#/definitions/path"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "initialState": {
+                    "$ref": "common@1.schema.json#/definitions/state"
+                  }
+                }
+              }
+            },
+            "additionalProperties": {
+              "type": "object"
+            },
+            "$comment": "Every additional/built-in/game type must also match its registered descriptor schema; unknown or missing-module types fail. This envelope does not grant permission to drop or accept arbitrary component data."
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

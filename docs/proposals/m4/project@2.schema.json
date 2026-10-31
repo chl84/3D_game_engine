@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/proposals/m4/project@2.schema.json",
+  "title": "Proposed project format 2",
+  "$comment": "Owner-approved concrete contract on 2026-10-31. Unknown component types always reject via registered validation; migration persists only on explicit save. Not yet integrated. M4.2 is held pending local binding/compiler and VM decisions; topology alternatives are not adopted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "projectId",
+    "name",
+    "engineVersion",
+    "assetRoot",
+    "scriptRoot",
+    "scenes",
+    "settings",
+    "metadata",
+    "gameProfile"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": 2
+    },
+    "projectId": {
+      "$ref": "common@1.schema.json#/definitions/uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "assetRoot": {
+      "type": "string"
+    },
+    "scriptRoot": {
+      "type": "string"
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defaultScene",
+        "tickRate",
+        "window"
+      ],
+      "properties": {
+        "defaultScene": {
+          "type": "string"
+        },
+        "tickRate": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height",
+            "mode"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "mode": {
+              "enum": [
+                "windowed",
+                "borderless",
+                "fullscreen"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "gameProfile": {
+      "$ref": "game-profile@1.schema.json"
+    }
+  }
+}

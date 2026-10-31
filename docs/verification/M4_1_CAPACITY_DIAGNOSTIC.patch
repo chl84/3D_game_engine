@@ -1,0 +1,44 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -29,2 +29,2 @@
+-                                   count <= 1000,
+-                               "instance count must be in 1..1000");
++                                   count <= 65536,
++                               "instance count must be in 1..65536");
+--- a/lua_probe.cpp
++++ b/lua_probe.cpp
+@@ -7,0 +8,2 @@
++#include <fstream>
++#include <unistd.h>
+@@ -164,0 +167,10 @@
++std::size_t diagnostic_rss_bytes() {
++    std::ifstream input("/proc/self/statm");
++    std::size_t pages = 0;
++    std::size_t resident = 0;
++    require(static_cast<bool>(input >> pages >> resident), "cannot read diagnostic RSS");
++    const auto page_size = ::sysconf(_SC_PAGESIZE);
++    require(page_size > 0, "cannot read diagnostic page size");
++    return resident * static_cast<std::size_t>(page_size);
++}
++
+@@ -166,0 +179 @@
++    const auto rss_before = diagnostic_rss_bytes();
+@@ -175 +188 @@
+-        states.back()->allocator.limit = aggregate_limit;
++        states.back()->allocator.limit = std::size_t{256} * 1024U * 1024U;
+@@ -185,0 +199 @@
++    const auto rss_after = diagnostic_rss_bytes();
+@@ -193,0 +208 @@
++    const auto post_validation_peak = totals.peak;
+@@ -202,0 +218,5 @@
++            {"postValidationPeakLuaBytes", post_validation_peak},
++            {"rssBeforeLuaBytes", rss_before},
++            {"rssAfterInitializationBytes", rss_after},
++            {"rssInitializationDeltaBytes", rss_after - rss_before},
++            {"diagnosticSharedAllocatorLimitBytes", 268435456},
+@@ -206 +226 @@
+-            {"sourceRelease", "sol2 3.3.0 / Lua 5.4.9 C++"},
++            {"sourceRelease", "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++"},
+@@ -284 +304 @@
+-            {"solSourceTag", "v3.3.0"},
++            {"solSourceTag", "DIAGNOSTIC backport-3.3.0"},

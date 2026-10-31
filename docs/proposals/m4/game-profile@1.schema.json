@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/proposals/m4/game-profile@1.schema.json",
+  "title": "Proposed M4 game profile",
+  "$comment": "Owner-approved concrete contract on 2026-10-31. Unknown component types always reject via registered validation; migration persists only on explicit save. Not yet integrated. M4.2 is held pending local binding/compiler and VM decisions; topology alternatives are not adopted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "id",
+    "modules",
+    "tickRate",
+    "physicsProfile",
+    "lua"
+  ],
+  "properties": {
+    "format": {
+      "const": "engine.game-profile@1"
+    },
+    "id": {
+      "$ref": "common@1.schema.json#/definitions/id"
+    },
+    "modules": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "schemaHash"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common@1.schema.json#/definitions/id"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "schemaHash": {
+            "$ref": "common@1.schema.json#/definitions/hash"
+          }
+        }
+      }
+    },
+    "tickRate": {
+      "const": 60
+    },
+    "physicsProfile": {
+      "const": "jolt-5.6.0-x64-double-deterministic@1"
+    },
+    "lua": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vmTopology",
+        "limits"
+      ],
+      "properties": {
+        "vmTopology": {
+          "enum": [
+            "per-instance",
+            "per-session"
+          ]
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "luaInstanceBytes",
+            "luaAggregateBytes",
+            "callbackInstructions",
+            "tickInstructions",
+            "queuedEventsAndCommands"
+          ],
+          "properties": {
+            "luaInstanceBytes": {
+              "const": 8388608
+            },
+            "luaAggregateBytes": {
+              "const": 67108864
+            },
+            "callbackInstructions": {
+              "const": 100000
+            },
+            "tickInstructions": {
+              "const": 1000000
+            },
+            "queuedEventsAndCommands": {
+              "const": 4096
+            }
+          }
+        }
+      }
+    }
+  }
+}

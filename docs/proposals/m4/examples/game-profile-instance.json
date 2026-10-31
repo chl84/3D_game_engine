@@ -1,0 +1,17 @@
+{
+  "format": "engine.game-profile@1",
+  "id": "game.demo@1",
+  "modules": [],
+  "tickRate": 60,
+  "physicsProfile": "jolt-5.6.0-x64-double-deterministic@1",
+  "lua": {
+    "vmTopology": "per-instance",
+    "limits": {
+      "luaInstanceBytes": 8388608,
+      "luaAggregateBytes": 67108864,
+      "callbackInstructions": 100000,
+      "tickInstructions": 1000000,
+      "queuedEventsAndCommands": 4096
+    }
+  }
+}

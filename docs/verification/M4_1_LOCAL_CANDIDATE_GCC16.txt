@@ -1,0 +1,150 @@
+-- The C compiler identification is GNU 16.2.1
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found nlohmann_json: <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/share/nlohmann_json/nlohmann_jsonConfig.cmake (found version "3.12.0")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found Stb: <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include
+-- Using glslc: /usr/bin/glslc
+-- Found Python3: <repo>/.venv/bin/python3 (found version "3.14.8") found components: Interpreter
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: <repo>/build/m4-local-alternatives/full-gcc16
+[1/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/error.cpp.o
+[2/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/config.cpp.o
+[3/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/path_sandbox.cpp.o
+[4/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/log.cpp.o
+[5/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/sha256.cpp.o
+[6/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/uuid.cpp.o
+[7/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/version.cpp.o
+[8/110] Building CXX object engine/core/CMakeFiles/engine_core.dir/src/reflect.cpp.o
+[9/110] Linking CXX static library engine/core/libengine_core.a
+[10/110] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/window.cpp.o
+[11/110] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/atomic_file.cpp.o
+[12/110] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/process.cpp.o
+[13/110] Building CXX object engine/platform/CMakeFiles/engine_platform.dir/src/local_socket.cpp.o
+[14/110] Linking CXX static library engine/platform/libengine_platform.a
+[15/110] Building CXX object engine/command/CMakeFiles/engine_command.dir/src/command.cpp.o
+[16/110] Building CXX object engine/scene/CMakeFiles/engine_scene.dir/src/project.cpp.o
+[17/110] Building CXX object engine/scene/CMakeFiles/engine_scene.dir/src/scene.cpp.o
+[18/110] Building CXX object engine/scene/CMakeFiles/engine_scene.dir/src/scene_view.cpp.o
+[19/110] Building C object engine/asset/CMakeFiles/engine_mikktspace.dir/generated/mikktspace.c.o
+[20/110] Compiling triangle.frag
+[21/110] Compiling triangle.vert
+[22/110] Generating shaders/pbr.frag.spv
+[23/110] Generating shaders/pbr.vert.spv
+[24/110] Linking CXX static library engine/command/libengine_command.a
+[25/110] Linking C static library engine/asset/libengine_mikktspace.a
+[26/110] Building CXX object engine/scene/CMakeFiles/engine_scene.dir/src/simulation.cpp.o
+[27/110] Linking CXX static library engine/scene/libengine_scene.a
+[28/110] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/gltf_import.cpp.o
+[29/110] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/asset_library.cpp.o
+[30/110] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/image_decode.cpp.o
+[31/110] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/tangents.cpp.o
+[32/110] Embedding SPIR-V shaders
+[33/110] Generating generated/pbr_shaders.hpp
+[34/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/pbr_renderer.cpp.o
+[35/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/camera.cpp.o
+[36/110] Building CXX object engine/asset/CMakeFiles/engine_asset.dir/src/commands.cpp.o
+[37/110] Linking CXX static library engine/asset/libengine_asset.a
+[38/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/device_capabilities.cpp.o
+[39/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/frustum.cpp.o
+[40/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/device.cpp.o
+[41/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/offscreen_renderer.cpp.o
+[42/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/renderer.cpp.o
+[43/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/scene_transform.cpp.o
+[44/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/vma.cpp.o
+[45/110] Building CXX object engine/render/CMakeFiles/engine_render.dir/src/vulkan_util.cpp.o
+[46/110] Linking CXX static library engine/render/libengine_render.a
+[47/110] Building CXX object engine/control/CMakeFiles/engine_control.dir/src/json_rpc.cpp.o
+[48/110] Linking CXX static library engine/control/libengine_control.a
+[49/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/doctor.cpp.o
+[50/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/live.cpp.o
+[51/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/commands.cpp.o
+[52/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/main.cpp.o
+[53/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/stb_image_write_impl.cpp.o
+[54/110] Building CXX object tools/engine/CMakeFiles/engine.dir/src/run.cpp.o
+[55/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/command_test.cpp.o
+[56/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/doctor_support_test.cpp.o
+[57/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/config_test.cpp.o
+[58/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/error_test.cpp.o
+[59/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/log_test.cpp.o
+[60/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/json_rpc_test.cpp.o
+[61/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/path_sandbox_test.cpp.o
+[62/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/reflect_test.cpp.o
+[63/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/project_test.cpp.o
+[64/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/scene_test.cpp.o
+[65/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/sha256_test.cpp.o
+[66/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/scene_view_test.cpp.o
+[67/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/simulation_test.cpp.o
+[68/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/uuid_test.cpp.o
+[69/110] Building CXX object tests/CMakeFiles/engine_core_tests.dir/unit/version_test.cpp.o
+[70/110] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_tangents_test.cpp.o
+[71/110] Building CXX object tests/CMakeFiles/engine_dependencies_smoke.dir/unit/dependencies_smoke.cpp.o
+[72/110] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_commands_test.cpp.o
+[73/110] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_import_test.cpp.o
+[74/110] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/image_decode_test.cpp.o
+[75/110] Building CXX object tests/CMakeFiles/engine_asset_tests.dir/unit/asset_library_test.cpp.o
+[76/110] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/camera_test.cpp.o
+[77/110] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/descriptor_requirements_test.cpp.o
+[78/110] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/device_test.cpp.o
+[79/110] Building CXX object tests/CMakeFiles/engine_render_tests.dir/render/scene_transform_test.cpp.o
+[80/110] Building CXX object tests/CMakeFiles/engine_window_smoke.dir/render/window_smoke.cpp.o
+[81/110] Building CXX object tests/CMakeFiles/engine_screenshot_test.dir/render/screenshot_test.cpp.o
+[82/110] Building CXX object tests/CMakeFiles/engine_swapchain_test.dir/render/swapchain_test.cpp.o
+[83/110] Building CXX object tests/CMakeFiles/engine_overlay_test.dir/render/overlay_test.cpp.o
+[84/110] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/gltf_import_fuzz.cpp.o
+[85/110] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/image_decode_fuzz.cpp.o
+[86/110] Building CXX object tests/CMakeFiles/engine_fuzz_harness.dir/fuzz/json_rpc_fuzz.cpp.o
+[87/110] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/render/pbr_test.cpp.o
+[88/110] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/__/tools/engine/src/stb_image_write_impl.cpp.o
+[89/110] Building CXX object tests/CMakeFiles/engine_pbr_test.dir/render/pbr_probes.cpp.o
+[90/110] Building C object tests/CMakeFiles/engine_journal_sync_fault.dir/contract/journal_sync_fault.c.o
+[91/110] Building CXX object tests/CMakeFiles/engine_local_socket_fixture.dir/contract/local_socket_fixture.cpp.o
+[92/110] Building CXX object tests/admission/CMakeFiles/engine_m4_admission.dir/main.cpp.o
+[93/110] Building CXX object tests/admission/CMakeFiles/engine_m4_jolt_admission.dir/main.cpp.o
+[94/110] Building CXX object tests/admission/CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o
+[95/110] Building CXX object tests/admission/CMakeFiles/engine_m4_jolt_admission.dir/jolt_probe.cpp.o
+[96/110] Linking CXX executable tests/engine_core_tests
+[97/110] Linking CXX executable tools/engine/engine
+[98/110] Linking CXX executable tests/engine_dependencies_smoke
+[99/110] Linking CXX executable tests/engine_asset_tests
+[100/110] Linking CXX executable tests/engine_render_tests
+[101/110] Linking CXX executable tests/engine_window_smoke
+[102/110] Linking CXX executable tests/engine_screenshot_test
+[103/110] Linking CXX executable tests/engine_swapchain_test
+[104/110] Linking CXX static library tests/libengine_fuzz_harness.a
+[105/110] Linking CXX executable tests/engine_overlay_test
+[106/110] Linking CXX executable tests/engine_local_socket_fixture
+[107/110] Linking C shared library tests/libengine_journal_sync_fault.so
+[108/110] Linking CXX executable tests/admission/engine_m4_admission
+[109/110] Linking CXX executable tests/admission/engine_m4_jolt_admission
+[110/110] Linking CXX executable tests/engine_pbr_test
+
+Test project <repo>/build/m4-local-alternatives/full-gcc16
+    Start 12: engine_version_json
+1/3 Test #12: engine_version_json ..............   Passed    0.03 sec
+    Start 29: engine_m4_lua_admission
+2/3 Test #29: engine_m4_lua_admission ..........   Passed    0.00 sec
+    Start 30: engine_m4_jolt_admission
+3/3 Test #30: engine_m4_jolt_admission .........   Passed    0.01 sec
+
+100% tests passed out of 3
+
+Label Time Summary:
+admission    =   0.01 sec*proc (2 tests)
+cli          =   0.03 sec*proc (1 test)
+m4           =   0.01 sec*proc (2 tests)
+unit         =   0.03 sec*proc (1 test)
+
+Total Test time (real) =   0.05 sec

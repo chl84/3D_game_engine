@@ -1,0 +1,38 @@
+M3 FINAL RELEASE — v0.4.0 — 2026-10-31
+
+Final PR head: 031bc433021af1a5db565983adde45271ae01030.
+Final reference CI: https://github.com/chl84/3D_game_engine/actions/runs/41184429834
+All six jobs completed/success: Windows, GCC14, Clang18, ASan/UBSan, Quality,
+Fuzz (Clang ASan). Version0.4.0 smoke tests passed on all builders.
+
+Standard merge (no admin bypass): https://github.com/chl84/3D_game_engine/pull/5
+Actual main merge commit: 88ccc85d30f03a8d2e6a8b345b1a2216a2d3d818.
+Owner explicitly authorized merge and tagging after the reported manual pass.
+Annotated tag v0.4.0, confirmed against remote refs:
+24fda1b9edee360adb0d225a55ba32e51d13077e refs/tags/v0.4.0
+88ccc85d30f03a8d2e6a8b345b1a2216a2d3d818 refs/tags/v0.4.0^{}
+
+M4 planning starts from this published tag; no M4 implementation is authorized.
+
+=== Windows / job124488360347 ===
+2026-10-31T08:27:48.1227314Z  7/21 Test  #7: engine_version_json ..............   Passed    0.07 sec
+2026-10-31T08:29:49.1301891Z 100% tests passed out of 21
+2026-10-31T08:29:52.7313872Z 100% tests passed out of 3
+2026-10-31T08:29:53.6148707Z 100% tests passed out of 1
+
+=== Clang / job124488360460 ===
+2026-10-31T08:27:14.1120994Z 12/28 Test #12: engine_version_json ..............   Passed    0.03 sec
+2026-10-31T08:27:49.5149049Z 100% tests passed out of 28
+2026-10-31T08:27:51.5959811Z 100% tests passed out of 3
+2026-10-31T08:27:51.7081230Z 100% tests passed out of 1
+
+=== ASan / job124488360546 ===
+2026-10-31T08:28:23.2423246Z 12/27 Test #12: engine_version_json ..............   Passed    0.11 sec
+2026-10-31T08:30:07.0817209Z 100% tests passed out of 27
+2026-10-31T08:30:07.3800622Z 100% tests passed out of 1
+
+=== GCC / job124488360582 ===
+2026-10-31T08:26:47.3894023Z 12/28 Test #12: engine_version_json ..............   Passed    0.03 sec
+2026-10-31T08:27:18.5882643Z 100% tests passed out of 28
+2026-10-31T08:27:20.6033494Z 100% tests passed out of 3
+2026-10-31T08:27:20.6945631Z 100% tests passed out of 1

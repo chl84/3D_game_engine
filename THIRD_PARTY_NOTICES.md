@@ -173,3 +173,16 @@ requires owner approval and an ADR.
   [`LICENSE`](third_party/mikktspace/LICENSE) for the complete notice.
 - The binary uses a generated build copy with documented UB corrections; see
   [build-copy corrections](third_party/mikktspace/README.md#build-copy-correction).
+
+## M4.1 admission-only dependencies
+
+JoltPhysics5.6.0 (Jorrit Rouwe), sol2 release3.3.0 (Rapptz, ThePhD and
+contributors), and Lua5.4.9 (Lua.org/PUC-Rio) use the MIT license. Exact source
+pins and conditional admission status are recorded in docs/DEPENDENCIES.md.
+The vcpkg overlays install the original source copyright/license notices with
+each package. No third-party source patch is applied by these admission ports.
+These libraries are not yet integrated into the engine runtime.
+
+- Jolt: https://github.com/jrouwe/JoltPhysics/blob/v5.6.0/LICENSE
+- sol2: https://github.com/ThePhD/sol2/blob/v3.3.0/LICENSE.txt
+- Lua: https://www.lua.org/license.html

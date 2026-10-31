@@ -1,0 +1,161 @@
+{
+  "sourceBase": "e7df90109d711176195a10a20063f70bea139c77",
+  "localCompilers": {
+    "gcc": "16.2.1",
+    "clang": "23.1.3"
+  },
+  "baseline": {
+    "gcc16": {
+      "status": "compile failed",
+      "errors": [
+        "<repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/optional_implementation.hpp:2194:31: error: \u2018class sol::optional<T&>\u2019 has no member named \u2018construct\u2019 [-Wtemplate-body]"
+      ],
+      "fullLog": "M4_1_LOCAL_BASELINE_GCC16.txt"
+    },
+    "clang23": {
+      "status": "compile failed",
+      "errors": [
+        "<repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/share/sol2/../../include/sol/optional_implementation.hpp:2194:10: error: no member named 'construct' in 'sol::optional<T &>'"
+      ],
+      "fullLog": "M4_1_LOCAL_BASELINE_CLANG23.txt"
+    }
+  },
+  "candidate": {
+    "commit": "c1f95a773c6f8f4fde8ca3efe872e7286afe4444",
+    "archiveSha512": "c02779f48c826d0bce2fd6ba171943ad8be2f87763e4e8997f09354656c69ac51a7e79bb330ca998a51c0ae971d929d82f64b66bf56b9de4a21df4a193b2f0f0",
+    "commitsAfterApprovedPin": 36,
+    "changedRepositoryFiles": 166,
+    "changedHeaders": 33,
+    "headerVersion": "3.5.0",
+    "adopted": false
+  },
+  "protectedProbes": {
+    "upstream-c1f95a7": {
+      "gcc16": {
+        "buildType": "Release",
+        "checks": [
+          "bound-field",
+          "sandbox-globals",
+          "environment-and-library-isolation",
+          "syntax-error",
+          "Lua-error-unwinding",
+          "typed-arguments",
+          "host-exception",
+          "instruction-exhaustion",
+          "allocator-failure",
+          "VM-cleanup",
+          "both-topologies"
+        ],
+        "compiler": "GNU 16.2.1",
+        "cxxLua": true,
+        "luaRelease": "Lua 5.4.9",
+        "ownCodeWarningsAsErrors": true,
+        "solHeaderVersion": "3.5.0",
+        "solSourceTag": "DIAGNOSTIC upstream-c1f95a7",
+        "status": "ok"
+      },
+      "clang23": {
+        "buildType": "Release",
+        "checks": [
+          "bound-field",
+          "sandbox-globals",
+          "environment-and-library-isolation",
+          "syntax-error",
+          "Lua-error-unwinding",
+          "typed-arguments",
+          "host-exception",
+          "instruction-exhaustion",
+          "allocator-failure",
+          "VM-cleanup",
+          "both-topologies"
+        ],
+        "compiler": "Clang 23.1.3",
+        "cxxLua": true,
+        "luaRelease": "Lua 5.4.9",
+        "ownCodeWarningsAsErrors": true,
+        "solHeaderVersion": "3.5.0",
+        "solSourceTag": "DIAGNOSTIC upstream-c1f95a7",
+        "status": "ok"
+      }
+    },
+    "backport-3.3.0": {
+      "gcc16": {
+        "buildType": "Release",
+        "checks": [
+          "bound-field",
+          "sandbox-globals",
+          "environment-and-library-isolation",
+          "syntax-error",
+          "Lua-error-unwinding",
+          "typed-arguments",
+          "host-exception",
+          "instruction-exhaustion",
+          "allocator-failure",
+          "VM-cleanup",
+          "both-topologies"
+        ],
+        "compiler": "GNU 16.2.1",
+        "cxxLua": true,
+        "luaRelease": "Lua 5.4.9",
+        "ownCodeWarningsAsErrors": true,
+        "solHeaderVersion": "3.2.3",
+        "solSourceTag": "DIAGNOSTIC backport-3.3.0",
+        "status": "ok"
+      },
+      "clang23": {
+        "buildType": "Release",
+        "checks": [
+          "bound-field",
+          "sandbox-globals",
+          "environment-and-library-isolation",
+          "syntax-error",
+          "Lua-error-unwinding",
+          "typed-arguments",
+          "host-exception",
+          "instruction-exhaustion",
+          "allocator-failure",
+          "VM-cleanup",
+          "both-topologies"
+        ],
+        "compiler": "Clang 23.1.3",
+        "cxxLua": true,
+        "luaRelease": "Lua 5.4.9",
+        "ownCodeWarningsAsErrors": true,
+        "solHeaderVersion": "3.2.3",
+        "solSourceTag": "DIAGNOSTIC backport-3.3.0",
+        "status": "ok"
+      }
+    }
+  },
+  "fullEngineCandidateBuilds": {
+    "gcc16": {
+      "build": "all110 Ninja steps passed",
+      "focusedTests": "Test project <repo>/build/m4-local-alternatives/full-gcc16\n    Start 12: engine_version_json\n1/3 Test #12: engine_version_json ..............   Passed    0.03 sec\n    Start 29: engine_m4_lua_admission\n2/3 Test #29: engine_m4_lua_admission ..........   Passed    0.00 sec\n    Start 30: engine_m4_jolt_admission\n3/3 Test #30: engine_m4_jolt_admission .........   Passed    0.01 sec\n\n100% tests passed out of 3\n\nLabel Time Summary:\nadmission    =   0.01 sec*proc (2 tests)\ncli          =   0.03 sec*proc (1 test)\nm4           =   0.01 sec*proc (2 tests)\nunit         =   0.03 sec*proc (1 test)\n\nTotal Test time (real) =   0.05 sec\n",
+      "luaProbeCompileCommand": {
+        "directory": "<repo>/build/m4-local-alternatives/full-gcc16",
+        "command": "/usr/bin/g++ -DM4_PROBE_BUILD_TYPE=\\\"Debug\\\" -DM4_PROBE_COMPILER=\"\\\"GNU 16.2.1\\\"\" -DSOL_ALL_SAFETIES_ON=1 -DSOL_USING_CXX_LUA=1 -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/engine-lua-cxx -isystem <repo>/build/m4-local-alternatives/sol2-c1f95a773c6f8f4fde8ca3efe872e7286afe4444/include -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include -g -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wdouble-promotion -Wformat=2 -Werror -ffp-contract=off -o tests/admission/CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o -c <repo>/tests/admission/lua_probe.cpp",
+        "file": "<repo>/tests/admission/lua_probe.cpp",
+        "output": "<repo>/build/m4-local-alternatives/full-gcc16/tests/admission/CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o"
+      },
+      "dependencyPolicy": "Reused existing pinned GCC16-built vcpkg installation; not a new compiler-matched dependency rebuild. Own engine targets compile with the named local compiler.",
+      "manifestInstall": false,
+      "adopted": false
+    },
+    "clang23": {
+      "build": "all110 Ninja steps passed",
+      "focusedTests": "Test project <repo>/build/m4-local-alternatives/full-clang23\n    Start 12: engine_version_json\n1/3 Test #12: engine_version_json ..............   Passed    0.02 sec\n    Start 29: engine_m4_lua_admission\n2/3 Test #29: engine_m4_lua_admission ..........   Passed    0.00 sec\n    Start 30: engine_m4_jolt_admission\n3/3 Test #30: engine_m4_jolt_admission .........   Passed    0.01 sec\n\n100% tests passed out of 3\n\nLabel Time Summary:\nadmission    =   0.01 sec*proc (2 tests)\ncli          =   0.02 sec*proc (1 test)\nm4           =   0.01 sec*proc (2 tests)\nunit         =   0.02 sec*proc (1 test)\n\nTotal Test time (real) =   0.04 sec\n",
+      "luaProbeCompileCommand": {
+        "directory": "<repo>/build/m4-local-alternatives/full-clang23",
+        "command": "/usr/bin/clang++ -DM4_PROBE_BUILD_TYPE=\\\"Debug\\\" -DM4_PROBE_COMPILER=\"\\\"Clang 23.1.3\\\"\" -DSOL_ALL_SAFETIES_ON=1 -DSOL_USING_CXX_LUA=1 -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/engine-lua-cxx -isystem <repo>/build/m4-local-alternatives/sol2-c1f95a773c6f8f4fde8ca3efe872e7286afe4444/include -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include -g -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wdouble-promotion -Wformat=2 -Werror -ffp-contract=off -o tests/admission/CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o -c <repo>/tests/admission/lua_probe.cpp",
+        "file": "<repo>/tests/admission/lua_probe.cpp",
+        "output": "<repo>/build/m4-local-alternatives/full-clang23/tests/admission/CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o"
+      },
+      "dependencyPolicy": "Reused existing pinned GCC16-built vcpkg installation; not a new compiler-matched dependency rebuild. Own engine targets compile with the named local compiler.",
+      "manifestInstall": false,
+      "adopted": false
+    }
+  },
+  "referenceMatrixStatusForCandidate": "GCC14/Clang18/MSVC not rerun for this unadopted candidate. Prior reference success applies to original3.3.0 only.",
+  "productionSol2PinUnchanged": true,
+  "m4_2Started": false
+}

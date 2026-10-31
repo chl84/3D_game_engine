@@ -1,8 +1,77 @@
 # Status
 
 **Last updated:** 2026-10-31
-**Current milestone:** M3 — asset pipeline and live control; v0.4.0 release authorized
-**Current substep:** M3.8 — technical acceptance complete; owner manual Blender test passed; merge/tag authorized subject to green final CI.
+**Current milestone:** M4 — physics and game logic
+**Current substep:** M4.1 — schemas/parser approved; binding remedy and VM topology pending; the mandatory local compiler gate holds M4.2.
+
+## M4.1 local binding decision — M4.2 explicitly held
+
+The owner approved the concrete ADR-0019 contracts and64MiB/depth32 parser
+exception, conditional on **always rejecting unknown component types** and
+**persisting migration only on explicit save**. No reader/writer has been
+implemented. M5 world data must use separate chunk files, not scene JSON;
+[ADR-0020](decisions/ADR-0020-world-chunk-persistence.md) records the accepted
+storage direction without selecting concrete chunk schemas.
+
+ADR-0016/topology remains unaccepted. The owner added a mandatory default-local-
+compiler gate before sol2 adoption and forbade starting M4.2 until resolution.
+Unpatched release3.3.0 reproducibly fails GCC16.2.1 and Clang23.1.3 in
+optional<T&>::emplace (nonexistent construct). Earlier reference admission and
+Astra review remain valid for their exact sources, but do not waive this gate.
+
+[Concrete alternatives/recommendation](verification/M4_1_LOCAL_COMPILER_OPTIONS.md):
+recommend the immutable upstream sol2 commitc1f95a773c6f8f4fde8ca3efe872e7286afe4444,
+subject to owner approval and fresh admission. In scratch trials it compiled all
+engine build steps with each default local compiler and passed the Lua/Jolt/
+version selection3/3 per compiler with own warnings-as-errors. A narrow3.3.0
+backport also passed both protected Lua probes. No manifest/overlay/preset or
+production source was changed; all trials reused existing pinned GCC16 vcpkg
+libraries. New candidate reference/sanitizer/clean dependency rebuilds remain
+unverified, and no production binding backend is adopted by these experiments.
+
+[Updated VM report](verification/M4_1_VM_COMPARISON.md) includes bindings/setup:
+original reference1000-instance means are23,298 Lua bytes and53.317us per-instance
+VM versus2,965.088 bytes and18.013us per shared-session instance (amortized).
+Supplemental RSS snapshots include native binding/host allocations. An isolated
+backport diagnostic (not adopted) matches original1000-instance Lua bytes and
+observes peak-budget boundaries at2,880 separate VMs or21,726 shared environments,
+with both next normal-GC peaks over64MiB and repeated boundary controls. Hard-
+ceiling emergency GC also admits24,000 shared instances in retained stress
+controls, but26,000 fails with Lua panic/SIGABRT; no stable exact hard-quota maximum
+or production-safe setup OOM handling is claimed. Shared table/GC
+growth makes the naive22,633 linear estimate too high. These counts apply only
+to this small payload and the **Lua allocator** budget, not total RAM or arbitrary
+scripts; at most eight fully saturated8MiB separate heaps fit64MiB. Formal VM
+costs must be refreshed for whichever binding remedy is actually admitted.
+
+The current reference implementation was independently reviewed at30a130b and
+publication CI41195896407 passed six jobs on e7df901. Those results are retained
+as historical reference evidence, not newer-candidate adoption proof. The local
+options/derived-capacity follow-up passed independent Astra high review for the
+report only; [disposition](verification/M4_1_LOCAL_COMPILER_REVIEW.md). Publication
+checks remain attached to PR6 and do not admit a new binding source.
+M4.2 has not started. Remaining owner decisions: binding remedy first, then
+ADR-0016 and VM topology after the corrected admission/measurement evidence.
+
+## M4 owner approval and active limits — 2026-10-31
+
+M4_PLAN.md is owner-approved with explicit conditions. ADR-0017/0018 are
+accepted. The original reference compiler condition is evidenced by green
+GCC14/Clang18/MSVC probes, but the later mandatory GCC16/Clang23 local gate is
+unresolved for the adopted3.3.0 pin. ADR-0016 remains pending the binding remedy
+and owner topology decision after updated admission/measurement evidence. No VM model is
+adopted yet. Resource limits/tick rate are approved starting points.
+
+Concrete project2/scene4/game-profile/replay schemas and parser limits are now
+approved with mandatory unknown-type rejection and explicit-save-only migration.
+Their implementation is still held by the local binding/VM decision. Animation deferral is approved and tracked
+as proposed M4A after M4/before M5. M4.8 keeps installed SDK as its goal, with a
+stop-and-propose checkpoint if dependency exports become extensive: consider
+full packaging in M8 and an external CMake/public-target boundary test in M4.
+
+M3 is released as annotated v0.4.0 on88ccc85 after six green final CI jobs on
+031bc43, the owner manual test and explicit merge/tag authorization.
+See [release evidence](verification/M3_FINAL_RELEASE_EVIDENCE.txt).
 
 ## M3.8 final acceptance
 
@@ -164,7 +233,7 @@ unauthorized. Earlier history below is retained for audit.
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive-sRGB correction delivered |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Technical acceptance complete; Astra high approved; CI/clone/fuzz/cache evidence recorded; owner manual Blender test passed; merge/tag authorized subject to final CI |
+| M3.8 | M3 hardening and acceptance | Complete — final six-job CI passed; owner manual test passed; merged in PR5 and tagged v0.4.0 |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -570,10 +639,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Verify normal PR checks on the v0.4.0 release candidate, merge through standard
-branch protection and tag the actual main merge commit as authorized. After
-merge and tag, draft the M4 plan with the requested ADR proposals and wait for approval.
-No further long fuzz run is required for M3.8 closure.
+Complete M4.1 admission probes and both 1,000-instance measurements. Present
+actual results and recommendation without accepting ADR-0016 or adopting a VM
+model. Submit concrete project2/scene4/replay schemas for owner approval.
 
 ## M3.5 implementation and verification
 

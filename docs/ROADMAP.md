@@ -9,8 +9,8 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M0 | Project foundation: repository, build, core, CLI skeleton, CI, documentation | Done — `v0.1.0` |
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Done — `v0.3.0`, owner approved |
-| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | M3.8 technical acceptance complete; Astra high approved, six reference CI jobs green, owner manual Blender test passed; v0.4.0 merge/tag authorized after green final CI; publication checks tracked in PR5 |
-| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | Planned |
+| M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | Done — v0.4.0; Astra high approved, final six-job CI green, owner manual test passed, merged in PR5 |
+| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | [Plan approved](M4_PLAN.md) with conditions; M4.1 reference probes/re-review passed; schemas/parser bounds approved; local binding/compiler and VM decisions pending, M4.2 held |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
 | M7 | AI-assisted game development, MCP adapter, automation tools | Planned |
@@ -87,6 +87,27 @@ Recorded from the M0.5 review. None of these block M0.5 or M0.6.
 | M1.9 | Hardening and M1 acceptance | Done |
 | M1.10 | `--dry-run`, generated `API_REFERENCE.md`, security and review fixes | Done — `v0.2.1` |
 
+## Animation follow-up plan
+
+Owner-approved deferral from M4: create a separate **M4A — Animation** plan,
+proposed after the M4 gameplay foundation and before M5 world work. M4A should
+cover glTF skins/clips, cooked-format compatibility, pose evaluation, GPU
+skinning, lifecycle/events and Blender-reference goldens. Scope, sequencing,
+formats and acceptance criteria require their own approved plan; it is not
+silently included in M4 or implemented by the deferral. Preserve original M3
+asset IDs and reimport compatibility. The final placement is a proposal for
+owner confirmation when that plan is prepared.
+
+## M5 world persistence — owner clarification
+
+World data must be stored in separate, versioned chunk files, not embedded in
+scene JSON; see [ADR-0020](decisions/ADR-0020-world-chunk-persistence.md).
+Keep the approved scene document64MiB/depth32 bounds; do not raise
+them to fit a streamed world. The M5 plan must define bounded chunk/manifest
+schemas, atomic persistence, streaming/identity and migration acceptance before
+implementation. This records the owner's storage direction, not a new M4 format
+or authorization to implement M5 now.
+
 ## Deferred modules
 
 These are intentionally outside M0/M1 and do not block the foundation:
@@ -95,7 +116,7 @@ These are intentionally outside M0/M1 and do not block the foundation:
 |---|---|---|
 | Audio | M4/M5 | Dedicated `audio` module. Start with the SDL3 audio API; add 3D spatialization and mixing on top. Evaluate miniaudio only if SDL3 is insufficient. |
 | Runtime UI | M6/M7 | Separate `ui` module or library choice (for example RmlUi, MIT). Dear ImGui remains editor/debug UI, not the shipping game HUD. |
-| Animation | M3/M4 | Report animation channels in M3; import and skeletal animation as a system in `scene`/`render` in M4. A separate `animation` module only if the responsibility grows. |
+| Animation | Proposed M4A | Owner-approved deferral from M4; prepare a separate animation plan after M4/before M5. Preserve M3 reimport IDs; no implementation before its own approval. |
 
 ## M2 reference scene budget
 

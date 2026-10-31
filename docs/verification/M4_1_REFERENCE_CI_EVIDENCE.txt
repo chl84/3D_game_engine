@@ -1,0 +1,47 @@
+M4.1 corrected reference CI evidence
+Implementation SHA: 30a130bb6ae5eca02477ea66dc475123e38b4264
+Workflow: https://github.com/chl84/3D_game_engine/actions/runs/41193913160
+All six jobs completed/success:
+  Linux GCC14 job124516119689: 30/30 CTest
+  Linux Clang18 job124516119787: 30/30 CTest
+  Windows MSVC job124516119803: 23/23 CTest
+  ASan/UBSan job124516119867: 29/29 CTest
+  Quality job124516119824: format18/tidy18 passed
+  Fuzz job124516119819: required short parser fuzz passed
+
+Downloaded artifacts via GitHub API; ZIP SHA256 verified before reading reports:
+  GCC14 artifact13039964366:
+    5a88fef217eafd308712293cc039913c82ce25493fc54f86a7f6e8c9e78a4d7a
+  Clang18 artifact13040048558:
+    599e9471d82766c127f3ddfa73624cbd8e5ab7c368ee448d5508151a20d3cefe
+  MSVC artifact13039234263:
+    7d8f1379dcd2382ce967e1c41390b8b0a7f5b0d45d7621d030a1f04da9c80831
+
+M4_1_REFERENCE_PROBES.json retains compiler IDs/paths/versions, probe outputs,
+all240 trace values per compiler, installed archive digests, command counts,
+representative commands and command-list digests. Complete command lists are
+retained in M4_1_REFERENCE_PROBES_FULL.json.gz (deterministic gzip timestamp0).
+Its compressed/uncompressed SHA256 values are recorded in the summary JSON.
+Read full evidence with Python gzip.open(..., 'rt') and json.load(...).
+
+Both Debug and Release libraries match each host compiler:
+  GCC14.2.0, Clang18.1.3, MSVC19.44.35229.0.
+Capture checked installed archive SHA256 and every generated command:
+  139 Jolt +32 Lua commands per configuration, 1026 across the matrix.
+  Lua C++20/exceptions/explicit FP contraction policy.
+  Jolt double/deterministic/SSE4.1/SSE4.2, RTTI/exceptions, no forbidden SIMD/FMA.
+  Our bridge uses full warnings with -Werror or /WX.
+  Windows audit is nonempty and native failures now stop the CI step immediately.
+All three240-tick primitive traces are exactly equal. This is admission only,
+not proof of the unimplemented full M4.4 physics suite.
+
+Final Release artifact13040019080 has binary SHA256:
+  bd522ff5e47009ed71d955e61aa472e64314f56a8b98f38efa0045fd8e2c9b99
+This equals the already measured982b3f8 binary byte-for-byte. Measurement records
+and actual AC/balanced/reference-machine conditions are in M4_1_VM_MEASUREMENTS.json.
+No repeated benchmark or extended fuzzing was necessary.
+
+Independent Astra high re-review passed exact30a130b and closed both prior P2s.
+Source/build/test/overlay implementation is unchanged by the evidence publication.
+Final publication-head checks remain attached to PR6; no merge/tag is authorized
+by these technical results. Owner VM/schema/parser decisions are still pending.

@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://engine.local/proposals/m4/replay@1.schema.json",
+  "title": "Proposed replay JSONL record",
+  "$comment": "Owner-approved concrete contract on 2026-10-31. Unknown component types always reject via registered validation; migration persists only on explicit save. Not yet integrated. M4.2 is held pending local binding/compiler and VM decisions; topology alternatives are not adopted.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordType",
+        "format",
+        "replayId",
+        "initialSceneHash",
+        "profileHash",
+        "inputMapHash",
+        "engineBuild",
+        "binaryHash",
+        "compilerFingerprint",
+        "numericProfile",
+        "tickRate",
+        "uuidSeed",
+        "rngSeed",
+        "assets",
+        "scripts",
+        "modules",
+        "runtime",
+        "initialStateHash"
+      ],
+      "properties": {
+        "recordType": {
+          "const": "header"
+        },
+        "format": {
+          "const": "engine.replay@1"
+        },
+        "replayId": {
+          "$ref": "common@1.schema.json#/definitions/uuid"
+        },
+        "initialSceneHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        },
+        "profileHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        },
+        "inputMapHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        },
+        "engineBuild": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "binaryHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        },
+        "compilerFingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "numericProfile": {
+          "const": "jolt-5.6.0-x64-double-deterministic@1"
+        },
+        "tickRate": {
+          "const": 60
+        },
+        "uuidSeed": {
+          "$ref": "common@1.schema.json#/definitions/seed"
+        },
+        "rngSeed": {
+          "$ref": "common@1.schema.json#/definitions/seed"
+        },
+        "assets": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assetId",
+              "cacheHash"
+            ],
+            "properties": {
+              "assetId": {
+                "$ref": "common@1.schema.json#/definitions/uuid"
+              },
+              "cacheHash": {
+                "$ref": "common@1.schema.json#/definitions/hash"
+              }
+            }
+          }
+        },
+        "scripts": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sourceHash"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "common@1.schema.json#/definitions/path"
+              },
+              "sourceHash": {
+                "$ref": "common@1.schema.json#/definitions/hash"
+              }
+            }
+          }
+        },
+        "modules": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "version",
+              "binaryHash"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common@1.schema.json#/definitions/id"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "binaryHash": {
+                "$ref": "common@1.schema.json#/definitions/hash"
+              }
+            }
+          }
+        },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "jolt",
+            "lua",
+            "sol2Release",
+            "vmTopology"
+          ],
+          "properties": {
+            "jolt": {
+              "const": "5.6.0"
+            },
+            "lua": {
+              "const": "5.4.9-cxx"
+            },
+            "sol2Release": {
+              "const": "3.3.0"
+            },
+            "vmTopology": {
+              "enum": [
+                "per-instance",
+                "per-session"
+              ]
+            }
+          }
+        },
+        "initialStateHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordType",
+        "tick",
+        "input",
+        "commands",
+        "stateHash"
+      ],
+      "properties": {
+        "recordType": {
+          "const": "tick"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "axes",
+            "down",
+            "pressed",
+            "released"
+          ],
+          "properties": {
+            "axes": {
+              "type": "object",
+              "maxProperties": 256,
+              "propertyNames": {
+                "$ref": "common@1.schema.json#/definitions/id"
+              },
+              "additionalProperties": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              }
+            },
+            "down": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common@1.schema.json#/definitions/id"
+              }
+            },
+            "pressed": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common@1.schema.json#/definitions/id"
+              }
+            },
+            "released": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common@1.schema.json#/definitions/id"
+              }
+            }
+          }
+        },
+        "commands": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sequence",
+              "name",
+              "arguments",
+              "result",
+              "origin"
+            ],
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_.]+@[1-9][0-9]*$"
+              },
+              "arguments": {
+                "type": "object"
+              },
+              "result": {
+                "type": "object"
+              },
+              "origin": {
+                "enum": [
+                  "external",
+                  "generated"
+                ]
+              }
+            }
+          },
+          "$comment": "Validate arguments/results against registered command schema and command-result@1, and enforce combined event/command capacity and record-byte limit."
+        },
+        "stateHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordType",
+        "ticks",
+        "lastStateHash",
+        "complete"
+      ],
+      "properties": {
+        "recordType": {
+          "const": "footer"
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastStateHash": {
+          "$ref": "common@1.schema.json#/definitions/hash"
+        },
+        "complete": {
+          "const": true
+        }
+      }
+    }
+  ]
+}
