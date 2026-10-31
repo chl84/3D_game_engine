@@ -4,6 +4,15 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+### Fresh local extended fuzz completed — 2026-10-31
+
+The corrected Astra-approved implementation completed a fresh 600-second run
+for **all three** targets with exit0: GLB65,407, image168,215 and RPC1,274,502
+executions. No sanitizer failures/artifacts; timeout/RSS/sanitizer guards are
+unchanged. [Evidence](verification/M3_8_FRESH_EXTENDED_FUZZ_EVIDENCE.txt).
+GitHub long run41177977464 and a subsequent successful corpus-cache reuse run
+remain separate pending gates. The local result does not claim GitHub reuse.
+
 ### Reference CI and public-clone gates passed — 2026-10-31
 
 Published candidate `9c812f5063b3f4a291777a43e071022d56865f54` has no
