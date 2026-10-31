@@ -217,6 +217,8 @@ if($r.Count -ne 1 -or $r[0].IdentityReference.Value -ne $u -or $r[0].IsInherited
             dense = request("command", {"name": "asset.import@1", "arguments": {"source": "dense.glb"}})["result"]
             assert dense["status"] == "error" and dense["error"]["code"] == "E_VALIDATION"
             assert dense["error"]["details"]["estimatedWork"] > dense["error"]["details"]["limit"] == 1000000
+            assert "Export tangents in Blender" in dense["error"]["hint"]
+            assert dense["error"]["details"]["jsonPointer"].startswith("/meshes/")
             assert rpc("ping")["alive"], "controlled work rejection stopped the live session"
             error_log = rpc("inspect", {"target": "log", "limit": 64})["entries"]
             assert any(e["name"] == "asset.import@1" and e["result"]["status"] == "error" for e in error_log)

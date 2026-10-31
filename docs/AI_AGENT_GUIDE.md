@@ -17,13 +17,17 @@ The end-of-session/substep reporting rules do not require a premature report.
 
 ## Independent reviewer
 
-Owner clarification, 2026-10-30: Claude Opus5.5 high is the reviewer until
-further owner instruction. Reviewer selection and changes belong to the owner.
-The earlier owner message selected GPT-6 Astra high; the latest clarification
-supersedes it. Preserve historical reviewer attribution rather than rewriting it.
-Claude independently re-reviewed the three M3.7 corrections and the durable
-journal; M3.7 is owner-approved. M3.8 follows the same independent-review and
-consolidated-report requirements.
+Owner correction, 2026-10-31: **GPT-6 Astra, high reasoning effort**, is the
+active independent reviewer. The owner intentionally selected Astra and has
+withdrawn the instruction to return to Claude for M3.7. Reviewer selection and
+changes belong exclusively to the owner. [REVIEWER.json](../REVIEWER.json)
+contains the delegation target (`gpt-6-astra`, `reasoningEffort=high`). Use that
+configuration for the M3.8 review and the M3.7 corrections/journal re-review.
+Preserve historical Claude/Astra review evidence as historical attribution;
+it does not select the current reviewer. M3.7 remains owner-approved. M3.8
+requires Astra review, required corrections/re-review and green reference CI
+before the consolidated report. Merge/tag await the owner's manual test and
+explicit instruction.
 
 ## Principles
 
@@ -276,6 +280,44 @@ before mutation. Scene placement/undo is implemented in M3.6.
 The official MikkTSpace implementation generates missing normal-map tangents
 during cooking and splits vertices at tangent discontinuities. Source tangents
 are preserved. `gltf-import@4` rejects old cache; use reimport to regenerate it.
+
+Missing-tangent generation has an owner-approved, inclusive **1,000,000 dense
+weld-pair budget per asset**, not a triangle-count cap. Position groups of at
+most 64 indexed corners contribute zero; larger groups charge n(n−1)/2. The
+maximum estimate across eight adjacent-Float32 grids is summed over all
+primitives requiring generation. See [ADR-0015](decisions/ADR-0015-tangent-work-budget.md).
+An over-budget import/reimport (including `--dry-run`) fails before cooking or
+source/cache writes, with CLI exit **3** and a `command-result@1` error:
+
+```json
+{
+  "status": "error",
+  "data": {},
+  "error": {
+    "code": "E_VALIDATION",
+    "message": "tangent generation exceeds the weld-work budget",
+    "hint": "Export tangents in Blender or simplify dense geometry.",
+    "details": {
+      "estimatedWork": 1000405,
+      "limit": 1000000,
+      "meshIndex": 1,
+      "primitiveIndex": 0,
+      "jsonPointer": "/meshes/1/primitives/0"
+    }
+  },
+  "warnings": []
+}
+```
+
+The numbers/indices above are illustrative; `estimatedWork` is the observed
+lower bound at early rejection. Branch on `error.code` and the structured
+`details`, not the message text. Enable **Tangents** in Blender's GLB export
+and export again, then retry import/reimport; valid authored tangents bypass
+generation. Simplifying coincident or extreme high-valence geometry is another
+option. The live API returns the same command-result error inside its JSON-RPC
+`result`; a controlled rejection leaves the session running and is logged.
+The previous asset/cache remains usable after a rejected reimport.
+
 The checked-in Blender fixtures verify tangent compatibility on the CPU.
 The M3.5 golden compares the mirrored-UV Blender model without tangents with
 a fixed lavapipe image and its Blender-tangent export. Renderer C++ APIs expose

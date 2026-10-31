@@ -78,7 +78,7 @@ This is an estimate for the confirmed dense welding bottleneck, not a universal
 CPU-time deadline or a replacement for existing vertex/index/source limits.
 Ordinary small position groups are exempt; other linear import/generation work
 can still depend on asset size and hardware. Reference CI, fresh extended fuzz
-and Claude review must pass before publication is declared complete.
+and GPT-6 Astra high review must pass before publication is declared complete.
 
 ## Alternatives considered
 

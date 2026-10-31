@@ -4,7 +4,8 @@ An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
 M0–M2 are released (`v0.3.0`). M3 is in progress: GLB import, cooked assets,
 reimport, PBR rendering and asset placement are implemented. The authenticated
-local live API is undergoing M3.7 verification and independent review. The engine is not ready for shipping games.
+local live API is M3.7 owner-approved; M3.8 is undergoing final acceptance with
+GPT-6 Astra high as reviewer (see `REVIEWER.json`). The engine is not ready for shipping games.
 
 ## Requirements
 
@@ -72,5 +73,5 @@ engine asset reimport samples/m2-demo <assetId> --dry-run --json
 ```
 
 Import accepts a self-contained indexed GLB with embedded PNG/JPEG textures.
-Assets are cooked for later placement and PBR rendering; M3.4 does not yet
-render imported assets. See [the agent guide](docs/AI_AGENT_GUIDE.md).
+Assets are cooked for placement and PBR rendering through `engine asset place`,
+`engine run` and `engine screenshot`. See [the agent guide](docs/AI_AGENT_GUIDE.md).

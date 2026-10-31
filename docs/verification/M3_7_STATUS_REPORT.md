@@ -1,5 +1,10 @@
 # Status report — 2026-10-30 — M3.7
 
+Historical snapshot: reviewer-selection instructions here are superseded by the
+owner correction on 2026-10-31. Active reviewer: GPT-6 Astra high, configured in
+[REVIEWER.json](../../REVIEWER.json). Preserve the actual review attribution below.
+
+
 **Final status:** Owner-approved on2026-10-30. Claude Opus5.5 high independently
 approves the corrected source with no blocking or required findings. All six
 reference CI jobs completed/success on the exact reviewed source. The mandatory

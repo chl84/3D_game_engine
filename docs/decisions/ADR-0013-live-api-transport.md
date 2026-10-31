@@ -131,9 +131,10 @@ live acceptance covers auth, framing/size/depth/duplicate-key errors,
 disconnects, connection cap, idle-client fairness/deadlines, private permissions,
 lock conflicts, sandbox escapes, command-log visibility and live-only asset
 import/place/save/load/reimport/screenshot. Reference Linux/Windows results and
-independent review are recorded in STATUS.md. The owner's latest clarification restores Claude Opus5.5 high and requires
-independent re-review of the three prior corrections, especially queued deadlines.
-Historical Astra attribution is retained.
+independent review are recorded in STATUS.md. The owner's 2026-10-31 correction
+selects GPT-6 Astra high for re-review of the three prior corrections, especially
+queued deadlines, and the durable journal. REVIEWER.json is the active target;
+historical Claude/Astra attribution is retained.
 
 Primary references:
 

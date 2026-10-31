@@ -95,7 +95,7 @@ part of the requested owner decision, not already authorized by this proposal.
    publication-ready hardening and cannot be silently counted as a green gate.
 
 The owner selected option 1. Implement only the approved policy, obtain fresh
-Claude review, then publish for all six reference CI jobs, extended fuzz/cache
+GPT-6 Astra high review, then publish for all six reference CI jobs, extended fuzz/cache
 save/restore and public exact-SHA clone. Merge/tag and M4 remain unauthorized.
 
 Implementation details and cache/compatibility policy are recorded in

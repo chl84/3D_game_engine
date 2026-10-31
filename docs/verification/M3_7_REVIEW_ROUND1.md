@@ -1,5 +1,10 @@
 # M3.7 independent review round1 and correction record
 
+Historical snapshot: reviewer-selection instructions here are superseded by the
+owner correction on 2026-10-31. Active reviewer: GPT-6 Astra high, configured in
+[REVIEWER.json](../../REVIEWER.json). Preserve the actual review attribution below.
+
+
 Reviewer: GPT-6 Astra, reasoningEffort=high, as selected by the owner.
 Reviewed source:6e3fb7343944637e054212d946f1ef7d7fa4d80e against16c5805.
 Technical verdict on that source: **Changes required**. No owner approval,

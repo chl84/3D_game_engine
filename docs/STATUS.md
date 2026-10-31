@@ -4,6 +4,20 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+## Active reviewer and acceptance instruction — 2026-10-31
+
+The owner intentionally selected GPT-6 Astra high and withdrew the instruction
+to return to Claude Opus for M3.7. REVIEWER.json is the active delegation target.
+Astra must re-review M3.8, including the tangent budget/large-model regression,
+and the M3.7 corrections/durable journal. Historical review records below retain
+their actual authors; earlier reviewer-selection instructions are superseded.
+The tangent budget is explicitly owner-approved. Over-budget input returns
+E_VALIDATION with structured work/limit/primitive details and a Blender tangent
+export hint; AI_AGENT_GUIDE.md documents the contract, and CLI/live tests assert
+it. Complete review/corrections and green reference CI before the final report.
+The owner will test samples/m3-manual before authorizing merge. No merge/tag is
+currently authorized. M4 planning waits until after merge/tag.
+
 ### Latest owner acceptance requirements — 2026-10-31
 
 - Before M3.8 closure, verify that the approved tangent-work budget admits a
@@ -35,15 +49,15 @@ independently approved all required corrections and durable JSONL with no
 blocking/required findings. Final CI41108912088 completed/success in all six
 jobs: GCC/Clang26/26, ASan25/25, Windows19/19, Fuzz and Quality success.
 [Consolidated A.5 report](verification/M3_7_STATUS_REPORT.md).
-Reviewer selection remains exclusively the owner's decision; Claude Opus is
-current reviewer. M3.8 is authorized; merge and tag require separate owner approval.
+Reviewer selection remains exclusively the owner's decision; GPT-6 Astra high
+is the current reviewer (owner correction 2026-10-31; REVIEWER.json). M3.8 is authorized; merge and tag require separate owner approval.
 
 M3.6 was owner-approved on 2026-10-30 after reviewer approval and final
 CI41076353145 (all6jobs; Linux22/22, Windows16/16). M3.4/M3.5 are approved.
 The owner requires shared CLI handlers/bus, 127.0.0.1 only, per-request token,
 bounded framing/connections/timeouts, sandboxed client paths, exclusive
 project locking, parser fuzzing and explicit negative/security/log tests.
-The current independent reviewer is Claude Opus5.5 high. Historical Astra
+The current independent reviewer is GPT-6 Astra high. Historical Claude/Astra
 review attribution is retained; no substitution is permitted without the owner.
 M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner timing rule.
 
@@ -100,7 +114,7 @@ M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner tim
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Owner-authorized; implementation/local verification in progress; Claude review and reference CI pending |
+| M3.8 | M3 hardening and acceptance | Owner-authorized; implementation/local verification in progress; Astra high review and reference CI pending |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -506,7 +520,7 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.8 is authorized. Complete the TSan-scope correction and Claude re-review,
+M3.8 is authorized. Complete GPT-6 Astra high re-review of M3.8 and the M3.7 corrections/journal,
 then publish for exact-source reference CI, extended fuzz/cache verification
 and public clean-clone acceptance. Deliver the consolidated A.5 report only
 after those gates pass. Merge/tag and M4 remain subject to owner authorization.
@@ -898,5 +912,5 @@ dry-run import/reimport preserve project/cache bytes on rejection, and live
 continues after the logged validation error. The old timeout input replays
 ten times in 85 ms under unchanged limits. New long fuzzing is in progress.
 [Budget evidence](verification/M3_8_TANGENT_BUDGET_EVIDENCE.txt).
-Claude review of this delta is pending before publication; Windows/reference
+Astra high review of this delta is pending before publication; Windows/reference
 CI, real GitHub corpus save/restore and public exact-SHA clone remain pending.

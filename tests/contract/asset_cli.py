@@ -184,11 +184,19 @@ def main():
                                code=3, error="E_VALIDATION")
                 assert rejected["error"]["details"]["estimatedWork"] > 1000000
                 assert rejected["error"]["details"]["limit"] == 1000000
+                assert "Export tangents in Blender" in rejected["error"]["hint"]
+                assert rejected["error"]["details"]["jsonPointer"].startswith("/meshes/")
+                assert isinstance(rejected["error"]["details"]["meshIndex"], int)
+                assert isinstance(rejected["error"]["details"]["primitiveIndex"], int)
                 assert snapshot(project) == before
         source.write_bytes(dense.read_bytes())
         before = snapshot(project)
         for extra in ((), ("--dry-run",)):
-            run("asset", "reimport", project, asset_id, *extra, code=3, error="E_VALIDATION")
+            rejected = run("asset", "reimport", project, asset_id, *extra,
+                           code=3, error="E_VALIDATION")
+            assert "Export tangents in Blender" in rejected["error"]["hint"]
+            assert rejected["error"]["details"]["estimatedWork"] > 1000000
+            assert rejected["error"]["details"]["limit"] == 1000000
             assert snapshot(project) == before, "budget rejection modified the existing cache"
         source.unlink()  # Existing valid portable copy remains usable.
         run("asset", "validate", project, asset_id)

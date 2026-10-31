@@ -7,8 +7,10 @@ MikkTSpace dependency with its marked UB-fixed build copy. Claude Opus5.5 high
 independently approved all M3.7 corrections and durable JSONL on d0797e1;
 CI41108912088 completed/success in all six jobs. The owner has now authorized
 M3.8 hardening and final acceptance. Merge/tag still require owner approval.
-Reviewer selection remains exclusively the owner's decision; Claude remains
-the reviewer. Deliver the consolidated A.5 report only after review, any
+Reviewer selection remains exclusively the owner's decision. The owner
+correction on 2026-10-31 selects GPT-6 Astra high (REVIEWER.json) for M3.8 and
+the M3.7 corrections/journal re-review; the return-to-Claude instruction is
+withdrawn. Earlier Claude approval above is historical. Deliver the consolidated A.5 report only after review, any
 required corrections/re-review and final reference CI are complete.
 
 M2 is released as `v0.3.0`. M3 starts from `main` at `bb8514c`.
@@ -332,7 +334,7 @@ credential with generic denial; bounded messages/connections/I/O deadlines;
 PathSandbox for every client path; lifetime project writer lock; permanent
 parser fuzzing in the existing CI job; tests for wrong token, oversized data,
 disconnect, lock exclusion and actual command-log visibility. New reviews use
-Claude Opus5.5 high. A synchronized JSONL command journal under .engine/ is
+GPT-6 Astra high. A synchronized JSONL command journal under .engine/ is
 required in M3.7; intent precedes execution and completion precedes reply.
 Independent re-review of all three prior findings is mandatory. Concrete
 protocol is ADR-0013.
