@@ -1,7 +1,28 @@
 # M4 Plan — Physics and game logic
 
-**Status:** Proposed; awaiting owner approval. No M4 implementation or new
-dependency installation is authorized by this document.
+**Status:** Owner-approved on 2026-10-31 with the conditions below. M4.1 is
+authorized; VM topology and concrete schemas require further owner decisions.
+
+## Owner approval conditions
+
+- ADR-0017 (Jolt) and ADR-0018 (static modules) are accepted.
+- sol2 3.3.0 and C++ Lua 5.4.9 are conditionally approved: M4.1 admission probes
+  must be green under GCC14, Clang18 and MSVC with warnings-as-errors for our code.
+- ADR-0016 is not accepted yet. Compare **1,000 instances** using one VM per
+  instance versus one VM per session with separate sandbox environments. Measure
+  memory/startup time, provide actual numbers and a recommendation, then await
+  the owner's VM decision. Do not adopt per-instance VMs as a default meanwhile.
+- The resource budgets and 60Hz rate are approved starting points. An admission
+  benchmark may measure a topology beyond the aggregate runtime budget only if
+  it is explicitly labelled diagnostic and reports that budget incompatibility.
+- Project2/scene4/replay direction is approved, but concrete schemas must be
+  approved in M4.1 before format-writing implementation.
+- Skeletal-animation deferral is approved; track a separate animation plan in
+  ROADMAP.md with proposed placement.
+- Retain the installed SDK goal for M4.8. If dependency install/export becomes
+  extensive, stop and propose full packaging in M8 with an external CMake/public-
+  target boundary test in M4. Do not silently substitute or expand packaging work.
+
 **Baseline:** M3 merged through [PR5](https://github.com/chl84/3D_game_engine/pull/5)
 at `88ccc85d30f03a8d2e6a8b345b1a2216a2d3d818`, released as annotated tag
 `v0.4.0`. All six final CI jobs passed on release head `031bc43` before merge.
@@ -23,7 +44,8 @@ Existing `engine run` remains the M2/M3 inspection fly camera. Add a distinct
 ## Decisions proposed for approval
 
 1. [ADR-0016](decisions/ADR-0016-lua-bindings.md): **sol2 3.3.0 with Lua 5.4.9**,
-   Lua built as C++ for unwinding, protected calls and safety checks. No LuaJIT
+   Lua built as C++ for unwinding, protected calls and safety checks; the VM
+   topology remains undecided until the 1,000-instance comparison. No LuaJIT
    or Lua 5.5 migration. All packages remain private implementation details.
 2. [ADR-0017](decisions/ADR-0017-deterministic-jolt.md): **Jolt 5.6.0**, CPU-only,
    double positions, cross-platform deterministic profile and a single-threaded
@@ -128,7 +150,7 @@ consolidated report after corrections/re-review and final CI. Reviewer remains
 | M4.3 Session, input and replay spine | M4.2 | Fixed tick, ordered systems/events, seeded IDs/RNG, bounded `InputFrame` and versioned replay. Fresh headless processes repeat every tick hash. Existing `simulate` behavior remains compatible. Reject tampered headers, bad tick ordering and mismatched fingerprints before stepping. |
 | M4.4 Rigid bodies and deterministic queries | M4.3 | Primitive static/dynamic/kinematic bodies, explicit lifetimes, gravity, contact events and narrow-phase raycasts. Falling/stacking/pushing/query fixtures and insertion-order controls pass; physics hashes match across the pinned compiler matrix. No Jolt type leaks through public headers. |
 | M4.5 Character and first-person input | M4.4 | Capsule character, ground/jump/gravity, walls, stairs/slopes, moving-platform policy and interaction ray. SDL actions feed the same tick frames as playback. Focus loss releases inputs; cursor capture is restored on exit. Recorded walk/jump/push remains identical headless. |
-| M4.6 Lua host and sandbox | M4.3 | Per-instance VM, aggregate allocator/instruction quotas, protected lifecycle, structured errors and text-only sandboxed loading. Test infinite loops, OOM, bytecode, path/symlink escape, absent io/os/debug/package and stale entity handles. C++ destructors run on Lua errors; no panic/exception crosses module boundaries. |
+| M4.6 Lua host and sandbox | M4.3 | Owner-selected VM topology after M4.1 comparison, allocator/instruction quotas, protected lifecycle, structured errors and text-only sandboxed loading. Test infinite loops, OOM, bytecode, path/symlink escape, absent io/os/debug/package and stale entity handles. C++ destructors run on Lua errors; no panic/exception crosses module boundaries. |
 | M4.7 Generated bindings and gameplay | M4.4–M4.6 | Bind reflected fields/commands, explicit runtime operations, events and seeded RNG. A Lua interaction changes an example object's state. Tests prove authoring changes go through the bus, runtime mutation stays in play state and script state is explicit serializable data. Generate API docs from the same registry. |
 | M4.8 Static game modules and installed SDK | M4.2/M4.7 | Build/install package exports; explicit registration and module/profile identity. A separate sample CMake project uses only the installed SDK, adds its own component/system, saves/loads it and exposes the same CLI/live interfaces in windowed and headless game hosts. No engine-source edits, DLL loading or static-initializer registration. |
 | M4.9 Development Lua hot reload | M4.7/M4.8 | Explicit reload at a tick boundary; build candidate VM and migrate declared state before swap. Syntax/type/quota failure leaves old state active. Existing-world commands are disabled during preparation. Reload is disabled during deterministic recording/playback; a reload starts a new recording segment. |
@@ -211,5 +233,6 @@ explicit animation scope decision above.
 Approve the M4 scope/substeps and proposed ADRs; the three dependency versions
 and pinned overlay approach; the deterministic contract and resource limits;
 the project2/scene4/replay direction subject to concrete schema approval in
-M4.1; and the explicit animation-follow-up deferral. Until then, this branch
-contains planning documents only. No package, schema or engine source is changed.
+M4.1; and the explicit animation-follow-up deferral. The owner has approved the plan with the conditions at the top. Work starts
+with M4.1 admission/measurements and proposed schemas; topology acceptance and
+concrete schema approval remain separate checkpoints.

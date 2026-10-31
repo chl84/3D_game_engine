@@ -1,37 +1,47 @@
 # Status
 
 **Last updated:** 2026-10-31
-**Current milestone:** M4 — physics and game logic; planning only
-**Current substep:** Proposed plan/ADRs awaiting owner approval; no implementation started.
+**Current milestone:** M4 — physics and game logic
+**Current substep:** M4.1 — owner-authorized dependency/profile admission, three-compiler probes, VM topology measurements and concrete schema proposals.
 
-## M3 released; M4 plan ready for review
+## M4.1 admission candidate
 
-All six final reference CI jobs passed on
-`031bc433021af1a5db565983adde45271ae01030` in
-[CI41184429834](https://github.com/chl84/3D_game_engine/actions/runs/41184429834).
-The owner explicitly authorized merge/tag after the reported manual Blender
-pass. [PR5](https://github.com/chl84/3D_game_engine/pull/5) was merged through
-standard branch protection as `88ccc85d30f03a8d2e6a8b345b1a2216a2d3d818`.
-Annotated tag **v0.4.0** is published and verified against the remote; it points
-at that exact main merge commit. [Release evidence](verification/M3_FINAL_RELEASE_EVIDENCE.txt).
-No unresolved required M3.8 review/test gate remains.
+Pinned overlays for Jolt5.6.0, sol2 release3.3.0 and Lua5.4.9/C++ are installed
+locally for isolated probes only. The engine runtime does not link the probe.
+Jolt's local GCC16 -Werror probe passed240-tick repeated rigid-body traces with
+double positions and cross-platform determinism definitions. Lua binding builds
+on local GCC16 and Clang23 reject the upstream sol::optional<T&>::emplace body
+(nonexistent construct); own implicit-conversion warnings were fixed explicitly.
+No library patch, version substitution or warning suppression is applied.
+Reference GCC14/Clang18/MSVC admission is pending. The optimized GCC14 binary
+will be retained for measurement on the reference machine if it builds.
+No VM timing/memory number or topology recommendation is claimed yet.
 
-[M4_PLAN.md](M4_PLAN.md) proposes ten substeps with dependencies, risks and
-objective acceptance criteria. The three requested ADR proposals are
-[Lua bindings](decisions/ADR-0016-lua-bindings.md),
-[deterministic Jolt](decisions/ADR-0017-deterministic-jolt.md) and
-[static game modules](decisions/ADR-0018-game-module-linking.md).
-They are **Proposed**, not accepted. This branch changes documentation only;
-no new package is installed and no M4 engine/source/schema code is changed.
+The 1,000-instance measurement driver uses fresh processes, equal payloads and
+alternating model order; it records Lua allocator memory and Linux whole-child
+peak RSS separately. A diagnostic aggregate-budget exception is explicitly
+labelled and does not change runtime limits. Concrete schemas and owner VM
+approval remain pending. These are in-progress probes, not M4.1 completion.
 
-Owner decisions before implementation: approve the plan/three ADRs, proposed
-package versions, deterministic limits and format direction; explicitly decide
-on the proposed skeletal-animation deferral because M3 tentatively assigned
-that follow-up to M4. Concrete format schemas require acceptance in M4.1.
-Do not implement M4 until the owner approves the plan.
+## M4 owner approval and active limits — 2026-10-31
 
-The M3.8 detail below is retained as source-specific history. Release actions
-and final CI above supersede earlier publication/authorization-pending wording.
+M4_PLAN.md is owner-approved with explicit conditions. ADR-0017/0018 are
+accepted. sol2 3.3.0 and C++ Lua 5.4.9 are conditionally approved after green
+GCC14/Clang18/MSVC probes with warnings-as-errors on our code. ADR-0016 remains
+pending the comparison of 1,000 script instances: per-instance VM versus one
+session VM with separate sandbox environments. Measure memory/startup, present
+numbers/recommendation, then await the owner topology decision. No VM model is
+adopted yet. Resource limits/tick rate are approved starting points.
+
+Project2/scene4/replay direction is approved; concrete schemas must be approved
+in M4.1 before format-writing code. Animation deferral is approved and tracked
+as proposed M4A after M4/before M5. M4.8 keeps installed SDK as its goal, with a
+stop-and-propose checkpoint if dependency exports become extensive: consider
+full packaging in M8 and an external CMake/public-target boundary test in M4.
+
+M3 is released as annotated v0.4.0 on88ccc85 after six green final CI jobs on
+031bc43, the owner manual test and explicit merge/tag authorization.
+See [release evidence](verification/M3_FINAL_RELEASE_EVIDENCE.txt).
 
 ## M3.8 final acceptance
 
@@ -599,9 +609,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Wait for the owner's review/approval of M4_PLAN.md and its proposed ADRs/scope.
-After approval, start M4.1 with the accepted decisions and concrete dependency/
-format admission. Do not install M4 dependencies or implement the runtime yet.
+Complete M4.1 admission probes and both 1,000-instance measurements. Present
+actual results and recommendation without accepting ADR-0016 or adopting a VM
+model. Submit concrete project2/scene4/replay schemas for owner approval.
 
 ## M3.5 implementation and verification
 

@@ -411,3 +411,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENGINE_SANITIZE_ADDRESS
     )
     set_tests_properties(engine_live_journal_fault PROPERTIES LABELS "contract;live;security" TIMEOUT 40)
 endif()
+
+# M4.1 isolated admission only; no engine runtime integration.
+add_subdirectory(admission)

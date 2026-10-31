@@ -403,8 +403,9 @@ golden image test of the scene passes.
 
 ### M4 — Physics and game logic
 
-**Planning status:** [M4_PLAN.md](M4_PLAN.md) and ADR-0016–0018 are proposed;
-owner approval is pending. No M4 implementation has started.
+**Planning status:** [M4_PLAN.md](M4_PLAN.md) is owner-approved with conditions.
+M4.1 admission probes/measurements are in progress; ADR-0017/0018 are accepted.
+ADR-0016 awaits three-compiler admission and the owner's VM-topology decision.
 
 - Jolt Physics with deterministic configuration: rigid bodies, collision and
   raycast

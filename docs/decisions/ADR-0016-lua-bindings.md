@@ -1,6 +1,6 @@
 # ADR-0016: Lua bindings and VM boundary
 
-- **Status:** Proposed — not accepted or implemented
+- **Status:** Partially approved; final acceptance pending M4.1 compiler probes and owner VM-topology decision
 - **Date:** 2026-10-31
 - **Scope:** [M4 proposal](../M4_PLAN.md); extends ADR-0005/0007 without changing
   the engine's Result/error contract.
@@ -31,8 +31,12 @@ return structured results. An unrecoverable VM panic is terminal for that
 session; do not catch it and pretend the VM can safely continue. Verify concrete
 macro behavior against the pinned headers rather than copying old tutorials.
 
-Use one `lua_State` per script instance for enforceable allocation attribution,
-with both instance and aggregate quotas from the M4 plan. Provide a counting
+VM topology is **not approved**. M4.1 must measure 1,000 script instances with
+(a) a `lua_State` per instance and (b) one session state with separate sandbox
+environments, then present memory/startup numbers and a recommendation to the
+owner. No topology is adopted before that decision. The comparison must explain
+which memory attribution/isolation guarantees each topology can enforce.
+The resource quotas remain approved starting points, subject to this decision. Provide a counting
 allocator and instruction hook before user code. Expose only an allowlist of
 base/table/string/numeric facilities; remove free load/loadfile/dofile, package,
 io, os, debug and raw coroutine creation. Host-controlled text-only module
@@ -72,7 +76,11 @@ reload. No Lua coroutine/closure/opaque-heap persistence is promised.
   or make exceptions and allocation failures automatically safe.
 - **LuaJIT/Lua 5.5:** would change the owner-selected runtime; not proposed.
 
-## Acceptance before relying on this decision
+## Owner conditions and acceptance before relying on this decision
+
+The owner conditionally approved sol2 3.3.0 and C++ Lua 5.4.9, provided all
+three compiler probes pass with warnings-as-errors for our code. The VM choice
+remains pending a measured 1,000-instance comparison and owner approval.
 
 All three compilers prove successful bindings, wrong-type errors, stale handles,
 syntax/runtime failure, instruction exhaustion and allocator failure. Destruction

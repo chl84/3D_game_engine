@@ -1,6 +1,6 @@
 # ADR-0017: Deterministic Jolt profile for M4
 
-- **Status:** Proposed — not accepted or implemented
+- **Status:** Accepted by the owner on 2026-10-31; implementation not yet complete
 - **Date:** 2026-10-31
 - **Scope:** [M4 proposal](../M4_PLAN.md); follows ADR-0002 and the existing
   double-position scene model.
@@ -13,7 +13,7 @@ events, input and game state also affect results. Engine positions are already
 double precision. Jolt source/configuration must be identical across the
 supported compiler matrix, and no GPU/window dependency may enter physics.
 
-## Proposed decision
+## Decision
 
 Pin **Jolt 5.6.0**, MIT, to an immutable source/hash through vcpkg. Configure a
 static CPU-only profile, kept private behind engine physics types. Record the

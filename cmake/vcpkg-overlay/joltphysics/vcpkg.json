@@ -1,0 +1,11 @@
+{
+  "name": "joltphysics",
+  "version": "5.6.0",
+  "description": "Owner-approved CPU-only double-position deterministic Jolt profile for M4 admission",
+  "homepage": "https://github.com/jrouwe/JoltPhysics",
+  "license": "MIT",
+  "dependencies": [
+    {"name": "vcpkg-cmake", "host": true},
+    {"name": "vcpkg-cmake-config", "host": true}
+  ]
+}

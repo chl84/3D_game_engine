@@ -39,7 +39,10 @@
         "vulkan-binding"
       ]
     },
-    "fastgltf"
+    "fastgltf",
+    "engine-lua-cxx",
+    "sol2",
+    "joltphysics"
   ],
   "overrides": [
     {

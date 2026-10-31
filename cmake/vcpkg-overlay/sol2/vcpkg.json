@@ -1,0 +1,7 @@
+{
+  "name": "sol2",
+  "version": "3.3.0",
+  "description": "Owner-selected sol2 headers for Lua 5.4 admission; no implicit Lua dependency",
+  "homepage": "https://github.com/ThePhD/sol2",
+  "license": "MIT"
+}

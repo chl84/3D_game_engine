@@ -180,6 +180,50 @@ jobs:
       - name: Core test summary
         run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
 
+      - name: M4.1 admission reports
+        if: always()
+        run: |
+          probe="./build/${{ matrix.preset }}/tests/admission/engine_m4_admission"
+          cmake --build --preset ${{ matrix.preset }} --target engine_m4_jolt_admission
+          set +e
+          "$probe" --verify-lua > m4-lua.json
+          lua_status=$?
+          "./build/${{ matrix.preset }}/tests/admission/engine_m4_jolt_admission" --verify-jolt > m4-jolt.json
+          jolt_status=$?
+          set -e
+          cat m4-lua.json m4-jolt.json
+          test "$lua_status" -eq 0 && test "$jolt_status" -eq 0
+
+      - name: Retain M4.1 admission binary and reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: m4-admission-${{ matrix.preset }}
+          if-no-files-found: ignore
+          path: |
+            build/${{ matrix.preset }}/tests/admission/engine_m4_admission
+            build/${{ matrix.preset }}/tests/admission/engine_m4_jolt_admission
+            m4-lua.json
+            m4-jolt.json
+
+      - name: Build optimized M4 VM measurement binary
+        if: always() && matrix.preset == 'ci-linux-gcc14'
+        run: |
+          cmake -S tests/admission -B build/m4-vm-release -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_MANIFEST_DIR="$GITHUB_WORKSPACE" -DVCPKG_MANIFEST_INSTALL=OFF \
+            -DVCPKG_INSTALLED_DIR="$GITHUB_WORKSPACE/build/${{ matrix.preset }}/vcpkg_installed"
+          cmake --build build/m4-vm-release --target engine_m4_admission
+
+      - name: Retain optimized M4 VM measurement binary
+        if: always() && matrix.preset == 'ci-linux-gcc14'
+        uses: actions/upload-artifact@v7
+        with:
+          name: m4-vm-reference-release
+          if-no-files-found: ignore
+          path: build/m4-vm-release/engine_m4_admission
+
       - name: Vulkan doctor detection
         run: |
           set +e
@@ -426,6 +470,30 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: ctest --preset ci-windows -R engine_core_tests -V
+
+      - name: M4.1 admission reports
+        if: always()
+        run: |
+          $probe = ".\build\ci-windows\tests\admission\engine_m4_admission.exe"
+          cmake --build --preset ci-windows --target engine_m4_jolt_admission
+          & $probe --verify-lua | Out-File -Encoding utf8 m4-lua.json
+          $luaStatus = $LASTEXITCODE
+          & .\build\ci-windows\tests\admission\engine_m4_jolt_admission.exe --verify-jolt | Out-File -Encoding utf8 m4-jolt.json
+          $joltStatus = $LASTEXITCODE
+          Get-Content m4-lua.json, m4-jolt.json
+          if ($luaStatus -ne 0 -or $joltStatus -ne 0) { throw "M4 admission failed" }
+
+      - name: Retain M4.1 admission binary and reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: m4-admission-msvc
+          if-no-files-found: ignore
+          path: |
+            build/ci-windows/tests/admission/engine_m4_admission.exe
+            build/ci-windows/tests/admission/engine_m4_jolt_admission.exe
+            m4-lua.json
+            m4-jolt.json
 
       - name: Upload test artifacts
         if: failure()

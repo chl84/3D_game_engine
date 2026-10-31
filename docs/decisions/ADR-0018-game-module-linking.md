@@ -1,6 +1,6 @@
 # ADR-0018: Static game modules and an installed game SDK
 
-- **Status:** Proposed — not accepted or implemented
+- **Status:** Accepted by the owner on 2026-10-31; implementation not yet complete
 - **Date:** 2026-10-31
 - **Scope:** [M4 proposal](../M4_PLAN.md); specializes the static-library direction
   already accepted in [ADR-0006](ADR-0006-static-libraries.md).
@@ -13,7 +13,7 @@ still contain built-in type switches, CLI/live orchestration lives in the engine
 tool, and installed CMake exports do not yet exist. These are implementation
 tasks, not capabilities already supplied by linking an archive.
 
-## Proposed decision
+## Decision
 
 Game modules are **static CMake libraries** linked into explicit game hosts.
 Lua is the default gameplay extension mechanism; C++ is available for custom
@@ -68,6 +68,14 @@ Existing core-only/M3 projects continue to work with the generic executable.
 - Dynamic plugins could reduce relink time, but require ABI/versioning,
   lifetime/unload and Windows export decisions. Defer until there is a concrete
   need and a separately approved ADR. Lua hot reload remains in M4 scope.
+
+## Owner-approved M4.8 stop condition
+
+The installed SDK remains the target. If dependency install/export proves
+extensive in M4.8, stop and present a concrete proposal to move full packaging
+to M8 while using a separate external CMake/public-target boundary test in M4.
+Do not silently weaken the external-consumer test or expand packaging scope.
+This stop condition was explicitly added by the owner on 2026-10-31.
 
 ## Acceptance
 

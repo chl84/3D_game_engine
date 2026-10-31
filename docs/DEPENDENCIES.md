@@ -129,3 +129,27 @@ importer is `gltf-import@4`, including scene-root and emissive-sRGB corrections.
 The separately marked build copy contains the documented UB fixes; the owner
 formally approved it together with the upstream zlib dependency. M3.8 adds no
 external dependencies or upgrades.
+
+## M4.1 admission-only candidates
+
+The owner approved Jolt5.6.0 and conditionally approved sol2 release3.3.0 plus
+Lua5.4.9 compiled as C++, subject to GCC14/Clang18/MSVC probes with -Werror for
+our code. These dependencies are currently linked only by isolated admission
+executables, not the engine runtime. ADR-0016 remains pending the compiler gate
+and measured VM-topology decision. No newer library is silently substituted.
+
+- Jolt commit `e77f175595e64cb44218cc9d9d56fc365ad0e36a`, MIT. The local
+  joltphysics overlay fixes CPU/static/double/deterministic flags; it does not
+  use the stock port's non-deterministic default.
+- sol2 peeled v3.3.0 commit `eba86625b707e3c8c99bbfc4624e51f42dc9e561`, MIT.
+  Its header version string still says3.2.3; source-tag identity is recorded
+  separately. The local overlay installs unmodified headers without pulling
+  an implicit Lua5.5 dependency.
+- Lua5.4.9 official archive, MIT, SHA-256
+  `2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6`.
+  engine-lua-cxx builds the original .c sources as C++ with matching linkage.
+
+Full SHA-512 locks are in the three overlay portfiles. The existing vcpkg
+baseline and unrelated versions are unchanged. Probe host code always uses
+engine warning flags plus -Werror or /WX; upstream library source uses its own
+warning configuration. See [admission methods](../tests/admission/README.md).

@@ -5,7 +5,8 @@ An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 M0–M3 are released as `v0.4.0`: GLB import/cooking/reimport, stable asset
 placement, PBR rendering and authenticated local live control are implemented
 and verified. M4 physics/gameplay is planned in [docs/M4_PLAN.md](docs/M4_PLAN.md)
-and awaits owner approval. GPT-6 Astra high is the active independent reviewer
+and is owner-approved with M4.1 compiler/VM/schema conditions; implementation
+is starting with isolated admission probes. GPT-6 Astra high is the active independent reviewer
 (see `REVIEWER.json`). The engine is not ready for shipping games.
 
 ## Requirements
