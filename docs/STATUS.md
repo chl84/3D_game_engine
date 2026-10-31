@@ -18,6 +18,20 @@ it. Complete review/corrections and green reference CI before the final report.
 The owner will test samples/m3-manual before authorizing merge. No merge/tag is
 currently authorized. M4 planning waits until after merge/tag.
 
+### Extended-fuzz PNG finding addressed before Astra review
+
+Audit of the completed prior long-fuzz log found a real image-target UBSan
+failure: an empty leading PNG IDAT reached pinned stb's null-buffer zero-byte
+memcpy. This is not a green extended-fuzz result. The exact retained input is
+now `tests/assets/m3/fuzz_empty_idat.png`, automatically seeded and covered by
+a permanent unit test. The engine wrapper removes only empty leading IDAT
+chunks before decoding. Valid PNGs with multiple empty chunks preserve exact
+RGBA pixels; corrupted input returns E_VALIDATION. No dependency patch/upgrade,
+format restriction or sanitizer relaxation is introduced. The old fuzzer
+replay fails; the corrected replay and ASan/UBSan image tests pass with leak
+checks enabled for unit tests. Fresh extended fuzzing, full-source Astra review
+and reference CI remain required before M3.8 completion.
+
 ### Latest owner acceptance requirements — 2026-10-31
 
 - Before M3.8 closure, verify that the approved tangent-work budget admits a

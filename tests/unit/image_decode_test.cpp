@@ -87,3 +87,29 @@ TEST_CASE("invalid and oversized images fail before allocation", "[asset][image]
         CHECK(result.error().details["maxDimension"] == engine::asset::kMaxTextureDimension);
     }
 }
+
+TEST_CASE("PNG leading empty IDAT chunks preserve valid pixels and reject fuzz corruption",
+          "[asset][image]") {
+    auto png = read_bytes(fixture("m3_basecolor.png"));
+    const auto original = decode_image(as_span(png), ImageMimeType::Png);
+    REQUIRE(original);
+    // Complete zero-length IDAT with its valid CRC, after the 13-byte IHDR.
+    const std::vector<std::byte> empty_idat{
+        std::byte{0},    std::byte{0},    std::byte{0},    std::byte{0},
+        std::byte{'I'},  std::byte{'D'},  std::byte{'A'},  std::byte{'T'},
+        std::byte{0x35}, std::byte{0xAF}, std::byte{0x06}, std::byte{0x1E},
+    };
+    png.insert(png.begin() + 33, empty_idat.begin(), empty_idat.end());
+    png.insert(png.begin() + 33, empty_idat.begin(), empty_idat.end());
+    const auto decoded = decode_image(as_span(png), ImageMimeType::Png);
+    REQUIRE(decoded);
+    CHECK(decoded->width == original->width);
+    CHECK(decoded->height == original->height);
+    CHECK(decoded->rgba8 == original->rgba8);
+
+    const auto corrupt = read_bytes(fixture("fuzz_empty_idat.png"));
+    const auto rejected = decode_image(as_span(corrupt), ImageMimeType::Png);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().code == ErrorCode::Validation);
+    REQUIRE(decode_image(as_span(png), ImageMimeType::Png));
+}

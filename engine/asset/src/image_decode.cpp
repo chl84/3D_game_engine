@@ -5,10 +5,12 @@
 
 #include <engine/asset/image_decode.hpp>
 
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace engine::asset {
 namespace {
@@ -16,6 +18,46 @@ namespace {
 [[nodiscard]] core::Error decode_error(std::string message, std::string reason = {}) {
     return core::make_error(core::ErrorCode::Validation, std::move(message),
                             "Use a valid PNG or JPEG texture.", {{"reason", std::move(reason)}});
+}
+
+// PNG permits empty IDAT chunks, including before the compressed data. The
+// pinned stb reader passes its still-null data buffer to memcpy for these.
+// Remove only leading empty IDAT chunks: they carry no compressed bytes.
+// Preserve the original header/chunks/CRCs and let stb validate/decode the rest.
+// No dependency patch or rejection of valid empty-chunk PNGs is needed.
+[[nodiscard]] std::vector<std::byte> normalize_png(std::span<const std::byte> encoded) {
+    std::vector<std::byte> output;
+    std::size_t copied = 0;
+    std::size_t cursor = 8; // stbi_info has already validated the PNG signature.
+    while (cursor <= encoded.size() && encoded.size() - cursor >= 12U) {
+        std::uint32_t length = 0;
+        for (std::size_t index = 0; index < 4U; ++index) {
+            length = (length << 8U) | std::to_integer<std::uint8_t>(encoded[cursor + index]);
+        }
+        if (length > encoded.size() - cursor - 12U) {
+            break; // Truncated/invalid chunk: leave it for the existing decoder.
+        }
+        const bool idat =
+            encoded[cursor + 4U] == std::byte{'I'} && encoded[cursor + 5U] == std::byte{'D'} &&
+            encoded[cursor + 6U] == std::byte{'A'} && encoded[cursor + 7U] == std::byte{'T'};
+        if (idat && length != 0U) {
+            break; // stb allocates its data buffer at the first nonempty IDAT.
+        }
+        if (idat) {
+            if (output.empty()) {
+                output.reserve(encoded.size());
+            }
+            const auto prefix = encoded.subspan(copied, cursor - copied);
+            output.insert(output.end(), prefix.begin(), prefix.end());
+            copied = cursor + 12U;
+        }
+        cursor += static_cast<std::size_t>(length) + 12U;
+    }
+    if (!output.empty()) {
+        const auto remainder = encoded.subspan(copied);
+        output.insert(output.end(), remainder.begin(), remainder.end());
+    }
+    return output;
 }
 
 } // namespace
@@ -84,8 +126,13 @@ core::Result<DecodedImage> decode_image(std::span<const std::byte> encoded,
                              }));
     }
     int decoded_channels = 0;
+    const auto normalized = is_png ? normalize_png(encoded.first(static_cast<std::size_t>(size)))
+                                   : std::vector<std::byte>{};
+    const auto* decode_bytes =
+        normalized.empty() ? bytes : reinterpret_cast<const unsigned char*>(normalized.data());
+    const auto decode_size = normalized.empty() ? size : static_cast<int>(normalized.size());
     unsigned char* pixels =
-        stbi_load_from_memory(bytes, size, &width, &height, &decoded_channels, 4);
+        stbi_load_from_memory(decode_bytes, decode_size, &width, &height, &decoded_channels, 4);
     if (pixels == nullptr) {
         const char* reason = stbi_failure_reason();
         return core::make_failure<DecodedImage>(

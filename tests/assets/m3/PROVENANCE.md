@@ -138,3 +138,18 @@ missing-tangent generation (ADR-0015). This retained artifact now has a required
 E_VALIDATION/unchanged-input expectation before MikkTSpace; the older finite-
 tangent expectation is historical. Six-copy and nearby-Float32 regressions
 exercise the same policy. The original file and fuzzer seeding remain intact.
+
+## Empty-IDAT PNG fuzz regression
+
+`fuzz_empty_idat.png` is the exact 268-byte retained mutation of this
+repository's original image seeds from extended M3.8 fuzzing on 2026-10-31.
+No third-party input was used; project authors, MIT. Original artifact:
+`crash-d75fee5332a130626c79a4235b6efa59f82f5fe8`. SHA-256:
+`e14e637455a8c8ab8637b4c9d4a9f9974d9ccc3d5afeef70879b2ec7e954377e`.
+It contains an empty leading IDAT followed by corrupt chunk data. Pinned stb
+called memcpy with a null destination and zero count before rejecting it;
+UBSan correctly terminated. The engine now strips only empty leading IDAT
+chunks before decoding: valid empty-chunk PNGs retain identical pixels, while
+this corrupt input returns E_VALIDATION. The source dependency, decoder
+version, accepted image formats and sanitizer settings are unchanged. The
+fixture is automatically included in the existing top-level image fuzz seeds.

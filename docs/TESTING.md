@@ -2,6 +2,13 @@
 
 ## Large normal-mapped import regression
 
+The permanent image suite also covers `fuzz_empty_idat.png`, an exact retained
+long-fuzz UBSan finding, and valid PNGs with multiple leading empty IDAT chunks.
+The latter must decode to byte-identical RGBA pixels; the corrupt fixture must
+return E_VALIDATION. Empty leading chunks are normalized in the engine wrapper,
+with no dependency change or disabled sanitizer. Both run in the usual asset
+unit test and the retained input is seeded into the existing image fuzzer.
+
 `engine_large_normalmap` imports the original Blender-exported machined ring
 in `tests/assets/m3/large/` through the public CLI. The source has 262,144
 triangles, UVs and an embedded baked normal texture, and deliberately lacks

@@ -1,0 +1,92 @@
+M3.8 PNG EMPTY-IDAT REGRESSION — 2026-10-31
+
+Source before fix: de8dc40 (engine image decoder unchanged from 0786ac7).
+Exact retained fuzz artifact: crash-d75fee5332a130626c79a4235b6efa59f82f5fe8.
+New fixture SHA-256: e14e637455a8c8ab8637b4c9d4a9f9974d9ccc3d5afeef70879b2ec7e954377e.
+Prior extended-fuzz image failure was real; GLB/RPC completion does not make
+that prior run green. No dependency/version change, rejection of valid empty
+IDAT PNGs, or weakened sanitizer policy.
+
+BASELINE COMMAND: ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 build/linux-fuzz/tests/engine_image_fuzz tests/assets/m3/fuzz_empty_idat.png -runs=1
+Baseline exits nonzero; existing fuzzer leak policy unchanged.
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 655637754
+INFO: Loaded 1 modules   (19205 inline 8-bit counters): 19205 [0x55684da1d370, 0x55684da21e75), 
+INFO: Loaded 1 PC tables (19205 PCs): 19205 [0x55684da21e78,0x55684da6cec8), 
+build/linux-fuzz/tests/engine_image_fuzz: Running 1 inputs 1 time(s) each.
+Running: tests/assets/m3/fuzz_empty_idat.png
+<repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1683:14: runtime error: null pointer passed as argument 1, which is declared to never be null
+/usr/include/string.h:48:28: note: nonnull attribute specified here
+    #0 0x55684d7df0c7 in stbi__getn(stbi__context*, unsigned char*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1683:7
+    #1 0x55684d7cc16f in stbi__parse_png_file(stbi__png*, int, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5194:18
+    #2 0x55684d7c3993 in stbi__do_png(stbi__png*, int*, int*, int*, int, stbi__result_info*) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5267:8
+    #3 0x55684d7c0c83 in stbi__png_load(stbi__context*, int*, int*, int*, int, stbi__result_info*) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5299:11
+    #4 0x55684d7bf8cb in stbi__load_main(stbi__context*, int*, int*, int*, int, stbi__result_info*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1147:35
+    #5 0x55684d7acd1e in stbi__load_and_postprocess_8bit(stbi__context*, int*, int*, int*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1263:19
+    #6 0x55684d7b02ac in stbi_load_from_memory <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1433:11
+    #7 0x55684d7b978e in engine::asset::decode_image(std::span<std::byte const, 18446744073709551615ul>, engine::asset::ImageMimeType) <repository>/engine/asset/src/image_decode.cpp:88:9
+    #8 0x55684d7973c9 in LLVMFuzzerTestOneInput <repository>/tests/fuzz/image_decode_fuzz.cpp:9:11
+    #9 0x55684d619dd5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) fuzzer.o
+    #10 0x55684d601ffc in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) fuzzer.o
+    #11 0x55684d6086bd in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) fuzzer.o
+    #12 0x55684d638987 in main (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x16e987) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #13 0x7f3b19827780 in __libc_start_call_main /usr/src/debug/glibc/glibc/csu/../sysdeps/nptl/libc_start_call_main.h:59:16
+    #14 0x7f3b198278b8 in __libc_start_main /usr/src/debug/glibc/glibc/csu/../csu/libc-start.c:372:3
+    #15 0x55684d5fa694 in _start (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x130694) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1683:14 
+==9== ERROR: libFuzzer: deadly signal
+    #0 0x55684d75c846 in __sanitizer_print_stack_trace (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x292846) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #1 0x55684d637d9d in fuzzer::PrintStackTrace() fuzzer.o
+    #2 0x55684d61819d in fuzzer::Fuzzer::CrashCallback() fuzzer.o
+    #3 0x7f3b1983e6ef  (/usr/lib/libc.so.6+0x3e6ef) (BuildId: d320029ad1a23be2f4bce117fd321cbd23a2014b)
+    #4 0x7f3b1989a11b in __pthread_kill_implementation /usr/src/debug/glibc/glibc/nptl/pthread_kill.c:43:17
+    #5 0x7f3b1983e5cf in raise /usr/src/debug/glibc/glibc/signal/../sysdeps/posix/raise.c:26:13
+    #6 0x7f3b19825684 in abort /usr/src/debug/glibc/glibc/stdlib/abort.c:77:3
+    #7 0x55684d77a023 in __sanitizer::Abort() (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x2b0023) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #8 0x55684d777d62 in __sanitizer::Die() (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x2add62) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #9 0x55684d7909c8 in __ubsan::ScopedReport::~ScopedReport() (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x2c69c8) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #10 0x55684d7949b1 in handleNonNullArg(__ubsan::NonNullArgData*, __ubsan::ReportOptions, bool) ubsan_handlers.cpp.o
+    #11 0x55684d79476c in __ubsan_handle_nonnull_arg (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x2ca76c) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #12 0x55684d7df0c7 in stbi__getn(stbi__context*, unsigned char*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1683:7
+    #13 0x55684d7cc16f in stbi__parse_png_file(stbi__png*, int, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5194:18
+    #14 0x55684d7c3993 in stbi__do_png(stbi__png*, int*, int*, int*, int, stbi__result_info*) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5267:8
+    #15 0x55684d7c0c83 in stbi__png_load(stbi__context*, int*, int*, int*, int, stbi__result_info*) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:5299:11
+    #16 0x55684d7bf8cb in stbi__load_main(stbi__context*, int*, int*, int*, int, stbi__result_info*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1147:35
+    #17 0x55684d7acd1e in stbi__load_and_postprocess_8bit(stbi__context*, int*, int*, int*, int) <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1263:19
+    #18 0x55684d7b02ac in stbi_load_from_memory <repository>/build/linux-fuzz/vcpkg_installed/x64-linux/include/stb_image.h:1433:11
+    #19 0x55684d7b978e in engine::asset::decode_image(std::span<std::byte const, 18446744073709551615ul>, engine::asset::ImageMimeType) <repository>/engine/asset/src/image_decode.cpp:88:9
+    #20 0x55684d7973c9 in LLVMFuzzerTestOneInput <repository>/tests/fuzz/image_decode_fuzz.cpp:9:11
+    #21 0x55684d619dd5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) fuzzer.o
+    #22 0x55684d601ffc in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) fuzzer.o
+    #23 0x55684d6086bd in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) fuzzer.o
+    #24 0x55684d638987 in main (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x16e987) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+    #25 0x7f3b19827780 in __libc_start_call_main /usr/src/debug/glibc/glibc/csu/../sysdeps/nptl/libc_start_call_main.h:59:16
+    #26 0x7f3b198278b8 in __libc_start_main /usr/src/debug/glibc/glibc/csu/../csu/libc-start.c:372:3
+    #27 0x55684d5fa694 in _start (<repository>/build/linux-fuzz/tests/engine_image_fuzz+0x130694) (BuildId: 013c01d72afa85bc3dc30328ddcbda7c626e36b7)
+
+NOTE: libFuzzer has rudimentary signal handlers.
+      Combine libFuzzer with AddressSanitizer or similar for better crash reports.
+SUMMARY: libFuzzer: deadly signal
+
+CORRECTED FIXED-INPUT REPLAY (same command), exit 0:
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 701014568
+INFO: Loaded 1 modules   (20196 inline 8-bit counters): 20196 [0x55f2e4890030, 0x55f2e4894f14), 
+INFO: Loaded 1 PC tables (20196 PCs): 20196 [0x55f2e4894f18,0x55f2e48e3d58), 
+build/linux-fuzz/tests/engine_image_fuzz: Running 1 inputs 1 time(s) each.
+Running: tests/assets/m3/fuzz_empty_idat.png
+Executed tests/assets/m3/fuzz_empty_idat.png in 0 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+
+IMAGE UNIT COMMAND: ASAN_OPTIONS=detect_leaks=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 build/linux-asan/tests/engine_asset_tests "[asset][image]"
+Filters: [asset] [image]
+Randomness seeded to: 4008788037
+===============================================================================
+All tests passed (36 assertions in 3 test cases)
+
+
+Review/extended-fuzz/reference-CI final gates remain pending on this corrected source.
