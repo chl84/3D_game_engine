@@ -69,7 +69,8 @@ def main() -> None:
         "measurementScope": {
             "startup": "VM setup, allowlist/bindings, environments and equal script initialization",
             "luaMemory": "requested allocator bytes, excluding host C++ allocations/allocator overhead",
-            "rss": "Linux peak for entire child, including validation/output/cleanup",
+            "rss": "Linux launched-child peak including exec/validation/output/cleanup; "
+                   "Python launch may impose a baseline",
             "budget": "diagnostic comparison; aggregate limit not used to truncate 1000 instances",
             "adoption": "neither topology is accepted; results require owner decision",
         },

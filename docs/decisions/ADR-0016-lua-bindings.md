@@ -82,12 +82,14 @@ The owner conditionally approved sol2 3.3.0 and C++ Lua 5.4.9, provided all
 three compiler probes pass with warnings-as-errors for our code. The VM choice
 remains pending a measured 1,000-instance comparison and owner approval.
 
-All three compilers prove successful bindings, wrong-type errors, stale handles,
+M4.1's three-compiler admission proves successful bindings, wrong-type errors,
 syntax/runtime failure, instruction exhaustion and allocator failure. Destruction
 sentinels must run on Lua-originated errors across the supported call paths.
-ASan/UBSan must stay clean; no exception, panic or raw VM pointer crosses the
-public boundary. The reflected external game component must work without a
-second hand-written field list. A failed admission is an approval checkpoint,
+ASan/UBSan must stay clean. M4.6/M4.7 additionally prove stale-ECS-handle rejection
+and that no exception, panic or raw VM pointer crosses the production public
+boundary. The reflected external game component must work without a
+second hand-written field list. These runtime APIs are not part of the isolated
+M4.1 prototype. A failed admission is an approval checkpoint,
 not permission to suppress checks or substitute another runtime.
 
 ## Primary references checked for this proposal

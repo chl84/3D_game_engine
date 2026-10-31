@@ -24,8 +24,18 @@ outside the ptrace sandbox: [raw result](verification/M4_1_LOCAL_JOLT_ASAN.json)
 Generated library flags explicitly contain `-frtti -fexceptions -ffp-contract=off`;
 the uninstrumented third-party library is not claimed to have full sanitizer
 coverage. The bridge is instrumented and no sanitizer check was disabled.
-The first optimized GCC14 artifact produced a diagnostic 1,000-instance run;
-repeat against the corrected candidate before presenting final numbers.
+CI41189740843 now passes GCC14/Clang18/MSVC and ASan/UBSan admission. The three
+240-tick primitive Jolt traces match exactly; this is not the unimplemented full
+M4.4 suite. [Raw reference probes](verification/M4_1_REFERENCE_PROBES.json).
+Quality found four clang-tidy issues (size_t multiplication and an unnamed
+parameter), corrected without changing algorithms/limits or suppressing checks;
+final CI remains pending. Local tidy18 cannot parse installed GCC16 standard
+headers; reference CI remains authoritative for that check.
+
+The corrected GCC14 Release artifact was measured with five fresh processes per
+model,1,000 instances each. Results/recommendation and complete provenance:
+[VM comparison](verification/M4_1_VM_COMPARISON.md). This recommendation is not
+owner approval of ADR-0016, and neither topology is adopted.
 
 The 1,000-instance measurement driver uses fresh processes, equal payloads and
 alternating model order; it records Lua allocator memory and Linux whole-child

@@ -13,6 +13,7 @@
 
 #include <bit>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -91,7 +92,7 @@ std::vector<std::uint64_t> simulate() {
     settings.mNumPositionSteps = 2;
     world.SetPhysicsSettings(settings);
     world.SetGravity(JPH::Vec3(0.0F, -9.81F, 0.0F));
-    JPH::TempAllocatorImpl temporary(64U * 1024U * 1024U);
+    JPH::TempAllocatorImpl temporary(std::size_t{64} * 1024U * 1024U);
     JPH::JobSystemSingleThreaded jobs(2048);
     auto floor_shape = JPH::BoxShapeSettings(JPH::Vec3(10.0F, 0.5F, 10.0F)).Create();
     auto box_shape = JPH::BoxShapeSettings(JPH::Vec3::sReplicate(0.5F)).Create();

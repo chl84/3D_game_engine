@@ -13,8 +13,8 @@
 namespace admission {
 namespace {
 
-constexpr std::size_t instance_limit = 8U * 1024U * 1024U;
-constexpr std::size_t aggregate_limit = 64U * 1024U * 1024U;
+constexpr std::size_t instance_limit = std::size_t{8} * 1024U * 1024U;
+constexpr std::size_t aggregate_limit = std::size_t{64} * 1024U * 1024U;
 
 struct Totals {
     std::size_t current{0};
@@ -145,7 +145,7 @@ struct InstructionBudget {
     int remaining{5000};
 };
 
-void instruction_hook(lua_State* state, lua_Debug*) {
+void instruction_hook(lua_State* state, lua_Debug* /*unused*/) {
     lua_getfield(state, LUA_REGISTRYINDEX, "m4.budget");
     auto* budget = static_cast<InstructionBudget*>(lua_touserdata(state, -1));
     lua_pop(state, 1);
