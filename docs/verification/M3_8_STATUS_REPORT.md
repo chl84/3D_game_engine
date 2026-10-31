@@ -2,8 +2,8 @@
 
 **Outcome:** Technical acceptance is complete for the verified implementation.
 The owner reported the manual Blender test passed and asked work to continue.
-The final publication changes documentation/evidence only; its normal PR checks
-must pass before handback. Merge and tag await a separate explicit instruction.
+The owner subsequently authorized merge and tagging. Normal PR checks must
+pass on the v0.4.0 release candidate before those actions.
 
 **Delivered:** M3 hardening and complete CLI/live Blender acceptance, retained
 fuzz regressions, bounded asset-wide tangent-generation admission, a realistic
@@ -15,8 +15,11 @@ extended fuzz/corpus evidence. All required review findings are resolved.
 GPT-6 Astra high independently approved the entire M3.8 delta and current
 M3.7 corrections/journal without blocking or required findings.
 **Verified publication baseline:** `9c812f5063b3f4a291777a43e071022d56865f54`.
-This baseline and subsequent evidence commits have no implementation delta
-from the reviewed source. [PR5](https://github.com/chl84/3D_game_engine/pull/5)
+This baseline and evidence commits through 684f101 have no implementation delta
+from the reviewed source. Release preparation additionally aligns CMake/the
+engine package version and the exact version smoke test to 0.4.0; dependency
+versions and engine behavior are unchanged. Final normal CI must cover that
+version-only delta. [PR5](https://github.com/chl84/3D_game_engine/pull/5)
 shows the latest documentation publication checks; the source-specific evidence
 below records what was actually run, not an assumed pass for another commit.
 
@@ -83,9 +86,10 @@ as completed capabilities.
 a mandatory second full run; the report corrects that extra gate. The PNG fuzz
 failure was fixed with a permanent regression before Astra approval. Dependency
 versions, source/cooked formats and sanitizer limits remain unchanged.
-**Approval needed:** Explicit merge and tag instruction, separate from the
-reported manual test pass.
+**Authorization:** The owner explicitly approved merge and tagging after the
+manual test pass; use standard branch protection and tag v0.4.0 on the actual
+main merge commit. M4 implementation still requires plan approval.
 **Next step:** Publish this report/evidence, verify the normal publication CI,
-then await merge/tag authorization. Only after merge and tag, draft the M4 plan
+then perform the authorized merge/tag. Only after merge and tag, draft the M4 plan
 with ADR proposals for Lua bindings, deterministic Jolt settings and game-module
 linking, and wait for owner approval before implementation.

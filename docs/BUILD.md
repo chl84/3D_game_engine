@@ -193,7 +193,7 @@ The CI version is authoritative for formatting.
 Expected shape:
 
 ```json
-{"name":"engine","version":"0.3.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
+{"name":"engine","version":"0.4.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
 
 ## Doctor

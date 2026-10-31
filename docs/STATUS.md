@@ -1,15 +1,35 @@
 # Status
 
 **Last updated:** 2026-10-31
-**Current milestone:** M3 — asset pipeline and live control; release pending
-**Current substep:** M3.8 — technical acceptance complete; owner manual Blender test passed; explicit merge/tag instruction pending.
+**Current milestone:** M3 — asset pipeline and live control; v0.4.0 release authorized
+**Current substep:** M3.8 — technical acceptance complete; owner manual Blender test passed; merge/tag authorized subject to green final CI.
 
 ## M3.8 final acceptance
+
+### Release authorization and version alignment
+
+The owner explicitly authorized merge and then tagging on 2026-10-31. Release
+version is v0.4.0, following M2 v0.3.0. CMake and the engine's own vcpkg package
+metadata now report 0.4.0, and the existing version smoke test expects exactly
+that value. No dependency version, format, sanitizer setting, rendering/import
+or live behavior changes. The final release candidate must pass normal PR CI
+before standard merge and an annotated v0.4.0 tag on the actual main merge commit.
+No admin bypass or history rewrite is authorized.
+Local release checks passed 4/4: version JSON, CLI contract, documentation links
+and generated API reference. The binary reports version 0.4.0. The smoke test
+continues to require an exact version match; no assertion was removed.
+
+The earlier Astra-reviewed implementation and exact-source evidence below are
+retained. Evidence-only commits through 684f101 changed documentation only;
+the release-preparation delta additionally changes version metadata and the
+matching smoke-test expectation. It is disclosed separately from that review.
+After merge and tag, draft the requested M4 plan and wait for approval before
+implementation. Do not repeat extended fuzzing for this version-only delta.
 
 The owner reported the manual Blender test **passed** on 2026-10-31 and asked
 work to continue. This records the owner's result without inventing model,
 export-setting or hardware details. [Manual guide](../samples/m3-manual/README.md).
-Merge/tag still require a separate explicit instruction; none is authorized.
+The separate merge/tag instructions are now authorized, as recorded above.
 
 - **Independent reviewer:** GPT-6 Astra high, configured in
   [REVIEWER.json](../REVIEWER.json). Astra approved implementation
@@ -58,9 +78,9 @@ Merge/tag still require a separate explicit instruction; none is authorized.
   [Regression evidence](verification/M3_8_EMPTY_IDAT_EVIDENCE.txt).
 
 [Consolidated M3.8 report](verification/M3_8_STATUS_REPORT.md).
-The final publication contains documentation/evidence changes only. Its normal
-PR CI checks must pass before handback; no new implementation review, repeat
-clean clone or extra long fuzz run is needed for those prose-only changes.
+The release candidate adds version metadata/test alignment to the published
+documentation/evidence. Its normal PR CI checks must pass before merge/tag;
+no repeat clean clone or extra long fuzz run is needed for that metadata delta.
 
 ## Remaining decisions and limitations
 
@@ -75,7 +95,7 @@ clean clone or extra long fuzz run is needed for those prose-only changes.
   large-model import timing is not a frame-rate or 16 GB memory-budget claim.
 - Journal synchronization tests do not prove storage-controller/power-loss
   durability or cross-file atomicity with scene/asset writes.
-- PR5 remains draft pending explicit merge/tag instruction. M4 planning starts
+- PR5 is ready for review and merge/tag are authorized after green CI. M4 planning starts
   **after merge and tag**, then waits for owner approval before implementation.
   Include ADR proposals for Lua bindings, deterministic Jolt configuration and
   game-module linking. Do not start M4 before that sequence.
@@ -87,8 +107,9 @@ to return to Claude for M3.7. Reviewer selection belongs exclusively to the
 owner. Historical Claude/Astra reviews below retain their actual attribution;
 old pending statements are snapshots, superseded by the final status above.
 M3.7 remains owner-approved on 2026-10-30; M3.4/M3.5/M3.6 are also approved.
-No merge, tag or admin bypass is authorized by reviewer approval or a passed
-manual test alone. Earlier history below is retained for audit.
+Merge/tag authorization comes from the later explicit owner instructions above,
+not from reviewer approval or the manual test alone. Admin bypass remains
+unauthorized. Earlier history below is retained for audit.
 
 ## Substeps
 
@@ -143,7 +164,7 @@ manual test alone. Earlier history below is retained for audit.
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive-sRGB correction delivered |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Technical acceptance complete; Astra high approved; CI/clone/fuzz/cache evidence recorded; owner manual Blender test passed; explicit merge/tag instruction pending |
+| M3.8 | M3 hardening and acceptance | Technical acceptance complete; Astra high approved; CI/clone/fuzz/cache evidence recorded; owner manual Blender test passed; merge/tag authorized subject to final CI |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -549,9 +570,9 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-Publish the consolidated M3.8 documentation/evidence and verify its normal PR
-checks. Then await the owner's explicit merge/tag instruction. After merge and
-tag, draft the M4 plan with the requested ADR proposals and wait for approval.
+Verify normal PR checks on the v0.4.0 release candidate, merge through standard
+branch protection and tag the actual main merge commit as authorized. After
+merge and tag, draft the M4 plan with the requested ADR proposals and wait for approval.
 No further long fuzz run is required for M3.8 closure.
 
 ## M3.5 implementation and verification
