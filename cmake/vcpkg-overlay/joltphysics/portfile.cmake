@@ -6,9 +6,16 @@ vcpkg_from_github(
     SHA512 f775b0e14682123d24d101eea2110da52d452aae05a61411e2dad2b86004ad665f0740a94e68d813e4b579ee9c7f8707f0cceab99b235d0f25973dac21a2865e
 )
 string(COMPARE EQUAL "${VCPKG_CRT_LINKAGE}" "static" STATIC_CRT)
+set(platform_options)
+if(VCPKG_TARGET_IS_WINDOWS)
+    # Pinned Jolt gates MSVC's x86 feature definitions on this variable even
+    # with Ninja, where CMake otherwise leaves it empty. Match the triplet.
+    list(APPEND platform_options "-DCMAKE_VS_PLATFORM_NAME=${VCPKG_TARGET_ARCHITECTURE}")
+endif()
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}/Build"
     OPTIONS
+        ${platform_options}
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -DJPH_BUILD_SHARED_LIBS=OFF -DDOUBLE_PRECISION=ON
         -DCROSS_PLATFORM_DETERMINISTIC=ON -DINTERPROCEDURAL_OPTIMIZATION=OFF

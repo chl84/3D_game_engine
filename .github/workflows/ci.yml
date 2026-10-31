@@ -484,9 +484,12 @@ jobs:
         if: always()
         run: |
           $probe = ".\build\ci-windows\tests\admission\engine_m4_admission.exe"
-          python scripts/capture_m4_build_profile.py build/ci-windows $env:VCPKG_ROOT | Out-File -Encoding utf8 m4-build-profile.json
+          .\.venv\Scripts\python.exe scripts/capture_m4_build_profile.py build/ci-windows $env:VCPKG_ROOT | Out-File -Encoding utf8 m4-build-profile.json
+          if ($LASTEXITCODE -ne 0) { throw "M4 build profile audit failed" }
           .\.venv\Scripts\python.exe scripts/validate_m4_proposals.py
+          if ($LASTEXITCODE -ne 0) { throw "M4 proposal validation failed" }
           cmake --build --preset ci-windows --target engine_m4_jolt_admission
+          if ($LASTEXITCODE -ne 0) { throw "M4 Jolt admission build failed" }
           & $probe --verify-lua | Out-File -Encoding utf8 m4-lua.json
           $luaStatus = $LASTEXITCODE
           & .\build\ci-windows\tests\admission\engine_m4_jolt_admission.exe --verify-jolt | Out-File -Encoding utf8 m4-jolt.json

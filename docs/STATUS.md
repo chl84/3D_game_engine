@@ -25,7 +25,15 @@ required P2 corrections, tracked in
   Local GCC16 verifies139 Jolt and32 Lua commands per configuration. Focused
   controls reject absent metadata, compiler mismatch, unsafe Lua FP and altered
   archive digest; the installed-package audit works without source buildtrees.
-  Corrected GCC14/Clang18/MSVC CI is still required.
+  CI41192173709 on982b3f8 verified the actual GCC14/Clang18 library identities,
+  both configurations and full command reports. All six jobs reported success,
+  but artifact inspection found a masked Windows profile-audit failure: upstream
+  Jolt's Ninja/MSVC path omitted SSE4 definitions because CMAKE_VS_PLATFORM_NAME
+  was empty. The Windows PowerShell step did not propagate the Python failure.
+  The candidate now passes the triplet architecture to Jolt, requires SSE4.1/4.2
+  in the C++ probe, and throws immediately on profile/validator/build failures.
+  New reference CI must prove Windows evidence; the earlier green job is not
+  treated as complete three-compiler admission.
 
 Earlier reference CI41189740843 passed the three host probes and ASan/UBSan,
 with identical240-tick primitive Jolt traces, but lacked complete library compiler
@@ -37,8 +45,8 @@ warnings or changing algorithms/limits; candidate CI remains separate.
 
 The1,000-instance comparison has five fresh processes per model, equal payloads,
 AC/balanced conditions and complete binary/run provenance:
-[VM comparison](verification/M4_1_VM_COMPARISON.md). Refresh its GCC14 measurement
-after the explicit Lua library FP policy before final presentation. The measured
+[VM comparison](verification/M4_1_VM_COMPARISON.md). Refreshed against the982b3f8
+GCC14 Release artifact after the explicit Lua library FP policy. The measured
 recommendation is not owner acceptance of ADR-0016. Concrete schemas are in
 [ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md) and
 [the format proposal](proposals/m4/README.md), pending owner approval.

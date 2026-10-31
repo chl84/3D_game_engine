@@ -21,6 +21,9 @@
 #if !defined(JPH_DOUBLE_PRECISION) || !defined(JPH_CROSS_PLATFORM_DETERMINISTIC)
 #error M4 admission requires the approved double-position deterministic Jolt profile
 #endif
+#if !defined(JPH_USE_SSE4_1) || !defined(JPH_USE_SSE4_2)
+#error M4 admission requires the approved SSE4.1 and SSE4.2 baseline on every x64 compiler
+#endif
 #if defined(JPH_USE_AVX) || defined(JPH_USE_AVX2) || defined(JPH_USE_AVX512) ||                    \
     defined(JPH_USE_FMADD) || defined(JPH_USE_F16C) || defined(JPH_USE_LZCNT) ||                   \
     defined(JPH_USE_TZCNT)

@@ -1,7 +1,7 @@
 {
   "name": "joltphysics",
   "version": "5.6.0",
-  "port-version": 2,
+  "port-version": 3,
   "description": "Owner-approved CPU-only double-position deterministic Jolt profile for M4 admission",
   "homepage": "https://github.com/jrouwe/JoltPhysics",
   "license": "MIT",

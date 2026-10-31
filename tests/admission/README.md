@@ -55,6 +55,14 @@ or a mixed compiler fails admission. Lua explicitly uses C++20, exceptions and
 FP controls and explicit RTTI/exception settings. Do not infer archive compilers
 from host macros or an unavailable source-build directory.
 
+Pinned Jolt5.6.0 gates MSVC feature definitions on CMAKE_VS_PLATFORM_NAME, which
+Ninja leaves empty. The Windows overlay explicitly supplies the triplet's x64
+platform so the approved SSE4.1/4.2 options take effect in the library and its
+exported target. The C++ probe and command audit both require these definitions;
+do not loosen that profile to accept an SSE2-only build. Windows CI must check
+native Python/CMake exit codes immediately so report failures cannot be masked
+by later successful probe execution.
+
 The first reference run passed GCC14/MSVC, but Clang18 rejected sol2's direct
 member-variable trampoline. The candidate now uses typed `sol::property`
 accessors without changing script field semantics, argument checks or pinned
