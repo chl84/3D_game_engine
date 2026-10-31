@@ -4,6 +4,29 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+### Reference CI and public-clone gates passed — 2026-10-31
+
+Published candidate `9c812f5063b3f4a291777a43e071022d56865f54` has no
+implementation delta from Astra-approved `5d01a36`. All **six** jobs in
+[reference CI41177949157](https://github.com/chl84/3D_game_engine/actions/runs/41177949157)
+completed/success, including Fuzz in addition to the five required checks.
+Actual full suites: GCC14/Clang18 28/28, ASan/UBSan 27/27, Windows MSVC21/21.
+The large normal-mapped model and offscreen Blender/color-space goldens pass
+on Linux and Windows. Reference format/tidy18 pass.
+[CI evidence](verification/M3_8_REFERENCE_CI_EVIDENCE.txt).
+
+The unchanged public-clone acceptance script rebuilt exact candidate9c812f5:
+28/28, zero CTest skips, plus M1 and full M3 CLI/live/golden/reimport acceptance.
+Supplemental doctor/Catch2 XML confirms lavapipe/descriptor indexing and
+13/13 render/device cases, 105 assertions, **zero internal skips**.
+[Public-clone evidence](verification/M3_8_PUBLIC_CLONE_EVIDENCE.txt).
+
+Remaining technical gates: finish fresh extended fuzzing and demonstrate real
+GitHub corpus save/restore with a second successful long run after the first
+cache has been saved. [First long run41177977464](https://github.com/chl84/3D_game_engine/actions/runs/41177977464)
+is still running at this snapshot. No full M3.8 completion/report is claimed.
+PR5 remains draft; owner manual test and explicit merge/tag instruction pending.
+
 ### Astra technical approval and publication candidate — 2026-10-31
 
 GPT-6 Astra high independently approved exact source

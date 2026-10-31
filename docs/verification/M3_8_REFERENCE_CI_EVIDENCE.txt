@@ -1,0 +1,191 @@
+M3.8 REFERENCE CI — CANDIDATE 9c812f5063b3f4a291777a43e071022d56865f54
+2026-10-31; implementation independently reviewed at 5d01a36.
+PR: https://github.com/chl84/3D_game_engine/pull/5
+Reference run: https://github.com/chl84/3D_game_engine/actions/runs/41177949157
+
+All SIX jobs completed/success: GCC14, Clang18, ASan/UBSan, Windows MSVC,
+Quality (reference clang-format18/clang-tidy18), Fuzz (Clang ASan).
+Actual full-suite totals: Linux GCC/Clang 28/28, ASan/UBSan 27/27, Windows21/21.
+No CTest-level skips in the full test runs. Windows presentation remains
+unverified; its suite covers the verified offscreen lavapipe path.
+Render summary logs show 105 assertions/13 device cases on Linux/Windows,
+Blender tangent image difference0 and fixed color-space goldens passing.
+The large normal-mapped 262144-triangle import passes on all four builders.
+
+Extended fuzz run41177977464 is SEPARATE and still running at this snapshot;
+no long-run cache-save/restore or final M3.8 completion is claimed here.
+
+=== gcc ===
+2026-10-31T06:49:37.2773313Z  1/28 Test  #1: engine_core_tests ................   Passed    0.08 sec
+2026-10-31T06:49:37.2807078Z  2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+2026-10-31T06:49:38.0665503Z  3/28 Test  #3: engine_asset_tests ...............   Passed    0.79 sec
+2026-10-31T06:49:38.2257389Z  4/28 Test  #4: engine_render_tests ..............   Passed    0.16 sec
+2026-10-31T06:49:38.2833806Z  5/28 Test  #5: engine_window_smoke ..............   Passed    0.06 sec
+2026-10-31T06:49:38.5423404Z  6/28 Test  #6: engine_swapchain_test ............   Passed    0.26 sec
+2026-10-31T06:49:38.6314818Z  7/28 Test  #7: engine_overlay_test ..............   Passed    0.09 sec
+2026-10-31T06:49:38.8539265Z  8/28 Test  #8: engine_run_smoke .................   Passed    0.22 sec
+2026-10-31T06:49:39.1351159Z  9/28 Test  #9: engine_point_light_warning .......   Passed    0.28 sec
+2026-10-31T06:49:39.1922451Z 10/28 Test #10: engine_screenshot_golden .........   Passed    0.06 sec
+2026-10-31T06:49:39.4191271Z 11/28 Test #11: engine_screenshot_cli ............   Passed    0.23 sec
+2026-10-31T06:49:39.4449616Z 12/28 Test #12: engine_version_json ..............   Passed    0.03 sec
+2026-10-31T06:49:39.8745103Z 13/28 Test #13: engine_cli_contract ..............   Passed    0.43 sec
+2026-10-31T06:49:39.9088202Z 14/28 Test #14: engine_docs_links ................   Passed    0.03 sec
+2026-10-31T06:49:42.0001857Z 15/28 Test #15: engine_sensitive_scan ............   Passed    2.09 sec
+2026-10-31T06:49:42.2988676Z 16/28 Test #16: engine_acceptance_m1 .............   Passed    0.30 sec
+2026-10-31T06:49:44.2468689Z 17/28 Test #17: engine_acceptance_m3 .............   Passed    1.95 sec
+2026-10-31T06:49:44.3299753Z 18/28 Test #18: engine_api_reference .............   Passed    0.08 sec
+2026-10-31T06:49:45.7602560Z 19/28 Test #19: engine_asset_cli .................   Passed    1.43 sec
+2026-10-31T06:49:54.2061268Z 20/28 Test #20: engine_large_normalmap ...........   Passed    8.45 sec
+2026-10-31T06:49:54.6802671Z 21/28 Test #21: engine_pbr_golden ................   Passed    0.47 sec
+2026-10-31T06:49:54.8825675Z 22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.20 sec
+2026-10-31T06:49:55.3949599Z 23/28 Test #23: engine_pbr_window ................   Passed    0.51 sec
+2026-10-31T06:49:57.1839169Z 24/28 Test #24: engine_asset_placement ...........   Passed    1.79 sec
+2026-10-31T06:50:07.5926217Z 25/28 Test #25: engine_live_api ..................   Passed   10.41 sec
+2026-10-31T06:50:08.8199039Z 26/28 Test #26: engine_local_socket_deadline .....   Passed    1.23 sec
+2026-10-31T06:50:09.0061315Z 27/28 Test #27: engine_live_journal ..............   Passed    0.19 sec
+2026-10-31T06:50:09.1151417Z 28/28 Test #28: engine_live_journal_fault ........   Passed    0.11 sec
+2026-10-31T06:50:09.1155352Z 100% tests passed out of 28
+2026-10-31T06:50:10.4486518Z 4: All tests passed (105 assertions in 13 test cases)
+2026-10-31T06:50:10.4539661Z 1/3 Test  #4: engine_render_tests ..............   Passed    0.10 sec
+2026-10-31T06:50:10.6752635Z 21: Blender tangent image difference: 0
+2026-10-31T06:50:10.8180894Z 21: PBR Blender golden, normal-map sensitivity, reflection, budgets and 16 km passed
+2026-10-31T06:50:10.8251172Z 2/3 Test #21: engine_pbr_golden ................   Passed    0.37 sec
+2026-10-31T06:50:11.0081388Z 22: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-31T06:50:11.0141495Z 3/3 Test #22: engine_pbr_color_golden ..........   Passed    0.19 sec
+2026-10-31T06:50:11.0146409Z 100% tests passed out of 3
+2026-10-31T06:50:11.1039898Z 1: All tests passed (560 assertions in 69 test cases)
+2026-10-31T06:50:11.1045051Z 1/1 Test #1: engine_core_tests ................   Passed    0.08 sec
+2026-10-31T06:50:11.1050005Z 100% tests passed out of 1
+2026-10-31T06:50:11.1109813Z print("lavapipe detected:", names)
+2026-10-31T06:50:11.1635641Z lavapipe detected: ['llvmpipe (llvm 20.1.2, 256 bits)']
+
+=== clang ===
+2026-10-31T06:50:51.1390148Z  1/28 Test  #1: engine_core_tests ................   Passed    0.09 sec
+2026-10-31T06:50:51.1428852Z  2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+2026-10-31T06:50:52.0234828Z  3/28 Test  #3: engine_asset_tests ...............   Passed    0.88 sec
+2026-10-31T06:50:53.2527533Z  4/28 Test  #4: engine_render_tests ..............   Passed    1.23 sec
+2026-10-31T06:50:53.3280451Z  5/28 Test  #5: engine_window_smoke ..............   Passed    0.07 sec
+2026-10-31T06:50:53.9002181Z  6/28 Test  #6: engine_swapchain_test ............   Passed    0.57 sec
+2026-10-31T06:50:54.0074568Z  7/28 Test  #7: engine_overlay_test ..............   Passed    0.11 sec
+2026-10-31T06:50:54.2786325Z  8/28 Test  #8: engine_run_smoke .................   Passed    0.27 sec
+2026-10-31T06:50:54.6085841Z  9/28 Test  #9: engine_point_light_warning .......   Passed    0.33 sec
+2026-10-31T06:50:54.6736963Z 10/28 Test #10: engine_screenshot_golden .........   Passed    0.06 sec
+2026-10-31T06:50:54.9463829Z 11/28 Test #11: engine_screenshot_cli ............   Passed    0.27 sec
+2026-10-31T06:50:54.9767120Z 12/28 Test #12: engine_version_json ..............   Passed    0.03 sec
+2026-10-31T06:50:55.4774890Z 13/28 Test #13: engine_cli_contract ..............   Passed    0.50 sec
+2026-10-31T06:50:55.5215295Z 14/28 Test #14: engine_docs_links ................   Passed    0.04 sec
+2026-10-31T06:50:58.1416591Z 15/28 Test #15: engine_sensitive_scan ............   Passed    2.62 sec
+2026-10-31T06:50:58.3924404Z 16/28 Test #16: engine_acceptance_m1 .............   Passed    0.25 sec
+2026-10-31T06:51:00.9470237Z 17/28 Test #17: engine_acceptance_m3 .............   Passed    2.55 sec
+2026-10-31T06:51:01.0511648Z 18/28 Test #18: engine_api_reference .............   Passed    0.10 sec
+2026-10-31T06:51:02.8256583Z 19/28 Test #19: engine_asset_cli .................   Passed    1.77 sec
+2026-10-31T06:51:15.4628844Z 20/28 Test #20: engine_large_normalmap ...........   Passed   12.64 sec
+2026-10-31T06:51:16.0992855Z 21/28 Test #21: engine_pbr_golden ................   Passed    0.64 sec
+2026-10-31T06:51:16.3221409Z 22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.22 sec
+2026-10-31T06:51:17.1539441Z 23/28 Test #23: engine_pbr_window ................   Passed    0.83 sec
+2026-10-31T06:51:19.7535755Z 24/28 Test #24: engine_asset_placement ...........   Passed    2.60 sec
+2026-10-31T06:51:29.6696156Z 25/28 Test #25: engine_live_api ..................   Passed    9.92 sec
+2026-10-31T06:51:30.9030221Z 26/28 Test #26: engine_local_socket_deadline .....   Passed    1.23 sec
+2026-10-31T06:51:31.1139979Z 27/28 Test #27: engine_live_journal ..............   Passed    0.21 sec
+2026-10-31T06:51:31.2773849Z 28/28 Test #28: engine_live_journal_fault ........   Passed    0.16 sec
+2026-10-31T06:51:31.2778398Z 100% tests passed out of 28
+2026-10-31T06:51:32.6672041Z 4: All tests passed (105 assertions in 13 test cases)
+2026-10-31T06:51:32.6729759Z 1/3 Test  #4: engine_render_tests ..............   Passed    0.12 sec
+2026-10-31T06:51:32.9402607Z 21: Blender tangent image difference: 0
+2026-10-31T06:51:33.1508919Z 21: PBR Blender golden, normal-map sensitivity, reflection, budgets and 16 km passed
+2026-10-31T06:51:33.1583466Z 2/3 Test #21: engine_pbr_golden ................   Passed    0.48 sec
+2026-10-31T06:51:33.3838032Z 22: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-31T06:51:33.3898475Z 3/3 Test #22: engine_pbr_color_golden ..........   Passed    0.23 sec
+2026-10-31T06:51:33.3904378Z 100% tests passed out of 3
+2026-10-31T06:51:33.4999139Z 1: All tests passed (560 assertions in 69 test cases)
+2026-10-31T06:51:33.5005464Z 1/1 Test #1: engine_core_tests ................   Passed    0.09 sec
+2026-10-31T06:51:33.5010594Z 100% tests passed out of 1
+2026-10-31T06:51:33.5063399Z print("lavapipe detected:", names)
+2026-10-31T06:51:33.5611238Z lavapipe detected: ['llvmpipe (llvm 20.1.2, 256 bits)']
+
+=== asan ===
+2026-10-31T06:51:03.8999266Z  1/27 Test  #1: engine_core_tests ................   Passed    0.45 sec
+2026-10-31T06:51:03.9164353Z  2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.02 sec
+2026-10-31T06:51:06.7360377Z  3/27 Test  #3: engine_asset_tests ...............   Passed    2.82 sec
+2026-10-31T06:51:08.2084378Z  4/27 Test  #4: engine_render_tests ..............   Passed    1.47 sec
+2026-10-31T06:51:08.3638862Z  5/27 Test  #5: engine_window_smoke ..............   Passed    0.15 sec
+2026-10-31T06:51:09.1359641Z  6/27 Test  #6: engine_swapchain_test ............   Passed    0.77 sec
+2026-10-31T06:51:09.3657150Z  7/27 Test  #7: engine_overlay_test ..............   Passed    0.23 sec
+2026-10-31T06:51:10.4036890Z  8/27 Test  #8: engine_run_smoke .................   Passed    1.04 sec
+2026-10-31T06:51:11.7380568Z  9/27 Test  #9: engine_point_light_warning .......   Passed    1.33 sec
+2026-10-31T06:51:11.9090439Z 10/27 Test #10: engine_screenshot_golden .........   Passed    0.17 sec
+2026-10-31T06:51:13.3107202Z 11/27 Test #11: engine_screenshot_cli ............   Passed    1.40 sec
+2026-10-31T06:51:13.4128290Z 12/27 Test #12: engine_version_json ..............   Passed    0.10 sec
+2026-10-31T06:51:17.6992328Z 13/27 Test #13: engine_cli_contract ..............   Passed    4.29 sec
+2026-10-31T06:51:17.7367649Z 14/27 Test #14: engine_docs_links ................   Passed    0.04 sec
+2026-10-31T06:51:19.8161566Z 15/27 Test #15: engine_sensitive_scan ............   Passed    2.08 sec
+2026-10-31T06:51:21.4656533Z 16/27 Test #16: engine_acceptance_m1 .............   Passed    1.65 sec
+2026-10-31T06:51:30.3260568Z 17/27 Test #17: engine_acceptance_m3 .............   Passed    8.86 sec
+2026-10-31T06:51:30.4970825Z 18/27 Test #18: engine_api_reference .............   Passed    0.17 sec
+2026-10-31T06:51:40.3926421Z 19/27 Test #19: engine_asset_cli .................   Passed    9.90 sec
+2026-10-31T06:52:10.7141648Z 20/27 Test #20: engine_large_normalmap ...........   Passed   30.32 sec
+2026-10-31T06:52:12.0094018Z 21/27 Test #21: engine_pbr_golden ................   Passed    1.29 sec
+2026-10-31T06:52:12.5927927Z 22/27 Test #22: engine_pbr_color_golden ..........   Passed    0.58 sec
+2026-10-31T06:52:13.7657445Z 23/27 Test #23: engine_pbr_window ................   Passed    1.17 sec
+2026-10-31T06:52:20.9505963Z 24/27 Test #24: engine_asset_placement ...........   Passed    7.18 sec
+2026-10-31T06:52:39.8088376Z 25/27 Test #25: engine_live_api ..................   Passed   18.86 sec
+2026-10-31T06:52:41.0471123Z 26/27 Test #26: engine_local_socket_deadline .....   Passed    1.24 sec
+2026-10-31T06:52:41.8947592Z 27/27 Test #27: engine_live_journal ..............   Passed    0.85 sec
+2026-10-31T06:52:41.8955081Z 100% tests passed out of 27
+2026-10-31T06:52:42.1530007Z 1: All tests passed (560 assertions in 69 test cases)
+2026-10-31T06:52:42.1749603Z 1/1 Test #1: engine_core_tests ................   Passed    0.25 sec
+2026-10-31T06:52:42.1754329Z 100% tests passed out of 1
+2026-10-31T06:52:42.1803239Z print("lavapipe detected under ASan/UBSan:", names)
+2026-10-31T06:52:42.3386389Z lavapipe detected under ASan/UBSan: ['llvmpipe (llvm 20.1.2, 256 bits)']
+
+=== windows ===
+2026-10-31T06:51:17.0798371Z print("Windows lavapipe detected:", names)
+2026-10-31T06:51:17.8958096Z Windows lavapipe detected: ['llvmpipe (llvm 23.1.4, 256 bits)']
+2026-10-31T06:51:19.3550703Z  1/21 Test  #1: engine_core_tests ................   Passed    0.89 sec
+2026-10-31T06:51:19.4268522Z  2/21 Test  #2: engine_dependencies_smoke ........   Passed    0.03 sec
+2026-10-31T06:51:22.0285552Z  3/21 Test  #3: engine_asset_tests ...............   Passed    2.60 sec
+2026-10-31T06:51:22.5875909Z  4/21 Test  #4: engine_render_tests ..............   Passed    0.56 sec
+2026-10-31T06:51:22.7478916Z  5/21 Test  #5: engine_screenshot_golden .........   Passed    0.16 sec
+2026-10-31T06:51:24.2720710Z  6/21 Test  #6: engine_screenshot_cli ............   Passed    1.52 sec
+2026-10-31T06:51:24.3401295Z  7/21 Test  #7: engine_version_json ..............   Passed    0.07 sec
+2026-10-31T06:51:27.2322032Z  8/21 Test  #8: engine_cli_contract ..............   Passed    2.89 sec
+2026-10-31T06:51:27.3117156Z  9/21 Test  #9: engine_docs_links ................   Passed    0.08 sec
+2026-10-31T06:51:30.6790051Z 10/21 Test #10: engine_sensitive_scan ............   Passed    3.37 sec
+2026-10-31T06:51:31.7601881Z 11/21 Test #11: engine_acceptance_m1 .............   Passed    1.08 sec
+2026-10-31T06:51:39.3950137Z 12/21 Test #12: engine_acceptance_m3 .............   Passed    7.63 sec
+2026-10-31T06:51:39.5641756Z 13/21 Test #13: engine_api_reference .............   Passed    0.17 sec
+2026-10-31T06:51:46.1713629Z 14/21 Test #14: engine_asset_cli .................   Passed    6.61 sec
+2026-10-31T06:52:08.6003199Z 15/21 Test #15: engine_large_normalmap ...........   Passed   22.43 sec
+2026-10-31T06:52:10.5163863Z 16/21 Test #16: engine_pbr_golden ................   Passed    1.92 sec
+2026-10-31T06:52:11.5545464Z 17/21 Test #17: engine_pbr_color_golden ..........   Passed    1.04 sec
+2026-10-31T06:52:21.6556340Z 18/21 Test #18: engine_asset_placement ...........   Passed   10.10 sec
+2026-10-31T06:54:17.9324437Z 19/21 Test #19: engine_live_api ..................   Passed  116.28 sec
+2026-10-31T06:54:19.2666779Z 20/21 Test #20: engine_local_socket_deadline .....   Passed    1.33 sec
+2026-10-31T06:54:19.9177534Z 21/21 Test #21: engine_live_journal ..............   Passed    0.65 sec
+2026-10-31T06:54:19.9185253Z 100% tests passed out of 21
+2026-10-31T06:54:20.8011443Z 4: All tests passed (105 assertions in 13 test cases)
+2026-10-31T06:54:20.8043305Z 1/3 Test  #4: engine_render_tests ..............   Passed    0.53 sec
+2026-10-31T06:54:21.8778817Z 16: Blender tangent image difference: 0
+2026-10-31T06:54:22.7481555Z 16: PBR Blender golden, normal-map sensitivity, reflection, budgets and 16 km passed
+2026-10-31T06:54:22.7512138Z 2/3 Test #16: engine_pbr_golden ................   Passed    1.95 sec
+2026-10-31T06:54:23.8551568Z 17: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-31T06:54:23.8578949Z 3/3 Test #17: engine_pbr_color_golden ..........   Passed    1.11 sec
+2026-10-31T06:54:23.8588755Z 100% tests passed out of 3
+2026-10-31T06:54:25.4888813Z 1: All tests passed (547 assertions in 67 test cases)
+2026-10-31T06:54:25.4921593Z 1/1 Test #1: engine_core_tests ................   Passed    1.25 sec
+2026-10-31T06:54:25.4934089Z 100% tests passed out of 1
+
+=== fuzz ===
+2026-10-31T06:48:31.0103241Z Fuzz target gltf: seconds=30, corpus files=8
+2026-10-31T06:48:31.0281903Z INFO: seed corpus: files: 8 min: 1336b max: 183764b total: 554663b rss: 36Mb
+2026-10-31T06:49:02.5520538Z Done 3702 runs in 31 second(s)
+2026-10-31T06:49:02.5986177Z Fuzz target image: seconds=30, corpus files=6
+2026-10-31T06:49:02.6171662Z INFO: seed corpus: files: 6 min: 268b max: 122586b total: 131732b rss: 34Mb
+2026-10-31T06:49:33.6364481Z Done 5974 runs in 31 second(s)
+2026-10-31T06:49:33.6734612Z Fuzz target rpc: seconds=30, corpus files=4
+2026-10-31T06:49:33.6946260Z INFO: seed corpus: files: 4 min: 3b max: 73b total: 125b rss: 35Mb
+2026-10-31T06:50:04.6958544Z Done 77572 runs in 31 second(s)
+
+=== quality ===
+2026-10-31T06:47:39.3069061Z   | xargs -0 clang-format-18 --dry-run --Werror
+2026-10-31T06:47:39.9017151Z   | xargs -0 clang-tidy-18 -p build/ci-linux-clang --warnings-as-errors='*'
