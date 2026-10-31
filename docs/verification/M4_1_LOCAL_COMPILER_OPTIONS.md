@@ -1,5 +1,9 @@
 # M4.1 local compiler gate — binding decision required
 
+[Independent Astra high report review](M4_1_LOCAL_COMPILER_REVIEW.md): approved
+for the report only, with no required findings. Optional scope clarifications
+are applied; this does not admit a new dependency source or accept ADR-0016.
+
 **Current answer: no.** The adopted admission pin, unmodified sol2 release3.3.0
 (`eba86625b707e3c8c99bbfc4624e51f42dc9e561`), does not compile with this machine's
 default GCC16.2.1 or Clang23.1.3. Both reject the nonexistent `construct` call

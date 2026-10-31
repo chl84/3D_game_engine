@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-31
 **Current milestone:** M4 — physics and game logic
-**Current substep:** M4.1 — technical admission/re-review verified; owner VM-topology and concrete-schema decisions pending before M4.2.
+**Current substep:** M4.1 — schemas/parser approved; binding remedy and VM topology pending; the mandatory local compiler gate holds M4.2.
 
 ## M4.1 local binding decision — M4.2 explicitly held
 
@@ -47,7 +47,9 @@ costs must be refreshed for whichever binding remedy is actually admitted.
 The current reference implementation was independently reviewed at30a130b and
 publication CI41195896407 passed six jobs on e7df901. Those results are retained
 as historical reference evidence, not newer-candidate adoption proof. The local
-options/derived-capacity follow-up awaits its own report review/publication checks.
+options/derived-capacity follow-up passed independent Astra high review for the
+report only; [disposition](verification/M4_1_LOCAL_COMPILER_REVIEW.md). Publication
+checks remain attached to PR6 and do not admit a new binding source.
 M4.2 has not started. Remaining owner decisions: binding remedy first, then
 ADR-0016 and VM topology after the corrected admission/measurement evidence.
 

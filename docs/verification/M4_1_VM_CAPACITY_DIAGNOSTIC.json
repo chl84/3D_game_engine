@@ -1,7 +1,7 @@
 {
   "budgetBytes": 67108864,
   "sourceBase": "e7df90109d711176195a10a20063f70bea139c77",
-  "scope": "Unadopted isolated sol2 3.3.0 optional-reference backport; GCC16, same Lua5.4.9 C++ library; original1000 retained byte counts match. Count guard widened only in scratch. Shared diagnostic allocator ceiling256MiB to observe over-budget neighbours without OOM; production64MiB budget unchanged. Peak includes initialization/bindings and positive validation. Host/native memory not part of Lua budget. No timing claimed during concurrent build activity.",
+  "scope": "Unadopted isolated sol2 3.3.0 optional-reference backport; GCC16, same Lua5.4.9 C++ library; the one-shot1000-instance capacity baseline matches original reference medians; supplemental RSS samples may vary. Count guard widened only in scratch. Shared diagnostic allocator ceiling256MiB to observe over-budget neighbours without OOM; production64MiB budget unchanged. Peak includes initialization/bindings and positive validation. Host/native memory not part of Lua budget. No timing claimed during concurrent build activity.",
   "binarySha256": "24a3c88d809aba198e45ac0a357c03e020dafe49760a23424e33539dbf19922e",
   "compiler": "GCC16.2.1",
   "summary": {

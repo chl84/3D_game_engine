@@ -114,6 +114,10 @@ instances remain live, rather than Python-launch-influenced child high-water RSS
 | One VM per instance | 32,473,088 bytes | 28,307,456 bytes | 28,307.456 bytes (27.644KiB) |
 | Session VM + private environments | 8,036,352 bytes | 3,842,048 bytes | 3,842.048 bytes (3.752KiB) |
 
+Shared-run GC timing also varies the outstanding Lua allocation in an individual
+sample; the reference and supplementary medians must not be read as a fixed
+per-script size guarantee.
+
 RSS is page-granular and includes allocator/code-page effects, not ownership-
 attributed heap bytes. RSS already includes Lua; never add the RSS and Lua
 columns together. The rows are medians of separately observed quantities;
@@ -136,8 +140,10 @@ extension of the3.3.0 diagnostic. These are not absolute hard-quota maxima:
 The budget is67,108,864 bytes. Fresh-process binary search checked both fitting
 and next-over-budget neighbors, followed by two independent rechecks per boundary.
 Every successful construction also positively validates each script's independent
-state/update and allocation cleanup. At1,000 instances the extended copy's Lua
-bytes exactly match both original GCC14 reference totals.
+state/update and allocation cleanup. The one-shot1,000-instance capacity baseline matches both original GCC14
+reference medians exactly. This does not claim every supplemental RSS sample
+has identical Lua bytes: one shared RSS sample records3,081,753 bytes, while
+the other four record2,965,088; reported medians are unchanged.
 
 The extension only widens the CLI count guard in a scratch copy. Its shared
 diagnostic allocator ceiling is256MiB so it can observe an over-budget neighbor

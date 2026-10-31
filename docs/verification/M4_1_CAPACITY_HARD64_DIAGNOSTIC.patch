@@ -1,20 +1,8 @@
 --- a/lua_probe.cpp
 +++ b/lua_probe.cpp
-@@ -185,7 +185,7 @@
-     const auto start = std::chrono::steady_clock::now();
-     if (mode == "per-session") {
-         states.push_back(std::make_unique<Vm>(totals));
+@@ -188 +188 @@
 -        states.back()->allocator.limit = std::size_t{256} * 1024U * 1024U;
 +        states.back()->allocator.limit = aggregate_limit;
-     }
-     for (std::size_t index = 0; index < count; ++index) {
-         if (mode == "per-instance") {
-@@ -219,7 +219,7 @@
-             {"rssBeforeLuaBytes", rss_before},
-             {"rssAfterInitializationBytes", rss_after},
-             {"rssInitializationDeltaBytes", rss_after - rss_before},
+@@ -222 +222 @@
 -            {"diagnosticSharedAllocatorLimitBytes", 268435456},
 +            {"diagnosticSharedAllocatorLimitBytes", 67108864},
-             {"aggregateRuntimeBudgetBytes", aggregate_limit},
-             {"exceedsAggregateRuntimeBudget", retained > aggregate_limit},
-             {"diagnosticAggregateBudgetNotEnforced", true},
