@@ -10,7 +10,7 @@ acceptance criteria in the approved plan are met and the evidence is recorded in
 | M1 | Headless core: reflection, ECS, command bus, project/scene format, offline CLI, fixed tick | Done — `v0.2.1` |
 | M2 | Vulkan renderer, SDL3 window, offscreen screenshots, ImGui debug overlay | Done — `v0.3.0`, owner approved |
 | M3 | Asset pipeline (glTF/GLB), cooked cache, live API; basic PBR and `DirectionalLight`; replace ilammy/msvc-dev-cmd with native vcvars | Done — v0.4.0; Astra high approved, final six-job CI green, owner manual test passed, merged in PR5 |
-| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | [Plan approved](M4_PLAN.md) with conditions; M4.1 technical probes/re-review passed; owner VM/schema decisions pending |
+| M4 | Jolt physics, Lua 5.4, gameplay modules, input recording | [Plan approved](M4_PLAN.md) with conditions; M4.1 reference probes/re-review passed; schemas/parser bounds approved; local binding/compiler and VM decisions pending, M4.2 held |
 | M5 | Open world: chunks, streaming, terrain LOD, double precision, persistent edits; shadows and point lights with the reference scene | Planned |
 | M6 | World editor with ImGui, reflection-driven inspector, gizmos | Planned |
 | M7 | AI-assisted game development, MCP adapter, automation tools | Planned |
@@ -97,6 +97,16 @@ formats and acceptance criteria require their own approved plan; it is not
 silently included in M4 or implemented by the deferral. Preserve original M3
 asset IDs and reimport compatibility. The final placement is a proposal for
 owner confirmation when that plan is prepared.
+
+## M5 world persistence — owner clarification
+
+World data must be stored in separate, versioned chunk files, not embedded in
+scene JSON; see [ADR-0020](decisions/ADR-0020-world-chunk-persistence.md).
+Keep the approved scene document64MiB/depth32 bounds; do not raise
+them to fit a streamed world. The M5 plan must define bounded chunk/manifest
+schemas, atomic persistence, streaming/identity and migration acceptance before
+implementation. This records the owner's storage direction, not a new M4 format
+or authorization to implement M5 now.
 
 ## Deferred modules
 

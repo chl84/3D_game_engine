@@ -4,72 +4,65 @@
 **Current milestone:** M4 — physics and game logic
 **Current substep:** M4.1 — technical admission/re-review verified; owner VM-topology and concrete-schema decisions pending before M4.2.
 
-## M4.1 technical admission verified — owner decisions pending
+## M4.1 local binding decision — M4.2 explicitly held
 
-Independent GPT-6 Astra high re-review passed exact implementation
-`30a130bb6ae5eca02477ea66dc475123e38b4264`, closing both initial P2 findings with
-no new required corrections. [Review](verification/M4_1_ASTRA_REVIEW.md).
-[CI41193913160](https://github.com/chl84/3D_game_engine/actions/runs/41193913160)
-passed all six jobs: GCC14/Clang18 each30/30, ASan/UBSan29/29, MSVC23/23,
-Quality and short fuzz. [CI evidence](verification/M4_1_REFERENCE_CI_EVIDENCE.txt).
-Subsequent publication edits retain documentation/evidence only; the reviewed
-engine/build/test/overlay implementation remains unchanged. Publication-head
-checks are attached to draft PR6, without granting merge/tag authorization.
+The owner approved the concrete ADR-0019 contracts and64MiB/depth32 parser
+exception, conditional on **always rejecting unknown component types** and
+**persisting migration only on explicit save**. No reader/writer has been
+implemented. M5 world data must use separate chunk files, not scene JSON;
+[ADR-0020](decisions/ADR-0020-world-chunk-persistence.md) records the accepted
+storage direction without selecting concrete chunk schemas.
 
-Lua5.4.9/C++ and sol2 release3.3.0 admission now satisfies the owner's three-
-compiler condition. Actual Lua/Jolt library compilers match each host in both
-configurations: GCC14.2.0, Clang18.1.3 and MSVC19.44.35229.0. Cached archive
-hashes, all1,026 generated library commands, exception/FP/SSE settings and own
--Werror or /WX are retained in [summary](verification/M4_1_REFERENCE_PROBES.json)
-and [complete compressed evidence](verification/M4_1_REFERENCE_PROBES_FULL.json.gz).
-The three240-tick primitive traces match exactly. The masked Windows audit and
-Ninja/SSE configuration failures are corrected; prior reports remain explicitly
-historical. This is admission, not the unimplemented full M4.4 physics suite.
+ADR-0016/topology remains unaccepted. The owner added a mandatory default-local-
+compiler gate before sol2 adoption and forbade starting M4.2 until resolution.
+Unpatched release3.3.0 reproducibly fails GCC16.2.1 and Clang23.1.3 in
+optional<T&>::emplace (nonexistent construct). Earlier reference admission and
+Astra review remain valid for their exact sources, but do not waive this gate.
 
-[Measured comparison](verification/M4_1_VM_COMPARISON.md), exactly1,000 instances,
-five fresh processes per model, reference i7-1265U, AC/balanced, GCC14 Release:
+[Concrete alternatives/recommendation](verification/M4_1_LOCAL_COMPILER_OPTIONS.md):
+recommend the immutable upstream sol2 commitc1f95a773c6f8f4fde8ca3efe872e7286afe4444,
+subject to owner approval and fresh admission. In scratch trials it compiled all
+engine build steps with each default local compiler and passed the Lua/Jolt/
+version selection3/3 per compiler with own warnings-as-errors. A narrow3.3.0
+backport also passed both protected Lua probes. No manifest/overlay/preset or
+production source was changed; all trials reused existing pinned GCC16 vcpkg
+libraries. New candidate reference/sanitizer/clean dependency rebuilds remain
+unverified, and no production binding backend is adopted by these experiments.
 
-| VM model | Median startup | Retained Lua allocation |
-|---|---:|---:|
-| One VM per instance | 53.32ms | 22.22MiB |
-| One VM per session, private environments | 18.01ms | 2.83MiB |
+[Updated VM report](verification/M4_1_VM_COMPARISON.md) includes bindings/setup:
+original reference1000-instance means are23,298 Lua bytes and53.317us per-instance
+VM versus2,965.088 bytes and18.013us per shared-session instance (amortized).
+Supplemental RSS snapshots include native binding/host allocations. An isolated
+backport diagnostic (not adopted) matches original1000-instance Lua bytes and
+observes peak-budget boundaries at2,880 separate VMs or21,726 shared environments,
+with both next normal-GC peaks over64MiB and repeated boundary controls. Hard-
+ceiling emergency GC also admits24,000 shared instances in retained stress
+controls, but26,000 fails with Lua panic/SIGABRT; no stable exact hard-quota maximum
+or production-safe setup OOM handling is claimed. Shared table/GC
+growth makes the naive22,633 linear estimate too high. These counts apply only
+to this small payload and the **Lua allocator** budget, not total RAM or arbitrary
+scripts; at most eight fully saturated8MiB separate heaps fit64MiB. Formal VM
+costs must be refreshed for whichever binding remedy is actually admitted.
 
-Whole-child RSS and scope/provenance are in the report. Current installed RAM
-is about32GiB, differing from the original16GB specification. The final candidate
-binary is byte-identical to the measured binary. Recommend per-instance VMs for
-M4 because the approved8MiB per-instance quota has a clear enforceable heap
-boundary; shared environments need a proven allocation attribution design.
-Neither model is selected or adopted in production code.
-
-Owner decisions still needed, as reserved in the M4 approval:
-
-1. VM topology and final acceptance of ADR-0016 after reviewing the measured costs.
-2. Concrete project2/scene4/game-profile1/replay1 contracts in
-   [ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md) and
-   [the proposal](proposals/m4/README.md). Legacy names/paths/counts are preserved;
-   five schemas, seven examples,15 rejection and12 compatibility controls pass.
-3. The explicit new64MiB/depth32 document parser compatibility exception:
-   oversized/deep legacy documents are rejected without writing/truncation.
-
-No format reader/writer, gameplay VM topology or M4.2 implementation is adopted
-before these decisions. Local GCC16/Clang23 upstream sol2 header incompatibility
-and tidy18/GCC16 standard-library incompatibility remain documented deviations;
-reference compilers passed without header patches, substitutions or suppressions.
-Production sandbox/stale-ECS APIs, full physics fixtures and VM-setup OOM
-injection remain future M4 work. Windows compilation/headless/offscreen is
-verified; physical Windows presentation/gameplay was not tested in M4.1.
+The current reference implementation was independently reviewed at30a130b and
+publication CI41195896407 passed six jobs on e7df901. Those results are retained
+as historical reference evidence, not newer-candidate adoption proof. The local
+options/derived-capacity follow-up awaits its own report review/publication checks.
+M4.2 has not started. Remaining owner decisions: binding remedy first, then
+ADR-0016 and VM topology after the corrected admission/measurement evidence.
 
 ## M4 owner approval and active limits — 2026-10-31
 
 M4_PLAN.md is owner-approved with explicit conditions. ADR-0017/0018 are
-accepted. The conditional sol2 3.3.0 and C++ Lua 5.4.9 compiler
-approval is now evidenced by green GCC14/Clang18/MSVC probes with warnings-as-
-errors on our code. ADR-0016 remains pending the owner topology decision after
-the completed1,000-instance comparison and recommendation. No VM model is
+accepted. The original reference compiler condition is evidenced by green
+GCC14/Clang18/MSVC probes, but the later mandatory GCC16/Clang23 local gate is
+unresolved for the adopted3.3.0 pin. ADR-0016 remains pending the binding remedy
+and owner topology decision after updated admission/measurement evidence. No VM model is
 adopted yet. Resource limits/tick rate are approved starting points.
 
-Project2/scene4/replay direction is approved; concrete schemas must be approved
-in M4.1 before format-writing code. Animation deferral is approved and tracked
+Concrete project2/scene4/game-profile/replay schemas and parser limits are now
+approved with mandatory unknown-type rejection and explicit-save-only migration.
+Their implementation is still held by the local binding/VM decision. Animation deferral is approved and tracked
 as proposed M4A after M4/before M5. M4.8 keeps installed SDK as its goal, with a
 stop-and-propose checkpoint if dependency exports become extensive: consider
 full packaging in M8 and an external CMake/public-target boundary test in M4.

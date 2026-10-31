@@ -1,0 +1,28 @@
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found nlohmann_json: <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/share/nlohmann_json/nlohmann_jsonConfig.cmake (found version "3.12.0")
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: <repo>/build/m4-local-gcc16
+[1/6] Scanning <repo>/tests/admission/main.cpp for CXX dependencies
+[2/6] Scanning <repo>/tests/admission/lua_probe.cpp for CXX dependencies
+[3/6] Generating CXX dyndep file CMakeFiles/engine_m4_admission.dir/CXX.dd
+[4/6] Building CXX object CMakeFiles/engine_m4_admission.dir/main.cpp.o
+[5/6] Building CXX object CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o
+FAILED: [code=1] CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o 
+/usr/bin/g++ -DM4_PROBE_BUILD_TYPE=\"Release\" -DM4_PROBE_COMPILER="\"GNU 16.2.1\"" -DSOL_ALL_SAFETIES_ON=1 -DSOL_USING_CXX_LUA=1 -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/engine-lua-cxx -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/share/sol2/../../include -isystem <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include -O3 -DNDEBUG -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wdouble-promotion -Wformat=2 -Werror -ffp-contract=off -MD -MT CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o -MF CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o.d -fmodules-ts -fmodule-mapper=CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o.modmap -MD -fdeps-format=p1689r5 -x c++ -o CMakeFiles/engine_m4_admission.dir/lua_probe.cpp.o -c <repo>/tests/admission/lua_probe.cpp
+In file included from <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/optional.hpp:33,
+                 from <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/types.hpp:28,
+                 from <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/trampoline.hpp:27,
+                 from <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/stack.hpp:27,
+                 from <repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/sol.hpp:52,
+                 from <repo>/tests/admission/lua_probe.cpp:3:
+<repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/optional_implementation.hpp: In member function ‘T& sol::optional<T&>::emplace(Args&& ...)’:
+<repo>/build/ci-linux-gcc/vcpkg_installed/x64-linux/include/sol/optional_implementation.hpp:2194:31: error: ‘class sol::optional<T&>’ has no member named ‘construct’ [-Wtemplate-body]
+ 2194 |                         this->construct(std::forward<Args>(args)...);
+      |                               ^~~~~~~~~
+ninja: build stopped: subcommand failed.

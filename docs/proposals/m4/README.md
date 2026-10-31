@@ -1,9 +1,12 @@
-# M4 concrete format proposal — owner review required
+# Approved M4 format contracts — implementation pending
 
-**Proposed only.** These draft-07 contracts are not installed in `schemas/`,
-advertised by the engine, or used by its readers/writers. M3 still reads/writes
-project1 and scene3. Approval of the M4 direction did not approve these files.
-Both VM topology values are review alternatives; neither is the adopted default.
+**Owner-approved on 2026-10-31**, including the64MiB/depth32 document bounds.
+Unknown component types must always be rejected by registered type validation;
+migration writes project/scene files only on explicit save. These draft-07
+contracts are not yet installed in `schemas/` or integrated into readers/writers.
+M3 still reads/writes project1 and scene3. Both VM topology values remain review
+alternatives; neither is selected. M4.2 is explicitly held pending ADR-0016's
+local-build/binding and VM decisions.
 
 | Contract | Concrete change |
 |---|---|
@@ -38,14 +41,14 @@ replay fields. Registered component field defaults materialize omitted legacy
 fields on in-memory migration, as the existing reader/writer does. Optional
 legacy metadata/parent fields become `{}`/`null`; stored values are preserved.
 
-**Explicit proposed compatibility exception:** the new64MiB document/depth32
+**Explicit owner-approved compatibility exception:** the new64MiB document/depth32
 parser bounds can reject formerly loadable oversized/deep legacy documents.
 Do not truncate, split, rewrite or save them automatically. Reject before world
 construction/writes with a structured resource-limit validation error containing
 path, actual size/depth, proposed limit and advice to keep using M3 or request an
-approved larger bound. This exception needs the owner's concrete format approval;
-it is not covered by the direction-only approval. No new parser limit is applied
-to production readers by this proposal.
+approved larger bound. The owner explicitly approved this exception. No new
+parser limit is applied to production readers by this decision record. M5 world
+data belongs in separate chunk files, not in a larger scene document.
 
 Validation has two required stages: this envelope, then registered descriptor
 schemas and semantic checks. Existing built-in component field contracts remain
@@ -74,7 +77,7 @@ Additional semantic checks before allocating runtime bodies or opening scripts:
 - State/metadata are finite JSON, with depth at most32; declared script state
   has at most256 root fields and at most64KiB encoded UTF-8 per instance.
   Propose a64MiB cap on each project/scene document and validate size/depth before
-  parsing or allocating an unbounded tree. These new parser limits need approval.
+  parsing or allocating an unbounded tree. These parser limits are owner-approved.
 
 ## Replay framing and determinism
 
@@ -117,9 +120,10 @@ byte-level golden vectors and mutation tests before claiming interoperability.
 
 ## Review checkpoint
 
-Owner approval is needed for the concrete field contracts, parser bounds,
-migration defaults and replay framing. VM topology remains a separate measured
-decision. Independent review and cross-compiler probes remain M4.1 gates.
+The owner approved the concrete field contracts, parser bounds, migration
+defaults and replay framing with mandatory unknown-type rejection and explicit-
+save-only migration. VM topology and local compiler/binding compatibility remain
+separate unresolved M4.1 decisions; M4.2 must not start before they are resolved.
 Validation of these proposal examples is not an engine format implementation:
 
 ```bash

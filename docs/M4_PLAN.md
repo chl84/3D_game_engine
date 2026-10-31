@@ -1,7 +1,8 @@
 # M4 Plan — Physics and game logic
 
 **Status:** Owner-approved on 2026-10-31 with the conditions below. M4.1 is
-authorized; VM topology and concrete schemas require further owner decisions.
+authorized; concrete schemas/parser bounds are approved. Local compiler/binding
+compatibility and VM topology remain unresolved; M4.2 must not start.
 
 ## Owner approval conditions
 
@@ -15,8 +16,12 @@ authorized; VM topology and concrete schemas require further owner decisions.
 - The resource budgets and 60Hz rate are approved starting points. An admission
   benchmark may measure a topology beyond the aggregate runtime budget only if
   it is explicitly labelled diagnostic and reports that budget incompatibility.
-- Project2/scene4/replay direction is approved, but concrete schemas must be
-  approved in M4.1 before format-writing implementation.
+- Concrete project2/scene4/game-profile/replay contracts and64MiB/depth32 bounds
+  are now approved: unknown components always reject; migration writes only on
+  explicit save. M5 world data goes in separate chunk files, not scene JSON.
+- The owner now requires local GCC16/Clang23 builds to work before sol2 adoption.
+  Present newer pinned sol2, overlay backport, locked local GCC14 and reflection-
+  generated Lua C-API binding alternatives. Do not start M4.2 before resolution.
 - Skeletal-animation deferral is approved; track a separate animation plan in
   ROADMAP.md with proposed placement.
 - Retain the installed SDK goal for M4.8. If dependency install/export becomes
@@ -240,5 +245,7 @@ Technical admission and independent Astra high re-review passed exact30a130b;
 all six reference CI jobs are green. [Evidence](verification/M4_1_REFERENCE_CI_EVIDENCE.txt).
 The1,000-instance comparison is complete with a per-instance-VM recommendation
 that retains enforceable approved quotas. [Numbers and scope](verification/M4_1_VM_COMPARISON.md).
-Await owner topology/schema approval, including the explicit64MiB/depth32 legacy
-document rejection exception, before closing M4.1 or starting M4.2.
+Concrete schemas and the64MiB/depth32 legacy-document rejection exception are
+now approved with strict unknown-type rejection and explicit-save-only migration.
+Await local compiler/binding resolution and owner topology approval before
+closing M4.1 or starting M4.2. M5 uses separate world chunk files.

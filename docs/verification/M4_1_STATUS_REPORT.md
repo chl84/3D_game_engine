@@ -1,4 +1,9 @@
-# M4.1 technical admission report — 2026-10-31
+# M4.1 reference admission report — 2026-10-31
+
+Historical reference report. The owner subsequently approved schemas/parser
+bounds and added a mandatory local compiler gate. See the
+[local binding follow-up](M4_1_LOCAL_COMPILER_OPTIONS.md) and updated VM report;
+M4.2 remains held. The newer candidate is not covered by this earlier verdict.
 
 Delivered isolated pinned dependency/profile probes, a measured1,000-instance
 comparison, concrete owner-review schemas and independent Astra high re-review.

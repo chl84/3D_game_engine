@@ -1,0 +1,95 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -26,8 +26,8 @@
+             const auto parsed = std::from_chars(text.data(), text.data() + text.size(), count);
+             admission::require(parsed.ec == std::errc{} &&
+                                    parsed.ptr == text.data() + text.size() && count > 0 &&
+-                                   count <= 1000,
+-                               "instance count must be in 1..1000");
++                                   count <= 65536,
++                               "instance count must be in 1..65536");
+             result = admission::benchmark_lua(argv[2], count);
+         } else {
+             throw std::runtime_error("invalid admission command");
+--- a/lua_probe.cpp
++++ b/lua_probe.cpp
+@@ -5,6 +5,8 @@
+ #include <algorithm>
+ #include <chrono>
+ #include <cstdlib>
++#include <fstream>
++#include <unistd.h>
+ #include <limits>
+ #include <memory>
+ #include <string>
+@@ -162,8 +164,19 @@
+ 
+ } // namespace
+ 
++std::size_t diagnostic_rss_bytes() {
++    std::ifstream input("/proc/self/statm");
++    std::size_t pages = 0;
++    std::size_t resident = 0;
++    require(static_cast<bool>(input >> pages >> resident), "cannot read diagnostic RSS");
++    const auto page_size = ::sysconf(_SC_PAGESIZE);
++    require(page_size > 0, "cannot read diagnostic page size");
++    return resident * static_cast<std::size_t>(page_size);
++}
++
+ nlohmann::json benchmark_lua(std::string_view mode, std::size_t count) {
+     require(mode == "per-instance" || mode == "per-session", "unknown VM model");
++    const auto rss_before = diagnostic_rss_bytes();
+     Totals totals;
+     std::vector<std::unique_ptr<Vm>> states;
+     std::vector<Instance> instances;
+@@ -172,7 +185,7 @@
+     const auto start = std::chrono::steady_clock::now();
+     if (mode == "per-session") {
+         states.push_back(std::make_unique<Vm>(totals));
+-        states.back()->allocator.limit = aggregate_limit;
++        states.back()->allocator.limit = std::size_t{256} * 1024U * 1024U;
+     }
+     for (std::size_t index = 0; index < count; ++index) {
+         if (mode == "per-instance") {
+@@ -183,6 +196,7 @@
+     const auto end = std::chrono::steady_clock::now();
+     const auto retained = totals.current;
+     const auto peak = totals.peak;
++    const auto rss_after = diagnostic_rss_bytes();
+     // Equal workload and a positive isolation check, outside startup timing.
+     for (auto& instance : instances) {
+         sol::protected_function update = instance.object.get<sol::protected_function>("update");
+@@ -191,6 +205,7 @@
+         require(instance.object["value"].get<Value&>().number == 18,
+                 "bound value changed incorrectly");
+     }
++    const auto post_validation_peak = totals.peak;
+     const auto milliseconds = std::chrono::duration<double, std::milli>(end - start).count();
+     instances.clear();
+     states.clear();
+@@ -200,10 +215,15 @@
+             {"startupMilliseconds", milliseconds},
+             {"retainedLuaBytes", retained},
+             {"peakLuaBytes", peak},
++            {"postValidationPeakLuaBytes", post_validation_peak},
++            {"rssBeforeLuaBytes", rss_before},
++            {"rssAfterInitializationBytes", rss_after},
++            {"rssInitializationDeltaBytes", rss_after - rss_before},
++            {"diagnosticSharedAllocatorLimitBytes", 268435456},
+             {"aggregateRuntimeBudgetBytes", aggregate_limit},
+             {"exceedsAggregateRuntimeBudget", retained > aggregate_limit},
+             {"diagnosticAggregateBudgetNotEnforced", true},
+-            {"sourceRelease", "sol2 3.3.0 / Lua 5.4.9 C++"},
++            {"sourceRelease", "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++"},
+             {"solHeaderVersion", SOL_VERSION_STRING},
+             {"luaRelease", LUA_RELEASE}};
+ }
+@@ -281,7 +301,7 @@
+     const auto shared = benchmark_lua("per-session", 2);
+     require(first["instances"] == shared["instances"], "topology workloads differ");
+     return {{"luaRelease", LUA_RELEASE},
+-            {"solSourceTag", "v3.3.0"},
++            {"solSourceTag", "DIAGNOSTIC backport-3.3.0"},
+             {"solHeaderVersion", SOL_VERSION_STRING},
+             {"cxxLua", true},
+             {"checks",

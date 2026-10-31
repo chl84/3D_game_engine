@@ -43,17 +43,16 @@ renderer. Python `jsonschema` is a development-only contract-test dependency.
 | fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import | M3 | C++17 glTF parser used for meshes, textures, materials and node hierarchies. Approved by the owner on 2026-10-30 and used by `engine/asset` from M3.2. |
 | simdjson | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | Transitive JSON parser for fastgltf | M3 | Pinned through the vcpkg baseline and an exact override. All components are permissive. Approved as a transitive dependency on 2026-10-30. |
 
-## Planned dependencies
+## M4 runtime dependencies — adoption pending
 
-These are approved in principle by the milestone plan but are not in the build
-yet. The exact versions are pinned at the start of the milestone that needs
-them.
+These versions are in the manifest for isolated M4.1 admission only. Engine
+runtime adoption is pending the local compiler/binding and VM decisions below.
 
 | Dependency | Version | License | Purpose | Milestone |
 |---|---|---|---|---|
 | Jolt Physics | 5.6.0 | MIT | Physics | M4 |
-| Lua | 5.4.8 | MIT | Scripting | M4 |
-| sol2 | 3.5.0 | MIT | Lua bindings generated from reflection | M4 |
+| Lua | 5.4.9 as C++ | MIT | Scripting, admission only | M4 |
+| sol2 | Release3.3.0, local compiler gate unresolved | MIT | Lua binding admission candidate | M4 |
 
 ## Tooling and SDK
 
@@ -135,8 +134,11 @@ external dependencies or upgrades.
 The owner approved Jolt5.6.0 and conditionally approved sol2 release3.3.0 plus
 Lua5.4.9 compiled as C++, subject to GCC14/Clang18/MSVC probes with -Werror for
 our code. These dependencies are currently linked only by isolated admission
-executables, not the engine runtime. ADR-0016 remains pending the compiler gate
-and measured VM-topology decision. No newer library is silently substituted.
+executables, not the engine runtime. The reference matrix passed, but the owner
+now also requires default local GCC16/Clang23 builds before adoption. Unpatched
+3.3.0 fails both. ADR-0016 and M4.2 remain held pending the binding and VM decisions.
+Newer upstream/backport trials are isolated, not dependency substitutions; see
+[local options and recommendation](verification/M4_1_LOCAL_COMPILER_OPTIONS.md).
 
 - Jolt commit `e77f175595e64cb44218cc9d9d56fc365ad0e36a`, MIT. The local
   joltphysics overlay fixes CPU/static/double/deterministic flags; it does not

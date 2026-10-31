@@ -1,6 +1,7 @@
 # Build
 
-**Status:** M3.8 technical acceptance complete; release authorization pending. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M3 is released as v0.4.0. M4.1 admission remains held on the local
+binding/compiler decision described below. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
@@ -35,6 +36,13 @@ Windows Server 2022 with MSVC. M0.5 installs `g++-14` and uses the
 `ci-linux-gcc14` preset; the ASan/UBSan job also uses `g++-14`. CI is the
 source of truth for reproducible builds; local Omarchy versions may be newer
 and are reported here.
+
+M4.1 adds an owner-required local gate: sol2 must build with default GCC16 and
+Clang23 before adoption. The current unmodified3.3.0 admission pin fails in
+`optional<T&>::emplace` on both. A diagnostic newer upstream pin builds all engine
+targets with both compilers, but it is not adopted and does not change normal
+presets/manifests. See [evidence, alternatives and recommendation](verification/M4_1_LOCAL_COMPILER_OPTIONS.md).
+M4.2 is explicitly held pending that binding decision and VM-topology approval.
 
 ## Prerequisites
 

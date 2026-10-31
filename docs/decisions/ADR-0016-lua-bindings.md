@@ -1,6 +1,6 @@
 # ADR-0016: Lua bindings and VM boundary
 
-- **Status:** Partially approved; compiler admission verified, final acceptance pending owner VM-topology decision
+- **Status:** Pending; reference admission verified, local compiler compatibility and owner VM-topology decision unresolved
 - **Date:** 2026-10-31
 - **Scope:** [M4 proposal](../M4_PLAN.md); extends ADR-0005/0007 without changing
   the engine's Result/error contract.
@@ -12,6 +12,16 @@ vision. A binding library has not been adopted. Entity access must stay valid
 across deletion/reload, and Lua errors must not bypass C++ resource cleanup or
 escape engine module boundaries. Convenience bindings do not themselves provide
 a sandbox, deterministic state, memory limits or a gameplay command policy.
+
+## Owner local-build gate — 2026-10-31
+
+The owner requires building with the machine's default GCC16 and Clang23 to work
+before sol2 is adopted. Reference GCC14/Clang18/MSVC success alone is insufficient.
+The unpatched3.3.0 pin fails both local compilers. Evaluate an immutable newer
+upstream pin, a narrow overlay backport, a locked local GCC14 toolchain and
+reflection-generated bindings using Lua's C API; present evidence/recommendation
+before changing the adopted dependency. Diagnostic scratch trials are not
+adoption. VM topology remains unapproved, and M4.2 is explicitly held.
 
 ## Proposed decision
 

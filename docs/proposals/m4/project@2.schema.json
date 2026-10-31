@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://engine.local/proposals/m4/project@2.schema.json",
   "title": "Proposed project format 2",
-  "$comment": "PROPOSED ONLY: owner approval required before engine reader/writer integration.",
+  "$comment": "Owner-approved concrete contract on 2026-10-31. Unknown component types always reject via registered validation; migration persists only on explicit save. Not yet integrated. M4.2 is held pending local binding/compiler and VM decisions; topology alternatives are not adopted.",
   "type": "object",
   "additionalProperties": false,
   "required": [

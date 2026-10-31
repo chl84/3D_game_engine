@@ -1,0 +1,194 @@
+{
+  "model": "per-session",
+  "budgetBytes": 67108864,
+  "source": "Isolated GCC16/sol2 3.3.0 backport diagnostic, original shared64MiB allocator ceiling restored. No adopted source/limit changed. No timing claim. Successful cases validate every instance and cleanup. Failing workers are disposable, core dumps disabled. Quota exhaustion can cause Lua panic/SIGABRT; production setup failure handling is not proved. No exact stable hard-quota maximum is established; these are bounded stress samples, not a production capacity guarantee.",
+  "binarySha256": "661c5b801ecff3884217617205ae9981e4c211dfdba64deebca21e0d3b44c8f5",
+  "samples": [
+    {
+      "instancesRequested": 21726,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 21726,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108701,
+        "postValidationPeakLuaBytes": 67108701,
+        "retainedLuaBytes": 65645575,
+        "rssAfterInitializationBytes": 81526784,
+        "rssBeforeLuaBytes": 4091904,
+        "rssInitializationDeltaBytes": 77434880,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 21727,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 21727,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108846,
+        "postValidationPeakLuaBytes": 67108846,
+        "retainedLuaBytes": 59688110,
+        "rssAfterInitializationBytes": 80822272,
+        "rssBeforeLuaBytes": 4104192,
+        "rssInitializationDeltaBytes": 76718080,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 22000,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 22000,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108846,
+        "postValidationPeakLuaBytes": 67108846,
+        "retainedLuaBytes": 60664358,
+        "rssAfterInitializationBytes": 81158144,
+        "rssBeforeLuaBytes": 4235264,
+        "rssInitializationDeltaBytes": 76922880,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 24000,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 24000,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108846,
+        "postValidationPeakLuaBytes": 67108846,
+        "retainedLuaBytes": 65993630,
+        "rssAfterInitializationBytes": 82776064,
+        "rssBeforeLuaBytes": 4173824,
+        "rssInitializationDeltaBytes": 78602240,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 26000,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    },
+    {
+      "instancesRequested": 28000,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    },
+    {
+      "instancesRequested": 30000,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    },
+    {
+      "instancesRequested": 32768,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    },
+    {
+      "instancesRequested": 24000,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 24000,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108846,
+        "postValidationPeakLuaBytes": 67108846,
+        "retainedLuaBytes": 65993630,
+        "rssAfterInitializationBytes": 82780160,
+        "rssBeforeLuaBytes": 4165632,
+        "rssInitializationDeltaBytes": 78614528,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 26000,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    },
+    {
+      "instancesRequested": 24000,
+      "exitCode": 0,
+      "stderr": "",
+      "result": {
+        "aggregateRuntimeBudgetBytes": 67108864,
+        "buildType": "Release",
+        "compiler": "GNU 16.2.1",
+        "diagnosticAggregateBudgetNotEnforced": true,
+        "diagnosticSharedAllocatorLimitBytes": 67108864,
+        "exceedsAggregateRuntimeBudget": false,
+        "instances": 24000,
+        "luaRelease": "Lua 5.4.9",
+        "model": "per-session",
+        "ownCodeWarningsAsErrors": true,
+        "peakLuaBytes": 67108846,
+        "postValidationPeakLuaBytes": 67108846,
+        "retainedLuaBytes": 65993630,
+        "rssAfterInitializationBytes": 82776064,
+        "rssBeforeLuaBytes": 4186112,
+        "rssInitializationDeltaBytes": 78589952,
+        "solHeaderVersion": "3.2.3",
+        "sourceRelease": "DIAGNOSTIC backport-3.3.0 / Lua 5.4.9 C++",
+        "status": "ok"
+      }
+    },
+    {
+      "instancesRequested": 26000,
+      "exitCode": -6,
+      "stderr": "[sol2] An error occurred and panic has been invoked: not enough memory\n[sol2] An error occurred and panic has been invoked: attempt to call a nil value\nterminate called after throwing an instance of 'sol::error'\n  what():  lua: error: attempt to call a nil value\n"
+    }
+  ]
+}
