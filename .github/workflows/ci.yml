@@ -40,13 +40,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        preset:
-          - ci-linux-gcc14
-          - ci-linux-clang
+        include:
+          - preset: ci-linux-gcc14
+            cc: gcc-14
+            cxx: g++-14
+          - preset: ci-linux-clang
+            cc: clang-18
+            cxx: clang++-18
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -77,7 +83,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libvulkan1 mesa-vulkan-drivers vulkan-tools vulkan-validationlayers \
-            g++-14 libx11-dev libxft-dev libxext-dev libwayland-dev \
+            g++-14 clang-18 libx11-dev libxft-dev libxext-dev libwayland-dev \
             libxkbcommon-dev libegl1-mesa-dev xvfb openbox
 
       - name: Restore pinned Vulkan SDK cache

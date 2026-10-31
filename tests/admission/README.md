@@ -41,6 +41,20 @@ stale-ECS-handle policy or per-script allocation attribution in a shared VM.
 Those runtime contracts are future M4 work. The Jolt executable runs independently
 so a Lua compiler blocker does not prevent profile/rigid-body smoke evidence.
 
+Admission requires the libraries themselves to match each host compiler, not
+only the probe translation units. Linux CI sets explicit CC/CXX for GCC14 and
+Clang18; Windows uses the selected MSVC toolchain. Both overlay packages retain
+generated `compile_commands.json`, CMake's actual compiler path/ID/version and
+the installed archive SHA-256 for Debug/Release under
+`share/<port>/build-provenance/`. This evidence travels with binary-cache hits.
+The capture script reads installed-package provenance, checks archive hashes,
+requires library/host compiler identity/version equality, and audits every
+library command for C++/exceptions/FP and Jolt numeric settings. Missing evidence
+or a mixed compiler fails admission. Lua explicitly uses C++20, exceptions and
+`-ffp-contract=off` (MSVC `/EHsc /fp:strict`). Jolt retains upstream deterministic
+FP controls and explicit RTTI/exception settings. Do not infer archive compilers
+from host macros or an unavailable source-build directory.
+
 The first reference run passed GCC14/MSVC, but Clang18 rejected sol2's direct
 member-variable trampoline. The candidate now uses typed `sol::property`
 accessors without changing script field semantics, argument checks or pinned

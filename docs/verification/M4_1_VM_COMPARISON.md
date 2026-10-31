@@ -7,6 +7,9 @@ SHA-256, archive digest, all ten samples and machine conditions are in
 [M4_1_VM_MEASUREMENTS.json](M4_1_VM_MEASUREMENTS.json).
 The subsequent clang-tidy correction changes integer expression types and an
 unused parameter comment, not the benchmark payload, limits or algorithms.
+After independent review, Lua's library FP policy is made explicit and library
+compiler provenance is required. These historical measurements must be refreshed
+from that corrected GCC14 artifact before the final owner decision report.
 
 ## Method and actual results
 

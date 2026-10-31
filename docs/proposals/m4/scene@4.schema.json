@@ -25,9 +25,7 @@
       "$ref": "common@1.schema.json#/definitions/id"
     },
     "name": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 128
+      "type": "string"
     },
     "revision": {
       "type": "integer",
@@ -36,7 +34,6 @@
     },
     "entities": {
       "type": "array",
-      "maxItems": 65536,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -52,9 +49,7 @@
             "$ref": "common@1.schema.json#/definitions/uuid"
           },
           "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128
+            "type": "string"
           },
           "parentId": {
             "anyOf": [

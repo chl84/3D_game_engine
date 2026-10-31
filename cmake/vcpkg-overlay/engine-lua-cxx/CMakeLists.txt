@@ -7,6 +7,11 @@ set_source_files_properties(${lua_sources} PROPERTIES LANGUAGE CXX)
 add_library(engine_lua_cxx STATIC ${lua_sources})
 set_target_properties(engine_lua_cxx PROPERTIES OUTPUT_NAME lua-cxx EXPORT_NAME lua)
 target_compile_features(engine_lua_cxx PRIVATE cxx_std_20)
+if(MSVC)
+    target_compile_options(engine_lua_cxx PRIVATE /EHsc /fp:strict)
+else()
+    target_compile_options(engine_lua_cxx PRIVATE -fexceptions -ffp-contract=off)
+endif()
 target_include_directories(engine_lua_cxx PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
     "$<INSTALL_INTERFACE:include/engine-lua-cxx>"

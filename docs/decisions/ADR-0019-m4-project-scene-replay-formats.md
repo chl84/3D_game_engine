@@ -31,7 +31,11 @@ are unchanged.
 
 The proposal caps replay records at64KiB, replay/project/scene files at64MiB,
 JSON depth at32, and declared script state at64KiB per instance. These exact
-parser/format limits require owner approval. Runtime resource starting points
+parser/format limits require owner approval, including the explicitly documented
+rejection of oversized/deep legacy documents without modification. Legacy names,
+project path strings and scene-list counts otherwise retain their previous
+accepted values; no new string truncation or duplicate removal is proposed.
+Runtime resource starting points
 are already approved. The VM-topology enum contains both alternatives solely
 for review; accepting these schemas does not select a topology or ADR-0016.
 

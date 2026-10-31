@@ -25,27 +25,21 @@
       "$ref": "common@1.schema.json#/definitions/uuid"
     },
     "name": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 128
+      "type": "string"
     },
     "engineVersion": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 128
+      "type": "string"
     },
     "assetRoot": {
-      "$ref": "common@1.schema.json#/definitions/path"
+      "type": "string"
     },
     "scriptRoot": {
-      "$ref": "common@1.schema.json#/definitions/path"
+      "type": "string"
     },
     "scenes": {
       "type": "array",
-      "maxItems": 65536,
-      "uniqueItems": true,
       "items": {
-        "$ref": "common@1.schema.json#/definitions/path"
+        "type": "string"
       }
     },
     "settings": {
@@ -58,7 +52,7 @@
       ],
       "properties": {
         "defaultScene": {
-          "$ref": "common@1.schema.json#/definitions/path"
+          "type": "string"
         },
         "tickRate": {
           "type": "integer",

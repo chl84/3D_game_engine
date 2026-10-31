@@ -35,6 +35,28 @@ def main() -> None:
     for name, example in examples:
         validators[name + ".schema.json"].validate(example)
 
+    compatibility = []
+
+    def accept_legacy(name: str, source, mutate) -> None:
+        candidate = copy.deepcopy(source)
+        mutate(candidate)
+        validators[name + ".schema.json"].validate(candidate)
+        compatibility.append(name)
+
+    for value in ("", "x" * 4096):
+        accept_legacy("project@2", project, lambda v: v.update(name=value, engineVersion=value))
+        accept_legacy("scene@4", scene, lambda v: v.update(name=value))
+        accept_legacy("scene@4", scene, lambda v: v["entities"][0].update(name=value))
+        accept_legacy("project@2", project, lambda v: v.update(assetRoot=value, scriptRoot=value))
+    accept_legacy("project@2", project, lambda v: v["settings"].update(defaultScene=""))
+    accept_legacy("project@2", project, lambda v: v.update(scenes=["", "scene.json", "scene.json"]))
+    accept_legacy("project@2", project, lambda v: v.update(scenes=["scene.json"] * 65537))
+    # Envelope count compatibility only: real UUID uniqueness is a separate
+    # mandatory semantic check, so avoid duplicating entities for this control.
+    accept_legacy("scene@4", scene, lambda v: v.update(entities=[{
+        **scene["entities"][0], "id": f"00000000-0000-4000-8000-{i:012x}"
+    } for i in range(65537)]))
+
     controls = []
 
     def reject(name: str, source, mutate) -> None:
@@ -62,7 +84,8 @@ def main() -> None:
     reject("replay@1", records[1], lambda v: v.update(tick=-1))
     reject("replay@1", records[-1], lambda v: v.update(complete=False))
     print(f"PROPOSALS ONLY: {len(schemas)} valid schemas, {len(examples)} examples, "
-          f"{len(controls)} rejected controls; runtime/semantic validation not implemented")
+          f"{len(controls)} rejected controls, {len(compatibility)} legacy compatibility controls; "
+          "runtime/semantic validation not implemented")
 
 
 if __name__ == "__main__":

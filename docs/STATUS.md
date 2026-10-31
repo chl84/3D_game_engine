@@ -4,48 +4,52 @@
 **Current milestone:** M4 — physics and game logic
 **Current substep:** M4.1 — owner-authorized dependency/profile admission, three-compiler probes, VM topology measurements and concrete schema proposals.
 
-## M4.1 admission candidate
+## M4.1 admission candidate — review corrections in progress
 
-Pinned overlays for Jolt5.6.0, sol2 release3.3.0 and Lua5.4.9/C++ are installed
-locally for isolated probes only. The engine runtime does not link the probe.
-Jolt's local GCC16 -Werror probe passed240-tick repeated rigid-body traces with
-double positions and cross-platform determinism definitions. Lua binding builds
-on local GCC16 and Clang23 reject the upstream sol::optional<T&>::emplace body
-(nonexistent construct); own implicit-conversion warnings were fixed explicitly.
-No library patch, version substitution or warning suppression is applied.
-Reference CI41188902763 passed GCC14/MSVC. Clang18 rejected sol2's direct
-member-variable trampoline; the corrected candidate uses typed property
-accessors while retaining field reads/writes and wrong-type checks. ASan/UBSan
-found missing Jolt RTTI at link time; the pinned overlay now explicitly enables
-RTTI/exceptions to match the host without disabling sanitizer checks. Corrected
-three-compiler CI remains pending. No upstream patch/version change is applied.
-The corrected local Jolt probe passes with full ASan/UBSan and leak detection
-outside the ptrace sandbox: [raw result](verification/M4_1_LOCAL_JOLT_ASAN.json).
-Generated library flags explicitly contain `-frtti -fexceptions -ffp-contract=off`;
-the uninstrumented third-party library is not claimed to have full sanitizer
-coverage. The bridge is instrumented and no sanitizer check was disabled.
-CI41189740843 now passes GCC14/Clang18/MSVC and ASan/UBSan admission. The three
-240-tick primitive Jolt traces match exactly; this is not the unimplemented full
-M4.4 suite. [Raw reference probes](verification/M4_1_REFERENCE_PROBES.json).
-Quality found four clang-tidy issues (size_t multiplication and an unnamed
-parameter), corrected without changing algorithms/limits or suppressing checks;
-final CI remains pending. Local tidy18 cannot parse installed GCC16 standard
-headers; reference CI remains authoritative for that check.
+Pinned admission-only overlays remain Jolt5.6.0, sol2 release3.3.0 and Lua5.4.9
+as C++. No engine gameplay runtime, topology or concrete format is adopted.
+The owner-selected independent Astra high review of exact `ee92064` found two
+required P2 corrections, tracked in
+[the review record](verification/M4_1_ASTRA_INITIAL_REVIEW.md).
 
-The corrected GCC14 Release artifact was measured with five fresh processes per
-model,1,000 instances each. Results/recommendation and complete provenance:
-[VM comparison](verification/M4_1_VM_COMPARISON.md). This recommendation is not
-owner approval of ADR-0016, and neither topology is adopted.
+- Legacy names/project paths/scene-list duplicates and counts now retain their
+  previously accepted values in the proposal. The new64MiB/depth32 parser bounds
+  are an explicit owner-pending compatibility exception: structured rejection
+  without rewriting or truncation. Proposal validation passes five schemas,
+  seven examples,15 rejected controls and12 positive legacy compatibility cases.
+- Lua/Jolt overlays now retain actual compiler path/ID/version, complete generated
+  compile commands and installed archive SHA-256 inside cached packages for both
+  Debug/Release. Capture requires library/host compiler identity/version equality,
+  verifies archive digests and effective C++/exception/FP/numeric flags. Linux CI
+  selects CC/CXX explicitly. Lua's exception/FP contraction policy is explicit.
+  Local GCC16 verifies139 Jolt and32 Lua commands per configuration. Focused
+  controls reject absent metadata, compiler mismatch, unsafe Lua FP and altered
+  archive digest; the installed-package audit works without source buildtrees.
+  Corrected GCC14/Clang18/MSVC CI is still required.
 
-The 1,000-instance measurement driver uses fresh processes, equal payloads and
-alternating model order; it records Lua allocator memory and Linux whole-child
-peak RSS separately. A diagnostic aggregate-budget exception is explicitly
-labelled and does not change runtime limits. Concrete schemas are proposed in
+Earlier reference CI41189740843 passed the three host probes and ASan/UBSan,
+with identical240-tick primitive Jolt traces, but lacked complete library compiler
+provenance; [those raw reports](verification/M4_1_REFERENCE_PROBES.json) are
+historical, not proof of separately compiled GCC/Clang archives. The corrected
+candidate after review must provide new evidence. Full M4.4 physics fixtures
+are not implemented. The four Quality findings were corrected without disabling
+warnings or changing algorithms/limits; candidate CI remains separate.
+
+The1,000-instance comparison has five fresh processes per model, equal payloads,
+AC/balanced conditions and complete binary/run provenance:
+[VM comparison](verification/M4_1_VM_COMPARISON.md). Refresh its GCC14 measurement
+after the explicit Lua library FP policy before final presentation. The measured
+recommendation is not owner acceptance of ADR-0016. Concrete schemas are in
 [ADR-0019](decisions/ADR-0019-m4-project-scene-replay-formats.md) and
-[docs/proposals/m4](proposals/m4/README.md): five schemas, seven examples and
-15 invalid envelope controls validate locally. Production semantic checks and
-format integration are not implemented. Owner schema/VM approval and independent
-review remain pending. These are in-progress probes, not M4.1 completion.
+[the format proposal](proposals/m4/README.md), pending owner approval.
+
+Local GCC16/Clang23 reject upstream sol::optional<T&>::emplace; tidy18 cannot
+parse GCC16 standard headers. No upstream header patch/version substitution or
+warning suppression is applied. The local corrected Jolt bridge passed full
+ASan/UBSan/leak checks [earlier](verification/M4_1_LOCAL_JOLT_ASAN.json); no full
+third-party sanitizer coverage is claimed. Optional OOM injection during VM/
+binding setup belongs before production script-boundary adoption in M4.6.
+M4.1 remains open pending corrected reference evidence/review and owner decisions.
 
 ## M4 owner approval and active limits — 2026-10-31
 

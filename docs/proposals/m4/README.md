@@ -27,6 +27,26 @@ write files. Only explicit save writes project2/scene4. Existing `simulate`
 continues to use `settings.tickRate` (1..1000); `play`/replay uses the separate
 profile's fixed60Hz. Reject a profile mismatch before starting play.
 
+Legacy project/scene/entity names and `engineVersion` remain unrestricted JSON
+strings, including empty and long names. Legacy project path strings and scene
+lists retain their accepted values, including duplicate list entries; there is
+no new1024-character or65,536-item schema cap on legacy fields. Project load
+preserves strings; resolving an actual filesystem operation still goes through
+PathSandbox. A formerly storable but unusable path is not rewritten or silently
+dropped. The1024-character path cap applies only to newly introduced script and
+replay fields. Registered component field defaults materialize omitted legacy
+fields on in-memory migration, as the existing reader/writer does. Optional
+legacy metadata/parent fields become `{}`/`null`; stored values are preserved.
+
+**Explicit proposed compatibility exception:** the new64MiB document/depth32
+parser bounds can reject formerly loadable oversized/deep legacy documents.
+Do not truncate, split, rewrite or save them automatically. Reject before world
+construction/writes with a structured resource-limit validation error containing
+path, actual size/depth, proposed limit and advice to keep using M3 or request an
+approved larger bound. This exception needs the owner's concrete format approval;
+it is not covered by the direction-only approval. No new parser limit is applied
+to production readers by this proposal.
+
 Validation has two required stages: this envelope, then registered descriptor
 schemas and semantic checks. Existing built-in component field contracts remain
 unchanged. The open component map allows registered `game.*` types without an
@@ -37,9 +57,11 @@ Profile IDs must resolve to the exact profile whose canonical hash is recorded.
 
 Additional semantic checks before allocating runtime bodies or opening scripts:
 
-- UUID uniqueness, existing parents, acyclic hierarchy, finite numbers and
-  normalized nonzero quaternions. Reject unsupported physics scale (anything
-  other than positive unit scale) with entity/component/field details.
+- UUID uniqueness, existing parents, acyclic hierarchy and finite numbers.
+  Preserve legacy stored quaternion values; require normalized nonzero rotation
+  only when constructing a physics body/character. Reject unsupported physics
+  scale (anything other than positive unit scale) with entity/component/field
+  details. Ordinary M3 visual transforms are not subject to new physics limits.
 - Rigid bodies require exactly one primitive collider. Colliders require a body;
   characters own their capsule and cannot also have a body/collider. Dynamic
   bodies and characters must be roots. Reject Motion/body/character transform
