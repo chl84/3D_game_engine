@@ -4,6 +4,21 @@
 **Current milestone:** M3 — asset pipeline and live control
 **Current substep:** M3.8 — authorized by the owner on 2026-10-30; hardening and final acceptance in progress.
 
+### Astra technical approval and publication candidate — 2026-10-31
+
+GPT-6 Astra high independently approved exact source
+`5d01a36d83b590392349b5925d6ce38cd7b3a7c1`, including the full M3.8 delta and
+M3.7 corrections/durable journal, with no blocking/required findings.
+[Review and optional skip-reporting limitation](verification/M3_8_ASTRA_REVIEW.md).
+Parent verification on the same implementation: GCC/Clang 28/28, full
+ASan/UBSan 27/27 (leaks enabled with documented lavapipe retention), full-build
+TSan 13/13. [Local evidence](verification/M3_8_ASTRA_LOCAL_EVIDENCE.txt).
+Fresh 600-second-per-target fuzzing is running; reference CI/Windows,
+GitHub corpus save/restore and public exact-SHA clean clone remain pending.
+The next commit records only review/evidence and is a publication candidate;
+there is no implementation delta after the reviewed source.
+No final M3.8 report, owner approval, merge or tag is claimed yet.
+
 ## Active reviewer and acceptance instruction — 2026-10-31
 
 The owner intentionally selected GPT-6 Astra high and withdrew the instruction
@@ -128,7 +143,7 @@ M3.8 is in progress. No M3 merge/tag is authorized. Reports follow the owner tim
 | M3.5 | PBR renderer, bindless assets and `DirectionalLight` | Owner approved 2026-10-30; emissive correction requested |
 | M3.6 | `AssetInstance` placement and scene v3 save/load | Owner approved 2026-10-30 |
 | M3.7 | Local JSON-RPC live API and durable JSONL | Owner-approved2026-10-30; Claude technical approval; all six final CI jobs green |
-| M3.8 | M3 hardening and acceptance | Owner-authorized; implementation/local verification in progress; Astra high review and reference CI pending |
+| M3.8 | M3 hardening and acceptance | Astra high technically approved 5d01a36; local full suites pass; reference CI, extended fuzz/cache and public clone pending |
 
 ## M3.5 fixture preparation (owner requested)
 
@@ -534,8 +549,8 @@ The Windows job caught two real portability issues before the milestone closed:
 
 ## Next step
 
-M3.8 is authorized. Complete GPT-6 Astra high re-review of M3.8 and the M3.7 corrections/journal,
-then publish for exact-source reference CI, extended fuzz/cache verification
+M3.8 is authorized and Astra high re-review is technically approved. Publish
+the approved implementation for exact-source reference CI, extended fuzz/cache verification
 and public clean-clone acceptance. Deliver the consolidated A.5 report only
 after those gates pass. Merge/tag and M4 remain subject to owner authorization.
 
