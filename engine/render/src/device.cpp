@@ -335,6 +335,10 @@ struct Selection {
 } // namespace
 
 struct Device::Impl {
+    std::uint64_t overhead_bytes{0};
+    std::uint32_t reserved_descriptors{0};
+    std::uint64_t texture_bytes{0};
+
     VkInstance instance{VK_NULL_HANDLE};
     VkDebugUtilsMessengerEXT messenger{VK_NULL_HANDLE};
     VkSurfaceKHR surface{VK_NULL_HANDLE};
@@ -721,6 +725,46 @@ core::Result<void> Device::wait_idle() const {
             vulkan_error("could not wait for the Vulkan device", "device", result));
     }
     return {};
+}
+
+std::uint64_t Device::gpu_memory_bytes() const {
+    VmaTotalStatistics stats{};
+    vmaCalculateStatistics(allocator(), &stats);
+    return stats.total.statistics.blockBytes + impl_->overhead_bytes;
+}
+core::Result<void> Device::reserve_gpu_overhead_bytes(std::uint64_t bytes,
+                                                      std::uint32_t descriptors) const {
+    if (bytes > kTotalGpuMemoryBudgetBytes ||
+        gpu_memory_bytes() > kTotalGpuMemoryBudgetBytes - bytes) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::Validation, "GPU memory budget exceeded"));
+    }
+    const auto maximum = descriptor_capabilities().max_update_after_bind_descriptors_in_all_pools;
+    if (descriptors > maximum || impl_->reserved_descriptors > maximum - descriptors) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Validation, "device-wide bindless descriptor pool limit exceeded"));
+    }
+    impl_->reserved_descriptors += descriptors;
+    impl_->overhead_bytes += bytes;
+    return {};
+}
+void Device::release_gpu_overhead_bytes(std::uint64_t bytes,
+                                        std::uint32_t descriptors) const noexcept {
+    impl_->overhead_bytes -= bytes;
+    impl_->reserved_descriptors -= descriptors;
+}
+core::Result<void> Device::charge_texture_bytes(std::uint64_t bytes) const {
+    if (bytes > kTextureMemoryBudgetBytes ||
+        impl_->texture_bytes > kTextureMemoryBudgetBytes - bytes ||
+        gpu_memory_bytes() > kTotalGpuMemoryBudgetBytes) {
+        return core::make_failure<void>(core::make_error(
+            core::ErrorCode::Validation, "GPU texture or total memory budget exceeded"));
+    }
+    impl_->texture_bytes += bytes;
+    return {};
+}
+void Device::release_texture_bytes(std::uint64_t bytes) const noexcept {
+    impl_->texture_bytes -= bytes;
 }
 
 } // namespace engine::render

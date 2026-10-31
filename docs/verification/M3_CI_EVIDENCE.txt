@@ -1,0 +1,59 @@
+# CI evidence — M3.4 and M3.5
+
+M3.4: run41041374885 completed/success, exact7cfad7a0f76d3abbba16e9851c8b7ceb1d273eb4; all6jobs success.
+Original M3.5: run41057830415 completed/success, exacteceb5f9e7dd63c2e2aef7a5c54b8cab239d99f18; all6jobs success.
+
+Owner-requested follow-up: run41065543569, attempt2 completed/success.
+Exact source:59c2e979a12484e2c9124f38ad0165ca2b9be0c3.
+All6latest job instances success. Attempt1 Windows failed beforebuild on ChocolateyHTTP504; only Windows rerun, no source/version/test change.
+
+Linux Clang
+2026-10-30T13:45:33.7946427Z 20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.17 sec
+2026-10-30T13:45:34.3115641Z 100% tests passed out of 21
+2026-10-30T13:45:36.2672888Z 20: Color-space patch 0: red=19 expected=19
+2026-10-30T13:45:36.2673268Z 20: Color-space patch 1: red=33 expected=33
+2026-10-30T13:45:36.2673662Z 20: Color-space patch 2: red=32 expected=33
+2026-10-30T13:45:36.2674016Z 20: Color-space patch 3: red=33 expected=33
+2026-10-30T13:45:36.2674375Z 20: Color-space patch 4: red=156 expected=156
+2026-10-30T13:45:36.2674757Z 20: Color-space patch 5: red=137 expected=137
+2026-10-30T13:45:36.2675287Z 20: PBR color-space fixed golden passed (sRGB base; linear MR/AO/emissive/normal)
+2026-10-30T13:45:36.2725199Z 3/3 Test #20: engine_pbr_color_golden ..........   Passed    0.21 sec
+
+Linux GCC14
+2026-10-30T13:46:08.0789893Z 20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.20 sec
+2026-10-30T13:46:08.6855425Z 100% tests passed out of 21
+2026-10-30T13:46:10.7077315Z 20: Color-space patch 0: red=19 expected=19
+2026-10-30T13:46:10.7077931Z 20: Color-space patch 1: red=33 expected=33
+2026-10-30T13:46:10.7078358Z 20: Color-space patch 2: red=32 expected=33
+2026-10-30T13:46:10.7078717Z 20: Color-space patch 3: red=33 expected=33
+2026-10-30T13:46:10.7079018Z 20: Color-space patch 4: red=156 expected=156
+2026-10-30T13:46:10.7079644Z 20: Color-space patch 5: red=137 expected=137
+2026-10-30T13:46:10.7080060Z 20: PBR color-space fixed golden passed (sRGB base; linear MR/AO/emissive/normal)
+2026-10-30T13:46:10.7125136Z 3/3 Test #20: engine_pbr_color_golden ..........   Passed    0.19 sec
+
+Linux ASan/UBSan (unsuppressed)
+2026-10-30T13:54:12.1014258Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T13:54:12.1014631Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+2026-10-30T13:54:45.8470549Z 20/21 Test #20: engine_pbr_color_golden ..........   Passed    0.66 sec
+2026-10-30T13:54:47.6845441Z 100% tests passed out of 21
+2026-10-30T13:54:47.7005572Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T13:54:47.7006149Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+2026-10-30T13:54:47.9985245Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T13:54:47.9985603Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+
+Windows MSVC / lavapipe (attempt2)
+2026-10-30T14:07:32.6252028Z 15/15 Test #15: engine_pbr_color_golden ..........   Passed    1.25 sec
+2026-10-30T14:07:32.6261066Z 100% tests passed out of 15
+2026-10-30T14:07:34.9786202Z 14: PBR device: llvmpipe (LLVM 23.1.4, 256 bits)
+2026-10-30T14:07:34.9786613Z 14: Blender tangent image difference: 0
+2026-10-30T14:07:37.5011741Z 15: PBR device: llvmpipe (LLVM 23.1.4, 256 bits)
+2026-10-30T14:07:37.5012314Z 15: Color-space patch 0: red=19 expected=19
+2026-10-30T14:07:37.5012812Z 15: Color-space patch 1: red=33 expected=33
+2026-10-30T14:07:37.5013301Z 15: Color-space patch 2: red=32 expected=33
+2026-10-30T14:07:37.5013783Z 15: Color-space patch 3: red=33 expected=33
+2026-10-30T14:07:37.5014290Z 15: Color-space patch 4: red=156 expected=156
+2026-10-30T14:07:37.5014800Z 15: Color-space patch 5: red=137 expected=137
+2026-10-30T14:07:37.5016103Z 15: PBR color-space fixed golden passed (sRGB base; linear MR/AO/emissive/normal)
+2026-10-30T14:07:37.5037385Z 3/3 Test #15: engine_pbr_color_golden ..........   Passed    1.30 sec
+
+Quality and Fuzz: completed/success. No leak/runtime-error lines in the Ubuntu ASan log; detect_leaks=1 and UBSan halt_on_error=1 are shown above. No skipped/not-run tests in the captured Linux/Windows full runs.

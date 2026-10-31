@@ -1,8 +1,33 @@
 # AI Agent Guide
 
-**Status:** M2.5. Version, doctor, the offline project/scene/entity/component
-CLI, fixed-tick simulation, the Vulkan renderer and offscreen screenshots exist. The live API is
-planned for M3.
+**Status:** M3.8 technical acceptance complete; release authorization pending. Offline authoring, asset
+cooking/reimport/placement, shared PBR rendering, fixed-tick simulation,
+offscreen screenshots and the authenticated local live API are implemented.
+Current review and exact-source verification results are in STATUS.md.
+
+## Status reports and independent review
+
+Owner instruction, 2026-10-30: do not send interim or substep status reports
+while independent review is pending. Deliver one consolidated A.5 report only
+after review is complete, findings have been addressed, and required re-review
+and CI verification have completed successfully. During ongoing work, provide
+only brief progress updates, necessary questions or genuine blockers. This
+instruction applies across sessions, including when a review runs asynchronously.
+The end-of-session/substep reporting rules do not require a premature report.
+
+## Independent reviewer
+
+Owner correction, 2026-10-31: **GPT-6 Astra, high reasoning effort**, is the
+active independent reviewer. The owner intentionally selected Astra and has
+withdrawn the instruction to return to Claude for M3.7. Reviewer selection and
+changes belong exclusively to the owner. [REVIEWER.json](../REVIEWER.json)
+contains the delegation target (`gpt-6-astra`, `reasoningEffort=high`). Use that
+configuration for the M3.8 review and the M3.7 corrections/journal re-review.
+Preserve historical Claude/Astra review evidence as historical attribution;
+it does not select the current reviewer. M3.7 remains owner-approved. M3.8
+requires Astra review, required corrections/re-review and green reference CI
+before the consolidated report. Merge/tag await the owner's manual test and
+explicit instruction.
 
 ## Principles
 
@@ -206,11 +231,175 @@ the read-only `SceneView`.
 
 ## Planned commands
 
-- Live API (JSON-RPC 2.0 over a local connection) in M3.
 - MCP adapter in M7.
 
 ## Live API and MCP
 
-Not implemented. The live API will expose the same commands plus inspection,
-screenshots, statistics and "run N ticks". The MCP adapter will be a thin layer
+The live API is implemented: shared commands, inspection, screenshot, ping
+and shutdown, with authentication and a durable journal. See the local live
+API section below. Live statistics and "run N ticks" remain planned; the
+offline simulation CLI exists. The future MCP adapter will be a thin layer
 over the same command bus.
+
+## Asset CLI (M3.4)
+
+```bash
+engine asset import <project> <source.glb> [--name NAME] [--dry-run] --json
+engine asset inspect <project> <assetId> --json
+engine asset validate <project> <assetId> --json
+engine asset reimport <project> <assetId> [--dry-run] --json
+engine asset list <project> --json
+```
+
+The source argument is relative to the caller's working directory or absolute;
+it may intentionally be outside the project. The sidecar retains that original
+source for reimport and falls back to its project copy if the source disappears.
+Successful CLI data exposes project-relative copy/cache/dependency paths rather
+than the original machine-specific source path. Results use `command-result@1`;
+asset data validates against `asset-result-data@1.schema.json`. Input schemas
+for the asset lifecycle and placement commands are included in `engine schema --json` and the
+generated API reference. CLI and live control use the same handlers.
+
+`inspect` reports stable node/mesh/material/texture IDs, per-primitive bounds,
+dependencies, animation-channel count and cooked-cache state. It still works
+when the derived cache is missing or stale, returning a warning and
+`cache.state = "unavailable"`. `validate` requires a usable current cache and
+checks the portable source copy against its stored SHA-256. `reimport` rebuilds
+missing/stale cache while preserving stable IDs. `list` is sorted by asset UUID.
+Animation data is not imported in M3 and inspect warns when channels are present.
+
+`--dry-run` parses, validates and cooks in memory but writes no files. Generated
+IDs in an import preview are disposable and not reservations. Reimport preview
+preserves the existing asset ID. Preview validates content and sandbox paths;
+it cannot promise that a later filesystem write will succeed. Imports acquire
+the normal project lock before writing. Asset imports/reimports are not undoable
+filesystem transactions; registering them in a shared bus does not make them
+eligible for a scene batch transaction. Such use fails with `E_UNSUPPORTED`
+before mutation. Scene placement/undo is implemented in M3.6.
+
+The official MikkTSpace implementation generates missing normal-map tangents
+during cooking and splits vertices at tangent discontinuities. Source tangents
+are preserved. `gltf-import@4` rejects old cache; use reimport to regenerate it.
+
+Missing-tangent generation has an owner-approved, inclusive **1,000,000 dense
+weld-pair budget per asset**, not a triangle-count cap. Position groups of at
+most 64 indexed corners contribute zero; larger groups charge n(n−1)/2. The
+maximum estimate across eight adjacent-Float32 grids is summed over all
+primitives requiring generation. See [ADR-0015](decisions/ADR-0015-tangent-work-budget.md).
+An over-budget import/reimport (including `--dry-run`) fails before cooking or
+source/cache writes, with CLI exit **3** and a `command-result@1` error:
+
+```json
+{
+  "status": "error",
+  "data": {},
+  "error": {
+    "code": "E_VALIDATION",
+    "message": "tangent generation exceeds the weld-work budget",
+    "hint": "Export tangents in Blender or simplify dense geometry.",
+    "details": {
+      "estimatedWork": 1000405,
+      "limit": 1000000,
+      "meshIndex": 1,
+      "primitiveIndex": 0,
+      "jsonPointer": "/meshes/1/primitives/0"
+    }
+  },
+  "warnings": []
+}
+```
+
+The numbers/indices above are illustrative; `estimatedWork` is the observed
+lower bound at early rejection. Branch on `error.code` and the structured
+`details`, not the message text. Enable **Tangents** in Blender's GLB export
+and export again, then retry import/reimport; valid authored tangents bypass
+generation. Simplifying coincident or extreme high-valence geometry is another
+option. The live API returns the same command-result error inside its JSON-RPC
+`result`; a controlled rejection leaves the session running and is logged.
+The previous asset/cache remains usable after a rejected reimport.
+
+The checked-in Blender fixtures verify tangent compatibility on the CPU.
+The M3.5 golden compares the mirrored-UV Blender model without tangents with
+a fixed lavapipe image and its Blender-tangent export. Renderer C++ APIs expose
+explicit `upload_asset`, `retire_asset` and `collect_assets`; scenes reference
+the uploaded ID through `AssetInstance`. CLI placement and automatic project
+asset resolution are implemented in M3.6. Reimport also rebuilds corrupt derived buffers
+when their stored cache key still matches.
+
+## Place and render asset instances (M3.6)
+
+```sh
+engine asset import demo models/cube.glb --json
+engine asset place demo scenes/main.scene.json --asset <assetId> --name Left --position -1.5 0 0 --json
+engine asset place demo scenes/main.scene.json --asset <assetId> --name Right --position 1.5 0 0 --json
+engine screenshot demo scenes/main.scene.json --out screenshots/instances.png --width 256 --height 192 --json
+engine run demo scenes/main.scene.json --frames 3 --hidden --json
+```
+
+A scene needs an enabled camera viewing the model. Placement uses the shared
+`asset.place@1` handler and returns `data.result.id` plus assetId/name/position.
+Its default name is the imported asset name and default position is [0,0,0].
+The CLI treats an explicitly empty --name as omitted; direct asset.place@1 JSON
+requires minLength1 if name is supplied. UUID lookup/deduplication uses canonical
+identity, including uppercase references supplied through component updates.
+`--dry-run` validates against the project and scene without saving; preview
+entity IDs are disposable. Placement holds the project lock, supports scene
+batch undo/rollback, and stores one AssetInstance rather than expanding GLB nodes.
+Two instances share their asset UUID, meshes, materials and image descriptors.
+Window and screenshot commands resolve each referenced asset once. Rendering
+is read-only: repair a missing/stale cache with `engine asset reimport` explicitly.
+Reimport keeps the asset UUID, so saved instance references continue to work.
+
+BaseColor and emissive textures use sRGB; normal/MR/AO are linear. Importer@4
+invalidates the former emissive-linear caches. Material factors remain linear.
+
+## Local live API (M3.7)
+
+Start a foreground project session, then use another terminal/client:
+
+```sh
+engine live serve demo scenes/main.scene.json --json
+engine live call demo --method ping --json
+engine live call demo --method command --params '{"name":"asset.list@1"}' --json
+engine live call demo --method inspect --params '{"target":"log","offset":0,"limit":32}' --json
+engine live call demo --method command --params '{"name":"scene.save@1","arguments":{"path":"scenes/main.scene.json"}}' --json
+engine live call demo --method shutdown --json
+```
+
+The CLI reads .engine/live.json through PathSandbox; credentials are not command
+line arguments or startup output. A Python client reads the private discovery
+file, connects only to127.0.0.1:port and sends one UTF-8 JSON object plus LF:
+jsonrpc2.0, protocolVersion1, token, id, method and named-object params. The
+published wire schemas are jsonrpc-request@1/jsonrpc-response@1. RPC result
+contains the same command-result@1 envelope as offline CLI. Authentication
+errors contain only code/message and never echoed parameters.
+
+Methods: command(name,arguments), inspect(target=scene|asset|project|schema|log),
+screenshot(out optional,width,height,frames), ping and shutdown. Inspect log
+supports offset/limit (1..64) and exposes the actual CommandBus records. Scene
+save/load and history undo/redo are shared commands, also in CLI schema output.
+Live scene changes remain in memory until explicit scene.save@1; shutdown does
+not silently save. Loading clears undo actions from the prior scene.
+
+See ADR-0013 for bounds:64KiB requests,4MiB replies, depth32,8clients, absolute
+receive/send I/O deadlines (default2s), and command-log admission bounds. Clients
+timing out after a complete request must not assume its command was rolled back.
+All paths are project-relative and sandboxed; import sources must be inside the
+project. An offline-imported external original is not read during live reimport;
+the project copy is used instead. Screenshot outputs must be .png and cannot
+replace session/cache/scene files. Offline writers, including screenshot and
+force-unlock of an active process, conflict with the lifetime live project lock.
+After a crash, use project unlock --force only once the owning process is dead.
+
+Live command journals persist under .engine/live-commands-<session UUID>.jsonl.
+The startup result identifies commandLogFile. Intent is synchronized before
+execution; completed CommandBus records are synchronized before acknowledgement.
+Restart preserves old session files, including after a crash. A started record
+without completion has an uncertain outcome; do not replay it automatically.
+Ignore an incomplete trailing JSONL line when reading earlier complete records.
+Journal failure ends the live session with E_IO. This does not save scene state;
+use scene.save@1. Journals contain command arguments/results and are owner-only.
+
+A journal failure also ends the foreground server with the existing E_IO exit
+status6 and one constant stderr diagnostic, even when a notification has no
+reply. Malformed result serialization follows this same terminal path.

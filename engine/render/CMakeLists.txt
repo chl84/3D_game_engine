@@ -53,7 +53,24 @@ add_custom_command(
 
 add_custom_target(engine_render_shaders DEPENDS "${shader_header}")
 
+set(pbr_vertex_spv "${shader_binary_dir}/pbr.vert.spv")
+set(pbr_fragment_spv "${shader_binary_dir}/pbr.frag.spv")
+set(pbr_header "${shader_generated_dir}/pbr_shaders.hpp")
+foreach(stage IN ITEMS vert frag)
+    add_custom_command(OUTPUT "${shader_binary_dir}/pbr.${stage}.spv"
+        COMMAND "${GLSLC_EXECUTABLE}" --target-env=vulkan1.3 --target-spv=spv1.5 -O -o "${shader_binary_dir}/pbr.${stage}.spv" "${shader_dir}/pbr.${stage}"
+        DEPENDS "${shader_dir}/pbr.${stage}" "${GLSLC_EXECUTABLE}" VERBATIM)
+endforeach()
+add_custom_command(OUTPUT "${pbr_header}"
+    COMMAND "${CMAKE_COMMAND}" "-DVERTEX=${pbr_vertex_spv}" "-DFRAGMENT=${pbr_fragment_spv}"
+        "-DOUTPUT=${pbr_header}" "-DPREFIX=Pbr" -P "${CMAKE_SOURCE_DIR}/cmake/EmbedSpirv.cmake"
+    DEPENDS "${pbr_vertex_spv}" "${pbr_fragment_spv}" "${CMAKE_SOURCE_DIR}/cmake/EmbedSpirv.cmake" VERBATIM)
+add_dependencies(engine_render_shaders engine_pbr_shaders)
+add_custom_target(engine_pbr_shaders DEPENDS "${pbr_header}")
+
 add_library(engine_render STATIC
+    src/pbr_renderer.cpp
+    "${pbr_header}"
     src/camera.cpp
     src/device.cpp
     src/device_capabilities.cpp
@@ -93,6 +110,7 @@ target_link_libraries(engine_render
         engine::core
         engine::platform
         engine::scene
+        engine::asset
         volk::volk_headers
         GPUOpen::VulkanMemoryAllocator
         glm::glm

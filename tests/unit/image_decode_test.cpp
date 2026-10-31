@@ -1,0 +1,115 @@
+#include <engine/asset/image_decode.hpp>
+
+#include <catch2/catch_test_macros.hpp>
+
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <span>
+#include <string>
+#include <vector>
+
+namespace {
+
+using engine::asset::decode_image;
+using engine::asset::ImageMimeType;
+using engine::core::ErrorCode;
+
+[[nodiscard]] std::vector<std::byte> read_bytes(const std::filesystem::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    REQUIRE(input);
+    const std::string content{std::istreambuf_iterator<char>(input),
+                              std::istreambuf_iterator<char>()};
+    std::vector<std::byte> bytes(content.size());
+    for (std::size_t index = 0; index < content.size(); ++index) {
+        bytes[index] = static_cast<std::byte>(content[index]);
+    }
+    return bytes;
+}
+
+[[nodiscard]] std::span<const std::byte> as_span(const std::vector<std::byte>& bytes) {
+    return std::span<const std::byte>(bytes.data(), bytes.size());
+}
+
+[[nodiscard]] std::filesystem::path fixture(const char* name) {
+    return std::filesystem::path(ENGINE_ASSET_FIXTURE_DIR) / name;
+}
+
+} // namespace
+
+TEST_CASE("PNG and JPEG decode to RGBA8", "[asset][image]") {
+    const auto png = read_bytes(fixture("m3_basecolor.png"));
+    auto decoded = decode_image(as_span(png), ImageMimeType::Png);
+    REQUIRE(decoded.has_value());
+    CHECK(decoded->width == 4U);
+    CHECK(decoded->height == 4U);
+    CHECK(decoded->rgba8.size() == 4U * 4U * 4U);
+    CHECK(decoded->rgba8[3] == 255U);
+
+    const auto jpeg = read_bytes(fixture("texture.jpg"));
+    auto jpeg_decoded = decode_image(as_span(jpeg), ImageMimeType::Jpeg);
+    REQUIRE(jpeg_decoded.has_value());
+    CHECK(jpeg_decoded->width == 2U);
+    CHECK(jpeg_decoded->height == 2U);
+    CHECK(jpeg_decoded->rgba8.size() == 2U * 2U * 4U);
+}
+
+TEST_CASE("invalid and oversized images fail before allocation", "[asset][image]") {
+    const auto png = read_bytes(fixture("m3_basecolor.png"));
+    SECTION("truncated") {
+        auto truncated = png;
+        truncated.resize(png.size() / 2U);
+        const auto result = decode_image(as_span(truncated), ImageMimeType::Png);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
+    SECTION("corrupt") {
+        const std::vector<std::byte> garbage(64U, std::byte{0x7F});
+        const auto result = decode_image(as_span(garbage), ImageMimeType::Png);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
+    SECTION("MIME mismatch") {
+        const auto jpeg = read_bytes(fixture("texture.jpg"));
+        const auto result = decode_image(as_span(jpeg), ImageMimeType::Png);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+    }
+
+    SECTION("oversized") {
+        const auto oversized = read_bytes(fixture("oversized.png"));
+        const auto result = decode_image(as_span(oversized), ImageMimeType::Png);
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().code == ErrorCode::Validation);
+        CHECK(result.error().details["maxDimension"] == engine::asset::kMaxTextureDimension);
+    }
+}
+
+TEST_CASE("PNG leading empty IDAT chunks preserve valid pixels and reject fuzz corruption",
+          "[asset][image]") {
+    auto png = read_bytes(fixture("m3_basecolor.png"));
+    const auto original = decode_image(as_span(png), ImageMimeType::Png);
+    REQUIRE(original);
+    // Complete zero-length IDAT with its valid CRC, after the 13-byte IHDR.
+    const std::vector<std::byte> empty_idat{
+        std::byte{0},    std::byte{0},    std::byte{0},    std::byte{0},
+        std::byte{'I'},  std::byte{'D'},  std::byte{'A'},  std::byte{'T'},
+        std::byte{0x35}, std::byte{0xAF}, std::byte{0x06}, std::byte{0x1E},
+    };
+    png.insert(png.begin() + 33, empty_idat.begin(), empty_idat.end());
+    png.insert(png.begin() + 33, empty_idat.begin(), empty_idat.end());
+    const auto decoded = decode_image(as_span(png), ImageMimeType::Png);
+    REQUIRE(decoded);
+    CHECK(decoded->width == original->width);
+    CHECK(decoded->height == original->height);
+    CHECK(decoded->rgba8 == original->rgba8);
+
+    const auto corrupt = read_bytes(fixture("fuzz_empty_idat.png"));
+    const auto rejected = decode_image(as_span(corrupt), ImageMimeType::Png);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().code == ErrorCode::Validation);
+    REQUIRE(decode_image(as_span(png), ImageMimeType::Png));
+}

@@ -70,6 +70,29 @@ struct Mesh {
     std::string mesh_id{std::string(kBuiltinCubeMesh)};
 };
 
+// References a cooked asset by its stable UUID. The asset hierarchy is
+// resolved read-only at render time.
+struct AssetInstance {
+    std::string asset_id;
+};
+
+struct DirectionalLight {
+    // Direction the light travels, from the light toward the scene.
+    core::Vec3 direction{0.0F, -1.0F, 0.0F};
+    core::Vec3 color{1.0F, 1.0F, 1.0F};
+    float intensity{1.0F};
+    bool enabled{true};
+};
+
+// Reserved in scene format 3; the M3 renderer ignores point lights. M5 adds
+// point-light rendering and shadows without another format version.
+struct PointLight {
+    core::Vec3 color{1.0F, 1.0F, 1.0F};
+    float intensity{1.0F};
+    float range{10.0F};
+    bool enabled{true};
+};
+
 struct EntityMetadata {
     nlohmann::json value = nlohmann::json::object();
 };

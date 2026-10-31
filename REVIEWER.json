@@ -1,0 +1,7 @@
+{
+  "providerInstanceId": "codex_codex_cli",
+  "model": "gpt-6-astra",
+  "options": {
+    "reasoningEffort": "high"
+  }
+}

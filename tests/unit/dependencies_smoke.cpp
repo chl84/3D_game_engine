@@ -3,6 +3,7 @@
 #include <CLI/CLI.hpp>
 #include <SDL3/SDL_version.h>
 #include <entt/entt.hpp>
+#include <fastgltf/core.hpp>
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <nlohmann/json-schema.hpp>
@@ -51,6 +52,9 @@ TEST_CASE("third-party dependencies compile and link", "[dependencies]") {
 
     VmaAllocatorCreateInfo allocator_info{};
     REQUIRE(allocator_info.instance == VK_NULL_HANDLE);
+
+    fastgltf::Parser parser;
+    (void)parser;
 
     ImGuiContext* imgui_context = ImGui::CreateContext();
     REQUIRE(imgui_context != nullptr);

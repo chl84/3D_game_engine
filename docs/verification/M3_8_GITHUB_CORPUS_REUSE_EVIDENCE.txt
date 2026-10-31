@@ -1,0 +1,30 @@
+M3.8 GITHUB CORPUS RESTORE/REUSE — 2026-10-31
+
+Candidate: 9c812f5063b3f4a291777a43e071022d56865f54.
+Save run: https://github.com/chl84/3D_game_engine/actions/runs/41177977464
+Restore run: https://github.com/chl84/3D_game_engine/actions/runs/41182629918
+Restore job: 124482992727.
+
+The first successful 600s-per-target run saved corpus key ending41177977464-1.
+The second run hit that exact restore key, restored it successfully, then
+started GLB fuzzing with676 corpus files (the fresh run started with8).
+This establishes actual GitHub cache restoration and use of the retained corpus.
+The second run was cancelled at the owner's request; its final conclusion is
+completed/cancelled. It is NOT claimed as a second successful long fuzz run.
+No further long run is needed to prove cache restore. The approved M3 plan's
+nightly/cached long fuzz suggestion is optional; a second complete long run
+was an unnecessary parent-imposed gate, not an approved acceptance criterion.
+Required short fuzz CI and the first complete long run remain successful.
+
+The first two 'Cache restored successfully' lines below are other dependency
+caches; the fuzz-corpus key/hit/restore and676-file target line are the relevant proof.
+
+2026-10-31T07:57:44.6224848Z Cache restored successfully
+2026-10-31T07:58:12.9418869Z Cache restored successfully
+2026-10-31T07:59:00.5377504Z   key: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-41182629918-1
+2026-10-31T07:59:00.5378160Z   restore-keys: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-
+2026-10-31T07:59:00.8465051Z Cache hit for restore-key: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-41177977464-1
+2026-10-31T07:59:01.8530941Z Cache restored successfully
+2026-10-31T07:59:01.8591756Z Cache restored from key: fuzz-corpus-v1-Linux-fa22583f91b55d4c076d3625a5a8aac4a095a19a89e37d6bc5ee00bcfc27822c-41177977464-1
+2026-10-31T07:59:01.8899661Z Fuzz target gltf: seconds=600, corpus files=676
+2026-10-31T08:05:12.6070402Z ##[error]The operation was canceled.

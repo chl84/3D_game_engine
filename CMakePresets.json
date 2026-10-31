@@ -55,6 +55,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "g++-14",
+        "CMAKE_C_COMPILER": "gcc-14",
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "ENGINE_WARNINGS_AS_ERRORS": "ON"
       }
@@ -66,6 +67,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "ENGINE_WARNINGS_AS_ERRORS": "ON"
       }
@@ -129,6 +131,23 @@
       "cacheVariables": {
         "ENGINE_WARNINGS_AS_ERRORS": "ON"
       }
+    },
+    {
+      "name": "linux-fuzz",
+      "inherits": "base",
+      "displayName": "Clang libFuzzer + ASan/UBSan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "ENGINE_BUILD_FUZZERS": "ON",
+        "ENGINE_SANITIZE_ADDRESS": "ON",
+        "ENGINE_SANITIZE_UNDEFINED": "ON",
+        "ENGINE_WARNINGS_AS_ERRORS": "ON",
+        "CMAKE_CXX_FLAGS": "-fsanitize=fuzzer-no-link",
+        "CMAKE_C_FLAGS": "-fsanitize=fuzzer-no-link"
+      }
     }
   ],
   "buildPresets": [
@@ -171,6 +190,10 @@
     {
       "name": "ci-windows",
       "configurePreset": "ci-windows"
+    },
+    {
+      "name": "linux-fuzz",
+      "configurePreset": "linux-fuzz"
     }
   ],
   "testPresets": [
@@ -214,6 +237,16 @@
       "configurePreset": "linux-asan",
       "output": {
         "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-asan-lavapipe",
+      "displayName": "Local Mesa lavapipe leak-check policy",
+      "inherits": "linux-asan",
+      "environment": {
+        "VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING": "1",
+        "ASAN_OPTIONS": "detect_leaks=1:abort_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
       }
     },
     {

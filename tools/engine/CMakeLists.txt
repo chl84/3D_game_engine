@@ -1,15 +1,18 @@
 add_executable(engine
     src/commands.cpp
     src/doctor.cpp
+    src/live.cpp
     src/main.cpp
     src/run.cpp
     src/stb_image_write_impl.cpp
 )
 
 target_link_libraries(engine PRIVATE
+    engine::control
     engine::core
     engine::platform
     engine::command
+    engine::asset
     engine::scene
     engine::render
     CLI11::CLI11

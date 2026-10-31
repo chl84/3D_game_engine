@@ -1,0 +1,105 @@
+M3.8 OWNER-REQUESTED LARGE NORMAL-MAPPED MODEL — 2026-10-31
+
+Engine source: 0786ac7 plus this test/documentation delta; no engine implementation change.
+Blender 5.2.2 LTS: original smooth machined ring, 262144 indexed triangles,
+baked non-flat tangent-space normal PNG, no TANGENT source attribute.
+
+Reference development machine: Intel i7-1265U, Iris Xe, currently 30 GiB RAM
+(original target specifies 16 GB). AC online=1; fixed platform profile=balanced
+before/after measurement. GCC 16.2.1, RelWithDebInfo, no sanitizers.
+No build/bake during timing. Ordinary desktop services remain.
+OS page cache not flushed; each import uses a fresh project/engine cache.
+Timing includes CLI startup, source decode, preflight, MikkTSpace, texture
+decode, cooking, writes and harness response-schema validation.
+
+COMMAND: .venv/bin/python3 tests/contract/large_normalmap.py build/linux-release/tools/engine/engine --repeat 3
+{
+  "triangles": 262144,
+  "sourceTangents": false,
+  "sha256": "3c74e555bf20c2d179dbded708a3b6b63e118389bffb3b07a12f240680e4b93e",
+  "uncachedImportSeconds": [
+    0.8762449219939299,
+    0.854202480026288,
+    0.8522446090064477
+  ],
+  "medianSeconds": 0.854202480026288
+}
+
+COMMAND: ctest --test-dir build/ci-linux-gcc -R "^(engine_asset_tests|engine_asset_cli|engine_large_normalmap|engine_docs_links)$" --output-on-failure
+Test project <repository>/build/ci-linux-gcc
+    Start  3: engine_asset_tests
+1/4 Test  #3: engine_asset_tests ...............   Passed    0.31 sec
+    Start 14: engine_docs_links
+2/4 Test #14: engine_docs_links ................   Passed    0.02 sec
+    Start 19: engine_asset_cli
+3/4 Test #19: engine_asset_cli .................   Passed    0.67 sec
+    Start 20: engine_large_normalmap
+4/4 Test #20: engine_large_normalmap ...........   Passed    5.83 sec
+
+100% tests passed out of 4
+
+Label Time Summary:
+acceptance    =   5.83 sec*proc (1 test)
+asset         =   6.80 sec*proc (3 tests)
+cli           =   6.50 sec*proc (2 tests)
+contract      =   6.50 sec*proc (2 tests)
+docs          =   0.02 sec*proc (1 test)
+unit          =   0.31 sec*proc (1 test)
+
+Total Test time (real) =   6.83 sec
+
+COMMAND: ASAN_OPTIONS=detect_leaks=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 ctest --test-dir build/linux-asan -R "^engine_large_normalmap$" --output-on-failure -V
+UpdateCTestConfiguration  from :<repository>/build/linux-asan/DartConfiguration.tcl
+Parse Config file:<repository>/build/linux-asan/DartConfiguration.tcl
+Test project <repository>/build/linux-asan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 20
+    Start 20: engine_large_normalmap
+
+20: Test command: <repository>/.venv/bin/python3 "<repository>/tests/contract/large_normalmap.py" "<repository>/build/linux-asan/tools/engine/engine"
+20: Working Directory: <repository>/build/linux-asan/tests
+20: Test timeout computed to be: 180
+20: {
+20:   "triangles": 262144,
+20:   "sourceTangents": false,
+20:   "sha256": "3c74e555bf20c2d179dbded708a3b6b63e118389bffb3b07a12f240680e4b93e",
+20:   "uncachedImportSeconds": [
+20:     25.841866783011938
+20:   ],
+20:   "medianSeconds": 25.841866783011938
+20: }
+1/1 Test #20: engine_large_normalmap ...........   Passed   28.08 sec
+
+The following tests passed:
+	engine_large_normalmap
+
+100% tests passed out of 1
+
+Label Time Summary:
+acceptance    =  28.08 sec*proc (1 test)
+asset         =  28.08 sec*proc (1 test)
+cli           =  28.08 sec*proc (1 test)
+contract      =  28.08 sec*proc (1 test)
+
+Total Test time (real) =  28.08 sec
+
+Guide command verification: extracted Bash blocks from samples/m3-manual/README.md;
+substituted the new ring for the user model, a fresh /tmp project, and added
+--frames 3 --hidden --json to both run commands for unattended verification.
+SDL_VIDEODRIVER=x11, VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json.
+All commands exited 0, including dry-run/reimport/validate/screenshot.
+Then changed the original GLB node translation to [0,0.5,0] and reimported:
+same asset UUID; cacheHit=false; saved scene bytes unchanged; new screenshot
+differs from the prior capture. All assertions passed. Owner manual test pending.
+
+Sandbox limitations: initial sanitizer attempt failed in project creation with
+LeakSanitizer ptrace restriction. Initial SDL run returned E_PRECONDITION,
+No available video device. Host reruns above passed with checks still enabled.
+
+Independent review, reference CI/Windows and final M3.8 acceptance remain pending.
+This evidence neither approves merge/tag nor starts M4.

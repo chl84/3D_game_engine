@@ -1,0 +1,102 @@
+M3.7 reference CI evidence
+Source: 7c241168583e5cd1b37c6b14aa60fd959819753d
+https://github.com/chl84/3D_game_engine/actions/runs/41093710140
+Final: completed/success; all six jobs completed/success, exact source SHA confirmed.
+COMMAND: gh run view 41093710140 --json status,conclusion,headSha,jobs,url
+
+Linux (ci-linux-gcc14) — completed/success
+2026-10-30T16:55:08.7989427Z 10/24 Test #10: engine_screenshot_golden .........   Passed    0.05 sec
+2026-10-30T16:55:11.3698240Z 19/24 Test #19: engine_pbr_golden ................   Passed    0.63 sec
+2026-10-30T16:55:11.5076357Z 20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.14 sec
+2026-10-30T16:55:17.3644774Z 23/24 Test #23: engine_live_api ..................   Passed    4.03 sec
+2026-10-30T16:55:18.5881387Z 24/24 Test #24: engine_local_socket_deadline .....   Passed    1.22 sec
+2026-10-30T16:55:18.5884381Z 100% tests passed out of 24
+2026-10-30T16:55:20.0490007Z 19: Blender tangent image difference: 0
+2026-10-30T16:55:20.1703457Z 2/3 Test #19: engine_pbr_golden ................   Passed    0.28 sec
+2026-10-30T16:55:20.3025038Z 20: Color-space patch 0: red=19 expected=19
+2026-10-30T16:55:20.3025236Z 20: Color-space patch 1: red=33 expected=33
+2026-10-30T16:55:20.3025409Z 20: Color-space patch 2: red=32 expected=33
+2026-10-30T16:55:20.3025575Z 20: Color-space patch 3: red=33 expected=33
+2026-10-30T16:55:20.3025746Z 20: Color-space patch 4: red=117 expected=117
+2026-10-30T16:55:20.3025928Z 20: Color-space patch 5: red=137 expected=137
+2026-10-30T16:55:20.3026217Z 20: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-30T16:55:20.3094321Z 3/3 Test #20: engine_pbr_color_golden ..........   Passed    0.14 sec
+2026-10-30T16:55:20.3098749Z 100% tests passed out of 3
+2026-10-30T16:55:20.3975447Z 100% tests passed out of 1
+
+Linux (ci-linux-clang) — completed/success
+2026-10-30T16:56:02.1609440Z 10/24 Test #10: engine_screenshot_golden .........   Passed    0.07 sec
+2026-10-30T16:56:06.8078520Z 19/24 Test #19: engine_pbr_golden ................   Passed    1.26 sec
+2026-10-30T16:56:07.0158099Z 20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.21 sec
+2026-10-30T16:56:16.0207387Z 23/24 Test #23: engine_live_api ..................   Passed    5.92 sec
+2026-10-30T16:56:17.2546751Z 24/24 Test #24: engine_local_socket_deadline .....   Passed    1.23 sec
+2026-10-30T16:56:17.2550922Z 100% tests passed out of 24
+2026-10-30T16:56:18.9205429Z 19: Blender tangent image difference: 0
+2026-10-30T16:56:19.1112966Z 2/3 Test #19: engine_pbr_golden ................   Passed    0.45 sec
+2026-10-30T16:56:19.3138665Z 20: Color-space patch 0: red=19 expected=19
+2026-10-30T16:56:19.3139169Z 20: Color-space patch 1: red=33 expected=33
+2026-10-30T16:56:19.3139658Z 20: Color-space patch 2: red=32 expected=33
+2026-10-30T16:56:19.3140145Z 20: Color-space patch 3: red=33 expected=33
+2026-10-30T16:56:19.3140951Z 20: Color-space patch 4: red=117 expected=117
+2026-10-30T16:56:19.3141478Z 20: Color-space patch 5: red=137 expected=137
+2026-10-30T16:56:19.3142184Z 20: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-30T16:56:19.3200816Z 3/3 Test #20: engine_pbr_color_golden ..........   Passed    0.21 sec
+2026-10-30T16:56:19.3206661Z 100% tests passed out of 3
+2026-10-30T16:56:19.4484031Z 100% tests passed out of 1
+
+Quality — completed/success
+2026-10-30T16:53:02.8804030Z clang-format-18 is already the newest version (1:18.1.3-1ubuntu1).
+2026-10-30T16:53:02.8804926Z clang-tidy-18 is already the newest version (1:18.1.3-1ubuntu1).
+2026-10-30T16:53:31.3637913Z   | xargs -0 clang-format-18 --dry-run --Werror
+2026-10-30T16:53:32.2931957Z   | xargs -0 clang-tidy-18 -p build/ci-linux-clang --warnings-as-errors='*'
+2026-10-30T17:05:18.0685648Z Suppressed 3493178 warnings (3491403 in non-user code, 1775 NOLINT).
+
+Linux ASan/UBSan — completed/success
+2026-10-30T16:56:59.4444926Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T16:56:59.4445270Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+2026-10-30T16:57:11.6818881Z 10/24 Test #10: engine_screenshot_golden .........   Passed    0.20 sec
+2026-10-30T16:57:34.3237927Z 19/24 Test #19: engine_pbr_golden ................   Passed    2.65 sec
+2026-10-30T16:57:34.9804089Z 20/24 Test #20: engine_pbr_color_golden ..........   Passed    0.66 sec
+2026-10-30T16:58:01.9051213Z 23/24 Test #23: engine_live_api ..................   Passed   16.46 sec
+2026-10-30T16:58:03.1500070Z 24/24 Test #24: engine_local_socket_deadline .....   Passed    1.24 sec
+2026-10-30T16:58:03.1505684Z 100% tests passed out of 24
+2026-10-30T16:58:03.1717846Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T16:58:03.1718223Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+2026-10-30T16:58:03.4604859Z 100% tests passed out of 1
+2026-10-30T16:58:03.4682359Z   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+2026-10-30T16:58:03.4682698Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+
+Windows (MSVC) — completed/success
+2026-10-30T16:56:53.9380467Z print("Windows lavapipe detected:", names)
+2026-10-30T16:56:55.0323115Z Windows lavapipe detected: ['llvmpipe (llvm 23.1.4, 256 bits)']
+2026-10-30T16:57:16.0826158Z 14/18 Test #14: engine_pbr_golden ................   Passed    2.17 sec
+2026-10-30T16:57:17.2518686Z 15/18 Test #15: engine_pbr_color_golden ..........   Passed    1.17 sec
+2026-10-30T16:58:06.5929526Z 17/18 Test #17: engine_live_api ..................   Passed   36.75 sec
+2026-10-30T16:58:07.9369235Z 18/18 Test #18: engine_local_socket_deadline .....   Passed    1.34 sec
+2026-10-30T16:58:07.9376999Z 100% tests passed out of 18
+2026-10-30T16:58:10.1108613Z 14: Blender tangent image difference: 0
+2026-10-30T16:58:10.9918457Z 2/3 Test #14: engine_pbr_golden ................   Passed    2.14 sec
+2026-10-30T16:58:11.9924535Z 15: Color-space patch 0: red=19 expected=19
+2026-10-30T16:58:11.9924848Z 15: Color-space patch 1: red=33 expected=33
+2026-10-30T16:58:11.9925159Z 15: Color-space patch 2: red=32 expected=33
+2026-10-30T16:58:11.9925478Z 15: Color-space patch 3: red=33 expected=33
+2026-10-30T16:58:11.9925877Z 15: Color-space patch 4: red=117 expected=117
+2026-10-30T16:58:11.9926280Z 15: Color-space patch 5: red=137 expected=137
+2026-10-30T16:58:11.9927461Z 15: PBR color-space fixed golden passed (sRGB base/emissive; linear MR/AO/normal)
+2026-10-30T16:58:11.9952897Z 3/3 Test #15: engine_pbr_color_golden ..........   Passed    1.00 sec
+2026-10-30T16:58:11.9963319Z 100% tests passed out of 3
+2026-10-30T16:58:13.2779773Z 100% tests passed out of 1
+
+Fuzz (Clang ASan) — completed/success
+2026-10-30T16:54:17.0014273Z   ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+2026-10-30T16:54:17.0015007Z   UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+2026-10-30T16:54:48.1346572Z Done 5553 runs in 31 second(s)
+2026-10-30T16:55:19.2255480Z Done 7794 runs in 31 second(s)
+2026-10-30T16:55:50.2698745Z Done 64402 runs in 31 second(s)
+
+No skipped/not-run/failed tests in the captured successful jobs.
+ASan reference job: leak checks on, no AddressSanitizer/LeakSanitizer/runtime-error diagnostics.
+Fuzz job retains its existing detect_leaks=0 setting; no leak-clean claim is made for the fuzz job.
+
+Final status verified with gh run view 41093710140 --json status,conclusion,headSha,jobs,url.
+All six jobs succeeded. Quality used clang-format18.1.3 and clang-tidy18.1.3 with warnings as errors. No error diagnostics.

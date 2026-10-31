@@ -2,6 +2,7 @@
 
 #include <engine/core/error.hpp>
 #include <engine/render/device.hpp>
+#include <engine/render/pbr_renderer.hpp>
 #include <engine/scene/scene_view.hpp>
 
 #include <cstdint>
@@ -35,6 +36,11 @@ public:
 
     [[nodiscard]] std::uint32_t width() const noexcept;
     [[nodiscard]] std::uint32_t height() const noexcept;
+
+    [[nodiscard]] core::Result<void> upload_asset(const asset::LoadedAsset& asset);
+    [[nodiscard]] core::Result<void> retire_asset(std::string_view asset_id);
+    [[nodiscard]] core::Result<void> collect_assets();
+    [[nodiscard]] PbrStats pbr_stats() const;
 
 private:
     struct Impl;

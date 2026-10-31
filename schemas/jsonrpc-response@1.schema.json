@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jsonrpc", "id"],
+  "properties": {
+    "jsonrpc": {"const": "2.0"},
+    "id": {"type": ["integer", "string", "null"]},
+    "result": {"type": "object"},
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {"code": {"type": "integer"}, "message": {"type": "string"}}
+    }
+  },
+  "oneOf": [{"required": ["result"]}, {"required": ["error"]}]
+}

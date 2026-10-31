@@ -1,0 +1,5 @@
+#pragma once
+namespace engine::asset::detail {
+inline constexpr const char* kAssetSchema = R"SCHEMA(@ASSET_SCHEMA@)SCHEMA";
+inline constexpr const char* kCookedSchema = R"SCHEMA(@COOKED_SCHEMA@)SCHEMA";
+}

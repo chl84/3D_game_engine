@@ -1,0 +1,37 @@
+Independent review — 2026-10-30
+Reviewer: Claude Opus5.5 high, isolated worktree; source4ce8cac22aee59c7718aac91b451176f327981b3 against5fc307f.
+Verdict: GODKJENT for technical M3.6; no blocking findings. No owner merge/tag/M3.7 authorization.
+
+Reviewer-run commands and results (manually verified by the reviewer):
+- ci-linux-clang configure/build with warnings-as-errors: zero warnings.
+- Clang CTest with explicit lavapipe:22/22, no skips.
+- GCC16 ASan/UBSan build; linux-asan-lavapipe with no LSAN_OPTIONS:22/22.
+- Injected77-byte application leak in engine_pbr_test: direct77bytes, exit134; clean control exit0.
+- clang-tidy23 on6modified translation units: no project diagnostics.
+- CI41073848866 read once: exact4ce8cac, completed/success, all6jobs; Linux22/22 and Windows16/16.
+- Initial system-Python run lacked jsonschema; reviewer corrected the Python environment before final results.
+
+Independent mutations, all detected and restored:
+M1 emissive classified Linear -> engine_asset_cli failed.
+M2 chart emissive GPU input Linear -> actual156/expected117.
+M3 omit AssetInstance snapshot restoration -> deletion-undo image equality failed.
+M4 omit upload deduplication -> duplicate-upload E_CONFLICT.
+M5 redo assigns a new instance ID -> UUID equality failed (initial unused-capture mutation did not compile; corrected mutation ran).
+M6 global rather than scene-seeded UUID -> deterministic replay failed.
+M7 omit finite position guard -> asset command regression failed.
+M8 omit referenced-cache validation -> unit and CLI missing-asset tests failed.
+
+Findings and disposition:
+L1 low: uppercase/mixed-case UUID references parsed successfully but used raw-text upload/lookup keys.
+    Corrected after review: canonical parsed UUID for upload deduplication and PBR lookup; scene bytes preserved.
+    Parent verified uppercase-only and mixed-case images and separately mutated each fix to reproduce the old errors.
+    The small correction is handled directly; this review verdict is attributed to4ce8cac, not represented as a new independent review of the correction.
+I1 empty CLI name uses the asset-name default: documented; direct JSON minLength1 remains.
+I2 historical suppression wording: clarified to past tense; original captured diagnostic command retained and marked historical.
+I3 shared-use emissive mutation can fail at mixed-space validation first; emissive-only test independently checks cooked sRGB: no change needed.
+
+Limits:
+Reviewer did not separately force the Intel ICD for the full window acceptance; parent did so successfully.
+Windows verification is software lavapipe/offscreen, not physical Windows swapchain presentation.
+clang-tidy18 and GCC14 reference checks are supplied by CI, not the local23/16 tools.
+Post-correction CI and final exact clean-clone evidence are recorded separately in the M3.6 evidence files.

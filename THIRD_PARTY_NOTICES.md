@@ -20,6 +20,8 @@ in the corresponding source distributions and in the vcpkg installed tree.
 | Vulkan Memory Allocator | 3.5.0 | MIT | GPU memory allocation (`render`) |
 | GLM | 1.0.3 | MIT | Renderer math (`render`) |
 | stb_image / stb_image_write (stb) | 2026-08-02 | MIT OR Unlicense | PNG encoding and golden-image decoding |
+| fastgltf | 0.9.1 | MIT | glTF 2.0 / GLB import (`asset`) |
+| simdjson | 5.0.5 | `(Apache-2.0 OR MIT) AND BSL-1.0 AND BSD-3-Clause` | Transitive JSON parser for fastgltf |
 | Dear ImGui | 1.93.0-docking | MIT | Debug overlay (`render`) |
 
 ## Test and development dependencies
@@ -46,9 +48,11 @@ the compiler outputs redistributable under the engine's MIT license.
 
 The following components are distributed under the MIT License: nlohmann/json,
 spdlog, fmt, volk, EnTT, json-schema-validator, jsonschema, Vulkan Memory
-Allocator, GLM and Dear ImGui. Dear ImGui's default fonts (ProggyClean and
-ProggyForever) are distributed under their own permissive licenses; the vcpkg
-package copyright file contains all of the notices.
+Allocator, GLM, Dear ImGui and fastgltf. Dear ImGui's default fonts
+(ProggyClean and ProggyForever) are distributed under their own permissive
+licenses; the vcpkg package copyright file contains all of the notices.
+simdjson is distributed under `(Apache-2.0 OR MIT) AND BSL-1.0 AND
+BSD-3-Clause`; its full notices are in the vcpkg installed tree.
 
 ```text
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -157,3 +161,15 @@ SDL3 source distribution and in the vcpkg installed tree.
 A new dependency or a version upgrade updates `docs/DEPENDENCIES.md` and this
 file in the same change. A dependency with a license outside the allowlist
 requires owner approval and an ADR.
+
+## MikkTSpace
+
+- Author: Morten S. Mikkelsen.
+- Source: <https://github.com/mmikk/MikkTSpace>
+- Commit: `3e895b49d05ea07e4c2133156cfa94369e19e409`
+- License: zlib, compatible with this project's MIT license.
+- Distribution: unmodified sources under `third_party/mikktspace`, with the
+  original license notices preserved. See
+  [`LICENSE`](third_party/mikktspace/LICENSE) for the complete notice.
+- The binary uses a generated build copy with documented UB corrections; see
+  [build-copy corrections](third_party/mikktspace/README.md#build-copy-correction).

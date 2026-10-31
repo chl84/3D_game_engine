@@ -77,3 +77,46 @@ verify glTF materials. M5 adds shadows and point lights together with the
 reference scene and streaming content. M5 is the first milestone where the
 entity/triangle/material budget can be exercised realistically. M8 repeats the
 measurement with the final renderer, descriptor path and packaging.
+
+## M3.8 high-poly import admission measurement (2026-10-31)
+
+The owner requested a realistic normal-mapped model of at least 200,000
+triangles to guard against rejecting ordinary large models. The original
+Blender-exported machined ring in `tests/assets/m3/large/` has **262,144
+triangles**, one indexed primitive, smooth normals, UV seams and an embedded
+256×256 baked normal texture. It intentionally has no TANGENT attribute.
+The public CLI imports it successfully, generates valid unit tangents for
+every cooked vertex, preserves every triangle and validates the cooked asset.
+
+Measured on the reference development machine's i7-1265U, Iris Xe and current
+30 GiB installed RAM (the original target configuration specifies 16 GB).
+AC was connected and the platform profile remained `balanced` before/after.
+Linux, GCC 16.2.1, `linux-release` (RelWithDebInfo, optimized, no sanitizers),
+engine source `0786ac7` plus this test/documentation change. No concurrent
+build or Blender bake ran during the measurement; ordinary desktop services
+remained running. Load average after the run: 1.31 / 0.69 / 0.39.
+
+Three fresh-project, empty-engine-cache imports took **0.876245, 0.854202 and
+0.852245 seconds**, median **0.854202 seconds**. The harness wall clock includes
+process launch, parsing, work admission, tangent generation, image decoding,
+cooking, source/cache writes and response-schema validation. Project creation,
+post-import validation and tangent inspection are outside the timed section.
+The OS file cache was not flushed; these are not cold-storage measurements.
+The GPU is not used for import. These results are not a frame-time benchmark
+or proof of the 16 GB configuration's memory budget.
+
+Reproduce (Python environment requires `requirements-dev.txt`):
+
+```bash
+.venv/bin/python3 tests/contract/large_normalmap.py \
+  build/linux-release/tools/engine/engine --repeat 3
+ctest --test-dir build/ci-linux-gcc -R '^engine_large_normalmap$' --output-on-failure
+```
+
+ADR-0015 limits **dense-position pair work**, not model triangle count. Indexed
+corner groups of 64 or fewer contribute zero; larger groups charge n(n−1)/2.
+The maximum of eight adjacent-Float32 grids per primitive is summed over all
+primitives requiring generation, with an inclusive 1,000,000-pair asset budget.
+Source tangents bypass generation. This one representative high-poly model
+does not prove admission of all topology: extreme high-valence/coincident
+geometry may still be rejected and should export tangents or be simplified.

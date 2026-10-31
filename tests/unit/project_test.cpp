@@ -11,9 +11,12 @@
 
 using engine::core::ReflectionRegistry;
 using engine::core::Vec3d;
+using engine::scene::AssetInstance;
 using engine::scene::Camera;
+using engine::scene::DirectionalLight;
 using engine::scene::Entity;
 using engine::scene::Mesh;
+using engine::scene::PointLight;
 using engine::scene::Project;
 using engine::scene::register_scene_components;
 using engine::scene::Scene;
@@ -69,6 +72,13 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     scene.component<Camera>(child).fovYRadians = 0.75F;
     REQUIRE(scene.add_component<Mesh>(child).has_value());
     scene.component<Mesh>(child).mesh_id = std::string(engine::scene::kBuiltinPlaneMesh);
+    REQUIRE(scene.add_component<AssetInstance>(child).has_value());
+    scene.component<AssetInstance>(child).asset_id = "5f0c2a2e-7d4b-4c1e-9a2f-1f3d4c5b6a70";
+    REQUIRE(scene.add_component<DirectionalLight>(root).has_value());
+    scene.component<DirectionalLight>(root).direction = {0.0F, -1.0F, -0.5F};
+    scene.component<DirectionalLight>(root).intensity = 2.5F;
+    REQUIRE(scene.add_component<PointLight>(child).has_value());
+    scene.component<PointLight>(child).range = 25.0F;
     REQUIRE(scene.set_metadata(child, {{"tag", "player"}}).has_value());
 
     const std::string scene_path = "scenes/main.scene.json";
@@ -93,6 +103,11 @@ TEST_CASE("scene format round-trips entities, hierarchy and components", "[proje
     REQUIRE(loaded->has<Mesh>(loaded_child.value_or(entt::null)));
     REQUIRE(loaded->component<Mesh>(loaded_child.value_or(entt::null)).mesh_id ==
             engine::scene::kBuiltinPlaneMesh);
+    REQUIRE(loaded->component<AssetInstance>(loaded_child.value_or(entt::null)).asset_id ==
+            "5f0c2a2e-7d4b-4c1e-9a2f-1f3d4c5b6a70");
+    REQUIRE(loaded->component<DirectionalLight>(loaded_root.value_or(entt::null)).intensity ==
+            2.5F);
+    REQUIRE(loaded->component<PointLight>(loaded_child.value_or(entt::null)).range == 25.0F);
     REQUIRE(loaded->metadata(loaded_child.value_or(entt::null)).at("tag") == "player");
 
     REQUIRE(project->save_scene(scene_path, *loaded, registry).has_value());
@@ -126,7 +141,7 @@ TEST_CASE("project and scene loaders reject unknown fields and newer versions", 
     register_scene_components(registry);
     auto scene_document =
         nlohmann::json::parse(read_file(project->root() / "scenes/main.scene.json"));
-    scene_document["formatVersion"] = 3;
+    scene_document["formatVersion"] = 4;
     REQUIRE(engine::platform::atomic_write_file(project->root() / "scenes/main.scene.json",
                                                 scene_document.dump(2) + "\n")
                 .has_value());
@@ -135,7 +150,7 @@ TEST_CASE("project and scene loaders reject unknown fields and newer versions", 
     REQUIRE(newer_scene.error().code == engine::core::ErrorCode::Unsupported);
 }
 
-TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
+TEST_CASE("scene format v1 and v2 load and upgrade to v3", "[project][scene]") {
     engine::test::TempDir temp("scene-v1");
     auto project = Project::create(temp.path() / "demo", "Demo");
     REQUIRE(project.has_value());
@@ -143,24 +158,29 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     ReflectionRegistry registry;
     register_scene_components(registry);
     const auto scene_file = project->root() / "scenes/main.scene.json";
-    auto scene_document = nlohmann::json::parse(read_file(scene_file));
-    REQUIRE(scene_document["formatVersion"] == 2);
-    scene_document["formatVersion"] = 1;
-    REQUIRE(
-        engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n").has_value());
+    for (const int source_version : {1, 2}) {
+        auto scene_document = nlohmann::json::parse(read_file(scene_file));
+        REQUIRE(scene_document["formatVersion"] == 3);
+        scene_document["formatVersion"] = source_version;
+        REQUIRE(engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n")
+                    .has_value());
+
+        auto upgraded_scene = project->load_scene("scenes/main.scene.json", registry);
+        REQUIRE(upgraded_scene.has_value());
+        REQUIRE(
+            project->save_scene("scenes/main.scene.json", *upgraded_scene, registry).has_value());
+        const auto upgraded = nlohmann::json::parse(read_file(scene_file));
+        REQUIRE(upgraded["formatVersion"] == 3);
+    }
 
     auto loaded = project->load_scene("scenes/main.scene.json", registry);
     REQUIRE(loaded.has_value());
-    REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
-    const auto upgraded = nlohmann::json::parse(read_file(scene_file));
-    REQUIRE(upgraded["formatVersion"] == 2);
-
     const Entity entity = require_entity(loaded->create_entity("Mesh"));
     loaded->transform(entity).position = {16000.001, 0.0, 8000.0};
     REQUIRE(loaded->add_component<Mesh>(entity).has_value());
     REQUIRE(project->save_scene("scenes/main.scene.json", *loaded, registry).has_value());
     auto mesh_document = nlohmann::json::parse(read_file(scene_file));
-    REQUIRE(mesh_document["formatVersion"] == 2);
+    REQUIRE(mesh_document["formatVersion"] == 3);
     REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Mesh"]["meshId"]
                 .get<std::string>() == std::string(engine::scene::kBuiltinCubeMesh));
     REQUIRE(mesh_document["entities"][0]["components"]["engine.scene.Transform"]["position"][0]
@@ -180,6 +200,37 @@ TEST_CASE("scene format v1 loads and upgrades to v2", "[project][scene]") {
     auto invalid = project->load_scene("scenes/main.scene.json", registry);
     REQUIRE_FALSE(invalid.has_value());
     REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
+}
+
+TEST_CASE("scene format v3 components require version 3", "[project][scene]") {
+    engine::test::TempDir temp("scene-v3-components");
+    auto project = Project::create(temp.path() / "demo", "Demo");
+    REQUIRE(project.has_value());
+
+    ReflectionRegistry registry;
+    register_scene_components(registry);
+    const auto scene_file = project->root() / "scenes/main.scene.json";
+    const auto original = nlohmann::json::parse(read_file(scene_file));
+    REQUIRE(original["formatVersion"] == 3);
+
+    const auto rejects_in_v2 = [&](const std::string& component, const std::string& value) {
+        auto scene_document = original;
+        scene_document["entities"][0]["components"][component] = nlohmann::json::parse(value);
+        scene_document["formatVersion"] = 2;
+        REQUIRE(engine::platform::atomic_write_file(scene_file, scene_document.dump(2) + "\n")
+                    .has_value());
+        auto invalid = project->load_scene("scenes/main.scene.json", registry);
+        REQUIRE_FALSE(invalid.has_value());
+        REQUIRE(invalid.error().code == engine::core::ErrorCode::Validation);
+    };
+
+    rejects_in_v2("engine.scene.AssetInstance",
+                  R"({"assetId":"5f0c2a2e-7d4b-4c1e-9a2f-1f3d4c5b6a70"})");
+    rejects_in_v2("engine.scene.DirectionalLight",
+                  R"({"direction":[0.0,-1.0,0.0],"color":[1.0,1.0,1.0],)"
+                  R"("intensity":1.0,"enabled":true})");
+    rejects_in_v2("engine.scene.PointLight", R"({"color":[1.0,0.9,0.8],"intensity":4.0,)"
+                                             R"("range":12.0,"enabled":true})");
 }
 
 TEST_CASE("scene loader rejects missing IDs and negative revisions", "[project]") {
@@ -264,6 +315,9 @@ TEST_CASE("project lock is exclusive and can be released", "[project]") {
 
     REQUIRE(project->lock().has_value());
     REQUIRE(project->locked());
+    const auto live_unlock = Project::force_unlock(project->root());
+    REQUIRE_FALSE(live_unlock);
+    CHECK(live_unlock.error().code == engine::core::ErrorCode::Conflict);
 
     auto second = Project::load(project->root());
     REQUIRE(second.has_value());
@@ -274,4 +328,36 @@ TEST_CASE("project lock is exclusive and can be released", "[project]") {
     project->unlock();
     REQUIRE_FALSE(project->locked());
     REQUIRE(second->lock().has_value());
+}
+
+TEST_CASE("private journal appends synchronize and reject unsafe targets", "[platform][journal]") {
+    engine::test::TempDir temp("journal");
+    const auto file = temp.path() / "commands.jsonl";
+    REQUIRE(engine::platform::atomic_write_private_file(file, "").has_value());
+    REQUIRE(engine::platform::append_private_file_synced(file, "{\"n\":1}\n").has_value());
+    REQUIRE(engine::platform::append_private_file_synced(file, "{\"n\":2}\n").has_value());
+    CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+    CHECK_FALSE(engine::platform::append_private_file_synced(temp.path(), "bad"));
+    CHECK_FALSE(engine::platform::append_private_file_synced(temp.path() / "missing", "bad"));
+    const auto alias = temp.path() / "alias";
+    std::error_code error;
+    std::filesystem::create_symlink(file, alias, error);
+    if (!error) {
+        CHECK_FALSE(engine::platform::append_private_file_synced(alias, "bad"));
+        CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+    }
+    const auto hard_link = temp.path() / "hard-link";
+    error.clear();
+    std::filesystem::create_hard_link(file, hard_link, error);
+    if (!error) {
+        CHECK_FALSE(engine::platform::append_private_file_synced(hard_link, "bad"));
+        CHECK(read_file(file) == "{\"n\":1}\n{\"n\":2}\n");
+        std::filesystem::remove(hard_link);
+    }
+#ifndef _WIN32
+    std::filesystem::permissions(
+        file, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write |
+                  std::filesystem::perms::group_read | std::filesystem::perms::others_read);
+    CHECK_FALSE(engine::platform::append_private_file_synced(file, "bad"));
+#endif
 }

@@ -2,8 +2,12 @@
 
 An AI-first 3D game engine written in C++20 and Vulkan 1.3.
 
-The project is in the M0 foundation phase. The engine is not usable for games
-yet; the first playable milestone is M2.
+M0–M2 are released (`v0.3.0`). M3 is in progress: GLB import, cooked assets,
+reimport, PBR rendering and asset placement are implemented. The authenticated
+local live API is M3.7 owner-approved. M3.8 technical acceptance and the owner
+manual Blender test have passed; merge/tag are authorized after green release-candidate CI.
+Documentation publication checks are tracked in PR #5. GPT-6 Astra high is the active reviewer
+(see `REVIEWER.json`). The engine is not ready for shipping games.
 
 ## Requirements
 
@@ -54,7 +58,22 @@ and `Escape` to close. See `samples/m2-demo/README.md` for details.
 - `docs/TESTING.md` — test types and commands
 - `docs/BUILD.md` — environment and build details
 - `docs/PERFORMANCE.md` — reference-scene budget and measurement plan
+- [Manual M3 Blender test](samples/m3-manual/README.md) — export, import, place, run and reimport your own model
 
 ## License
 
 MIT. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+
+## Import a model
+
+```bash
+engine asset import samples/m2-demo model.glb --name Model --json
+engine asset list samples/m2-demo --json
+engine asset inspect samples/m2-demo <assetId> --json
+engine asset validate samples/m2-demo <assetId> --json
+engine asset reimport samples/m2-demo <assetId> --dry-run --json
+```
+
+Import accepts a self-contained indexed GLB with embedded PNG/JPEG textures.
+Assets are cooked for placement and PBR rendering through `engine asset place`,
+`engine run` and `engine screenshot`. See [the agent guide](docs/AI_AGENT_GUIDE.md).

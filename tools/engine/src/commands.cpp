@@ -1,7 +1,12 @@
 #include "commands.hpp"
+#include "scene_assets.hpp"
+#include "scene_warnings.hpp"
 
+#include <engine/asset/commands.hpp>
 #include <engine/command/command.hpp>
+#include <engine/control/json_rpc.hpp>
 #include <engine/core/path_sandbox.hpp>
+#include <engine/platform/atomic_file.hpp>
 #include <engine/render/device.hpp>
 #include <engine/render/offscreen_renderer.hpp>
 #include <engine/scene/project.hpp>
@@ -34,16 +39,19 @@ using core::ErrorCode;
 using core::ReflectionRegistry;
 using core::Result;
 using core::Uuid;
+using scene::AssetInstance;
 using scene::Camera;
+using scene::DirectionalLight;
 using scene::Entity;
 using scene::Mesh;
 using scene::Motion;
+using scene::PointLight;
 using scene::Project;
 using scene::Scene;
 using scene::Transform;
 
-[[nodiscard]] CommandResult success(nlohmann::json data) {
-    return CommandResult::success(CommandOutput{std::move(data)});
+[[nodiscard]] CommandResult success(nlohmann::json data, std::vector<std::string> warnings = {}) {
+    return CommandResult::success(CommandOutput{std::move(data), std::move(warnings)});
 }
 
 [[nodiscard]] CommandResult failure(Error error) {
@@ -62,6 +70,9 @@ void print_result(const CommandResult& result, bool json) {
         if (!result.error->hint.empty()) {
             std::cerr << "hint: " << result.error->hint << '\n';
         }
+    }
+    for (const std::string& warning : result.warnings) {
+        std::cerr << "warning: " << warning << '\n';
     }
 }
 
@@ -167,6 +178,36 @@ void print_result(const CommandResult& result, bool json) {
         }
         return static_cast<void*>(&scene.component<Mesh>(entity));
     }
+    if (component_name == "engine.scene.AssetInstance") {
+        was_present = scene.has<AssetInstance>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<AssetInstance>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<AssetInstance>(entity));
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        was_present = scene.has<DirectionalLight>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<DirectionalLight>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<DirectionalLight>(entity));
+    }
+    if (component_name == "engine.scene.PointLight") {
+        was_present = scene.has<PointLight>(entity);
+        if (!was_present) {
+            auto added = scene.add_component<PointLight>(entity);
+            if (!added) {
+                return core::make_failure<void*>(added.error());
+            }
+        }
+        return static_cast<void*>(&scene.component<PointLight>(entity));
+    }
     return core::make_failure<void*>(core::make_error(ErrorCode::NotFound, "unsupported component",
                                                       {}, {{"component", component_name}}));
 }
@@ -185,6 +226,15 @@ void print_result(const CommandResult& result, bool json) {
     if (component_name == "engine.scene.Mesh") {
         return scene.has<Mesh>(entity);
     }
+    if (component_name == "engine.scene.AssetInstance") {
+        return scene.has<AssetInstance>(entity);
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        return scene.has<DirectionalLight>(entity);
+    }
+    if (component_name == "engine.scene.PointLight") {
+        return scene.has<PointLight>(entity);
+    }
     return false;
 }
 
@@ -198,6 +248,15 @@ void print_result(const CommandResult& result, bool json) {
     }
     if (component_name == "engine.scene.Mesh") {
         return scene.remove_component<Mesh>(entity);
+    }
+    if (component_name == "engine.scene.AssetInstance") {
+        return scene.remove_component<AssetInstance>(entity);
+    }
+    if (component_name == "engine.scene.DirectionalLight") {
+        return scene.remove_component<DirectionalLight>(entity);
+    }
+    if (component_name == "engine.scene.PointLight") {
+        return scene.remove_component<PointLight>(entity);
     }
     return core::make_failure<void>(core::make_error(
         ErrorCode::Validation, "component cannot be removed", {}, {{"component", component_name}}));
@@ -237,6 +296,21 @@ void print_result(const CommandResult& result, bool json) {
     if (const auto* mesh = registry.find("engine.scene.Mesh");
         mesh != nullptr && scene.has<Mesh>(entity)) {
         snapshot["components"]["engine.scene.Mesh"] = mesh->to_json(&scene.component<Mesh>(entity));
+    }
+    if (const auto* asset = registry.find("engine.scene.AssetInstance");
+        asset != nullptr && scene.has<AssetInstance>(entity)) {
+        snapshot["components"]["engine.scene.AssetInstance"] =
+            asset->to_json(&scene.component<AssetInstance>(entity));
+    }
+    if (const auto* light = registry.find("engine.scene.DirectionalLight");
+        light != nullptr && scene.has<DirectionalLight>(entity)) {
+        snapshot["components"]["engine.scene.DirectionalLight"] =
+            light->to_json(&scene.component<DirectionalLight>(entity));
+    }
+    if (const auto* light = registry.find("engine.scene.PointLight");
+        light != nullptr && scene.has<PointLight>(entity)) {
+        snapshot["components"]["engine.scene.PointLight"] =
+            light->to_json(&scene.component<PointLight>(entity));
     }
 
     nlohmann::json children = nlohmann::json::array();
@@ -311,6 +385,54 @@ void print_result(const CommandResult& result, bool json) {
             return core::make_failure<Entity>(added.error());
         }
         auto parsed = mesh->from_json(&scene.component<Mesh>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
+    if (const auto iterator = components.find("engine.scene.AssetInstance");
+        iterator != components.end()) {
+        const auto* asset = registry.find("engine.scene.AssetInstance");
+        if (asset == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "asset instance descriptor missing"));
+        }
+        auto added = scene.add_component<AssetInstance>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = asset->from_json(&scene.component<AssetInstance>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
+    if (const auto iterator = components.find("engine.scene.DirectionalLight");
+        iterator != components.end()) {
+        const auto* descriptor = registry.find("engine.scene.DirectionalLight");
+        if (descriptor == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "directional light descriptor missing"));
+        }
+        auto added = scene.add_component<DirectionalLight>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = descriptor->from_json(&scene.component<DirectionalLight>(entity), *iterator);
+        if (!parsed) {
+            return core::make_failure<Entity>(parsed.error());
+        }
+    }
+    if (const auto iterator = components.find("engine.scene.PointLight");
+        iterator != components.end()) {
+        const auto* descriptor = registry.find("engine.scene.PointLight");
+        if (descriptor == nullptr) {
+            return core::make_failure<Entity>(
+                core::make_error(ErrorCode::NotFound, "point light descriptor missing"));
+        }
+        auto added = scene.add_component<PointLight>(entity);
+        if (!added) {
+            return core::make_failure<Entity>(added.error());
+        }
+        auto parsed = descriptor->from_json(&scene.component<PointLight>(entity), *iterator);
         if (!parsed) {
             return core::make_failure<Entity>(parsed.error());
         }
@@ -426,7 +548,10 @@ void print_result(const CommandResult& result, bool json) {
 
 void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
                              const ReflectionRegistry& registry) {
-    (void)project;
+    const auto assets = asset::register_asset_scene_commands(bus, project.root(), scene);
+    if (!assets) {
+        throw std::runtime_error("failed to register asset placement: " + assets.error().message);
+    }
     const auto add = [&bus](std::string name, nlohmann::json schema,
                             command::CommandRegistry::Handler handler) {
         const auto result = bus.add(std::move(name), std::move(schema), std::move(handler));
@@ -833,7 +958,7 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
     CommandLog log;
     CommandBus bus(log);
     try {
-        register_scene_commands(bus, *project, *scene, registry);
+        register_project_commands(bus, *project, *scene, registry);
     } catch (const std::exception& error) {
         return failure(core::make_error(ErrorCode::Internal, error.what()));
     }
@@ -858,6 +983,105 @@ void register_scene_commands(CommandBus& bus, Project& project, Scene& scene,
 }
 
 } // namespace
+
+nlohmann::json project_command_schemas() {
+    auto schemas = scene_command_schemas();
+    schemas.update(asset::asset_command_schemas());
+    for (const auto* name : {"scene.save@1", "scene.load@1"}) {
+        schemas[name] = {
+            {"$schema", "http://json-schema.org/draft-07/schema#"},
+            {"type", "object"},
+            {"additionalProperties", false},
+            {"required", {"path"}},
+            {
+                "properties",
+                {
+                    {
+                        "path",
+                        {{"type", "string"}, {"minLength", 1}, {"pattern", R"(\.scene\.json$)"}},
+                    },
+                },
+            },
+        };
+    }
+    for (const auto* name : {"history.undo@1", "history.redo@1"}) {
+        schemas[name] = {
+            {"$schema", "http://json-schema.org/draft-07/schema#"},
+            {"type", "object"},
+            {"additionalProperties", false},
+        };
+    }
+    return schemas;
+}
+void register_project_commands(CommandBus& bus, Project& project, Scene& scene,
+                               const ReflectionRegistry& registry, bool project_sources_only) {
+    register_scene_commands(bus, project, scene, registry);
+    const auto registered =
+        asset::register_asset_commands(bus, project.root(), false, project_sources_only);
+    if (!registered) {
+        throw std::runtime_error(registered.error().message);
+    }
+    const auto schemas = project_command_schemas();
+    for (const auto* name : {"scene.save@1", "scene.load@1", "history.undo@1", "history.redo@1"}) {
+        const auto added = bus.add(
+            name, schemas.at(name),
+            [name = std::string(name), &bus, &project, &scene,
+             &registry](const nlohmann::json& args) -> Result<CommandOutput> {
+                if (bus.in_transaction()) {
+                    return core::make_failure<CommandOutput>(core::make_error(
+                        ErrorCode::Unsupported,
+                        "scene file/history commands cannot run in a transaction"));
+                }
+                if (name == "history.undo@1" || name == "history.redo@1") {
+                    auto result = name == "history.undo@1" ? bus.undo() : bus.redo();
+                    if (!result) {
+                        return core::make_failure<CommandOutput>(result.error());
+                    }
+                } else {
+                    const auto path = args.at("path").get<std::string>();
+                    auto sandbox = core::PathSandbox::create(project.root());
+                    if (!sandbox) {
+                        return core::make_failure<CommandOutput>(sandbox.error());
+                    }
+                    auto resolved = sandbox->resolve(path);
+                    if (!resolved) {
+                        return core::make_failure<CommandOutput>(resolved.error());
+                    }
+                    const auto relative = resolved->lexically_relative(project.root());
+                    const auto first = relative.begin();
+                    if (!resolved->filename().string().ends_with(".scene.json") ||
+                        first == relative.end() || *first == ".engine" || *first == "assets") {
+                        return core::make_failure<CommandOutput>(core::make_error(
+                            ErrorCode::Validation,
+                            "scene file path resolves to a reserved or non-scene target"));
+                    }
+                    if (name == "scene.save@1") {
+                        auto result = project.save_scene(path, scene, registry);
+                        if (!result) {
+                            return core::make_failure<CommandOutput>(result.error());
+                        }
+                    } else {
+                        auto loaded = project.load_scene(path, registry);
+                        if (!loaded) {
+                            return core::make_failure<CommandOutput>(loaded.error());
+                        }
+                        auto cleared = bus.clear_history();
+                        if (!cleared) {
+                            return core::make_failure<CommandOutput>(cleared.error());
+                        }
+                        scene = std::move(*loaded);
+                    }
+                }
+                return CommandOutput{{
+                    {"sceneId", scene.scene_id().to_string()},
+                    {"revision", scene.revision()},
+                }};
+            });
+        if (!added) {
+            throw std::runtime_error(added.error().message);
+        }
+    }
+}
 
 int project_create(const std::string& root, const std::string& name, bool json, bool dry_run) {
     if (dry_run) {
@@ -948,6 +1172,7 @@ int project_validate(const std::string& root, bool json) {
         return exit_code_for(result);
     }
     ReflectionRegistry registry = make_registry();
+    std::vector<std::string> warnings;
     for (const auto& scene_path : project->scenes()) {
         auto scene = project->load_scene(scene_path, registry);
         if (!scene) {
@@ -955,12 +1180,16 @@ int project_validate(const std::string& root, bool json) {
             print_result(result, json);
             return exit_code_for(result);
         }
+        const auto scene_warnings = point_light_warnings(*scene, scene_path);
+        warnings.insert(warnings.end(), scene_warnings.begin(), scene_warnings.end());
     }
-    const CommandResult result = success({
-        {"valid", true},
-        {"projectId", project->project_id().to_string()},
-        {"scenes", project->scenes()},
-    });
+    const CommandResult result = success(
+        {
+            {"valid", true},
+            {"projectId", project->project_id().to_string()},
+            {"scenes", project->scenes()},
+        },
+        std::move(warnings));
     print_result(result, json);
     return 0;
 }
@@ -1094,7 +1323,8 @@ int scene_validate(const std::string& project_root, const std::string& scene_pat
         print_result(result, json);
         return exit_code_for(result);
     }
-    const CommandResult result = success({{"valid", true}, {"entities", scene->size()}});
+    const CommandResult result = success({{"valid", true}, {"entities", scene->size()}},
+                                         point_light_warnings(*scene, scene_path));
     print_result(result, json);
     return 0;
 }
@@ -1200,10 +1430,78 @@ int simulate(const std::string& project_root, const std::string& scene_path, int
     return 0;
 }
 
+int asset_execute(const std::string& operation, const std::string& project_root,
+                  const std::string& source, const std::string& asset_id, const std::string& name,
+                  bool json, bool dry_run) {
+    auto project = Project::load(project_root);
+    if (!project) {
+        auto result = failure(project.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    if (!dry_run && (operation == "import" || operation == "reimport")) {
+        auto sandbox = core::PathSandbox::create(project->root());
+        if (!sandbox) {
+            const auto result = failure(sandbox.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        auto lock_path = sandbox->resolve(".engine/lock");
+        if (!lock_path) {
+            const auto result = failure(lock_path.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+        auto locked = project->lock();
+        if (!locked) {
+            auto result = failure(locked.error());
+            print_result(result, json);
+            return exit_code_for(result);
+        }
+    }
+    CommandLog log;
+    CommandBus bus(log);
+    auto registered = asset::register_asset_commands(bus, project->root(), dry_run);
+    if (!registered) {
+        auto result = failure(registered.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+    nlohmann::json arguments = nlohmann::json::object();
+    if (operation == "import") {
+        arguments["source"] = source;
+        if (!name.empty()) {
+            arguments["name"] = name;
+        }
+    } else if (operation != "list") {
+        arguments["assetId"] = asset_id;
+    }
+    const auto result = bus.execute({"asset." + operation + "@1", std::move(arguments)});
+    print_result(result, json);
+    return exit_code_for(result);
+}
+
+int asset_place(const std::string& project_root, const std::string& scene_path,
+                const std::string& asset_id, const std::string& name,
+                const std::vector<double>& position, bool json, bool dry_run) {
+    nlohmann::json args = {{"assetId", asset_id}};
+    if (!name.empty()) {
+        args["name"] = name;
+    }
+    if (!position.empty()) {
+        args["position"] = position;
+    }
+    const auto result = execute_scene_command(project_root, scene_path,
+                                              {"asset.place@1", std::move(args)}, 0, dry_run);
+    print_result(result, json);
+    return exit_code_for(result);
+}
+
 int schema(bool json) {
     const ReflectionRegistry registry = make_registry();
+    auto commands = project_command_schemas();
     const CommandResult result =
-        success({{"components", registry.schemas()}, {"commands", scene_command_schemas()}});
+        success({{"components", registry.schemas()}, {"commands", std::move(commands)}});
     print_result(result, json);
     return 0;
 }
@@ -1259,7 +1557,7 @@ int batch(const std::string& project_root, const std::string& scene_path, const 
     CommandLog log;
     CommandBus bus(log);
     try {
-        register_scene_commands(bus, *project, *scene, registry);
+        register_project_commands(bus, *project, *scene, registry);
     } catch (const std::exception& error) {
         const CommandResult result = failure(core::make_error(ErrorCode::Internal, error.what()));
         print_result(result, json);
@@ -1328,110 +1626,117 @@ int batch(const std::string& project_root, const std::string& scene_path, const 
     return 0;
 }
 
+Result<CommandOutput> capture_scene(const Project& project, const Scene& scene,
+                                    const std::string& out_path, int frames, int width, int height,
+                                    bool inline_png, std::string_view scene_label) {
+    if (frames < 1 || width < 1 || height < 1) {
+        return core::make_failure<CommandOutput>(
+            core::make_error(ErrorCode::Validation, "frames, width and height must be positive", {},
+                             {{"frames", frames}, {"width", width}, {"height", height}}));
+    }
+    if (frames > 1000 || width > 8192 || height > 8192) {
+        return core::make_failure<CommandOutput>(
+            core::make_error(ErrorCode::Validation, "screenshot limits exceeded", {},
+                             {{"maxFrames", 1000}, {"maxDimension", 8192}}));
+    }
+    auto sandbox = core::PathSandbox::create(project.root());
+    if (!sandbox) {
+        return core::make_failure<CommandOutput>(sandbox.error());
+    }
+    if (!out_path.empty()) {
+        auto output = sandbox->resolve(out_path);
+        if (!output) {
+            return core::make_failure<CommandOutput>(output.error());
+        }
+    }
+    render::DeviceOptions options;
+    options.application_name = "engine screenshot";
+    auto device = render::Device::create(options);
+    if (!device) {
+        return core::make_failure<CommandOutput>(device.error());
+    }
+    render::OffscreenOptions offscreen;
+    offscreen.width = static_cast<std::uint32_t>(width);
+    offscreen.height = static_cast<std::uint32_t>(height);
+    auto renderer = render::OffscreenRenderer::create(*device, offscreen);
+    if (!renderer) {
+        return core::make_failure<CommandOutput>(renderer.error());
+    }
+    const scene::SceneView view(scene);
+    auto uploaded = upload_scene_assets(*renderer, project.root(), view);
+    if (!uploaded) {
+        return core::make_failure<CommandOutput>(uploaded.error());
+    }
+    auto pixels = renderer->render(view, frames);
+    if (!pixels) {
+        return core::make_failure<CommandOutput>(pixels.error());
+    }
+    if (device->validation_report().errors != 0) {
+        return core::make_failure<CommandOutput>(
+            core::make_error(ErrorCode::Validation, "screenshot Vulkan validation failed"));
+    }
+    std::string png;
+    const auto append = [](void* context, void* bytes, int size) {
+        static_cast<std::string*>(context)->append(static_cast<const char*>(bytes),
+                                                   static_cast<std::size_t>(size));
+    };
+    if (stbi_write_png_to_func(append, &png, width, height, 4, pixels->data(), width * 4) == 0) {
+        return core::make_failure<CommandOutput>(
+            core::make_error(ErrorCode::Io, "could not encode screenshot"));
+    }
+    nlohmann::json data = {{"width", width}, {"height", height}, {"frames", frames}};
+    if (!out_path.empty()) {
+        auto output = sandbox->resolve(out_path);
+        if (!output) {
+            return core::make_failure<CommandOutput>(output.error());
+        }
+        std::error_code ec;
+        std::filesystem::create_directories(output->parent_path(), ec);
+        if (ec) {
+            return core::make_failure<CommandOutput>(
+                core::make_error(ErrorCode::Io, "could not create screenshot directory"));
+        }
+        auto written = platform::atomic_write_file(*output, png);
+        if (!written) {
+            return core::make_failure<CommandOutput>(written.error());
+        }
+        data["path"] = output->string();
+    }
+    if (inline_png) {
+        data["pngBase64"] = control::base64(png);
+    }
+    return CommandOutput{std::move(data), point_light_warnings(scene, scene_label)};
+}
 int screenshot(const std::string& project_root, const std::string& scene_path,
                const std::string& out_path, int frames, int width, int height, bool json) {
     if (out_path.empty()) {
-        const CommandResult result = failure(
-            core::make_error(ErrorCode::Usage, "--out is required", {}, {{"stage", "screenshot"}}));
+        const auto result = failure(core::make_error(ErrorCode::Usage, "--out is required"));
         print_result(result, json);
         return exit_code_for(result);
     }
-    constexpr int kMaxDimension = 8192;
-    constexpr int kMaxFrames = 1000;
-    if (frames <= 0 || width <= 0 || height <= 0) {
-        const CommandResult result = failure(
-            core::make_error(ErrorCode::Validation, "frames, width and height must be positive", {},
-                             {{"frames", frames}, {"width", width}, {"height", height}}));
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-    if (frames > kMaxFrames || width > kMaxDimension || height > kMaxDimension) {
-        const CommandResult result =
-            failure(core::make_error(ErrorCode::Validation, "screenshot limits exceeded", {},
-                                     {{"maxFrames", kMaxFrames}, {"maxDimension", kMaxDimension}}));
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
     auto project = Project::load(project_root);
     if (!project) {
-        const CommandResult result = failure(project.error());
+        const auto result = failure(project.error());
         print_result(result, json);
         return exit_code_for(result);
     }
-    auto sandbox = core::PathSandbox::create(project->root());
-    if (!sandbox) {
-        const CommandResult result = failure(sandbox.error());
+    auto locked = project->lock();
+    if (!locked) {
+        const auto result = failure(locked.error());
         print_result(result, json);
         return exit_code_for(result);
     }
-    auto output = sandbox->resolve(out_path);
-    if (!output) {
-        const CommandResult result = failure(output.error());
+    const auto registry = make_registry();
+    auto scene = project->load_scene(scene_path, registry);
+    if (!scene) {
+        const auto result = failure(scene.error());
         print_result(result, json);
         return exit_code_for(result);
     }
-    ReflectionRegistry registry;
-    scene::register_scene_components(registry);
-    auto loaded_scene = project->load_scene(scene_path, registry);
-    if (!loaded_scene) {
-        const CommandResult result = failure(loaded_scene.error());
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
-    render::DeviceOptions device_options;
-    device_options.application_name = "engine screenshot";
-    auto device = render::Device::create(device_options);
-    if (!device) {
-        const CommandResult result = failure(device.error());
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
-    render::OffscreenOptions offscreen_options;
-    offscreen_options.width = static_cast<std::uint32_t>(width);
-    offscreen_options.height = static_cast<std::uint32_t>(height);
-    auto renderer = render::OffscreenRenderer::create(*device, offscreen_options);
-    if (!renderer) {
-        const CommandResult result = failure(renderer.error());
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
-    const scene::SceneView view(*loaded_scene);
-    auto pixels = renderer->render(view, frames);
-    if (!pixels) {
-        const CommandResult result = failure(pixels.error());
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
-    if (output->has_parent_path()) {
-        std::error_code error;
-        std::filesystem::create_directories(output->parent_path(), error);
-        if (error) {
-            const CommandResult result = failure(
-                core::make_error(ErrorCode::Io, "could not create the screenshot directory",
-                                 error.message(), {{"path", output->parent_path().string()}}));
-            print_result(result, json);
-            return exit_code_for(result);
-        }
-    }
-    if (stbi_write_png(output->string().c_str(), width, height, 4, pixels->data(), width * 4) ==
-        0) {
-        const CommandResult result = failure(core::make_error(
-            ErrorCode::Io, "could not write the screenshot", {}, {{"path", output->string()}}));
-        print_result(result, json);
-        return exit_code_for(result);
-    }
-
-    const CommandResult result = success({
-        {"path", output->string()},
-        {"width", width},
-        {"height", height},
-        {"frames", frames},
-    });
+    auto captured =
+        capture_scene(*project, *scene, out_path, frames, width, height, false, scene_path);
+    const auto result =
+        captured ? CommandResult::success(std::move(*captured)) : failure(captured.error());
     print_result(result, json);
     return exit_code_for(result);
 }

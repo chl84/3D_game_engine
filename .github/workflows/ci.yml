@@ -1,6 +1,7 @@
 name: CI
 
 # CI runs for pull requests to main, pushes to main and manual dispatches.
+# The scheduled/manual long-fuzz mode runs only fuzzers, for 10 minutes each.
 # Feature-branch pushes do not trigger CI; open a pull request or run the
 # workflow manually when a feature branch needs verification.
 on:
@@ -11,12 +12,19 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      long_fuzz:
+        description: Run only extended fuzzing (600 seconds per target, cached corpus)
+        type: boolean
+        default: false
+  schedule:
+    - cron: '23 2 * * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name == 'schedule' || inputs.long_fuzz == true }}
   cancel-in-progress: true
 
 env:
@@ -25,6 +33,7 @@ env:
 
 jobs:
   linux:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Linux (${{ matrix.preset }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -166,7 +175,7 @@ jobs:
           '
 
       - name: Render test summary
-        run: ctest --preset ${{ matrix.preset }} -R engine_render_tests -V
+        run: ctest --preset ${{ matrix.preset }} -R "engine_render_tests|engine_pbr_(golden|color_golden)" -V
 
       - name: Core test summary
         run: ctest --preset ${{ matrix.preset }} -R engine_core_tests -V
@@ -228,6 +237,7 @@ jobs:
             doctor-*.json
 
   windows:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Windows (MSVC)
     runs-on: windows-2022
     timeout-minutes: 30
@@ -240,9 +250,37 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            throw "vswhere.exe was not found"
+          }
+          $installation = & $vswhere -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if (-not $installation) {
+            throw "No Visual Studio installation with the x64 C++ tools was found"
+          }
+          $vcvars = Join-Path $installation "VC\Auxiliary\Build\vcvarsall.bat"
+          if (-not (Test-Path $vcvars)) {
+            throw "vcvarsall.bat was not found at $vcvars"
+          }
+          $environment = cmd /c "`"$vcvars`" x64 >nul && set"
+          foreach ($line in $environment) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              "$($matches[1])=$($matches[2])" |
+                Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            }
+          }
+
+      - name: Verify MSVC
+        shell: pwsh
+        run: |
+          if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
+            throw "cl.exe was not found after vcvarsall"
+          }
+          cl.exe 2>&1 | Select-Object -First 1
 
       - name: Restore vcpkg binary cache
         uses: actions/cache@v6
@@ -382,7 +420,7 @@ jobs:
       - name: Render test summary
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: ctest --preset ci-windows -R engine_render_tests -V
+        run: ctest --preset ci-windows -R "engine_render_tests|engine_pbr_(golden|color_golden)" -V
 
       - name: Core test summary
         env:
@@ -400,6 +438,7 @@ jobs:
             doctor-*.json
 
   quality:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -497,6 +536,7 @@ jobs:
             | xargs -0 clang-tidy-18 -p build/ci-linux-clang --warnings-as-errors='*'
 
   linux-asan:
+    if: github.event_name != 'schedule' && inputs.long_fuzz != true
     name: Linux ASan/UBSan
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -662,3 +702,110 @@ jobs:
           path: |
             build/linux-asan/Testing
             doctor-asan.json
+
+  fuzz:
+    name: Fuzz (Clang ASan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ (github.event_name == 'schedule' || inputs.long_fuzz == true) && 55 || 20 }}
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/vcpkg-overlay/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          git -C "$VCPKG_ROOT" checkout 0e5eb43501dab17aa055dd54bd7a8c018f330fe2
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Install Clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+
+      - name: Restore pinned Vulkan SDK cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vulkan-sdk
+          key: vulkan-sdk-1.4.363.0-${{ runner.os }}
+
+      - name: Install pinned glslc
+        run: |
+          sdk_root="$GITHUB_WORKSPACE/.vulkan-sdk/1.4.363.0/x86_64"
+          if [ ! -x "$sdk_root/bin/glslc" ]; then
+            archive="$RUNNER_TEMP/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            curl -fsSL -o "$archive" \
+              "https://sdk.lunarg.com/sdk/download/1.4.363.0/linux/vulkansdk-linux-x86_64-1.4.363.0.tar.xz"
+            expected="197962f5cbf80baf2775a03336a01cee7c8745686c65aaa70d3f751ade4d7e43"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "Vulkan SDK checksum mismatch: $actual" >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/.vulkan-sdk"
+            tar -xJf "$archive" -C "$GITHUB_WORKSPACE/.vulkan-sdk"
+          fi
+          test -x "$sdk_root/bin/glslc"
+          echo "$sdk_root/bin" >> "$GITHUB_PATH"
+          echo "VULKAN_SDK=$sdk_root" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$sdk_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
+      - name: Install pinned CMake and Ninja
+        run: |
+          cmake_archive="/tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          ninja_archive="/tmp/ninja-${NINJA_VERSION}-linux.zip"
+          curl -fsSL -o "$cmake_archive" \
+            "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz"
+          curl -fsSL -o "$ninja_archive" \
+            "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip"
+          mkdir -p "$HOME/.local/cmake" "$HOME/.local/bin"
+          tar -xzf "$cmake_archive" -C "$HOME/.local/cmake" --strip-components=1
+          unzip -q -o "$ninja_archive" -d "$HOME/.local/bin"
+          echo "$HOME/.local/cmake/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure fuzzers
+        run: cmake --preset linux-fuzz
+
+      - name: Build fuzzers
+        run: cmake --build --preset linux-fuzz --target engine_gltf_fuzz engine_image_fuzz engine_rpc_fuzz
+
+      # The per-run suffix makes a new immutable cache on each successful run.
+      # Restore this corpus version/seed/harness set; required CI uses fresh seeds.
+      - name: Restore and retain extended fuzz corpus
+        if: github.event_name == 'schedule' || inputs.long_fuzz == true
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/corpus
+          key: fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'tests/assets/m3/*.glb', 'tests/assets/m3/*.png', 'tests/assets/m3/*.jpg', 'vcpkg.json', 'vcpkg-configuration.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fuzz-corpus-v1-${{ runner.os }}-${{ hashFiles('tests/fuzz/**', 'tests/assets/m3/*.glb', 'tests/assets/m3/*.png', 'tests/assets/m3/*.jpg', 'vcpkg.json', 'vcpkg-configuration.json') }}-
+
+      - name: Run fuzz targets
+        env:
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+          FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || inputs.long_fuzz == true) && '600' || '30' }}
+        run: |
+          bash scripts/run_fuzz_targets.sh "$FUZZ_SECONDS" "$RUNNER_TEMP/corpus" "$RUNNER_TEMP/fuzz-artifacts"
+
+      - name: Upload fuzz diagnostics and reproductions
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fuzz-artifacts
+          if-no-files-found: ignore
+          retention-days: 14

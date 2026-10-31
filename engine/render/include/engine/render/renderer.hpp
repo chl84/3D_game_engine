@@ -4,6 +4,7 @@
 #include <engine/core/math.hpp>
 #include <engine/platform/window.hpp>
 #include <engine/render/device.hpp>
+#include <engine/render/pbr_renderer.hpp>
 
 #include <volk.h>
 
@@ -97,6 +98,11 @@ public:
     void process_sdl_event(const SDL_Event& event) noexcept;
     [[nodiscard]] bool overlay_wants_mouse() const noexcept;
     [[nodiscard]] bool overlay_wants_keyboard() const noexcept;
+
+    [[nodiscard]] core::Result<void> upload_asset(const asset::LoadedAsset& asset);
+    [[nodiscard]] core::Result<void> retire_asset(std::string_view asset_id);
+    [[nodiscard]] core::Result<void> collect_assets();
+    [[nodiscard]] PbrStats pbr_stats() const;
 
 private:
     struct Impl;

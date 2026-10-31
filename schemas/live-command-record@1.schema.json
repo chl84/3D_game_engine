@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Live command journal record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["journalVersion", "session", "dispatch", "event", "name", "arguments"],
+  "properties": {
+    "journalVersion": {"const": 1},
+    "session": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "dispatch": {"type": "integer", "minimum": 1},
+    "event": {"enum": ["started", "completed"]},
+    "name": {"type": "string"},
+    "arguments": {"type": "object"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "result": {"type": "object"}
+  },
+  "oneOf": [
+    {"properties": {"event": {"const": "started"}}, "not": {"anyOf": [{"required": ["sequence"]}, {"required": ["result"]}]}},
+    {"properties": {"event": {"const": "completed"}}, "required": ["sequence", "result"]}
+  ]
+}

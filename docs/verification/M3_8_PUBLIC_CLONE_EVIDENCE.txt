@@ -1,0 +1,115 @@
+M3.8 PUBLIC EXACT-SHA CLEAN-CLONE ACCEPTANCE — 2026-10-31
+
+Command: SDL_VIDEODRIVER=x11 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json CMAKE_BUILD_PARALLEL_LEVEL=2 KEEP=1 bash scripts/acceptance_m3.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline 9c812f5063b3f4a291777a43e071022d56865f54
+Exit0. Fresh public shallow clone; original acceptance script unchanged.
+All targets rebuilt from cloned source with normal pinned vcpkg resolution.
+
+M3 clean-clone source: 9c812f5063b3f4a291777a43e071022d56865f54
+Test project <public-clone>/build/linux-debug
+      Start  1: engine_core_tests
+ 1/28 Test  #1: engine_core_tests ................   Passed    0.06 sec
+      Start  2: engine_dependencies_smoke
+ 2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/28 Test  #3: engine_asset_tests ...............   Passed    0.45 sec
+      Start  4: engine_render_tests
+ 4/28 Test  #4: engine_render_tests ..............   Passed    0.11 sec
+      Start  5: engine_window_smoke
+ 5/28 Test  #5: engine_window_smoke ..............   Passed    0.07 sec
+      Start  6: engine_swapchain_test
+ 6/28 Test  #6: engine_swapchain_test ............   Passed    0.30 sec
+      Start  7: engine_overlay_test
+ 7/28 Test  #7: engine_overlay_test ..............   Passed    0.16 sec
+      Start  8: engine_run_smoke
+ 8/28 Test  #8: engine_run_smoke .................   Passed    0.28 sec
+      Start  9: engine_point_light_warning
+ 9/28 Test  #9: engine_point_light_warning .......   Passed    0.35 sec
+      Start 10: engine_screenshot_golden
+10/28 Test #10: engine_screenshot_golden .........   Passed    0.05 sec
+      Start 11: engine_screenshot_cli
+11/28 Test #11: engine_screenshot_cli ............   Passed    0.25 sec
+      Start 12: engine_version_json
+12/28 Test #12: engine_version_json ..............   Passed    0.04 sec
+      Start 13: engine_cli_contract
+13/28 Test #13: engine_cli_contract ..............   Passed    0.44 sec
+      Start 14: engine_docs_links
+14/28 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/28 Test #15: engine_sensitive_scan ............   Passed    2.24 sec
+      Start 16: engine_acceptance_m1
+16/28 Test #16: engine_acceptance_m1 .............   Passed    0.22 sec
+      Start 17: engine_acceptance_m3
+17/28 Test #17: engine_acceptance_m3 .............   Passed    1.34 sec
+      Start 18: engine_api_reference
+18/28 Test #18: engine_api_reference .............   Passed    0.09 sec
+      Start 19: engine_asset_cli
+19/28 Test #19: engine_asset_cli .................   Passed    0.81 sec
+      Start 20: engine_large_normalmap
+20/28 Test #20: engine_large_normalmap ...........   Passed    6.58 sec
+      Start 21: engine_pbr_golden
+21/28 Test #21: engine_pbr_golden ................   Passed    0.32 sec
+      Start 22: engine_pbr_color_golden
+22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.14 sec
+      Start 23: engine_pbr_window
+23/28 Test #23: engine_pbr_window ................   Passed    0.24 sec
+      Start 24: engine_asset_placement
+24/28 Test #24: engine_asset_placement ...........   Passed    1.44 sec
+      Start 25: engine_live_api
+25/28 Test #25: engine_live_api ..................   Passed    6.79 sec
+      Start 26: engine_local_socket_deadline
+26/28 Test #26: engine_local_socket_deadline .....   Passed    1.23 sec
+      Start 27: engine_live_journal
+27/28 Test #27: engine_live_journal ..............   Passed    0.19 sec
+      Start 28: engine_live_journal_fault
+28/28 Test #28: engine_live_journal_fault ........   Passed    0.10 sec
+
+100% tests passed out of 28
+
+Label Time Summary:
+acceptance      =  16.88 sec*proc (8 tests)
+asset           =  11.32 sec*proc (8 tests)
+cli             =  16.98 sec*proc (9 tests)
+contract        =  20.11 sec*proc (14 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   2.37 sec*proc (3 tests)
+live            =   9.65 sec*proc (5 tests)
+render          =  11.85 sec*proc (14 tests)
+security        =  10.56 sec*proc (5 tests)
+unit            =   1.24 sec*proc (9 tests)
+
+Total Test time (real) =  24.34 sec
+M3 clean-clone CTest: 28 tests, 0 skipped/disabled/not run
+M1 acceptance passed
+M3 public CLI Blender golden passed: max=1, changed=0
+M3 import/inspect/validate/place/PBR/save/load/live/reimport/stable IDs/JSONL acceptance passed
+M3 clean-clone acceptance passed
+kept clean clone at <public-clone>
+
+Supplemental optional-Astra-observation check, same clone:
+engine doctor --require vulkan --json
+engine_render_tests --reporter xml --out <report>
+Both exit0 with the same explicit lavapipe ICD. Catch2 confirms no internal
+render/device skips; CTest JUnit alone cannot prove this.
+{
+  "Catch2Results": {
+    "successes": "105",
+    "failures": "0",
+    "expectedFailures": "0",
+    "skips": "0"
+  },
+  "Catch2Cases": {
+    "successes": "13",
+    "failures": "0",
+    "expectedFailures": "0",
+    "skips": "0"
+  },
+  "doctorRequirements": {
+    "failed": [],
+    "passed": true,
+    "requested": [
+      "vulkan"
+    ]
+  },
+  "lavapipe": true,
+  "descriptorIndexing": true
+}

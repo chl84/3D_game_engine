@@ -62,4 +62,31 @@ core::Error vulkan_error(std::string message, std::string stage, VkResult result
                             {{"stage", std::move(stage)}, {"vkResult", static_cast<int>(result)}});
 }
 
+VkResult create_budgeted_buffer(const Device& device, const VkBufferCreateInfo* create,
+                                const VmaAllocationCreateInfo* alloc, VkBuffer* buffer,
+                                VmaAllocation* allocation, VmaAllocationInfo* details) {
+    const auto result =
+        vmaCreateBuffer(device.allocator(), create, alloc, buffer, allocation, details);
+    if (result == VK_SUCCESS && device.gpu_memory_bytes() > kTotalGpuMemoryBudgetBytes) {
+        vmaDestroyBuffer(device.allocator(), *buffer, *allocation);
+        *buffer = VK_NULL_HANDLE;
+        *allocation = nullptr;
+        return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    return result;
+}
+VkResult create_budgeted_image(const Device& device, const VkImageCreateInfo* create,
+                               const VmaAllocationCreateInfo* alloc, VkImage* image,
+                               VmaAllocation* allocation, VmaAllocationInfo* details) {
+    const auto result =
+        vmaCreateImage(device.allocator(), create, alloc, image, allocation, details);
+    if (result == VK_SUCCESS && device.gpu_memory_bytes() > kTotalGpuMemoryBudgetBytes) {
+        vmaDestroyImage(device.allocator(), *image, *allocation);
+        *image = VK_NULL_HANDLE;
+        *allocation = nullptr;
+        return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    return result;
+}
+
 } // namespace engine::render::detail

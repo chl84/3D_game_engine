@@ -14,6 +14,10 @@
 | `engine scene create|inspect|validate --json` | Scene lifecycle |
 | `engine entity create|delete|reparent --json` | Entity lifecycle |
 | `engine component set|add|remove --json` | Component changes |
+| `engine asset import|inspect|validate|reimport|list --json` | Asset lifecycle and cooked-cache inspection |
+| `engine asset place <project> <scene> --asset UUID [--position X Y Z] --json` | Place a shared asset instance |
+| `engine live serve <project> [scene] --json` | Authenticated loopback project session |
+| `engine live call <project> --method METHOD --params JSON --json` | Call the live session using private discovery |
 | `engine simulate --ticks N --json` | Fixed-tick state dump |
 | `engine batch --file FILE --undo N --json` | Transactional command batch |
 | `engine screenshot <project> <scene> --frames N --out FILE --json` | Offscreen PNG screenshot |
@@ -26,12 +30,174 @@ All offline commands return a document that validates against
 
 | Component | Fields |
 |---|---|
+| `engine.scene.AssetInstance` | `assetId`: string |
 | `engine.scene.Camera` | `enabled`: boolean, `far`: number, `fovYRadians`: number, `near`: number |
+| `engine.scene.DirectionalLight` | `color`: array[number][3], `direction`: array[number][3], `enabled`: boolean, `intensity`: number |
 | `engine.scene.Mesh` | `meshId`: string |
 | `engine.scene.Motion` | `linearVelocity`: array[number][3] |
+| `engine.scene.PointLight` | `color`: array[number][3], `enabled`: boolean, `intensity`: number, `range`: number |
 | `engine.scene.Transform` | `position`: array[number][3], `rotation`: array[number][4], `scale`: array[number][3] |
 
 ## Commands
+
+### `asset.import@1`
+
+Required arguments: `source`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "source"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.inspect@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.list@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {},
+  "required": [],
+  "type": "object"
+}
+```
+
+### `asset.place@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "position": {
+      "items": {
+        "type": "number"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.reimport@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `asset.validate@1`
+
+Required arguments: `assetId`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "assetId": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "assetId"
+  ],
+  "type": "object"
+}
+```
+
+### `history.redo@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "type": "object"
+}
+```
+
+### `history.undo@1`
+
+Required arguments: none
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "type": "object"
+}
+```
 
 ### `scene.component.add@1`
 
@@ -193,6 +359,50 @@ Required arguments: none
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "type": "object"
+}
+```
+
+### `scene.load@1`
+
+Required arguments: `path`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "minLength": 1,
+      "pattern": "\\.scene\\.json$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "path"
+  ],
+  "type": "object"
+}
+```
+
+### `scene.save@1`
+
+Required arguments: `path`
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "minLength": 1,
+      "pattern": "\\.scene\\.json$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "path"
+  ],
   "type": "object"
 }
 ```

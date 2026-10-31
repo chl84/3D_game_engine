@@ -1,0 +1,479 @@
+M3.8 ASTRA-APPROVED IMPLEMENTATION — LOCAL EVIDENCE — 2026-10-31
+
+Reviewed source: 5d01a36d83b590392349b5925d6ce38cd7b3a7c1.
+Parent builds: ci-linux-gcc, ci-linux-clang, linux-asan and linux-tsan, all targets.
+GCC/Clang: SDL_VIDEODRIVER=x11 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --test-dir build/<preset> --output-on-failure --output-junit <report>.
+ASan: same SDL/ICD, ctest --preset linux-asan-lavapipe --output-on-failure.
+TSan: documented full-build 13-test regex, with lavapipe ICD.
+No CTest skips; internal Catch2 skips are not excluded by CTest JUnit alone.
+Reference CI/Windows, extended fuzz/cache and public clone remain separate pending gates.
+
+=== Parent GCC28/28 ===
+Test project <repository>/build/ci-linux-gcc
+      Start  1: engine_core_tests
+ 1/28 Test  #1: engine_core_tests ................   Passed    0.10 sec
+      Start  2: engine_dependencies_smoke
+ 2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.01 sec
+      Start  3: engine_asset_tests
+ 3/28 Test  #3: engine_asset_tests ...............   Passed    0.59 sec
+      Start  4: engine_render_tests
+ 4/28 Test  #4: engine_render_tests ..............   Passed    0.15 sec
+      Start  5: engine_window_smoke
+ 5/28 Test  #5: engine_window_smoke ..............   Passed    0.07 sec
+      Start  6: engine_swapchain_test
+ 6/28 Test  #6: engine_swapchain_test ............   Passed    0.33 sec
+      Start  7: engine_overlay_test
+ 7/28 Test  #7: engine_overlay_test ..............   Passed    0.19 sec
+      Start  8: engine_run_smoke
+ 8/28 Test  #8: engine_run_smoke .................   Passed    0.33 sec
+      Start  9: engine_point_light_warning
+ 9/28 Test  #9: engine_point_light_warning .......   Passed    0.58 sec
+      Start 10: engine_screenshot_golden
+10/28 Test #10: engine_screenshot_golden .........   Passed    0.06 sec
+      Start 11: engine_screenshot_cli
+11/28 Test #11: engine_screenshot_cli ............   Passed    0.43 sec
+      Start 12: engine_version_json
+12/28 Test #12: engine_version_json ..............   Passed    0.04 sec
+      Start 13: engine_cli_contract
+13/28 Test #13: engine_cli_contract ..............   Passed    0.70 sec
+      Start 14: engine_docs_links
+14/28 Test #14: engine_docs_links ................   Passed    0.05 sec
+      Start 15: engine_sensitive_scan
+15/28 Test #15: engine_sensitive_scan ............   Passed    2.97 sec
+      Start 16: engine_acceptance_m1
+16/28 Test #16: engine_acceptance_m1 .............   Passed    0.30 sec
+      Start 17: engine_acceptance_m3
+17/28 Test #17: engine_acceptance_m3 .............   Passed    2.01 sec
+      Start 18: engine_api_reference
+18/28 Test #18: engine_api_reference .............   Passed    0.13 sec
+      Start 19: engine_asset_cli
+19/28 Test #19: engine_asset_cli .................   Passed    1.37 sec
+      Start 20: engine_large_normalmap
+20/28 Test #20: engine_large_normalmap ...........   Passed    8.98 sec
+      Start 21: engine_pbr_golden
+21/28 Test #21: engine_pbr_golden ................   Passed    0.39 sec
+      Start 22: engine_pbr_color_golden
+22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.13 sec
+      Start 23: engine_pbr_window
+23/28 Test #23: engine_pbr_window ................   Passed    0.26 sec
+      Start 24: engine_asset_placement
+24/28 Test #24: engine_asset_placement ...........   Passed    1.76 sec
+      Start 25: engine_live_api
+25/28 Test #25: engine_live_api ..................   Passed    7.36 sec
+      Start 26: engine_local_socket_deadline
+26/28 Test #26: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 27: engine_live_journal
+27/28 Test #27: engine_live_journal ..............   Passed    0.23 sec
+      Start 28: engine_live_journal_fault
+28/28 Test #28: engine_live_journal_fault ........   Passed    0.11 sec
+
+100% tests passed out of 28
+
+Label Time Summary:
+acceptance      =  21.00 sec*proc (8 tests)
+asset           =  15.50 sec*proc (8 tests)
+cli             =  21.57 sec*proc (9 tests)
+contract        =  25.55 sec*proc (14 tests)
+dependencies    =   0.01 sec*proc (1 test)
+docs            =   3.16 sec*proc (3 tests)
+live            =  10.96 sec*proc (5 tests)
+render          =  14.08 sec*proc (14 tests)
+security        =  11.92 sec*proc (5 tests)
+unit            =   1.54 sec*proc (9 tests)
+
+Total Test time (real) =  30.91 sec
+
+=== Parent Clang28/28 ===
+Test project <repository>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/28 Test  #1: engine_core_tests ................   Passed    0.06 sec
+      Start  2: engine_dependencies_smoke
+ 2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/28 Test  #3: engine_asset_tests ...............   Passed    0.38 sec
+      Start  4: engine_render_tests
+ 4/28 Test  #4: engine_render_tests ..............   Passed    0.11 sec
+      Start  5: engine_window_smoke
+ 5/28 Test  #5: engine_window_smoke ..............   Passed    0.07 sec
+      Start  6: engine_swapchain_test
+ 6/28 Test  #6: engine_swapchain_test ............   Passed    0.31 sec
+      Start  7: engine_overlay_test
+ 7/28 Test  #7: engine_overlay_test ..............   Passed    0.16 sec
+      Start  8: engine_run_smoke
+ 8/28 Test  #8: engine_run_smoke .................   Passed    0.27 sec
+      Start  9: engine_point_light_warning
+ 9/28 Test  #9: engine_point_light_warning .......   Passed    0.33 sec
+      Start 10: engine_screenshot_golden
+10/28 Test #10: engine_screenshot_golden .........   Passed    0.06 sec
+      Start 11: engine_screenshot_cli
+11/28 Test #11: engine_screenshot_cli ............   Passed    0.24 sec
+      Start 12: engine_version_json
+12/28 Test #12: engine_version_json ..............   Passed    0.04 sec
+      Start 13: engine_cli_contract
+13/28 Test #13: engine_cli_contract ..............   Passed    0.41 sec
+      Start 14: engine_docs_links
+14/28 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/28 Test #15: engine_sensitive_scan ............   Passed    1.96 sec
+      Start 16: engine_acceptance_m1
+16/28 Test #16: engine_acceptance_m1 .............   Passed    0.21 sec
+      Start 17: engine_acceptance_m3
+17/28 Test #17: engine_acceptance_m3 .............   Passed    1.61 sec
+      Start 18: engine_api_reference
+18/28 Test #18: engine_api_reference .............   Passed    0.15 sec
+      Start 19: engine_asset_cli
+19/28 Test #19: engine_asset_cli .................   Passed    1.02 sec
+      Start 20: engine_large_normalmap
+20/28 Test #20: engine_large_normalmap ...........   Passed    6.85 sec
+      Start 21: engine_pbr_golden
+21/28 Test #21: engine_pbr_golden ................   Passed    0.36 sec
+      Start 22: engine_pbr_color_golden
+22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.15 sec
+      Start 23: engine_pbr_window
+23/28 Test #23: engine_pbr_window ................   Passed    0.24 sec
+      Start 24: engine_asset_placement
+24/28 Test #24: engine_asset_placement ...........   Passed    1.51 sec
+      Start 25: engine_live_api
+25/28 Test #25: engine_live_api ..................   Passed    8.59 sec
+      Start 26: engine_local_socket_deadline
+26/28 Test #26: engine_local_socket_deadline .....   Passed    1.25 sec
+      Start 27: engine_live_journal
+27/28 Test #27: engine_live_journal ..............   Passed    0.28 sec
+      Start 28: engine_live_journal_fault
+28/28 Test #28: engine_live_journal_fault ........   Passed    0.11 sec
+
+100% tests passed out of 28
+
+Label Time Summary:
+acceptance      =  19.35 sec*proc (8 tests)
+asset           =  12.13 sec*proc (8 tests)
+cli             =  19.27 sec*proc (9 tests)
+contract        =  22.85 sec*proc (14 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   2.14 sec*proc (3 tests)
+live            =  11.85 sec*proc (5 tests)
+render          =  14.01 sec*proc (14 tests)
+security        =  12.20 sec*proc (5 tests)
+unit            =   1.19 sec*proc (9 tests)
+
+Total Test time (real) =  26.80 sec
+
+=== Parent ASan/UBSan27/27, leak checks/retention policy ===
+Test project <repository>/build/linux-asan
+      Start  1: engine_core_tests
+ 1/27 Test  #1: engine_core_tests ................   Passed    0.44 sec
+      Start  2: engine_dependencies_smoke
+ 2/27 Test  #2: engine_dependencies_smoke ........   Passed    0.03 sec
+      Start  3: engine_asset_tests
+ 3/27 Test  #3: engine_asset_tests ...............   Passed    4.68 sec
+      Start  4: engine_render_tests
+ 4/27 Test  #4: engine_render_tests ..............   Passed    0.56 sec
+      Start  5: engine_window_smoke
+ 5/27 Test  #5: engine_window_smoke ..............   Passed    0.23 sec
+      Start  6: engine_swapchain_test
+ 6/27 Test  #6: engine_swapchain_test ............   Passed    0.55 sec
+      Start  7: engine_overlay_test
+ 7/27 Test  #7: engine_overlay_test ..............   Passed    0.37 sec
+      Start  8: engine_run_smoke
+ 8/27 Test  #8: engine_run_smoke .................   Passed    1.29 sec
+      Start  9: engine_point_light_warning
+ 9/27 Test  #9: engine_point_light_warning .......   Passed    1.90 sec
+      Start 10: engine_screenshot_golden
+10/27 Test #10: engine_screenshot_golden .........   Passed    0.17 sec
+      Start 11: engine_screenshot_cli
+11/27 Test #11: engine_screenshot_cli ............   Passed    1.61 sec
+      Start 12: engine_version_json
+12/27 Test #12: engine_version_json ..............   Passed    0.12 sec
+      Start 13: engine_cli_contract
+13/27 Test #13: engine_cli_contract ..............   Passed    4.01 sec
+      Start 14: engine_docs_links
+14/27 Test #14: engine_docs_links ................   Passed    0.03 sec
+      Start 15: engine_sensitive_scan
+15/27 Test #15: engine_sensitive_scan ............   Passed    1.92 sec
+      Start 16: engine_acceptance_m1
+16/27 Test #16: engine_acceptance_m1 .............   Passed    1.49 sec
+      Start 17: engine_acceptance_m3
+17/27 Test #17: engine_acceptance_m3 .............   Passed    5.55 sec
+      Start 18: engine_api_reference
+18/27 Test #18: engine_api_reference .............   Passed    0.17 sec
+      Start 19: engine_asset_cli
+19/27 Test #19: engine_asset_cli .................   Passed    7.81 sec
+      Start 20: engine_large_normalmap
+20/27 Test #20: engine_large_normalmap ...........   Passed   52.65 sec
+      Start 21: engine_pbr_golden
+21/27 Test #21: engine_pbr_golden ................   Passed    1.65 sec
+      Start 22: engine_pbr_color_golden
+22/27 Test #22: engine_pbr_color_golden ..........   Passed    0.81 sec
+      Start 23: engine_pbr_window
+23/27 Test #23: engine_pbr_window ................   Passed    1.09 sec
+      Start 24: engine_asset_placement
+24/27 Test #24: engine_asset_placement ...........   Passed    8.07 sec
+      Start 25: engine_live_api
+25/27 Test #25: engine_live_api ..................   Passed   45.35 sec
+      Start 26: engine_local_socket_deadline
+26/27 Test #26: engine_local_socket_deadline .....   Passed    1.26 sec
+      Start 27: engine_live_journal
+27/27 Test #27: engine_live_journal ..............   Passed    1.00 sec
+
+100% tests passed out of 27
+
+Label Time Summary:
+acceptance      = 115.73 sec*proc (8 tests)
+asset           =  82.30 sec*proc (8 tests)
+cli             = 122.80 sec*proc (9 tests)
+contract        = 132.14 sec*proc (13 tests)
+dependencies    =   0.03 sec*proc (1 test)
+docs            =   2.12 sec*proc (3 tests)
+live            =  53.15 sec*proc (4 tests)
+render          =  69.20 sec*proc (14 tests)
+security        =  49.52 sec*proc (4 tests)
+unit            =   7.15 sec*proc (9 tests)
+
+Total Test time (real) = 144.80 sec
+
+=== Parent full-build TSan13/13 ===
+UpdateCTestConfiguration  from :<repository>/DartConfiguration.tcl
+Test project <repository>/build/linux-tsan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+      Start  1: engine_core_tests
+
+1: Test command: <repository>/build/linux-tsan/tests/engine_core_tests
+1: Working Directory: <repository>/build/linux-tsan/tests
+1: Test timeout computed to be: 10000000
+1: Randomness seeded to: 980684226
+1: ===============================================================================
+1: All tests passed (560 assertions in 69 test cases)
+1: 
+ 1/13 Test  #1: engine_core_tests ................   Passed    0.41 sec
+test 2
+      Start  2: engine_dependencies_smoke
+
+2: Test command: <repository>/build/linux-tsan/tests/engine_dependencies_smoke
+2: Working Directory: <repository>/build/linux-tsan/tests
+2: Test timeout computed to be: 10000000
+2: Randomness seeded to: 1138700625
+2: ===============================================================================
+2: All tests passed (13 assertions in 1 test case)
+2: 
+ 2/13 Test  #2: engine_dependencies_smoke ........   Passed    0.04 sec
+test 3
+      Start  3: engine_asset_tests
+
+3: Test command: <repository>/build/linux-tsan/tests/engine_asset_tests
+3: Working Directory: <repository>/build/linux-tsan/tests
+3: Test timeout computed to be: 10000000
+3: Randomness seeded to: 2730829199
+3: ===============================================================================
+3: All tests passed (22888 assertions in 28 test cases)
+3: 
+ 3/13 Test  #3: engine_asset_tests ...............   Passed    3.41 sec
+test 4
+      Start  4: engine_render_tests
+
+4: Test command: <repository>/build/linux-tsan/tests/engine_render_tests
+4: Working Directory: <repository>/build/linux-tsan/tests
+4: Test timeout computed to be: 10000000
+4: Randomness seeded to: 2296170142
+4: ===============================================================================
+4: All tests passed (105 assertions in 13 test cases)
+4: 
+ 4/13 Test  #4: engine_render_tests ..............   Passed    0.86 sec
+test 12
+      Start 12: engine_version_json
+
+12: Test command: <repository>/.venv/bin/python3 "<repository>/tests/smoke/version_json.py" "<repository>/build/linux-tsan/tools/engine/engine"
+12: Working Directory: <repository>/build/linux-tsan/tests
+12: Test timeout computed to be: 10000000
+12: {
+12:   "buildType": "Debug",
+12:   "compiler": "GNU 16.2.1",
+12:   "cxxStandard": "20",
+12:   "gitCommit": "5d01a36",
+12:   "name": "engine",
+12:   "platform": "Linux-x86_64",
+12:   "version": "0.3.0"
+12: }
+ 5/13 Test #12: engine_version_json ..............   Passed    0.09 sec
+test 13
+      Start 13: engine_cli_contract
+
+13: Test command: <repository>/.venv/bin/python3 "<repository>/tests/contract/validate_cli.py" "<repository>/build/linux-tsan/tools/engine/engine"
+13: Working Directory: <repository>/build/linux-tsan/tests
+13: Test timeout computed to be: 10000000
+13: CLI contract OK
+ 6/13 Test #13: engine_cli_contract ..............   Passed    2.42 sec
+test 14
+      Start 14: engine_docs_links
+
+14: Test command: <repository>/.venv/bin/python3 "<repository>/tests/docs/check_links.py"
+14: Working Directory: <repository>/build/linux-tsan/tests
+14: Test timeout computed to be: 10000000
+14: docs links OK (43 files)
+ 7/13 Test #14: engine_docs_links ................   Passed    0.07 sec
+test 15
+      Start 15: engine_sensitive_scan
+
+15: Test command: <repository>/.venv/bin/python3 "<repository>/tests/docs/check_sensitive.py"
+15: Working Directory: <repository>/build/linux-tsan/tests
+15: Test timeout computed to be: 10000000
+15: sensitive-data scan OK (286 tracked files)
+ 8/13 Test #15: engine_sensitive_scan ............   Passed    2.85 sec
+test 16
+      Start 16: engine_acceptance_m1
+
+16: Test command: <repository>/.venv/bin/python3 "<repository>/scripts/acceptance_m1.py" "<repository>/build/linux-tsan/tools/engine/engine"
+16: Working Directory: <repository>/build/linux-tsan/tests
+16: Test timeout computed to be: 10000000
+16: M1 acceptance passed
+ 9/13 Test #16: engine_acceptance_m1 .............   Passed    1.08 sec
+test 18
+      Start 18: engine_api_reference
+
+18: Test command: <repository>/.venv/bin/python3 "<repository>/scripts/generate_api_reference.py" "--engine" "<repository>/build/linux-tsan/tools/engine/engine" "--check"
+18: Working Directory: <repository>/build/linux-tsan/tests
+18: Test timeout computed to be: 10000000
+18: API reference is up to date
+10/13 Test #18: engine_api_reference .............   Passed    0.20 sec
+test 19
+      Start 19: engine_asset_cli
+
+19: Test command: <repository>/.venv/bin/python3 "<repository>/tests/contract/asset_cli.py" "<repository>/build/linux-tsan/tools/engine/engine"
+19: Working Directory: <repository>/build/linux-tsan/tests
+19: Test timeout computed to be: 10000000
+19: Asset CLI contract passed
+11/13 Test #19: engine_asset_cli .................   Passed    5.35 sec
+test 26
+      Start 26: engine_local_socket_deadline
+
+26: Test command: <repository>/.venv/bin/python3 "<repository>/tests/contract/local_socket_deadline.py" "<repository>/build/linux-tsan/tests/engine_local_socket_fixture"
+26: Working Directory: <repository>/build/linux-tsan/tests
+26: Test timeout computed to be: 20
+26: Queued receive deadline survives a blocking handler; expired frame never dispatches
+12/13 Test #26: engine_local_socket_deadline .....   Passed    1.24 sec
+test 27
+      Start 27: engine_live_journal
+
+27: Test command: <repository>/.venv/bin/python3 "<repository>/tests/contract/live_journal.py" "<repository>/build/linux-tsan/tools/engine/engine"
+27: Working Directory: <repository>/build/linux-tsan/tests
+27: Test timeout computed to be: 40
+27: Live JSONL crash/restart/error handling and Linux serialization fail-closed regression passed
+13/13 Test #27: engine_live_journal ..............   Passed    0.41 sec
+
+The following tests passed:
+	engine_core_tests
+	engine_dependencies_smoke
+	engine_asset_tests
+	engine_render_tests
+	engine_version_json
+	engine_cli_contract
+	engine_docs_links
+	engine_sensitive_scan
+	engine_acceptance_m1
+	engine_api_reference
+	engine_asset_cli
+	engine_local_socket_deadline
+	engine_live_journal
+
+100% tests passed out of 13
+
+Label Time Summary:
+acceptance      =   1.08 sec*proc (1 test)
+asset           =   8.75 sec*proc (2 tests)
+cli             =   7.86 sec*proc (3 tests)
+contract        =  10.69 sec*proc (6 tests)
+dependencies    =   0.04 sec*proc (1 test)
+docs            =   3.11 sec*proc (3 tests)
+live            =   1.65 sec*proc (2 tests)
+render          =   0.86 sec*proc (1 test)
+security        =   4.49 sec*proc (3 tests)
+unit            =   4.81 sec*proc (5 tests)
+
+Total Test time (real) =  18.42 sec
+
+=== Independent Astra Clang28/28 ===
+Test project <review-checkout>/build/ci-linux-clang
+      Start  1: engine_core_tests
+ 1/28 Test  #1: engine_core_tests ................   Passed    0.06 sec
+      Start  2: engine_dependencies_smoke
+ 2/28 Test  #2: engine_dependencies_smoke ........   Passed    0.00 sec
+      Start  3: engine_asset_tests
+ 3/28 Test  #3: engine_asset_tests ...............   Passed    0.43 sec
+      Start  4: engine_render_tests
+ 4/28 Test  #4: engine_render_tests ..............   Passed    0.18 sec
+      Start  5: engine_window_smoke
+ 5/28 Test  #5: engine_window_smoke ..............   Passed    0.06 sec
+      Start  6: engine_swapchain_test
+ 6/28 Test  #6: engine_swapchain_test ............   Passed    0.14 sec
+      Start  7: engine_overlay_test
+ 7/28 Test  #7: engine_overlay_test ..............   Passed    0.17 sec
+      Start  8: engine_run_smoke
+ 8/28 Test  #8: engine_run_smoke .................   Passed    0.34 sec
+      Start  9: engine_point_light_warning
+ 9/28 Test  #9: engine_point_light_warning .......   Passed    0.29 sec
+      Start 10: engine_screenshot_golden
+10/28 Test #10: engine_screenshot_golden .........   Passed    0.04 sec
+      Start 11: engine_screenshot_cli
+11/28 Test #11: engine_screenshot_cli ............   Passed    0.23 sec
+      Start 12: engine_version_json
+12/28 Test #12: engine_version_json ..............   Passed    0.04 sec
+      Start 13: engine_cli_contract
+13/28 Test #13: engine_cli_contract ..............   Passed    0.46 sec
+      Start 14: engine_docs_links
+14/28 Test #14: engine_docs_links ................   Passed    0.05 sec
+      Start 15: engine_sensitive_scan
+15/28 Test #15: engine_sensitive_scan ............   Passed    2.10 sec
+      Start 16: engine_acceptance_m1
+16/28 Test #16: engine_acceptance_m1 .............   Passed    0.23 sec
+      Start 17: engine_acceptance_m3
+17/28 Test #17: engine_acceptance_m3 .............   Passed    1.87 sec
+      Start 18: engine_api_reference
+18/28 Test #18: engine_api_reference .............   Passed    0.19 sec
+      Start 19: engine_asset_cli
+19/28 Test #19: engine_asset_cli .................   Passed    1.05 sec
+      Start 20: engine_large_normalmap
+20/28 Test #20: engine_large_normalmap ...........   Passed    6.96 sec
+      Start 21: engine_pbr_golden
+21/28 Test #21: engine_pbr_golden ................   Passed    0.35 sec
+      Start 22: engine_pbr_color_golden
+22/28 Test #22: engine_pbr_color_golden ..........   Passed    0.14 sec
+      Start 23: engine_pbr_window
+23/28 Test #23: engine_pbr_window ................   Passed    0.23 sec
+      Start 24: engine_asset_placement
+24/28 Test #24: engine_asset_placement ...........   Passed    1.34 sec
+      Start 25: engine_live_api
+25/28 Test #25: engine_live_api ..................   Passed    7.83 sec
+      Start 26: engine_local_socket_deadline
+26/28 Test #26: engine_local_socket_deadline .....   Passed    1.24 sec
+      Start 27: engine_live_journal
+27/28 Test #27: engine_live_journal ..............   Passed    0.28 sec
+      Start 28: engine_live_journal_fault
+28/28 Test #28: engine_live_journal_fault ........   Passed    0.12 sec
+
+100% tests passed out of 28
+
+Label Time Summary:
+acceptance      =  18.75 sec*proc (8 tests)
+asset           =  12.36 sec*proc (8 tests)
+cli             =  18.54 sec*proc (9 tests)
+contract        =  22.43 sec*proc (14 tests)
+dependencies    =   0.00 sec*proc (1 test)
+docs            =   2.34 sec*proc (3 tests)
+live            =  11.34 sec*proc (5 tests)
+render          =  13.21 sec*proc (14 tests)
+security        =  11.57 sec*proc (5 tests)
+unit            =   1.12 sec*proc (9 tests)
+
+Total Test time (real) =  26.42 sec
+
+=== Independent Astra ASan/UBSan image units ===
+Randomness seeded to: 1961840278
+===============================================================================
+All tests passed (36 assertions in 3 test cases)
+
+

@@ -203,6 +203,47 @@ int main(int argc, char** argv) {
     component_remove->add_option("--component", remove_component, "Component name.")->required();
     component_command->require_subcommand(1);
 
+    auto* asset_command =
+        app.add_subcommand("asset", "Import, inspect, validate, reimport or list assets.");
+    std::string asset_project;
+    std::string asset_source;
+    std::string asset_id;
+    std::string asset_name;
+    auto* asset_import = asset_command->add_subcommand("import", "Import and cook a GLB.");
+    auto* asset_inspect =
+        asset_command->add_subcommand("inspect", "Inspect an asset and its cache.");
+    auto* asset_validate =
+        asset_command->add_subcommand("validate", "Validate an asset and cooked data.");
+    auto* asset_reimport =
+        asset_command->add_subcommand("reimport", "Reimport while preserving asset IDs.");
+    auto* asset_list = asset_command->add_subcommand("list", "List project assets.");
+    for (auto* command :
+         {asset_import, asset_inspect, asset_validate, asset_reimport, asset_list}) {
+        command->add_option("project", asset_project, "Project directory.")->required();
+        command->add_flag("--json", json, "Emit a machine-readable JSON document.");
+    }
+    asset_import
+        ->add_option("source", asset_source, "Source GLB (relative to the current directory).")
+        ->required();
+    asset_import->add_option("--name", asset_name, "Asset display name.");
+    asset_import->add_flag("--dry-run", dry_run, "Validate cooking without writing files.");
+    asset_reimport->add_flag("--dry-run", dry_run, "Validate reimport without writing files.");
+    for (auto* command : {asset_inspect, asset_validate, asset_reimport}) {
+        command->add_option("assetId", asset_id, "Asset UUID.")->required();
+    }
+    auto* asset_place =
+        asset_command->add_subcommand("place", "Place an asset instance in a scene.");
+    std::string asset_scene;
+    std::vector<double> asset_position;
+    asset_place->add_option("project", asset_project, "Project directory.")->required();
+    asset_place->add_option("scene", asset_scene, "Scene path inside the project.")->required();
+    asset_place->add_option("--asset", asset_id, "Asset UUID.")->required();
+    asset_place->add_option("--name", asset_name, "Instance name (default: asset name).");
+    asset_place->add_option("--position", asset_position, "Instance position X Y Z.")->expected(3);
+    asset_place->add_flag("--json", json, "Emit a machine-readable JSON document.");
+    asset_place->add_flag("--dry-run", dry_run, "Validate placement without saving the scene.");
+    asset_command->require_subcommand(1);
+
     auto* schema_command = app.add_subcommand("schema", "Print component schemas.");
     schema_command->add_flag("--json", json, "Emit a machine-readable JSON document.");
 
@@ -258,6 +299,26 @@ int main(int argc, char** argv) {
         ->check(CLI::PositiveNumber);
     screenshot_command->add_option("--height", screenshot_height, "Image height.")
         ->check(CLI::PositiveNumber);
+
+    auto* live = app.add_subcommand("live", "Authenticated local live API.");
+    auto* live_serve = live->add_subcommand("serve", "Run a project session until shutdown.");
+    auto* live_call =
+        live->add_subcommand("call", "Call a project session using its private discovery file.");
+    std::string live_project;
+    std::string live_scene = "scenes/main.scene.json";
+    std::string live_method = "ping";
+    std::string live_params = "{}";
+    int live_timeout = 2000;
+    for (auto* subcommand : {live_serve, live_call}) {
+        subcommand->add_option("project", live_project, "Project directory.")->required();
+        subcommand->add_flag("--json", json, "Emit machine-readable output.");
+    }
+    live_serve->add_option("scene", live_scene, "Initial project scene.");
+    live_serve->add_option("--io-timeout-ms", live_timeout, "Per-connection I/O deadline.")
+        ->check(CLI::Range(50, 30000));
+    live_call->add_option("--method", live_method, "JSON-RPC method.");
+    live_call->add_option("--params", live_params, "Method parameters as a JSON object.");
+    live->require_subcommand(1);
 
     for (CLI::App* command : {
              project_create,
@@ -335,6 +396,37 @@ int main(int argc, char** argv) {
         return result.failed_requirements.empty()
                    ? 0
                    : engine::core::exit_code(engine::core::ErrorCode::Precondition);
+    }
+
+    if (*live_serve) {
+        return engine::cli::live_server(live_project, live_scene, live_timeout, json);
+    }
+    if (*live_call) {
+        return engine::cli::live_call(live_project, live_method, live_params, json);
+    }
+    if (*asset_place) {
+        return engine::cli::asset_place(asset_project, asset_scene, asset_id, asset_name,
+                                        asset_position, json, dry_run);
+    }
+    if (*asset_command) {
+        std::string operation;
+        if (*asset_import) {
+            operation = "import";
+        }
+        if (*asset_inspect) {
+            operation = "inspect";
+        }
+        if (*asset_validate) {
+            operation = "validate";
+        }
+        if (*asset_reimport) {
+            operation = "reimport";
+        }
+        if (*asset_list) {
+            operation = "list";
+        }
+        return engine::cli::asset_execute(operation, asset_project, asset_source, asset_id,
+                                          asset_name, json, dry_run);
     }
 
     if (*project_command) {

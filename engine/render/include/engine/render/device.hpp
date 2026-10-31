@@ -83,6 +83,15 @@ public:
 
     [[nodiscard]] core::Result<void> wait_idle() const;
 
+    // Includes reserved VMA blocks plus native-target, debug-overlay and descriptor reservations.
+    [[nodiscard]] std::uint64_t gpu_memory_bytes() const;
+    [[nodiscard]] core::Result<void>
+    reserve_gpu_overhead_bytes(std::uint64_t bytes, std::uint32_t descriptors = 0) const;
+    void release_gpu_overhead_bytes(std::uint64_t bytes,
+                                    std::uint32_t descriptors = 0) const noexcept;
+    [[nodiscard]] core::Result<void> charge_texture_bytes(std::uint64_t bytes) const;
+    void release_texture_bytes(std::uint64_t bytes) const noexcept;
+
 private:
     struct Impl;
 

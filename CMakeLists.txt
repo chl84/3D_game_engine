@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(engine VERSION 0.3.0 LANGUAGES CXX)
+project(engine VERSION 0.4.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 option(ENGINE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(ENGINE_BUILD_FUZZERS "Build libFuzzer targets (Clang only)" OFF)
 
 include(CTest)
 

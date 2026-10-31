@@ -136,6 +136,7 @@ struct OffscreenRenderer::Impl {
     };
 
     const Device* device{nullptr};
+    std::unique_ptr<PbrRenderer> pbr;
     std::uint32_t width{0};
     std::uint32_t height{0};
     VkImage color_image{VK_NULL_HANDLE};
@@ -240,8 +241,8 @@ core::Result<void> OffscreenRenderer::Impl::create_targets() {
 
     image_info.format = kColorFormat;
     image_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    VkResult result = vmaCreateImage(device->allocator(), &image_info, &allocation_info,
-                                     &color_image, &color_allocation, nullptr);
+    VkResult result = detail::create_budgeted_image(*device, &image_info, &allocation_info,
+                                                    &color_image, &color_allocation, nullptr);
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(detail::vulkan_error(
             "could not create the offscreen color image", "offscreen", result));
@@ -263,8 +264,8 @@ core::Result<void> OffscreenRenderer::Impl::create_targets() {
 
     image_info.format = kDepthFormat;
     image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    result = vmaCreateImage(device->allocator(), &image_info, &allocation_info, &depth_image,
-                            &depth_allocation, nullptr);
+    result = detail::create_budgeted_image(*device, &image_info, &allocation_info, &depth_image,
+                                           &depth_allocation, nullptr);
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(detail::vulkan_error(
             "could not create the offscreen depth image", "offscreen", result));
@@ -285,8 +286,8 @@ core::Result<void> OffscreenRenderer::Impl::create_targets() {
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     VmaAllocationCreateInfo readback_allocation_info{};
     readback_allocation_info.usage = VMA_MEMORY_USAGE_GPU_TO_CPU;
-    result = vmaCreateBuffer(device->allocator(), &buffer_info, &readback_allocation_info,
-                             &readback_buffer, &readback_allocation, nullptr);
+    result = detail::create_budgeted_buffer(*device, &buffer_info, &readback_allocation_info,
+                                            &readback_buffer, &readback_allocation, nullptr);
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(detail::vulkan_error(
             "could not create the offscreen readback buffer", "offscreen", result));
@@ -377,8 +378,8 @@ OffscreenRenderer::Impl::create_gpu_mesh(const MeshData& mesh) {
         buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         VmaAllocationCreateInfo allocation_info{};
         allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-        const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
-                                                &buffer, &allocation, nullptr);
+        const VkResult result = detail::create_budgeted_buffer(
+            *device, &buffer_info, &allocation_info, &buffer, &allocation, nullptr);
         if (result != VK_SUCCESS) {
             return core::make_failure<void>(detail::vulkan_error(
                 "could not create an offscreen mesh buffer", "offscreen", result));
@@ -650,6 +651,29 @@ core::Result<std::vector<std::uint8_t>> OffscreenRenderer::Impl::draw(const scen
             return core::make_failure<std::vector<std::uint8_t>>(detail::vulkan_error(
                 "could not wait for the offscreen fence", "offscreen", result));
         }
+        if (pbr) {
+            auto configured = pbr->set_format(kColorFormat, kDepthFormat);
+            if (!configured) {
+                return core::make_failure<std::vector<std::uint8_t>>(configured.error());
+            }
+            auto prepared = pbr->prepare(view, camera_world, aspect, 0);
+            if (!prepared) {
+                return core::make_failure<std::vector<std::uint8_t>>(prepared.error());
+            }
+        } else {
+            for (auto entity : view.entities()) {
+                if (view.scene().has<scene::AssetInstance>(entity)) {
+                    return core::make_failure<std::vector<std::uint8_t>>(core::make_error(
+                        core::ErrorCode::NotFound, "scene asset has not been uploaded", {},
+                        {
+                            {
+                                "assetId",
+                                view.scene().component<scene::AssetInstance>(entity).asset_id,
+                            },
+                        }));
+                }
+            }
+        }
         result = vkResetFences(device->device(), 1, &fence);
         if (result != VK_SUCCESS) {
             return core::make_failure<std::vector<std::uint8_t>>(
@@ -745,6 +769,9 @@ core::Result<std::vector<std::uint8_t>> OffscreenRenderer::Impl::draw(const scen
             vkCmdBindVertexBuffers(command_buffer, 0, 1, &mesh->vertex_buffer, &offset);
             vkCmdBindIndexBuffer(command_buffer, mesh->index_buffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(command_buffer, mesh->index_count, 1, 0, 0, 0);
+        }
+        if (pbr) {
+            pbr->draw(command_buffer, 0);
         }
         vkCmdEndRendering(command_buffer);
 
@@ -843,6 +870,30 @@ std::uint32_t OffscreenRenderer::width() const noexcept {
 
 std::uint32_t OffscreenRenderer::height() const noexcept {
     return impl_->height;
+}
+
+core::Result<void> OffscreenRenderer::upload_asset(const asset::LoadedAsset& asset) {
+    if (!impl_->pbr) {
+        auto p = PbrRenderer::create(*impl_->device, 1);
+        if (!p) {
+            return core::make_failure<void>(p.error());
+        }
+        impl_->pbr = std::make_unique<PbrRenderer>(std::move(*p));
+    }
+    return impl_->pbr->upload(asset);
+}
+core::Result<void> OffscreenRenderer::retire_asset(std::string_view id) {
+    if (!impl_->pbr) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::NotFound, "no PBR assets uploaded"));
+    }
+    return impl_->pbr->retire(id);
+}
+core::Result<void> OffscreenRenderer::collect_assets() {
+    return impl_->pbr ? impl_->pbr->collect() : core::Result<void>{};
+}
+PbrStats OffscreenRenderer::pbr_stats() const {
+    return impl_->pbr ? impl_->pbr->stats() : PbrStats{};
 }
 
 } // namespace engine::render

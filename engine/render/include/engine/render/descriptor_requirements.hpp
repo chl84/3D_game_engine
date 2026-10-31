@@ -18,7 +18,7 @@ namespace engine::render {
 inline constexpr std::uint32_t kBindlessSampledImageBudget = 4096;
 inline constexpr std::uint32_t kBindlessSamplerBudget = 2;
 inline constexpr std::uint32_t kBindlessDescriptorBudget =
-    kBindlessSampledImageBudget + kBindlessSamplerBudget;
+    kBindlessSampledImageBudget + kBindlessSamplerBudget + 1; // material/texture-record SSBO
 inline constexpr std::uint32_t kBindlessMaterialBudget = 4096;
 inline constexpr std::uint32_t kMinimumBoundDescriptorSets = 2;
 inline constexpr std::uint64_t kTextureMemoryBudgetBytes = 1024ULL * 1024ULL * 1024ULL;

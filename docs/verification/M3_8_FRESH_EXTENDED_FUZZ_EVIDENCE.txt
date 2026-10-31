@@ -1,0 +1,35 @@
+M3.8 FRESH LOCAL EXTENDED FUZZ — 2026-10-31
+
+Implementation source: 5d01a36d83b590392349b5925d6ce38cd7b3a7c1, Astra-approved.
+All fuzz targets rebuilt after the PNG fix and formatting. Later commits are
+review/evidence documentation only. New empty corpus path; original checked-in
+seeds include exact retained collapsed-position GLB and empty-IDAT PNG.
+
+COMMAND: cmake --build --preset linux-fuzz --target engine_image_fuzz engine_gltf_fuzz engine_rpc_fuzz -j 2
+COMMAND: ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 bash scripts/run_fuzz_targets.sh 600 /tmp/m39-final-fresh-corpus /tmp/m39-final-fuzz-artifacts
+Background completion: exit0. ASan/UBSan error/abort settings, 10s per-input
+timeout and 2048MiB RSS guard unchanged. Leak checks are disabled only under
+the existing documented fuzzer policy, not for unit/whole-engine ASan tests.
+
+Fuzz target gltf: seconds=600, corpus files=8
+INFO: Seed: 743518415
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 183764 bytes
+INFO: seed corpus: files: 8 min: 1336b max: 183764b total: 554663b rss: 37Mb
+#65407	DONE   cov: 16332 ft: 45243 corp: 587/12625Kb lim: 183764 exec/s: 108 rss: 467Mb
+Done 65407 runs in 601 second(s)
+Fuzz target image: seconds=600, corpus files=6
+INFO: Seed: 1344590852
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 122586 bytes
+INFO: seed corpus: files: 6 min: 268b max: 122586b total: 131732b rss: 43Mb
+#168215	DONE   cov: 5556 ft: 15654 corp: 565/18Mb lim: 122586 exec/s: 279 rss: 399Mb
+Done 168215 runs in 601 second(s)
+Fuzz target rpc: seconds=600, corpus files=4
+INFO: Seed: 1945624563
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 4 min: 3b max: 73b total: 125b rss: 43Mb
+#1274502	DONE   cov: 6858 ft: 20682 corp: 1742/57Kb lim: 1088 exec/s: 2120 rss: 529Mb
+Done 1274502 runs in 601 second(s)
+
+Full retained local log SHA-256: 74444490e01bfe36faec288bded9edebaf63d5d4a7c373a422c5e1fa07d7f7d9
+No sanitizer errors or retained failure artifacts. This proves local fresh
+600s-per-target fuzzing only, not GitHub cache save/restore.

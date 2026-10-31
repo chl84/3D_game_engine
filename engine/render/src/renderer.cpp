@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -244,7 +245,21 @@ struct Renderer::Impl {
         float radius{0.0F};
     };
 
+    struct LegacyDraw {
+        const GpuMesh* mesh{};
+        glm::mat4 model{1};
+    };
+    struct PreparedFrame {
+        glm::mat4 view_projection{1};
+        std::vector<LegacyDraw> legacy;
+    };
+
     const Device* device{nullptr};
+    std::unique_ptr<PbrRenderer> pbr;
+    std::optional<core::Error> terminal_error;
+    std::uint64_t swapchain_budget{0};
+    std::uint64_t overlay_budget{0};
+    std::uint64_t overlay_peak_vertices{0}, overlay_peak_indices{0};
     const platform::Window* window{nullptr};
     SwapchainOptions options;
     bool overlay_visible{true};
@@ -308,9 +323,10 @@ struct Renderer::Impl {
     [[nodiscard]] core::Result<void> create_swapchain();
     [[nodiscard]] core::Result<void> recreate_swapchain();
     void destroy_swapchain();
+    [[nodiscard]] core::Result<PreparedFrame> prepare_frame(const scene::SceneView& scene_view,
+                                                            const CameraPose* camera_pose);
     [[nodiscard]] core::Result<void> record_frame(std::uint32_t image_index,
-                                                  const scene::SceneView& scene_view,
-                                                  const CameraPose* camera_pose);
+                                                  const PreparedFrame& prepared);
 };
 
 Renderer::Impl::~Impl() {
@@ -484,8 +500,8 @@ core::Result<Renderer::Impl::GpuMesh> Renderer::Impl::create_gpu_mesh(const Mesh
         VmaAllocationCreateInfo allocation_info{};
         allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-        const VkResult result = vmaCreateBuffer(device->allocator(), &buffer_info, &allocation_info,
-                                                &buffer, &allocation, nullptr);
+        const VkResult result = detail::create_budgeted_buffer(
+            *device, &buffer_info, &allocation_info, &buffer, &allocation, nullptr);
         if (result != VK_SUCCESS) {
             return core::make_failure<void>(
                 detail::vulkan_error("could not create a mesh buffer", "mesh", result));
@@ -610,8 +626,8 @@ core::Result<void> Renderer::Impl::create_depth_resources() {
     VmaAllocationCreateInfo allocation_info{};
     allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-    VkResult result = vmaCreateImage(device->allocator(), &image_info, &allocation_info,
-                                     &depth_image, &depth_allocation, nullptr);
+    VkResult result = detail::create_budgeted_image(*device, &image_info, &allocation_info,
+                                                    &depth_image, &depth_allocation, nullptr);
     if (result != VK_SUCCESS) {
         return core::make_failure<void>(
             detail::vulkan_error("could not create the depth image", "depth", result));
@@ -913,7 +929,15 @@ core::Result<void> Renderer::Impl::create_overlay_vulkan() {
     rendering.depthAttachmentFormat = depth_format;
     info.PipelineInfoMain.PipelineRenderingCreateInfo = rendering;
 
+    constexpr std::uint64_t overlay_reservation = 64ULL * 1024ULL * 1024ULL;
+    auto reserved = device->reserve_gpu_overhead_bytes(overlay_reservation);
+    if (!reserved) {
+        return reserved;
+    }
+    overlay_budget = overlay_reservation;
     if (!ImGui_ImplVulkan_Init(&info)) {
+        device->release_gpu_overhead_bytes(overlay_budget);
+        overlay_budget = 0;
         return core::make_failure<void>(core::make_error(
             core::ErrorCode::Internal, "could not initialize the ImGui Vulkan backend", {},
             {{"stage", "overlay"}}));
@@ -927,6 +951,12 @@ void Renderer::Impl::destroy_overlay_vulkan() {
         ImGui_ImplVulkan_Shutdown();
         overlay_vulkan_initialized = false;
     }
+    if (overlay_budget) {
+        device->release_gpu_overhead_bytes(overlay_budget);
+        overlay_budget = 0;
+    }
+    overlay_peak_vertices = 0;
+    overlay_peak_indices = 0;
 }
 
 void Renderer::Impl::build_overlay(const scene::SceneView& scene_view) {
@@ -1147,6 +1177,15 @@ core::Result<void> Renderer::Impl::create_swapchain() {
     window_width = window->width();
     window_height = window->height();
 
+    const std::uint64_t native_reservation =
+        static_cast<std::uint64_t>(images.size()) *
+        ((2ULL * extent.width * extent.height * 4ULL) + (1024ULL * 1024ULL));
+    auto native_budget = device->reserve_gpu_overhead_bytes(native_reservation);
+    if (!native_budget) {
+        destroy_swapchain();
+        return native_budget;
+    }
+    swapchain_budget = native_reservation;
     auto depth_result = create_depth_resources();
     if (!depth_result) {
         destroy_swapchain();
@@ -1201,16 +1240,19 @@ void Renderer::Impl::destroy_swapchain() {
         vkDestroySwapchainKHR(handle, swapchain, nullptr);
         swapchain = VK_NULL_HANDLE;
     }
+    if (swapchain_budget) {
+        device->release_gpu_overhead_bytes(swapchain_budget);
+        swapchain_budget = 0;
+    }
     format = VK_FORMAT_UNDEFINED;
     extent = VkExtent2D{0, 0};
 }
 
-core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
-                                                const scene::SceneView& scene_view,
-                                                const CameraPose* camera_pose) {
+core::Result<Renderer::Impl::PreparedFrame>
+Renderer::Impl::prepare_frame(const scene::SceneView& scene_view, const CameraPose* camera_pose) {
     const auto camera_entity = scene_view.active_camera();
     if (!camera_entity.has_value()) {
-        return core::make_failure<void>(core::make_error(
+        return core::make_failure<PreparedFrame>(core::make_error(
             core::ErrorCode::NotFound, "the scene has no active camera", {}, {{"stage", "scene"}}));
     }
     scene::WorldTransform camera_world;
@@ -1232,6 +1274,86 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
         camera.projection(aspect) * camera_view_from_world(camera_world);
     const Frustum frustum = Frustum::from_view_projection(view_projection);
 
+    if (pbr) {
+        auto configured = pbr->set_format(format, depth_format);
+        if (!configured) {
+            return core::make_failure<PreparedFrame>(configured.error());
+        }
+        auto prepared =
+            pbr->prepare(scene_view, camera_world, aspect, static_cast<std::uint32_t>(frame_index));
+        if (!prepared) {
+            return core::make_failure<PreparedFrame>(prepared.error());
+        }
+    } else {
+        for (auto entity : scene_view.entities()) {
+            if (scene_view.scene().has<scene::AssetInstance>(entity)) {
+                return core::make_failure<PreparedFrame>(core::make_error(
+                    core::ErrorCode::NotFound, "scene asset has not been uploaded", {},
+                    {
+                        {
+                            "assetId",
+                            scene_view.scene().component<scene::AssetInstance>(entity).asset_id,
+                        },
+                    }));
+            }
+        }
+    }
+    if (overlay_vulkan_initialized && overlay_visible) {
+        const auto* draw = ImGui::GetDrawData();
+        if (draw) {
+            overlay_peak_vertices =
+                std::max(overlay_peak_vertices, static_cast<std::uint64_t>(draw->TotalVtxCount));
+            overlay_peak_indices =
+                std::max(overlay_peak_indices, static_cast<std::uint64_t>(draw->TotalIdxCount));
+            std::uint64_t required =
+                2ULL * std::max<std::size_t>(images.size(), 2U) *
+                ((overlay_peak_vertices * sizeof(ImDrawVert)) +
+                 (overlay_peak_indices * sizeof(ImDrawIdx)) + (2ULL * 1024ULL * 1024ULL));
+            for (const ImTextureData* texture : ImGui::GetPlatformIO().Textures) {
+                required += (static_cast<std::uint64_t>(std::max(texture->Width, 0)) *
+                             static_cast<std::uint64_t>(std::max(texture->Height, 0)) * 16ULL) +
+                            (4ULL * 1024ULL * 1024ULL);
+            }
+            if (required > overlay_budget) {
+                return core::make_failure<PreparedFrame>(
+                    core::make_error(core::ErrorCode::Validation,
+                                     "debug overlay exceeds its reserved GPU memory budget"));
+            }
+        }
+    }
+    PreparedFrame prepared;
+    prepared.view_projection = view_projection;
+    for (const scene::Entity entity : scene_view.entities()) {
+        if (!scene_view.has_mesh(entity)) {
+            continue;
+        }
+        const scene::Mesh& mesh_component = scene_view.mesh(entity);
+        const GpuMesh* mesh = find_mesh(mesh_component.mesh_id);
+        if (mesh == nullptr) {
+            return core::make_failure<PreparedFrame>(core::make_error(
+                core::ErrorCode::Unsupported, "the scene references an unknown mesh", {},
+                {{"stage", "mesh"}, {"meshId", mesh_component.mesh_id}}));
+        }
+
+        const scene::WorldTransform world = scene_view.world_transform(entity);
+        const glm::mat4 model = camera_relative_model(world, camera_world.position);
+        const float scale = std::max({
+            static_cast<float>(world.scale.x),
+            static_cast<float>(world.scale.y),
+            static_cast<float>(world.scale.z),
+        });
+        const glm::vec3 center{model[3][0], model[3][1], model[3][2]};
+        if (!frustum.intersects_sphere(center, mesh->radius * scale)) {
+            continue;
+        }
+
+        prepared.legacy.push_back({mesh, model});
+    }
+    return prepared;
+}
+
+core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
+                                                const PreparedFrame& prepared) {
     Frame& frame = frames[frame_index];
     VkResult result = vkResetCommandBuffer(frame.command_buffer, 0);
     if (result != VK_SUCCESS) {
@@ -1311,43 +1433,22 @@ core::Result<void> Renderer::Impl::record_frame(std::uint32_t image_index,
     vkCmdBindPipeline(frame.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     PushConstants push_constants;
-    push_constants.view_projection = view_projection;
-    std::uint32_t visible = 0;
-    for (const scene::Entity entity : scene_view.entities()) {
-        if (!scene_view.has_mesh(entity)) {
-            continue;
-        }
-        const scene::Mesh& mesh_component = scene_view.mesh(entity);
-        const GpuMesh* mesh = find_mesh(mesh_component.mesh_id);
-        if (mesh == nullptr) {
-            return core::make_failure<void>(core::make_error(
-                core::ErrorCode::Unsupported, "the scene references an unknown mesh", {},
-                {{"stage", "mesh"}, {"meshId", mesh_component.mesh_id}}));
-        }
-
-        const scene::WorldTransform world = scene_view.world_transform(entity);
-        const glm::mat4 model = camera_relative_model(world, camera_world.position);
-        const float scale = std::max({
-            static_cast<float>(world.scale.x),
-            static_cast<float>(world.scale.y),
-            static_cast<float>(world.scale.z),
-        });
-        const glm::vec3 center{model[3][0], model[3][1], model[3][2]};
-        if (!frustum.intersects_sphere(center, mesh->radius * scale)) {
-            continue;
-        }
-
-        push_constants.model = model;
+    push_constants.view_projection = prepared.view_projection;
+    for (const auto& draw : prepared.legacy) {
+        const auto* mesh = draw.mesh;
+        push_constants.model = draw.model;
         vkCmdPushConstants(frame.command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
                            sizeof(PushConstants), &push_constants);
         VkDeviceSize vertex_offset = 0;
         vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &mesh->vertex_buffer, &vertex_offset);
         vkCmdBindIndexBuffer(frame.command_buffer, mesh->index_buffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(frame.command_buffer, mesh->index_count, 1, 0, 0, 0);
-        ++visible;
     }
-    last_visible_entities = visible;
+    last_visible_entities = static_cast<std::uint32_t>(prepared.legacy.size());
 
+    if (pbr) {
+        pbr->draw(frame.command_buffer, static_cast<std::uint32_t>(frame_index));
+    }
     if (overlay_vulkan_initialized && overlay_visible) {
         ImDrawData* draw_data = ImGui::GetDrawData();
         if (draw_data != nullptr) {
@@ -1408,6 +1509,10 @@ core::Result<bool> Renderer::draw_frame(const scene::SceneView& view, const Came
 
 core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
                                              const CameraPose* camera) {
+    const auto terminal = impl_->terminal_error;
+    if (terminal.has_value()) {
+        return core::make_failure<bool>(*terminal);
+    }
     if (impl_->window->minimized()) {
         return false;
     }
@@ -1433,21 +1538,6 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
         }
         if (impl_->swapchain == VK_NULL_HANDLE) {
             return false;
-        }
-    }
-
-    if (!view.active_camera().has_value()) {
-        return core::make_failure<bool>(core::make_error(
-            core::ErrorCode::NotFound, "the scene has no active camera", {}, {{"stage", "scene"}}));
-    }
-    for (const scene::Entity entity : view.entities()) {
-        if (!view.has_mesh(entity)) {
-            continue;
-        }
-        if (impl_->find_mesh(view.mesh(entity).mesh_id) == nullptr) {
-            return core::make_failure<bool>(core::make_error(
-                core::ErrorCode::Unsupported, "the scene references an unknown mesh", {},
-                {{"stage", "mesh"}, {"meshId", view.mesh(entity).mesh_id}}));
         }
     }
 
@@ -1478,7 +1568,14 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
             ++impl_->stats.gpu_samples;
         }
     }
+    impl_->timestamp_ready[frame_slot] = false;
     const auto cpu_start = std::chrono::steady_clock::now();
+
+    impl_->build_overlay(view);
+    auto prepared = impl_->prepare_frame(view, camera);
+    if (!prepared) {
+        return core::make_failure<bool>(prepared.error());
+    }
 
     std::uint32_t image_index = 0;
     result = vkAcquireNextImageKHR(impl_->device->device(), impl_->swapchain,
@@ -1501,15 +1598,11 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
     }
     const bool suboptimal = result == VK_SUBOPTIMAL_KHR;
 
-    result = vkResetFences(impl_->device->device(), 1, &frame.in_flight);
-    if (result != VK_SUCCESS) {
-        return core::make_failure<bool>(
-            detail::vulkan_error("could not reset the frame fence", "frame", result));
-    }
-
-    impl_->build_overlay(view);
-    auto recorded = impl_->record_frame(image_index, view, camera);
+    auto recorded = impl_->record_frame(image_index, *prepared);
     if (!recorded) {
+        // An acquired image/semaphore cannot be reused after a Vulkan failure.
+        // Recreate this renderer; subsequent calls return instead of waiting.
+        impl_->terminal_error = recorded.error();
         return core::make_failure<bool>(recorded.error());
     }
 
@@ -1536,10 +1629,18 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
     submit_info.signalSemaphoreInfoCount = 1;
     submit_info.pSignalSemaphoreInfos = &signal_info;
 
+    result = vkResetFences(impl_->device->device(), 1, &frame.in_flight);
+    if (result != VK_SUCCESS) {
+        auto error = detail::vulkan_error("could not reset the frame fence", "frame", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
+    }
+
     result = vkQueueSubmit2(impl_->device->graphics_queue(), 1, &submit_info, frame.in_flight);
     if (result != VK_SUCCESS) {
-        return core::make_failure<bool>(
-            detail::vulkan_error("could not submit the frame", "frame", result));
+        auto error = detail::vulkan_error("could not submit the frame", "frame", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
     impl_->timestamp_ready[frame_slot] = impl_->timestamp_supported;
     const auto cpu_end = std::chrono::steady_clock::now();
@@ -1565,12 +1666,15 @@ core::Result<bool> Renderer::draw_frame_impl(const scene::SceneView& view,
         return false;
     }
     if (result == VK_ERROR_SURFACE_LOST_KHR) {
-        return core::make_failure<bool>(
-            detail::vulkan_error("the surface was lost while presenting", "swapchain", result));
+        auto error =
+            detail::vulkan_error("the surface was lost while presenting", "swapchain", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        return core::make_failure<bool>(
-            detail::vulkan_error("could not present the frame", "swapchain", result));
+        auto error = detail::vulkan_error("could not present the frame", "swapchain", result);
+        impl_->terminal_error = error;
+        return core::make_failure<bool>(std::move(error));
     }
 
     ++impl_->presented_frames;
@@ -1673,6 +1777,30 @@ std::uint64_t Renderer::overlay_entity_count() const noexcept {
 
 std::uint32_t Renderer::overlay_draw_vertices() const noexcept {
     return impl_->overlay_draw_vertices;
+}
+
+core::Result<void> Renderer::upload_asset(const asset::LoadedAsset& asset) {
+    if (!impl_->pbr) {
+        auto p = PbrRenderer::create(*impl_->device, static_cast<std::uint32_t>(kFramesInFlight));
+        if (!p) {
+            return core::make_failure<void>(p.error());
+        }
+        impl_->pbr = std::make_unique<PbrRenderer>(std::move(*p));
+    }
+    return impl_->pbr->upload(asset);
+}
+core::Result<void> Renderer::retire_asset(std::string_view id) {
+    if (!impl_->pbr) {
+        return core::make_failure<void>(
+            core::make_error(core::ErrorCode::NotFound, "no PBR assets uploaded"));
+    }
+    return impl_->pbr->retire(id);
+}
+core::Result<void> Renderer::collect_assets() {
+    return impl_->pbr ? impl_->pbr->collect() : core::Result<void>{};
+}
+PbrStats Renderer::pbr_stats() const {
+    return impl_->pbr ? impl_->pbr->stats() : PbrStats{};
 }
 
 } // namespace engine::render

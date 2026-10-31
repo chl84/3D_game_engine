@@ -1,6 +1,6 @@
 # Build
 
-**Status:** M2.7. The build uses a pinned vcpkg manifest, CLI11 command
+**Status:** M3.8 technical acceptance complete; release authorization pending. The build uses a pinned vcpkg manifest, CLI11 command
 dispatch, the core library with the reflection registry, the command bus with
 transactions and undo/redo, the scene/ECS module, the project/scene format with
 atomic saves, the offline project/scene/entity/component CLI, fixed-tick
@@ -193,7 +193,7 @@ The CI version is authoritative for formatting.
 Expected shape:
 
 ```json
-{"name":"engine","version":"0.3.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
+{"name":"engine","version":"0.4.0","gitCommit":"...","buildType":"Debug","compiler":"GNU 16.2.1","platform":"Linux-x86_64","cxxStandard":"20"}
 ```
 
 ## Doctor
@@ -214,14 +214,16 @@ The JSON output is validated against `schemas/doctor@1.schema.json`.
 
 ## Windows
 
-Windows is **not verified** yet. The `windows-debug`, `windows-release` and
-`ci-windows` presets use MSVC and vcpkg. The Windows CI job compiles and runs
-headless tests from M0.2 onward; the runner has no GPU, so graphics is not
-tested there. Graphics on Windows is not part of the M2/M3 approval and will be
-reported as **not verified** until the owner tests it manually on a Windows
-machine.
+The `windows-debug`, `windows-release` and `ci-windows` presets use MSVC and
+vcpkg. Windows compilation, headless contracts and offscreen rendering with
+pinned lavapipe are verified by CI (M3.7: 19/19 on d0797e1). This includes
+Blender normal-map and sRGB/linear golden images and live journal/security
+contracts. Physical Windows presentation and hardware-GPU rendering remain
+**not verified** until the owner tests them manually. Current M3.8 results
+are recorded separately in STATUS.md; earlier results do not certify new code.
 
-The CI workflow sets up MSVC with `ilammy/msvc-dev-cmd` and uses the
+The CI workflow locates Visual Studio with `vswhere`, imports
+`vcvarsall.bat x64` and verifies `cl.exe` before configuring. It uses the
 `x64-windows` vcpkg triplet. The first configure installs the dependencies in
 `build/ci-windows/vcpkg_installed/`.
 
@@ -336,3 +338,83 @@ checks: `Linux (ci-linux-gcc14)`, `Linux (ci-linux-clang)`, `Windows (MSVC)`,
 `Quality` and `Linux ASan/UBSan`. Force pushes and deletions are disabled, and
 conversations must be resolved before merging. `enforce_admins` is off so the
 owner can still push directly during M0.
+
+## M3 PBR verification
+
+The shared PBR shaders compile for Vulkan 1.3 / SPIR-V 1.5 so alpha discard does
+not require optional shaderDemoteToHelperInvocation. Generated embedded shader
+symbols are unique for each pair. No new build/runtime dependency is added.
+
+`engine_pbr_golden` uses the checked-in 256x192 lavapipe golden
+`tests/fixtures/golden/m3_pbr_256.png` and the locally baked mirrored-UV Blender
+model without exported tangents. It also compares Blender's exported tangents,
+checks sensitivity to disabled normals/flipped handedness, reflection and 16 km,
+and runs numerical color-space/mip/alpha, wrap/filter, reflected-normal and full
+descriptor-boundary probes. Blender reference/golden checks share strict byte
+tolerances; the analytical reflection probe rejects a missing handedness sign.
+Vulkan validation is Required; initialization errors fail the test. A different
+GPU skips only this lavapipe-specific CTest (77), not the window lifetime test.
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang --output-on-failure
+# Local physical-GPU controls, without fixed-golden comparison:
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/intel_icd.json build/ci-linux-clang/tests/engine_pbr_test --device-smoke
+```
+
+`engine_pbr_window` checks two-frame descriptor/resource retirement and reuse on
+Linux with a display (CI uses Xvfb). It also verifies that invalid scene data can
+be corrected and rendering resumes without a fence/semaphore hang. Windows runs the offscreen golden/probes;
+Windows presentation remains unverified. Use the existing sanitizer preset
+`linux-asan`. Whole-process/reference-scene performance remains M5/M8.
+
+## Local Mesa RTASM leak-check policy
+
+The earlier 112-byte LSan report is identified as Mesa 26.2.5 RTASM arena metadata,
+not an unknown engine allocation. See the [source/stack diagnosis](verification/M3_SANITIZER_DIAGNOSIS.md)
+and [full M3.5 report](verification/M3_5_STATUS_REPORT.md).
+The opt-in local test preset preserves native-library globals using the supported
+Vulkan loader switch. The inactive LSan rule was removed at the owner's request. Leak detection,
+ASan/UBSan and Required Vulkan validation remain enabled. The ordinary preset
+and Ubuntu CI do not inherit this local policy.
+
+```sh
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset linux-asan-lavapipe --output-on-failure
+```
+
+The explicit `engine_pbr_color_golden` now compares a fixed 192x128 six-patch
+image as well as numerical sRGB/data expectations. It is registered on Linux
+and Windows. This is separate from the Blender normal-map golden.
+
+## M3.7 native local transport
+
+No third-party dependency is added. The planned control target contains the
+bounded JSON parser; platform uses POSIX sockets/process APIs on Linux and
+Windows system ws2_32/advapi32/bcrypt for sockets, DACLs and CSPRNG. Windows
+private discovery permissions are verified before writing credentials and
+checked independently by the cross-platform integration test. The new
+engine_rpc_fuzz target runs alongside the existing GLB/image targets.
+
+## M3.8 acceptance entry points
+
+The normal build includes `engine_acceptance_m3` on Linux and Windows. It drives
+only the public CLI/live interface with the checked-in mirrored Blender fixture
+and the existing M3.5 golden; no Blender installation is needed to run it.
+The fixture source, generator and MIT provenance remain checked in.
+
+```bash
+cmake --preset ci-linux-clang
+cmake --build --preset ci-linux-clang
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json ctest --preset ci-linux-clang
+# Clean clone, expected SHA optional as the third argument:
+bash scripts/acceptance_m3.sh https://github.com/chl84/3D_game_engine.git m3/asset-pipeline
+```
+
+Select a working lavapipe ICD and a display for the complete Linux window suite;
+CI uses Xvfb/openbox. `KEEP=1` retains the fresh clone for diagnosis. The clean
+clone runs full CTest plus explicit M1 and M3 acceptance. It reports JUnit
+test/skip totals and rejects incomplete acceptance with any skipped, disabled
+or unexecuted CTest test. No release version is
+changed before owner approval of merge/tag. The nightly fuzz mode reuses the
+pinned CI toolchain and adds no package; see TESTING.md for limits and cache
+provenance. Hardware performance goals remain M5/M8 and are not inferred from
+software-rendered acceptance timings.

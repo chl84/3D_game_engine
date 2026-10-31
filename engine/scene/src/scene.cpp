@@ -311,6 +311,24 @@ void register_scene_components(core::ReflectionRegistry& registry) {
     registry.component<Mesh>("engine.scene.Mesh")
         .field("meshId", &Mesh::mesh_id, "Asset ID or built-in mesh ID")
         .build();
+
+    registry.component<AssetInstance>("engine.scene.AssetInstance")
+        .field("assetId", &AssetInstance::asset_id, "Stable asset UUID")
+        .build();
+
+    registry.component<DirectionalLight>("engine.scene.DirectionalLight")
+        .field("direction", &DirectionalLight::direction, "Light travel direction")
+        .field("color", &DirectionalLight::color, "Linear RGB color")
+        .field("intensity", &DirectionalLight::intensity, "Light intensity")
+        .field("enabled", &DirectionalLight::enabled, "Whether the light is enabled")
+        .build();
+
+    registry.component<PointLight>("engine.scene.PointLight")
+        .field("color", &PointLight::color, "Linear RGB color")
+        .field("intensity", &PointLight::intensity, "Light intensity")
+        .field("range", &PointLight::range, "Influence range in metres")
+        .field("enabled", &PointLight::enabled, "Whether the light is enabled")
+        .build();
 }
 
 } // namespace engine::scene

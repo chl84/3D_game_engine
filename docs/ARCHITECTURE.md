@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** M2.5. This document describes the approved module boundaries and
+**Status:** M3.8 technical acceptance complete; final publication/release state is recorded in STATUS.md. This document describes the approved module boundaries and
 the current implementation. Planned modules are marked as planned.
 
 ## Principles
@@ -233,7 +233,7 @@ Stable error codes and exit codes are part of the public contract. See
 
 ## Current implementation
 
-M2.5 contains:
+The current implementation contains:
 
 - `engine/core`: version metadata, `Result<T>`/`Error`, UUID v4 and the seeded
   `UuidGenerator`, `PathSandbox`, JSON `Config`, `Log` with console and JSONL
@@ -275,5 +275,35 @@ M2.5 contains:
 - CI: GCC 14, Clang 18, Windows MSVC, clang-format/clang-tidy, ASan/UBSan and
   lavapipe-based Vulkan detection
 
-The remaining modules are planned, not implemented. M2 adds the Vulkan
-renderer; M3 adds assets.
+- `engine/asset`: validated self-contained GLB import, PNG/JPEG cooking,
+  versioned sidecars/cooked buffers, SHA-256 cache keys, stable IDs and reimport,
+  the pinned MikkTSpace adapter and shared versioned asset command handlers
+- `tools/engine`: asset import/inspect/validate/reimport/list, registered through
+  the shared command bus. Mutations hold the project lock. Preview validates
+  source data and cooking without persistent writes. File imports are not
+  undoable and are rejected inside command transactions before any writes.
+
+- `engine/render` also provides shared `PbrRenderer` resources for window and
+  offscreen rendering. Explicit `LoadedAsset` uploads supply node hierarchies,
+  meshes and textures to `AssetInstance` references through read-only SceneView.
+  One bindless set holds 4096 images and 4096 materials. GPU mips, sRGB baseColor/emissive,
+  linear data inputs, metallic-roughness/normal/AO/emissive shading, OPAQUE/MASK
+  and an authored DirectionalLight use one shared shader pair (ADR-0014).
+  Retired assets retain descriptor leases until idle collection. Resource
+  budgets count VMA blocks plus documented native-resource reservations.
+
+Instance placement and automatic project-asset resolution are implemented in
+M3.6 through shared undoable asset commands and CLI composition-root uploads.
+Live control and durable command journaling were delivered in M3.7. Physics, scripting, streaming and editor remain planned.
+
+## M3.7 live control
+
+The planned control module now supplies a bounded JSON-RPC parser and base64
+encoding, depending only on core. Platform owns nonblocking native loopback
+sockets, CSPRNG token generation, restricted atomic discovery writes and process
+liveness checks. The CLI composition root owns one Project/Scene/CommandBus
+session and registers exactly the same authoring handlers as offline CLI.
+Requests execute sequentially on that owner thread; connection I/O is bounded
+and multiplexed without a thread-per-client implementation. Screenshot rendering
+and PNG encoding are shared with offline CLI. ADR-0013 defines wire, resource,
+authentication, sandbox and lifetime-lock contracts.

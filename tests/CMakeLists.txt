@@ -12,11 +12,13 @@ add_executable(engine_core_tests
     unit/config_test.cpp
     unit/error_test.cpp
     unit/log_test.cpp
+    unit/json_rpc_test.cpp
     unit/path_sandbox_test.cpp
     unit/project_test.cpp
     unit/reflect_test.cpp
     unit/scene_test.cpp
     unit/scene_view_test.cpp
+    unit/sha256_test.cpp
     unit/simulation_test.cpp
     unit/uuid_test.cpp
     unit/version_test.cpp
@@ -29,6 +31,7 @@ target_include_directories(engine_core_tests PRIVATE
 
 target_link_libraries(engine_core_tests PRIVATE
     engine::core
+    engine::control
     engine::platform
     engine::command
     engine::scene
@@ -55,6 +58,7 @@ target_link_libraries(engine_dependencies_smoke PRIVATE
     nlohmann_json_schema_validator::validator
     SDL3::SDL3
     glm::glm
+    fastgltf::fastgltf
     imgui::imgui
     GPUOpen::VulkanMemoryAllocator
     volk::volk_headers
@@ -70,6 +74,35 @@ engine_set_warnings(engine_dependencies_smoke)
 
 add_test(NAME engine_dependencies_smoke COMMAND engine_dependencies_smoke)
 set_tests_properties(engine_dependencies_smoke PROPERTIES LABELS "unit;dependencies")
+
+add_executable(engine_asset_tests
+    unit/asset_tangents_test.cpp
+    unit/asset_commands_test.cpp
+    unit/asset_import_test.cpp
+    unit/asset_library_test.cpp
+    unit/image_decode_test.cpp
+)
+
+target_include_directories(engine_asset_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit
+)
+
+target_link_libraries(engine_asset_tests PRIVATE
+    engine::asset
+    engine::scene
+    Catch2::Catch2WithMain
+    nlohmann_json_schema_validator::validator
+)
+
+target_compile_definitions(engine_asset_tests PRIVATE
+    ENGINE_ASSET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/m3"
+    ENGINE_SCHEMA_DIR="${CMAKE_SOURCE_DIR}/schemas"
+)
+
+engine_set_warnings(engine_asset_tests)
+
+add_test(NAME engine_asset_tests COMMAND engine_asset_tests)
+set_tests_properties(engine_asset_tests PROPERTIES LABELS "unit;asset")
 
 add_executable(engine_render_tests
     render/camera_test.cpp
@@ -170,6 +203,17 @@ if(NOT WIN32)
         LABELS "contract;cli;render"
         SKIP_RETURN_CODE 77
     )
+
+    add_test(
+        NAME engine_point_light_warning
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/smoke/point_light_warning.py"
+                "$<TARGET_FILE:engine>"
+    )
+    set_tests_properties(engine_point_light_warning PROPERTIES
+        LABELS "contract;cli;render"
+        SKIP_RETURN_CODE 77
+    )
 endif()
 
 # Offscreen tests are registered on every platform. They skip when no usable
@@ -247,6 +291,14 @@ set_tests_properties(engine_acceptance_m1 PROPERTIES
     LABELS "contract;acceptance"
 )
 
+add_test(NAME engine_acceptance_m3
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/scripts/acceptance_m3.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_acceptance_m3 PROPERTIES
+    LABELS "contract;acceptance;asset;live;render" TIMEOUT 180
+)
+
 add_test(
     NAME engine_api_reference
     COMMAND "${Python3_EXECUTABLE}"
@@ -258,3 +310,104 @@ add_test(
 set_tests_properties(engine_api_reference PROPERTIES
     LABELS "docs;contract"
 )
+
+add_library(engine_fuzz_harness STATIC
+    fuzz/gltf_import_fuzz.cpp
+    fuzz/image_decode_fuzz.cpp
+    fuzz/json_rpc_fuzz.cpp
+)
+target_link_libraries(engine_fuzz_harness PRIVATE engine::asset engine::control)
+engine_set_warnings(engine_fuzz_harness)
+
+if(ENGINE_BUILD_FUZZERS)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "ENGINE_BUILD_FUZZERS requires Clang")
+    endif()
+    add_executable(engine_gltf_fuzz fuzz/gltf_import_fuzz.cpp)
+    target_link_libraries(engine_gltf_fuzz PRIVATE engine::asset)
+    target_compile_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_gltf_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_gltf_fuzz)
+
+    add_executable(engine_rpc_fuzz fuzz/json_rpc_fuzz.cpp)
+    target_link_libraries(engine_rpc_fuzz PRIVATE engine::control)
+    target_compile_options(engine_rpc_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_rpc_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_rpc_fuzz)
+
+    add_executable(engine_image_fuzz fuzz/image_decode_fuzz.cpp)
+    target_link_libraries(engine_image_fuzz PRIVATE engine::asset)
+    target_compile_options(engine_image_fuzz PRIVATE -fsanitize=fuzzer-no-link)
+    target_link_options(engine_image_fuzz PRIVATE -fsanitize=fuzzer)
+    engine_set_warnings(engine_image_fuzz)
+endif()
+
+add_test(NAME engine_asset_cli
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/asset_cli.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_asset_cli PROPERTIES LABELS "contract;cli;asset")
+
+add_test(NAME engine_large_normalmap
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/large_normalmap.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_large_normalmap PROPERTIES LABELS "contract;cli;asset;acceptance" TIMEOUT 180)
+
+add_executable(engine_pbr_test render/pbr_test.cpp render/pbr_probes.cpp ${PROJECT_SOURCE_DIR}/tools/engine/src/stb_image_write_impl.cpp)
+target_link_libraries(engine_pbr_test PRIVATE engine::render engine::asset)
+target_include_directories(engine_pbr_test PRIVATE ${Stb_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/unit)
+target_compile_definitions(engine_pbr_test PRIVATE ENGINE_ASSET_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/m3")
+engine_set_warnings(engine_pbr_test)
+add_test(NAME engine_pbr_golden COMMAND engine_pbr_test "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden/m3_pbr_256.png")
+set_tests_properties(engine_pbr_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
+add_test(NAME engine_pbr_color_golden COMMAND engine_pbr_test --color-golden "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/golden/m3_pbr_colorspace_192x128.png")
+set_tests_properties(engine_pbr_color_golden PROPERTIES LABELS "render;asset;acceptance" SKIP_RETURN_CODE 77)
+if(NOT WIN32)
+    add_test(NAME engine_pbr_window COMMAND engine_pbr_test --window)
+    set_tests_properties(engine_pbr_window PROPERTIES LABELS "render;asset" SKIP_RETURN_CODE 77 TIMEOUT 30)
+endif()
+
+set(asset_placement_window)
+if(NOT WIN32)
+    set(asset_placement_window --window)
+endif()
+add_test(NAME engine_asset_placement
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/asset_placement.py"
+            "$<TARGET_FILE:engine>" ${asset_placement_window}
+)
+set_tests_properties(engine_asset_placement PROPERTIES LABELS "contract;cli;asset;render;acceptance" TIMEOUT 120)
+
+add_test(NAME engine_live_api
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_api.py" "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_live_api PROPERTIES LABELS "contract;cli;live;security;render;acceptance" TIMEOUT 120)
+
+add_executable(engine_local_socket_fixture contract/local_socket_fixture.cpp)
+target_link_libraries(engine_local_socket_fixture PRIVATE engine::platform)
+engine_set_warnings(engine_local_socket_fixture)
+add_test(NAME engine_local_socket_deadline
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/local_socket_deadline.py"
+            "$<TARGET_FILE:engine_local_socket_fixture>"
+)
+set_tests_properties(engine_local_socket_deadline PROPERTIES LABELS "contract;live;security" TIMEOUT 20)
+
+add_test(NAME engine_live_journal
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_journal.py"
+            "$<TARGET_FILE:engine>"
+)
+set_tests_properties(engine_live_journal PROPERTIES LABELS "contract;live;security" TIMEOUT 40)
+
+# LD_PRELOAD syscall fault injection is Linux-only and intentionally excludes
+# sanitizer presets; their runtime/linker instrumentation is verified separately.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ENGINE_SANITIZE_ADDRESS
+   AND NOT ENGINE_SANITIZE_UNDEFINED AND NOT ENGINE_SANITIZE_THREAD)
+    add_library(engine_journal_sync_fault SHARED contract/journal_sync_fault.c)
+    target_link_libraries(engine_journal_sync_fault PRIVATE ${CMAKE_DL_LIBS})
+    target_compile_options(engine_journal_sync_fault PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME engine_live_journal_fault
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contract/live_journal_fault.py"
+                "$<TARGET_FILE:engine>" "$<TARGET_FILE:engine_journal_sync_fault>"
+    )
+    set_tests_properties(engine_live_journal_fault PROPERTIES LABELS "contract;live;security" TIMEOUT 40)
+endif()

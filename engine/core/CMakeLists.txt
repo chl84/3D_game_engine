@@ -10,6 +10,7 @@ add_library(engine_core STATIC
     src/log.cpp
     src/path_sandbox.cpp
     src/reflect.cpp
+    src/sha256.cpp
     src/uuid.cpp
     src/version.cpp
 )

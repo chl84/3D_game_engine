@@ -14,9 +14,11 @@ CMakeUserPresets.json
 /vcpkg-cache/
 /.venv/
 
-# Engine runtime data
+# Engine runtime data and cooked asset cache
 /.engine/
 **/.engine/
+/.engine/cache/
+**/.engine/cache/
 
 # Compiled shaders and binaries
 *.spv

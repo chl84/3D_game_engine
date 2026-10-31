@@ -1,4 +1,6 @@
 #include "commands.hpp"
+#include "scene_assets.hpp"
+#include "scene_warnings.hpp"
 
 #include <engine/command/command.hpp>
 #include <engine/platform/window.hpp>
@@ -29,8 +31,8 @@ using core::ErrorCode;
 using core::ReflectionRegistry;
 using scene::Project;
 
-[[nodiscard]] CommandResult success(nlohmann::json data) {
-    return CommandResult::success(CommandOutput{std::move(data)});
+[[nodiscard]] CommandResult success(nlohmann::json data, std::vector<std::string> warnings = {}) {
+    return CommandResult::success(CommandOutput{std::move(data), std::move(warnings)});
 }
 
 [[nodiscard]] CommandResult failure(Error error) {
@@ -49,6 +51,9 @@ void print_result(const CommandResult& result, bool json) {
         if (!result.error->hint.empty()) {
             std::cerr << "hint: " << result.error->hint << '\n';
         }
+    }
+    for (const std::string& warning : result.warnings) {
+        std::cerr << "warning: " << warning << '\n';
     }
 }
 
@@ -108,6 +113,7 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
         return exit_code_for(result);
     }
     const scene::SceneView view(*scene);
+    const auto warnings = point_light_warnings(*scene, scene_path);
     const auto camera_entity = view.active_camera();
     if (!camera_entity.has_value()) {
         const CommandResult result = failure(core::make_error(
@@ -159,6 +165,13 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
     auto renderer = render::Renderer::create(*device, *window, swapchain_options);
     if (!renderer) {
         const CommandResult result = failure(renderer.error());
+        print_result(result, json);
+        return exit_code_for(result);
+    }
+
+    const auto uploaded = upload_scene_assets(*renderer, project->root(), view);
+    if (!uploaded) {
+        const auto result = failure(uploaded.error());
         print_result(result, json);
         return exit_code_for(result);
     }
@@ -281,11 +294,13 @@ int run_window(const std::string& project_root, const std::string& scene_path, i
         return exit_code_for(result);
     }
 
-    const CommandResult result = success({
-        {"frames", renderer->presented_frames()},
-        {"width", window->width()},
-        {"height", window->height()},
-    });
+    const CommandResult result = success(
+        {
+            {"frames", renderer->presented_frames()},
+            {"width", window->width()},
+            {"height", window->height()},
+        },
+        warnings);
     print_result(result, json);
     return exit_code_for(result);
 }
